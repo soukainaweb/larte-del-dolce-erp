@@ -15,7 +15,7 @@ import MyProfile from '../pages/MyProfile/MyProfilePage';
 import CustomersPage from '../pages/Customers/CustomersPage';
 import UsersPage from '../pages/Users/UsersPage';
 import ProductsPage from '../pages/Products/ProductsPage';
-import ProductionPage from '../pages/Production/ProductionPage';
+import ProductionPage from '../pages/production/ProductionPage';
 import OrdersPage from '../pages/Orders/OrdersPage';
 import CategoriesPage from '../pages/Categories/CategoriesPage';
 import InventoryPage from '../pages/Inventory/InventoryPage';
