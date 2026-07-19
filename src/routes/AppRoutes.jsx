@@ -10,7 +10,7 @@ import DashboardLayout from '../components/layout/DashboardLayout/DashboardLayou
 import Login from '../pages/auth/Login';
 import ForgotPassword from '../pages/auth/ForgotPassword';
 import ChangePassword from '../pages/auth/ChangePassword';
-import DashboardHome from '../pages/dashboardHome/DashboardHome';
+import DashboardHome from '../pages/dashboardhome/DashboardHome';
 import MyProfile from '../pages/myprofile/MyProfilePage';
 import CustomersPage from '../pages/customers/CustomersPage';
 import UsersPage from '../pages/users/UsersPage';
