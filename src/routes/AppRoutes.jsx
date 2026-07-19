@@ -10,29 +10,29 @@ import DashboardLayout from '../components/layout/DashboardLayout/DashboardLayou
 import Login from '../pages/auth/Login';
 import ForgotPassword from '../pages/auth/ForgotPassword';
 import ChangePassword from '../pages/auth/ChangePassword';
-import DashboardHome from '../pages/DashboardHome/DashboardHome';
-import MyProfile from '../pages/MyProfile/MyProfilePage';
-import CustomersPage from '../pages/Customers/CustomersPage';
-import UsersPage from '../pages/Users/UsersPage';
+import DashboardHome from '../pages/dashboardHome/DashboardHome';
+import MyProfile from '../pages/myprofile/MyProfilePage';
+import CustomersPage from '../pages/customers/CustomersPage';
+import UsersPage from '../pages/users/UsersPage';
 import ProductsPage from '../pages/products/ProductsPage';
 import ProductionPage from '../pages/production/ProductionPage';
 import OrdersPage from '../pages/orders/OrdersPage';
-import CategoriesPage from '../pages/Categories/CategoriesPage';
+import CategoriesPage from '../pages/categories/CategoriesPage';
 import InventoryPage from '../pages/inventory/InventoryPage';
-import WarehousePage from '../pages/Warehouse/WarehousePage';
-import SuppliersPage from '../pages/Suppliers/SuppliersPage';
-import DeliveriesPage from '../pages/Deliveries/DeliveriesPage';
+import WarehousePage from '../pages/warehouse/WarehousePage';
+import SuppliersPage from '../pages/suppliers/SuppliersPage';
+import DeliveriesPage from '../pages/deliveries/DeliveriesPage';
 import InvoicesPage from '../pages/invoices/InvoicesPage';
-import PaymentsPage from '../pages/Payments/PaymentsPage';
-import ExpensesPage from '../pages/Expenses/ExpensesPage';
-import FinancePage from '../pages/Finance/FinancePage';
+import PaymentsPage from '../pages/payments/PaymentsPage';
+import ExpensesPage from '../pages/expenses/ExpensesPage';
+import FinancePage from '../pages/finance/FinancePage';
 import ReportsPage from '../pages/reports/ReportsPage';
-import AnalyticsPage from '../pages/Analytics/AnalyticsPage';
-import NotificationsPage from '../pages/Notifications/NotificationsPage';
+import AnalyticsPage from '../pages/analytics/AnalyticsPage';
+import NotificationsPage from '../pages/notifications/NotificationsPage';
 import RolesPermissionsPage from '../pages/RolesPermissions/RolesPermissionsPage';
 
 // ⭐ NOUVEAU : Importer la page Journal d'activité
-import ActivityLogPage from '../pages/ActivityLog/ActivityLogPage';
+import ActivityLogPage from '../pages/activitylog/ActivityLogPage';
 
 // Composant de fallback
 import ModuleFallback from '../components/ModuleFallback';
