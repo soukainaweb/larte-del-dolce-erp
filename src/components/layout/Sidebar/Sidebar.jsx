@@ -1,0 +1,831 @@
+// src/components/layout/Sidebar/Sidebar.jsx
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+  memo,
+} from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  LayoutDashboard,
+  ClipboardList,
+  Users,
+  Package,
+  FileText,
+  Truck,
+  Factory,
+  Warehouse,
+  Boxes,
+  ShoppingCart,
+  CreditCard,
+  Wallet,
+  BadgeDollarSign,
+  BarChart3,
+  LineChart,
+  PieChart,
+  Briefcase,
+  UsersRound,
+  ShieldCheck,
+  Settings,
+  Bell,
+  UserCircle,
+  LifeBuoy,
+  BookOpen,
+  History,
+  LogOut,
+  ChevronRight,
+  ChevronLeft,
+  X,
+  Cookie,
+  FolderTree,
+} from 'lucide-react';
+
+// ==================================================
+// DESIGN TOKENS — L'arte del dolce ERP Sidebar
+// ==================================================
+const COLORS = Object.freeze({
+  background: '#FFFFFF',
+  primary: '#B8863B',
+  darkGold: '#9E6C30',
+  hover: '#F8F5EF',
+  border: '#ECE7DF',
+  text: '#2B2420',
+  textSecondary: '#8A7B68',
+  badge: '#E8A33D',
+  badgeText: '#7A4B12',
+  danger: '#D0483C',
+  online: '#3FB65F',
+  cream: '#FBF8F2',
+});
+
+const TRANSITION = { duration: 0.25, ease: [0.4, 0, 0.2, 1] };
+
+const WIDTH_EXPANDED = 280;
+const WIDTH_COLLAPSED = 90;
+
+// ==================================================
+// ROLE SYSTEM
+// ==================================================
+export const ROLES = Object.freeze({
+  ADMIN: 'Administrator',
+  ACCOUNTANT: 'Accountant',
+  SALES_REP: 'Sales Representative',
+  PRODUCTION_MANAGER: 'Production Manager',
+  FACTORY_EMPLOYEE: 'Factory Employee',
+  WAREHOUSE_MANAGER: 'Warehouse Manager',
+  DELIVERY_DRIVER: 'Delivery Driver',
+  FINANCE_MANAGER: 'Finance Manager',
+  MANAGER: 'Manager',
+  VIEWER: 'Viewer',
+});
+
+const FULL_ACCESS_ROLES = [ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.MANAGER];
+
+const isItemVisible = (item, role, permissions) => {
+  if (item.visible === false) return false;
+  if (item.permission && permissions && permissions.length > 0) {
+    if (!permissions.includes(item.permission)) return false;
+  }
+  if (!item.roles || item.roles.length === 0) return true;
+  if (FULL_ACCESS_ROLES.includes(role)) return true;
+  return item.roles.includes(role);
+};
+
+// ==================================================
+// DEFAULT MENU CONFIGURATION
+// ==================================================
+const ALL_CORE_ROLES = [ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.MANAGER];
+
+const DASHBOARD_ITEM = {
+  id: 'dashboard',
+  title: 'Dashboard',
+  icon: LayoutDashboard,
+  route: '/dashboard',
+  roles: [],
+  badge: null,
+  children: null,
+  permission: null,
+  visible: true,
+};
+
+const DEFAULT_MENU_CONFIG = [
+  // ---------- GESTION ----------
+  {
+    id: 'users',
+    title: 'Utilisateurs',
+    icon: UsersRound,
+    route: '/dashboard/users',
+    roles: [ROLES.ADMIN],
+    badge: null,
+    children: null,
+    permission: 'users.view',
+    visible: true,
+    group: 'gestion',
+  },
+  {
+    id: 'customers',
+    title: 'Clients',
+    icon: Users,
+    route: '/dashboard/customers',
+    roles: [...ALL_CORE_ROLES, ROLES.SALES_REP],
+    badge: null,
+    children: null,
+    permission: 'customers.view',
+    visible: true,
+    group: 'gestion',
+  },
+  {
+    id: 'categories',
+    title: 'Catégories',
+    icon: FolderTree,
+    route: '/dashboard/categories',
+    roles: [...ALL_CORE_ROLES, ROLES.SALES_REP],
+    badge: null,
+    children: null,
+    permission: 'categories.view',
+    visible: true,
+    group: 'gestion',
+  },
+  {
+    id: 'products',
+    title: 'Produits',
+    icon: Package,
+    route: '/dashboard/products',
+    roles: [...ALL_CORE_ROLES, ROLES.SALES_REP, ROLES.PRODUCTION_MANAGER, ROLES.WAREHOUSE_MANAGER],
+    badge: null,
+    children: null,
+    permission: 'products.view',
+    visible: true,
+    group: 'gestion',
+  },
+  {
+    id: 'orders',
+    title: 'Commandes',
+    icon: ClipboardList,
+    route: '/dashboard/orders',
+    roles: [...ALL_CORE_ROLES, ROLES.SALES_REP],
+    badge: null,
+    children: null,
+    permission: 'orders.view',
+    visible: true,
+    group: 'gestion',
+  },
+  {
+    id: 'production',
+    title: 'Production',
+    icon: Factory,
+    route: '/dashboard/production',
+    roles: [...ALL_CORE_ROLES, ROLES.PRODUCTION_MANAGER, ROLES.FACTORY_EMPLOYEE],
+    badge: null,
+    children: null,
+    permission: 'production.view',
+    visible: true,
+    group: 'gestion',
+  },
+
+  // ---------- STOCK & PRODUCTION ----------
+  {
+    id: 'inventory',
+    title: 'Inventaire',
+    icon: Boxes,
+    route: '/dashboard/inventory',
+    roles: [...ALL_CORE_ROLES, ROLES.WAREHOUSE_MANAGER, ROLES.PRODUCTION_MANAGER],
+    badge: null,
+    children: null,
+    permission: 'inventory.view',
+    visible: true,
+    group: 'stock',
+  },
+  {
+    id: 'warehouse',
+    title: 'Entrepôt',
+    icon: Warehouse,
+    route: '/dashboard/warehouse',
+    roles: [...ALL_CORE_ROLES, ROLES.WAREHOUSE_MANAGER],
+    badge: null,
+    children: null,
+    permission: 'warehouse.view',
+    visible: true,
+    group: 'stock',
+  },
+  {
+    id: 'suppliers',
+    title: 'Fournisseurs',
+    icon: ShoppingCart,
+    route: '/dashboard/suppliers',
+    roles: [...ALL_CORE_ROLES, ROLES.WAREHOUSE_MANAGER],
+    badge: null,
+    children: null,
+    permission: 'suppliers.view',
+    visible: true,
+    group: 'stock',
+  },
+  {
+    id: 'deliveries',
+    title: 'Livraisons',
+    icon: Truck,
+    route: '/dashboard/deliveries',
+    roles: [...ALL_CORE_ROLES, ROLES.DELIVERY_DRIVER],
+    badge: null,
+    children: null,
+    permission: 'deliveries.view',
+    visible: true,
+    group: 'stock',
+  },
+
+  // ---------- FINANCE ----------
+  {
+    id: 'invoices',
+    title: 'Factures',
+    icon: FileText,
+    route: '/dashboard/invoices',
+    roles: [...ALL_CORE_ROLES, ROLES.FINANCE_MANAGER],
+    badge: null,
+    children: null,
+    permission: 'invoices.view',
+    visible: true,
+    group: 'finance',
+  },
+  {
+    id: 'payments',
+    title: 'Paiements',
+    icon: BadgeDollarSign,
+    route: '/dashboard/payments',
+    roles: [ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.FINANCE_MANAGER],
+    badge: null,
+    children: null,
+    permission: 'payments.view',
+    visible: true,
+    group: 'finance',
+  },
+  {
+    id: 'expenses',
+    title: 'Dépenses',
+    icon: Wallet,
+    route: '/dashboard/expenses',
+    roles: [ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.FINANCE_MANAGER],
+    badge: null,
+    children: null,
+    permission: 'expenses.view',
+    visible: true,
+    group: 'finance',
+  },
+  {
+    id: 'finance',
+    title: 'Finances',
+    icon: CreditCard,
+    route: '/dashboard/finance',
+    roles: [ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.FINANCE_MANAGER],
+    badge: null,
+    children: null,
+    permission: 'finance.view',
+    visible: true,
+    group: 'finance',
+  },
+
+  // ---------- RAPPORTS ----------
+  {
+    id: 'reports',
+    title: 'Rapports',
+    icon: BarChart3,
+    route: '/dashboard/reports',
+    roles: ALL_CORE_ROLES,
+    badge: null,
+    children: null,
+    permission: 'reports.view',
+    visible: true,
+    group: 'rapports',
+  },
+  {
+    id: 'statistics',
+    title: 'Statistiques',
+    icon: LineChart,
+    route: '/dashboard/statistics',
+    roles: ALL_CORE_ROLES,
+    badge: null,
+    children: null,
+    permission: 'statistics.view',
+    visible: true,
+    group: 'rapports',
+  },
+  {
+    id: 'analytics',
+    title: 'Analytics',
+    icon: PieChart,
+    route: '/dashboard/analytics',
+    roles: ALL_CORE_ROLES,
+    badge: null,
+    children: null,
+    permission: 'analytics.view',
+    visible: true,
+    group: 'rapports',
+  },
+
+  // ---------- PARAMÈTRES ----------
+  {
+    id: 'notifications',
+    title: 'Notifications',
+    icon: Bell,
+    route: '/dashboard/notifications',
+    roles: [],
+    badge: 8,
+    children: null,
+    permission: null,
+    visible: true,
+    group: 'parametres',
+  },
+  {
+    id: 'roles',
+    title: 'Rôles & Permissions',
+    icon: ShieldCheck,
+    route: '/dashboard/roles',
+    roles: [ROLES.ADMIN],
+    badge: null,
+    children: null,
+    permission: 'roles.view',
+    visible: true,
+    group: 'parametres',
+  },
+  {
+    id: 'employees',
+    title: 'Employés',
+    icon: Briefcase,
+    route: '/dashboard/employees',
+    roles: [ROLES.ADMIN, ROLES.ACCOUNTANT],
+    badge: null,
+    children: null,
+    permission: 'employees.view',
+    visible: true,
+    group: 'parametres',
+  },
+  {
+    id: 'activity',
+    title: "Journal d'activité",
+    icon: History,
+    route: '/dashboard/activity-logs',
+    roles: [ROLES.ADMIN, ROLES.ACCOUNTANT],
+    badge: null,
+    children: null,
+    permission: 'activity.view',
+    visible: true,
+    group: 'parametres',
+  },
+  {
+    id: 'settings',
+    title: 'Paramètres',
+    icon: Settings,
+    route: '/dashboard/settings',
+    roles: [ROLES.ADMIN],
+    badge: null,
+    children: null,
+    permission: 'settings.view',
+    visible: true,
+    group: 'parametres',
+  },
+  {
+    id: 'profile',
+    title: 'Mon Profil',
+    icon: UserCircle,
+    route: '/dashboard/profile',
+    roles: [],
+    badge: null,
+    children: null,
+    permission: null,
+    visible: true,
+    group: 'parametres',
+  },
+];
+
+const GROUP_LABELS = [
+  { id: 'gestion', label: 'GESTION' },
+  { id: 'stock', label: 'STOCK & PRODUCTION' },
+  { id: 'finance', label: 'FINANCE' },
+  { id: 'rapports', label: 'RAPPORTS' },
+  { id: 'parametres', label: 'PARAMÈTRES' },
+];
+export { GROUP_LABELS };
+
+// ==================================================
+// HOOKS
+// ==================================================
+function useDismiss(ref, isOpen, onClose) {
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handlePointer = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) onClose();
+    };
+    const handleKey = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('mousedown', handlePointer);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handlePointer);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [ref, isOpen, onClose]);
+}
+
+// ==================================================
+// LOGO MARK
+// ==================================================
+const DEFAULT_LOGO_SRC = '/src/assets/images/logo.png';
+
+const LogoMark = memo(function LogoMark({ logo, size }) {
+  const [failed, setFailed] = useState(false);
+  const src = logo || DEFAULT_LOGO_SRC;
+
+  return (
+    <span
+      className="flex shrink-0 items-center justify-center rounded-2xl bg-white shadow-[0_2px_10px_rgba(184,134,59,0.18)]"
+      style={{ width: size, height: size, border: `1px solid ${COLORS.border}` }}
+    >
+      {!failed ? (
+        <img
+          src={src}
+          alt="L'arte del dolce"
+          className="object-contain"
+          style={{ width: size * 0.7, height: size * 0.7 }}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <Cookie
+          strokeWidth={1.6}
+          style={{ width: size * 0.52, height: size * 0.52, color: COLORS.primary }}
+        />
+      )}
+    </span>
+  );
+});
+
+// ==================================================
+// SIDEBAR HEADER
+// ==================================================
+const SidebarHeader = memo(function SidebarHeader({
+  logo,
+  appName,
+  appSuffix,
+  isCollapsed,
+  isMobile,
+  onToggleCollapse,
+  onCloseMobile,
+}) {
+  return (
+    <div
+      className={`relative flex shrink-0 items-center border-b px-4 py-4 ${
+        isCollapsed && !isMobile ? 'justify-center' : 'justify-between'
+      }`}
+      style={{ borderColor: COLORS.border, minHeight: 80 }}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <LogoMark logo={logo} size={isCollapsed && !isMobile ? 44 : 48} />
+        {!isCollapsed || isMobile ? (
+          <span className="flex min-w-0 flex-col leading-tight">
+            <span
+              className="truncate text-[17px] font-semibold"
+              style={{ color: COLORS.text, fontFamily: '"Cormorant Garamond", "Playfair Display", serif' }}
+            >
+              {appName}
+            </span>
+            <span
+              className="text-[11px] font-semibold tracking-[0.2em]"
+              style={{ color: COLORS.primary }}
+            >
+              {(appSuffix || '').toUpperCase()}
+            </span>
+          </span>
+        ) : null}
+      </div>
+
+      {isMobile ? (
+        <button
+          type="button"
+          onClick={onCloseMobile}
+          aria-label="Fermer le menu"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
+          style={{ color: COLORS.text }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = COLORS.hover; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+        >
+          <X size={18} />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          aria-label={isCollapsed ? 'Développer le menu' : 'Réduire le menu'}
+          className={`hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border shadow-sm transition-colors duration-200 lg:flex ${
+            isCollapsed ? 'absolute -right-3.5 top-4 bg-white' : 'bg-white'
+          }`}
+          style={{ borderColor: COLORS.border, color: COLORS.text }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = COLORS.hover; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; }}
+        >
+          {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+        </button>
+      )}
+    </div>
+  );
+});
+
+// ==================================================
+// MENU ITEM
+// ==================================================
+const MenuItem = memo(function MenuItem({ item, isCollapsed, activeItemId, onNavigate }) {
+  const Icon = item.icon || LayoutDashboard;
+  const isActive = item.id === activeItemId;
+
+  const handleClick = useCallback(() => {
+    onNavigate(item);
+  }, [item, onNavigate]);
+
+  return (
+    <motion.button
+      type="button"
+      onClick={handleClick}
+      title={isCollapsed ? item.title : undefined}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.15 }}
+      className={`group relative flex w-full items-center gap-3 rounded-xl px-3 text-[13.5px] font-medium outline-none transition-colors duration-200 ${
+        isCollapsed ? 'justify-center' : ''
+      }`}
+      style={{
+        height: 44,
+        background: isActive
+          ? `linear-gradient(90deg, ${COLORS.primary} 0%, ${COLORS.darkGold} 100%)`
+          : 'transparent',
+        color: isActive ? '#FFFFFF' : COLORS.text,
+        boxShadow: isActive ? '0 6px 14px -4px rgba(191, 139, 60, 0.45)' : 'none',
+      }}
+      onMouseEnter={(e) => {
+        if (!isActive) e.currentTarget.style.backgroundColor = COLORS.hover;
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
+      }}
+    >
+      <Icon
+        size={18}
+        strokeWidth={1.8}
+        className="shrink-0"
+        style={{ color: isActive ? '#FFFFFF' : COLORS.textSecondary }}
+      />
+
+      {!isCollapsed ? (
+        <>
+          <span className="flex-1 truncate text-left">{item.title}</span>
+          {item.badge ? (
+            <span
+              className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold"
+              style={{
+                backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : COLORS.badge,
+                color: isActive ? '#FFFFFF' : '#FFFFFF',
+              }}
+            >
+              {item.badge}
+            </span>
+          ) : (
+            <ChevronRight
+              size={14}
+              className="shrink-0"
+              style={{ color: isActive ? '#FFFFFF' : '#C9BEAE', opacity: isActive ? 0 : 1 }}
+            />
+          )}
+        </>
+      ) : item.badge ? (
+        <span
+          className="absolute right-2 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white"
+          style={{ backgroundColor: COLORS.badge }}
+        >
+          {item.badge}
+        </span>
+      ) : null}
+    </motion.button>
+  );
+});
+
+// ==================================================
+// FOOTER LINKS
+// ==================================================
+const FooterLink = memo(function FooterLink({ icon: Icon, label, onClick, isCollapsed, danger }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={isCollapsed ? label : undefined}
+      className={`flex h-10 items-center gap-3 rounded-lg px-3 text-[13.5px] font-medium transition-colors duration-200 ${
+        isCollapsed ? 'justify-center' : ''
+      }`}
+      style={{ color: danger ? COLORS.danger : COLORS.textSecondary }}
+      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = COLORS.hover; }}
+      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+    >
+      <Icon size={17} strokeWidth={1.8} />
+      {!isCollapsed ? label : null}
+    </button>
+  );
+});
+
+// ==================================================
+// BRAND CARD
+// ==================================================
+const BrandCard = memo(function BrandCard({ appName, appSuffix, version, isCollapsed }) {
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${isCollapsed ? 'justify-center' : ''}`}
+      style={{ borderColor: COLORS.border, backgroundColor: COLORS.cream }}
+    >
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+        style={{ backgroundColor: '#F0DEC0' }}
+      >
+        <Cookie size={16} strokeWidth={1.8} style={{ color: COLORS.darkGold }} />
+      </span>
+      {!isCollapsed ? (
+        <span className="min-w-0 flex-1 leading-tight">
+          <span className="block truncate text-[13px] font-semibold" style={{ color: COLORS.text }}>
+            {appName} {appSuffix}
+          </span>
+          <span className="block text-[11px]" style={{ color: COLORS.textSecondary }}>
+            v{version}
+          </span>
+        </span>
+      ) : null}
+      {!isCollapsed ? (
+        <span
+          className="h-2 w-2 shrink-0 rounded-full"
+          style={{ backgroundColor: COLORS.online }}
+          aria-hidden="true"
+        />
+      ) : null}
+    </div>
+  );
+});
+
+// ==================================================
+// SIDEBAR - COMPOSANT PRINCIPAL
+// ==================================================
+const Sidebar = ({
+  logo,
+  appName = "L'arte del dolce",
+  appSuffix = 'ERP',
+  version = '1.0.0',
+  currentUser = {
+    firstName: 'John',
+    lastName: 'Doe',
+    role: ROLES.ADMIN,
+    avatarUrl: '',
+    isOnline: true,
+  },
+  permissions = [],
+  menuItems = DEFAULT_MENU_CONFIG,
+  activeItemId = 'dashboard',
+  onNavigate = () => {},
+  isCollapsed = false,
+  onToggleCollapse = () => {},
+  isMobileOpen = false,
+  onCloseMobile = () => {},
+  onHelp = () => {},
+  onDocumentation = () => {},
+  onLogout = () => {},
+  language = 'fr',
+  className = '',
+}) => {
+  const isRTL = language === 'ar';
+
+  const handleNavigate = useCallback(
+    (item) => {
+      onNavigate(item);
+      onCloseMobile();
+    },
+    [onNavigate, onCloseMobile],
+  );
+
+  const visibleMenuItems = useMemo(
+    () => menuItems.filter((item) => isItemVisible(item, currentUser?.role, permissions)),
+    [menuItems, currentUser?.role, permissions],
+  );
+
+  const dashboardVisible = isItemVisible(DASHBOARD_ITEM, currentUser?.role, permissions);
+
+  const renderNav = (isMobile) => (
+    <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3">
+      <div className="flex flex-col gap-1">
+        {dashboardVisible ? (
+          <MenuItem
+            item={DASHBOARD_ITEM}
+            isCollapsed={isCollapsed && !isMobile}
+            activeItemId={activeItemId}
+            onNavigate={handleNavigate}
+          />
+        ) : null}
+        {visibleMenuItems.map((item) => (
+          <MenuItem
+            key={item.id}
+            item={item}
+            isCollapsed={isCollapsed && !isMobile}
+            activeItemId={activeItemId}
+            onNavigate={handleNavigate}
+          />
+        ))}
+      </div>
+
+      {/* Footer links */}
+      <div className="mt-3 flex flex-col gap-0.5 border-t pt-3" style={{ borderColor: COLORS.border }}>
+        <FooterLink 
+          icon={LifeBuoy} 
+          label="Centre d'aide" 
+          onClick={onHelp} 
+          isCollapsed={isCollapsed && !isMobile} 
+        />
+        <FooterLink 
+          icon={BookOpen} 
+          label="Documentation" 
+          onClick={onDocumentation} 
+          isCollapsed={isCollapsed && !isMobile} 
+        />
+        <FooterLink 
+          icon={LogOut} 
+          label="Déconnexion" 
+          onClick={onLogout} 
+          isCollapsed={isCollapsed && !isMobile} 
+          danger 
+        />
+      </div>
+    </nav>
+  );
+
+  return (
+    <>
+      {/* Overlay mobile */}
+      <AnimatePresence>
+        {isMobileOpen ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={TRANSITION}
+            onClick={onCloseMobile}
+            className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+            aria-hidden="true"
+          />
+        ) : null}
+      </AnimatePresence>
+
+      {/* Sidebar Desktop */}
+      <aside
+        dir={isRTL ? 'rtl' : 'ltr'}
+        className={`sticky top-0 z-30 hidden h-screen shrink-0 flex-col bg-white shadow-none transition-[width] duration-300 ease-out lg:flex ${
+          isRTL ? 'border-l' : 'border-r'
+        } ${className}`}
+        style={{
+          width: isCollapsed ? WIDTH_COLLAPSED : WIDTH_EXPANDED,
+          borderColor: COLORS.border,
+        }}
+      >
+        <SidebarHeader
+          logo={logo}
+          appName={appName}
+          appSuffix={appSuffix}
+          isCollapsed={isCollapsed}
+          isMobile={false}
+          onToggleCollapse={onToggleCollapse}
+          onCloseMobile={onCloseMobile}
+        />
+        {renderNav(false)}
+        <div className="shrink-0 px-3 pb-3">
+          <BrandCard appName={appName} appSuffix={appSuffix} version={version} isCollapsed={isCollapsed} />
+        </div>
+      </aside>
+
+      {/* Sidebar Mobile */}
+      <aside
+        dir={isRTL ? 'rtl' : 'ltr'}
+        className={`fixed inset-y-0 z-50 flex w-[300px] max-w-[85vw] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
+          isRTL ? 'right-0 border-l' : 'left-0 border-r'
+        } ${
+          isMobileOpen ? 'translate-x-0' : isRTL ? 'translate-x-full' : '-translate-x-full'
+        }`}
+        style={{ borderColor: COLORS.border }}
+      >
+        <SidebarHeader
+          logo={logo}
+          appName={appName}
+          appSuffix={appSuffix}
+          isCollapsed={false}
+          isMobile
+          onToggleCollapse={onToggleCollapse}
+          onCloseMobile={onCloseMobile}
+        />
+        {renderNav(true)}
+        <div className="shrink-0 px-3 pb-3">
+          <BrandCard appName={appName} appSuffix={appSuffix} version={version} isCollapsed={false} />
+        </div>
+      </aside>
+    </>
+  );
+};
+
+export default memo(Sidebar);
