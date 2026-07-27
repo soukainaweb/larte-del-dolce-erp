@@ -216,7 +216,10 @@ const DashboardLayout = () => {
         isMobile={isMobile}
         isMobileOpen={isMobileOpen}
         onCloseMobile={handleCloseMobile}
-        currentUser={user}
+        currentUser={{
+        ...user,
+        role: user?.role?.name
+        }}
         onNavigate={handleNavigate}
         activeItemId={location.pathname.split('/').filter(Boolean).pop() || 'dashboard'}
         onLogout={handleLogout}

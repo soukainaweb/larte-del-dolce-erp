@@ -69,16 +69,16 @@ const WIDTH_COLLAPSED = 90;
 // ROLE SYSTEM
 // ==================================================
 export const ROLES = Object.freeze({
-  ADMIN: 'Administrator',
-  ACCOUNTANT: 'Accountant',
-  SALES_REP: 'Sales Representative',
-  PRODUCTION_MANAGER: 'Production Manager',
-  FACTORY_EMPLOYEE: 'Factory Employee',
-  WAREHOUSE_MANAGER: 'Warehouse Manager',
-  DELIVERY_DRIVER: 'Delivery Driver',
-  FINANCE_MANAGER: 'Finance Manager',
-  MANAGER: 'Manager',
-  VIEWER: 'Viewer',
+  ADMIN: 'admin',
+  ACCOUNTANT: 'accountant',
+  SALES_REP: 'sales_rep',
+  PRODUCTION_MANAGER: 'production_manager',
+  FACTORY_EMPLOYEE: 'factory_employee',
+  WAREHOUSE_MANAGER: 'warehouse_manager',
+  DELIVERY_DRIVER: 'delivery_driver',
+  FINANCE_MANAGER: 'finance_manager',
+  MANAGER: 'manager',
+  VIEWER: 'viewer',
 });
 
 const FULL_ACCESS_ROLES = [ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.MANAGER];
@@ -298,18 +298,7 @@ const DEFAULT_MENU_CONFIG = [
     visible: true,
     group: 'rapports',
   },
-  {
-    id: 'statistics',
-    title: 'Statistiques',
-    icon: LineChart,
-    route: '/dashboard/statistics',
-    roles: ALL_CORE_ROLES,
-    badge: null,
-    children: null,
-    permission: 'statistics.view',
-    visible: true,
-    group: 'rapports',
-  },
+  
   {
     id: 'analytics',
     title: 'Analytics',
@@ -348,18 +337,7 @@ const DEFAULT_MENU_CONFIG = [
     visible: true,
     group: 'parametres',
   },
-  {
-    id: 'employees',
-    title: 'Employés',
-    icon: Briefcase,
-    route: '/dashboard/employees',
-    roles: [ROLES.ADMIN, ROLES.ACCOUNTANT],
-    badge: null,
-    children: null,
-    permission: 'employees.view',
-    visible: true,
-    group: 'parametres',
-  },
+  
   {
     id: 'activity',
     title: "Journal d'activité",

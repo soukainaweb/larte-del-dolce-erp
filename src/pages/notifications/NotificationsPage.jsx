@@ -158,6 +158,21 @@ import {
   getModuleIcon,
   hasDetailRoute 
 } from '../../utils/notificationRoutes';
+import {
+  getNotifications,
+  getNotificationById,
+  markNotificationAsRead,
+  markMultipleAsRead,
+  markAllAsRead,
+  deleteNotification,
+  deleteMultipleNotifications,
+  deleteAllReadNotifications,
+  getNotificationStatistics,
+  exportNotifications,
+  getNotificationModules,
+  getNotificationPriorities,
+  getUnreadCount
+} from '../../services/notificationService';
 
 // ==========================================
 // CONSTANTES
@@ -165,272 +180,6 @@ import {
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
 const CURRENCY = 'MAD';
-
-// ==========================================
-// MOCK DATA - NOTIFICATIONS
-// ==========================================
-
-const generateMockNotifications = () => {
-  const types = [
-    { type: 'order', icon: ShoppingBag, color: '#3B82F6', label: 'Commandes' },
-    { type: 'production', icon: Factory, color: '#F59E0B', label: 'Production' },
-    { type: 'delivery', icon: Truck, color: '#10B981', label: 'Livraisons' },
-    { type: 'invoice', icon: FileText, color: '#8B5CF6', label: 'Factures' },
-    { type: 'payment', icon: CreditCard, color: '#22C55E', label: 'Paiements' },
-    { type: 'product', icon: Package, color: '#EF4444', label: 'Produits' },
-    { type: 'customer', icon: User, color: '#06B6D4', label: 'Clients' },
-    { type: 'user', icon: Users, color: '#F472B6', label: 'Utilisateurs' },
-    { type: 'system', icon: Settings, color: '#6B7280', label: 'Système' },
-    { type: 'analytics', icon: BarChart3, color: '#8B5CF6', label: 'Analytics' },
-    { type: 'stock', icon: Package, color: '#F59E0B', label: 'Stock' },
-    { type: 'report', icon: FileText, color: '#EF4444', label: 'Rapports' },
-    { type: 'category', icon: Layers, color: '#22C55E', label: 'Catégories' },
-    { type: 'classification', icon: Tag, color: '#8B5CF6', label: 'Classifications' }
-  ];
-
-  const priorities = [
-    { level: 'low', label: 'Faible', color: '#3B82F6' },
-    { level: 'medium', label: 'Moyenne', color: '#F59E0B' },
-    { level: 'high', label: 'Haute', color: '#EF4444' },
-    { level: 'critical', label: 'Critique', color: '#7F1D1D' }
-  ];
-
-  const users = ['Youssef A.', 'Sara B.', 'Mohamed C.', 'Karim D.', 'Nadia E.', 'Admin'];
-  const clients = ['Café Al Amir', 'Pâtisserie Nour', 'Restaurant La Table', 'Snack City', 'Boissons du Maroc'];
-  
-  const entityIds = {
-    order: ['CMD-1054', 'CMD-1055', 'CMD-1056', 'CMD-1057', 'CMD-1058'],
-    customer: ['CLT-001', 'CLT-002', 'CLT-003', 'CLT-004', 'CLT-005'],
-    client: ['CLT-001', 'CLT-002', 'CLT-003', 'CLT-004', 'CLT-005'],
-    product: ['PRD-001', 'PRD-002', 'PRD-003', 'PRD-004', 'PRD-005'],
-    category: ['CAT-001', 'CAT-002', 'CAT-003', 'CAT-004', 'CAT-005'],
-    classification: ['CLS-001', 'CLS-002', 'CLS-003', 'CLS-004', 'CLS-005'],
-    invoice: ['FAC-0456', 'FAC-0457', 'FAC-0458', 'FAC-0459', 'FAC-0460'],
-    payment: ['PAY-001', 'PAY-002', 'PAY-003', 'PAY-004', 'PAY-005'],
-    production: ['PRD-0034', 'PRD-0035', 'PRD-0036', 'PRD-0037', 'PRD-0038'],
-    delivery: ['LIV-0087', 'LIV-0088', 'LIV-0089', 'LIV-0090', 'LIV-0091'],
-    user: ['USR-001', 'USR-002', 'USR-003', 'USR-004', 'USR-005'],
-    report: ['RPT-001', 'RPT-002', 'RPT-003', 'RPT-004', 'RPT-005']
-  };
-
-  const titles = {
-    order: [
-      'Nouvelle commande créée',
-      'Commande validée',
-      'Commande en production',
-      'Commande terminée',
-      'Commande livrée',
-      'Commande annulée'
-    ],
-    production: [
-      'Production lancée',
-      'Production terminée',
-      'Production en retard',
-      'Production interrompue'
-    ],
-    delivery: [
-      'Livraison créée',
-      'Livraison en cours',
-      'Livraison effectuée',
-      'Livraison retardée'
-    ],
-    invoice: [
-      'Nouvelle facture',
-      'Facture payée',
-      'Facture en attente',
-      'Facture impayée'
-    ],
-    payment: [
-      'Paiement reçu',
-      'Paiement refusé',
-      'Paiement confirmé'
-    ],
-    product: [
-      'Nouveau produit ajouté',
-      'Produit modifié',
-      'Produit en rupture',
-      'Stock faible'
-    ],
-    customer: [
-      'Nouveau client',
-      'Client modifié',
-      'Client supprimé'
-    ],
-    user: [
-      'Nouvel utilisateur',
-      'Modification utilisateur',
-      'Connexion réussie',
-      'Échec de connexion'
-    ],
-    system: [
-      'Sauvegarde effectuée',
-      'Mise à jour disponible',
-      'Maintenance programmée'
-    ],
-    analytics: [
-      'Nouveau rapport disponible',
-      'Analyse terminée'
-    ],
-    stock: [
-      'Stock critique',
-      'Réapprovisionnement nécessaire'
-    ],
-    report: [
-      'Rapport généré',
-      'Rapport exporté'
-    ],
-    category: [
-      'Nouvelle catégorie créée',
-      'Catégorie modifiée'
-    ],
-    classification: [
-      'Nouvelle classification créée',
-      'Classification modifiée'
-    ]
-  };
-
-  const descriptions = {
-    order: [
-      'Une nouvelle commande a été créée par {user}.',
-      'La commande a été validée par le comptable.',
-      'La commande est entrée en production.',
-      'La production de la commande est terminée.',
-      'La commande a été livrée avec succès.',
-      'La commande a été annulée.'
-    ],
-    production: [
-      'La production de la commande a débuté.',
-      'La production est terminée avec succès.',
-      'La production accuse un retard de 2 heures.',
-      'La production a été interrompue pour maintenance.'
-    ],
-    delivery: [
-      'Une nouvelle livraison a été planifiée.',
-      'La livraison est en cours de réalisation.',
-      'La livraison a été effectuée avec succès.',
-      'La livraison est en retard.'
-    ],
-    invoice: [
-      'Une nouvelle facture a été générée.',
-      'La facture a été payée par le client.',
-      'La facture est en attente de paiement.',
-      'La facture est impayée depuis 15 jours.'
-    ],
-    payment: [
-      'Un paiement a été reçu de {client}.',
-      'Le paiement a été refusé.',
-      'Le paiement a été confirmé.'
-    ],
-    product: [
-      'Un nouveau produit a été ajouté au catalogue.',
-      'Un produit a été modifié.',
-      'Un produit est en rupture de stock.',
-      'Le stock d\'un produit est faible.'
-    ],
-    customer: [
-      'Un nouveau client a été enregistré.',
-      'Les informations d\'un client ont été modifiées.',
-      'Un client a été supprimé.'
-    ],
-    user: [
-      'Un nouvel utilisateur a été créé.',
-      'Les informations d\'un utilisateur ont été modifiées.',
-      'Un utilisateur s\'est connecté avec succès.',
-      'Tentative de connexion échouée.'
-    ],
-    system: [
-      'Une sauvegarde automatique a été effectuée.',
-      'Une nouvelle mise à jour est disponible.',
-      'Une maintenance est programmée.'
-    ],
-    analytics: [
-      'Un nouveau rapport d\'analyse est disponible.',
-      'L\'analyse des données est terminée.'
-    ],
-    stock: [
-      'Le niveau de stock est critique pour certains produits.',
-      'Un réapprovisionnement est nécessaire.'
-    ],
-    report: [
-      'Le rapport a été généré avec succès.',
-      'Le rapport a été exporté.'
-    ],
-    category: [
-      'Une nouvelle catégorie a été créée.',
-      'Une catégorie a été modifiée.'
-    ],
-    classification: [
-      'Une nouvelle classification a été créée.',
-      'Une classification a été modifiée.'
-    ]
-  };
-
-  const notifications = [];
-  const now = new Date();
-
-  for (let i = 1; i <= 248; i++) {
-    const typeObj = types[Math.floor(Math.random() * types.length)];
-    const priorityObj = priorities[Math.floor(Math.random() * priorities.length)];
-    const status = Math.random() > 0.4 ? 'read' : 'unread';
-    const user = users[Math.floor(Math.random() * users.length)];
-    const client = clients[Math.floor(Math.random() * clients.length)];
-    
-    const titleList = titles[typeObj.type] || ['Notification'];
-    const descList = descriptions[typeObj.type] || ['Notification système'];
-    
-    const title = titleList[Math.floor(Math.random() * titleList.length)];
-    let description = descList[Math.floor(Math.random() * descList.length)];
-    description = description.replace('{user}', user).replace('{client}', client);
-
-    const date = new Date(now);
-    date.setDate(date.getDate() - Math.floor(Math.random() * 30));
-    date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
-
-    const entityIdList = entityIds[typeObj.type] || [`${typeObj.type.toUpperCase()}-${String(i).padStart(4, '0')}`];
-    const entityId = entityIdList[Math.floor(Math.random() * entityIdList.length)];
-
-    notifications.push({
-      id: i,
-      type: typeObj.type,
-      entityId: entityId,
-      icon: typeObj.icon,
-      color: typeObj.color,
-      label: typeObj.label,
-      title,
-      description,
-      createdBy: user,
-      client: Math.random() > 0.5 ? client : null,
-      priority: priorityObj.level,
-      priorityLabel: priorityObj.label,
-      priorityColor: priorityObj.color,
-      status,
-      createdAt: date.toLocaleDateString('fr-FR'),
-      time: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      timestamp: date.getTime(),
-      module: typeObj.label,
-      isRead: status === 'read',
-      archived: false,
-      route: undefined
-    });
-  }
-
-  notifications.sort((a, b) => b.timestamp - a.timestamp);
-  
-  return notifications;
-};
-
-const getNotificationStats = (notifications) => {
-  const total = notifications.length;
-  const unread = notifications.filter(n => !n.isRead).length;
-  const critical = notifications.filter(n => n.priority === 'critical' || n.priority === 'high').length;
-  const today = notifications.filter(n => {
-    const today = new Date();
-    const notifDate = new Date(n.timestamp);
-    return notifDate.toDateString() === today.toDateString();
-  }).length;
-
-  return { total, unread, critical, today };
-};
 
 // ==========================================
 // COMPOSANTS UI
@@ -668,10 +417,8 @@ const NotificationDetailModal = ({ isOpen, onClose, notification, onMarkRead }) 
   const route = getNotificationRoute(notification);
   const moduleLabel = getModuleLabel(notification);
 
-  // ⭐ FONCTION DE NAVIGATION CORRIGÉE
   const handleNavigate = () => {
     onClose();
-    // Navigation intelligente vers la route calculée
     navigate(route);
   };
 
@@ -796,7 +543,6 @@ const NotificationDetailModal = ({ isOpen, onClose, notification, onMarkRead }) 
             </button>
           </div>
 
-          {/* ⭐ Affichage de la destination pour debug */}
           <div className="mt-3 md:mt-4 text-center">
             <p className="text-[9px] md:text-xs text-[#6D6D6D]">
               <span className="font-medium">Destination :</span> {route}
@@ -989,80 +735,65 @@ const NotificationsPage = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
   const [isExporting, setIsExporting] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Load notifications
+  const fetchNotifications = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: pageSize,
+        search: searchTerm || undefined,
+        module: filters.module !== 'Tous' ? filters.module : undefined,
+        priority: filters.priority !== 'all' ? filters.priority : undefined,
+        status: filters.status !== 'all' ? filters.status : undefined,
+        period: filters.period !== 'all' ? filters.period : undefined,
+        sort_by: 'created_at',
+        sort_order: 'desc'
+      };
+      const response = await getNotifications(params);
+      const data = response.data.data || [];
+      setNotifications(data);
+      setTotalCount(response.data.meta?.total || data.length);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      showToast('Erreur lors du chargement des notifications', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const mockData = generateMockNotifications();
-      setNotifications(mockData);
-      setIsLoading(false);
-    }, 500);
-  }, []);
+    fetchNotifications();
+  }, [currentPage, pageSize, searchTerm, filters]);
 
-  const stats = useMemo(() => getNotificationStats(notifications), [notifications]);
+  // Fetch statistics
+  const [stats, setStats] = useState({ total: 0, unread: 0, critical: 0, today: 0 });
 
-  const filteredNotifications = useMemo(() => {
-    let filtered = [...notifications];
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(n =>
-        n.title.toLowerCase().includes(term) ||
-        n.description.toLowerCase().includes(term) ||
-        n.createdBy.toLowerCase().includes(term) ||
-        (n.client && n.client.toLowerCase().includes(term)) ||
-        (n.entityId && n.entityId.toLowerCase().includes(term))
-      );
-    }
-
-    if (filters.period && filters.period !== 'all') {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
-      filtered = filtered.filter(n => {
-        const notifDate = new Date(n.timestamp);
-        switch (filters.period) {
-          case 'today':
-            return notifDate >= today;
-          case 'week':
-            const weekStart = new Date(today);
-            weekStart.setDate(today.getDate() - 7);
-            return notifDate >= weekStart;
-          case 'month':
-            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-            return notifDate >= monthStart;
-          case 'year':
-            const yearStart = new Date(today.getFullYear(), 0, 1);
-            return notifDate >= yearStart;
-          default:
-            return true;
-        }
+  const fetchStatistics = async () => {
+    try {
+      const response = await getNotificationStatistics({
+        period: filters.period !== 'all' ? filters.period : undefined
       });
+      const data = response.data.data || {};
+      setStats({
+        total: data.total || 0,
+        unread: data.unread || 0,
+        critical: data.critical || 0,
+        today: data.today || 0
+      });
+    } catch (error) {
+      console.error('Error fetching notification statistics:', error);
     }
+  };
 
-    if (filters.module && filters.module !== 'Tous') {
-      filtered = filtered.filter(n => n.module === filters.module);
-    }
+  useEffect(() => {
+    fetchStatistics();
+  }, [filters.period]);
 
-    if (filters.priority && filters.priority !== 'all') {
-      filtered = filtered.filter(n => n.priority === filters.priority);
-    }
-
-    if (filters.status && filters.status !== 'all') {
-      filtered = filtered.filter(n => 
-        filters.status === 'read' ? n.isRead : !n.isRead
-      );
-    }
-
-    return filtered;
-  }, [notifications, searchTerm, filters]);
-
-  const paginatedNotifications = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredNotifications.slice(start, start + pageSize);
-  }, [filteredNotifications, currentPage, pageSize]);
-
-  const totalPages = Math.ceil(filteredNotifications.length / pageSize);
+  // Pagination
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -1102,11 +833,11 @@ const NotificationsPage = () => {
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    showToast('Export réalisé avec succès', 'success');
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    showToast('Erreur lors de l\'export', 'error');
   };
 
   // ==========================================
@@ -1121,50 +852,85 @@ const NotificationsPage = () => {
     setToast({ isOpen: false, message: '', type: 'success' });
   };
 
-  const handleToggleRead = (notification) => {
-    setNotifications(prev =>
-      prev.map(n =>
-        n.id === notification.id
-          ? { ...n, isRead: !n.isRead }
-          : n
-      )
-    );
-    showToast(
-      notification.isRead 
-        ? '📬 Notification marquée comme non lue'
-        : '✅ Notification marquée comme lue',
-      'success'
-    );
+  const handleToggleRead = async (notification) => {
+    try {
+      await markNotificationAsRead(notification.id);
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notification.id
+            ? { ...n, isRead: !n.isRead }
+            : n
+        )
+      );
+      await fetchStatistics();
+      showToast(
+        notification.isRead 
+          ? '📬 Notification marquée comme non lue'
+          : '✅ Notification marquée comme lue',
+        'success'
+      );
+    } catch (error) {
+      console.error('Error toggling read status:', error);
+      showToast('Erreur lors du changement de statut', 'error');
+    }
   };
 
-  const handleDelete = (notification) => {
+  const handleDelete = async (notification) => {
     if (window.confirm(`Supprimer la notification "${notification.title}" ?`)) {
-      setNotifications(prev => prev.filter(n => n.id !== notification.id));
-      setSelectedIds(prev => prev.filter(id => id !== notification.id));
-      showToast('🗑️ Notification supprimée avec succès', 'success');
+      try {
+        await deleteNotification(notification.id);
+        setNotifications(prev => prev.filter(n => n.id !== notification.id));
+        setSelectedIds(prev => prev.filter(id => id !== notification.id));
+        await fetchStatistics();
+        showToast('🗑️ Notification supprimée avec succès', 'success');
+      } catch (error) {
+        console.error('Error deleting notification:', error);
+        showToast('Erreur lors de la suppression', 'error');
+      }
     }
   };
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(n => ({ ...n, isRead: true }))
-    );
-    showToast('✅ Toutes les notifications ont été marquées comme lues', 'success');
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead();
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, isRead: true }))
+      );
+      await fetchStatistics();
+      showToast('✅ Toutes les notifications ont été marquées comme lues', 'success');
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+      showToast('Erreur lors du marquage', 'error');
+    }
   };
 
-  const handleDeleteRead = () => {
+  const handleDeleteRead = async () => {
     if (window.confirm('Supprimer toutes les notifications lues ?')) {
-      setNotifications(prev => prev.filter(n => !n.isRead));
-      showToast('🗑️ Notifications lues supprimées avec succès', 'success');
+      try {
+        await deleteAllReadNotifications();
+        setNotifications(prev => prev.filter(n => !n.isRead));
+        await fetchStatistics();
+        showToast('🗑️ Notifications lues supprimées avec succès', 'success');
+      } catch (error) {
+        console.error('Error deleting read notifications:', error);
+        showToast('Erreur lors de la suppression', 'error');
+      }
     }
   };
 
-  const handleDeleteSelected = () => {
+  const handleDeleteSelected = async () => {
     if (selectedIds.length === 0) return;
     if (window.confirm(`Supprimer ${selectedIds.length} notification(s) sélectionnée(s) ?`)) {
-      setNotifications(prev => prev.filter(n => !selectedIds.includes(n.id)));
-      setSelectedIds([]);
-      showToast(`🗑️ ${selectedIds.length} notification(s) supprimée(s) avec succès`, 'success');
+      try {
+        await deleteMultipleNotifications({ ids: selectedIds });
+        setNotifications(prev => prev.filter(n => !selectedIds.includes(n.id)));
+        setSelectedIds([]);
+        await fetchStatistics();
+        showToast(`🗑️ ${selectedIds.length} notification(s) supprimée(s) avec succès`, 'success');
+      } catch (error) {
+        console.error('Error deleting selected notifications:', error);
+        showToast('Erreur lors de la suppression', 'error');
+      }
     }
   };
 
@@ -1177,19 +943,20 @@ const NotificationsPage = () => {
   };
 
   const handleSelectAll = () => {
-    if (selectedIds.length === paginatedNotifications.length) {
+    const currentIds = notifications.map(n => n.id);
+    if (selectedIds.length === currentIds.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(paginatedNotifications.map(n => n.id));
+      setSelectedIds(currentIds);
     }
   };
 
-  // ⭐ HANDLER CORRIGÉ - Navigation intelligente vers la route calculée
   const handleViewDetails = (notification) => {
     setSelectedNotification(notification);
     setIsDetailModalOpen(true);
     
     if (!notification.isRead) {
+      markNotificationAsRead(notification.id);
       setNotifications(prev =>
         prev.map(n =>
           n.id === notification.id
@@ -1197,31 +964,35 @@ const NotificationsPage = () => {
             : n
         )
       );
+      fetchStatistics();
     }
   };
 
-  const handleMarkAsRead = (notification) => {
-    setNotifications(prev =>
-      prev.map(n =>
-        n.id === notification.id
-          ? { ...n, isRead: true }
-          : n
-      )
-    );
-    showToast('✅ Notification marquée comme lue', 'success');
+  const handleMarkAsRead = async (notification) => {
+    try {
+      await markNotificationAsRead(notification.id);
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notification.id
+            ? { ...n, isRead: true }
+            : n
+        )
+      );
+      await fetchStatistics();
+      showToast('✅ Notification marquée comme lue', 'success');
+    } catch (error) {
+      console.error('Error marking as read:', error);
+      showToast('Erreur lors du marquage', 'error');
+    }
   };
 
-  const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const mockData = generateMockNotifications();
-      setNotifications(mockData);
-      setIsLoading(false);
-      showToast('🔄 Notifications actualisées avec succès', 'success');
-    }, 800);
+  const handleRefresh = async () => {
+    await fetchNotifications();
+    await fetchStatistics();
+    showToast('🔄 Notifications actualisées avec succès', 'success');
   };
 
-  const handleResetFilters = () => {
+  const handleResetFilters = async () => {
     setSearchTerm('');
     setFilters({
       period: 'all',
@@ -1230,6 +1001,8 @@ const NotificationsPage = () => {
       status: 'all'
     });
     setCurrentPage(1);
+    await fetchNotifications();
+    await fetchStatistics();
     showToast('🔄 Filtres réinitialisés avec succès', 'success');
   };
 
@@ -1237,7 +1010,7 @@ const NotificationsPage = () => {
   // RENDER
   // ==========================================
 
-  if (isLoading) {
+  if (isLoading && notifications.length === 0) {
     return (
       <div className="p-3 md:p-6 max-w-7xl mx-auto">
         <div className="space-y-4 md:space-y-6">
@@ -1310,10 +1083,10 @@ const NotificationsPage = () => {
           <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
             {/* Export Buttons */}
             <ExportButtons
-              data={filteredNotifications}
+              data={notifications}
               columns={columns}
               title="Liste des notifications"
-              subtitle={`${filteredNotifications.length} notifications`}
+              subtitle={`${notifications.length} notifications`}
               filename={`notifications_${new Date().toISOString().split('T')[0]}`}
               summary={summary}
               rowFormatter={rowFormatter}
@@ -1428,14 +1201,14 @@ const NotificationsPage = () => {
               onClick={handleSelectAll}
               className="p-0.5 md:p-1 hover:bg-[#F8F7F4] rounded-lg transition-colors"
             >
-              {selectedIds.length === paginatedNotifications.length && paginatedNotifications.length > 0 ? (
+              {selectedIds.length === notifications.length && notifications.length > 0 ? (
                 <CheckSquare size={14} className="md:w-[18px] md:h-[18px] text-[#B8863B]" />
               ) : (
                 <Square size={14} className="md:w-[18px] md:h-[18px] text-[#6D6D6D]" />
               )}
             </button>
             <span className="text-[10px] md:text-xs text-[#6D6D6D]">
-              {filteredNotifications.length} notif(s)
+              {totalCount} notif(s)
             </span>
             {selectedIds.length > 0 && (
               <button
@@ -1448,13 +1221,13 @@ const NotificationsPage = () => {
           </div>
           <div className="flex items-center gap-1 md:gap-2 text-[9px] md:text-xs text-[#6D6D6D]">
             <span className="hidden sm:inline">Affichage de </span>
-            <span>{(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredNotifications.length)}</span>
-            <span className="hidden sm:inline">sur {filteredNotifications.length}</span>
+            <span>{(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalCount)}</span>
+            <span className="hidden sm:inline">sur {totalCount}</span>
           </div>
         </div>
 
         <div className="divide-y divide-[#ECE8E1]">
-          {paginatedNotifications.length === 0 ? (
+          {notifications.length === 0 ? (
             <div className="p-8 md:p-12 text-center">
               <BellOff size={36} className="md:w-12 md:h-12 text-[#D1CBC0] mx-auto mb-2 md:mb-3" />
               <h3 className="text-base md:text-lg font-bold text-[#3D2F24]">Aucune notification</h3>
@@ -1465,7 +1238,7 @@ const NotificationsPage = () => {
               </p>
             </div>
           ) : (
-            paginatedNotifications.map((notification) => (
+            notifications.map((notification) => (
               <NotificationItem
                 key={notification.id}
                 notification={notification}

@@ -20,6 +20,25 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+// src/pages/Users/UsersPage.jsx
+// CHANGER CETTE LIGNE :
+import {
+  getUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+  updateUserStatus,
+  updateUserRole,
+  getUserStatistics,
+  exportUsers,
+  getUserRoles,
+  getUserStatuses,
+  sendPasswordReset,
+  resendInvitation
+} from '../../services/userServicePage';  // ← Changé de 'userServicePage' à 'userService'
+
+// ===> Supprimer 'userServicePage' et utiliser 'userService' à la place
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -522,107 +541,76 @@ const UsersPage = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Load users
-  useEffect(() => {
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockUsers = [
-          {
-            id: 1,
-            firstName: 'Mohamed',
-            lastName: 'Amine',
-            email: 'admin@larte.com',
-            phone: '+212 6 12 34 56 78',
-            role: 'Administrator',
-            status: 'active',
-            createdAt: new Date('2024-01-15')
-          },
-          {
-            id: 2,
-            firstName: 'Soukaina',
-            lastName: 'El Idrissi',
-            email: 'soukaina@larte.com',
-            phone: '+212 6 23 45 67 89',
-            role: 'Accountant',
-            status: 'active',
-            createdAt: new Date('2024-02-01')
-          },
-          {
-            id: 3,
-            firstName: 'Youssef',
-            lastName: 'Karim',
-            email: 'youssef@larte.com',
-            phone: '+212 6 34 56 78 90',
-            role: 'Sales Representative',
-            status: 'active',
-            createdAt: new Date('2024-02-15')
-          },
-          {
-            id: 4,
-            firstName: 'Sara',
-            lastName: 'El Idrissi',
-            email: 'sara@larte.com',
-            phone: '+212 6 45 67 89 01',
-            role: 'Production Manager',
-            status: 'active',
-            createdAt: new Date('2024-03-01')
-          },
-          {
-            id: 5,
-            firstName: 'Ahmed',
-            lastName: 'Benjelloun',
-            email: 'ahmed@larte.com',
-            phone: '+212 6 56 78 90 12',
-            role: 'Factory Employee',
-            status: 'inactive',
-            createdAt: new Date('2024-03-15')
-          }
-        ];
-        setUsers(mockUsers);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        role: roleFilter !== 'all' ? roleFilter : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        sort_by: 'createdAt',
+        sort_order: 'desc'
+      };
+      const response = await getUsers(params);
+      const data = response.data.data || [];
+      setUsers(data);
+      setTotalCount(response.data.meta?.total || data.length);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUsers();
+  }, [currentPage, itemsPerPage, searchTerm, roleFilter, statusFilter]);
+
+  // Fetch statistics
+  const [kpis, setKpis] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    suspended: 0,
+    locked: 0
+  });
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await getUserStatistics();
+      const data = response.data.data || {};
+      setKpis({
+        total: data.total || 0,
+        active: data.active || 0,
+        inactive: data.inactive || 0,
+        suspended: data.suspended || 0,
+        locked: data.locked || 0
+      });
+    } catch (error) {
+      console.error('Error fetching user statistics:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatistics();
   }, []);
 
-  // Filter users
+  // Filter users (client-side for demo, API already handles filters)
   const filteredUsers = useMemo(() => {
-    let filtered = users;
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(u =>
-        u.firstName.toLowerCase().includes(term) ||
-        u.lastName.toLowerCase().includes(term) ||
-        u.email.toLowerCase().includes(term)
-      );
-    }
-
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(u => u.role === roleFilter);
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(u => u.status === statusFilter);
-    }
-
-    return filtered;
-  }, [users, searchTerm, roleFilter, statusFilter]);
+    return users;
+  }, [users]);
 
   // Paginate
   const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredUsers.slice(start, start + itemsPerPage);
-  }, [filteredUsers, currentPage, itemsPerPage]);
+    return filteredUsers;
+  }, [filteredUsers]);
 
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -648,11 +636,11 @@ const UsersPage = () => {
   });
 
   const summary = [
-    { label: 'Total utilisateurs', value: users.length },
-    { label: 'Actifs', value: users.filter(u => u.status === 'active').length },
-    { label: 'Inactifs', value: users.filter(u => u.status === 'inactive').length },
-    { label: 'Suspendus', value: users.filter(u => u.status === 'suspended').length },
-    { label: 'Verrouillés', value: users.filter(u => u.status === 'locked').length }
+    { label: 'Total utilisateurs', value: kpis.total },
+    { label: 'Actifs', value: kpis.active },
+    { label: 'Inactifs', value: kpis.inactive },
+    { label: 'Suspendus', value: kpis.suspended },
+    { label: 'Verrouillés', value: kpis.locked }
   ];
 
   // ==========================================
@@ -670,15 +658,11 @@ const UsersPage = () => {
   const handleCreateUser = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newUser = {
-        id: users.length + 1,
-        ...formData,
-        createdAt: new Date(),
-        status: formData.status || 'active'
-      };
+      const response = await createUser(formData);
+      const newUser = response.data.data;
       setUsers(prev => [newUser, ...prev]);
       setIsCreateModalOpen(false);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error creating user:', error);
     } finally {
@@ -689,12 +673,14 @@ const UsersPage = () => {
   const handleEditUser = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await updateUser(selectedUser.id, formData);
+      const updatedUser = response.data.data;
       setUsers(prev => prev.map(u =>
-        u.id === selectedUser.id ? { ...u, ...formData } : u
+        u.id === selectedUser.id ? updatedUser : u
       ));
       setIsEditModalOpen(false);
       setSelectedUser(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error updating user:', error);
     } finally {
@@ -705,15 +691,21 @@ const UsersPage = () => {
   const handleDeleteUser = async () => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await deleteUser(selectedUser.id);
       setUsers(prev => prev.filter(u => u.id !== selectedUser.id));
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error deleting user:', error);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchUsers();
+    fetchStatistics();
   };
 
   useEffect(() => {
@@ -757,9 +749,9 @@ const UsersPage = () => {
             Ajouter un utilisateur
           </button>
           <button
+            onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
             title="Actualiser"
-            onClick={() => window.location.reload()}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -909,7 +901,7 @@ const UsersPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredUsers.length)} sur {filteredUsers.length} utilisateurs
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} utilisateurs
           </p>
           <div className="flex items-center gap-2">
             <button

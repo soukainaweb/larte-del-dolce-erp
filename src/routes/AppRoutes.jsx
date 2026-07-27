@@ -34,6 +34,9 @@ import RolesPermissionsPage from '../pages/RolesPermissions/RolesPermissionsPage
 // ⭐ NOUVEAU : Importer la page Journal d'activité
 import ActivityLogPage from '../pages/activitylog/ActivityLogPage';
 
+// ⭐ NOUVEAU : Importer la page Paramètres
+import SettingsPage from '../pages/settings/SettingsPage';
+
 // Composant de fallback
 import ModuleFallback from '../components/ModuleFallback';
 
@@ -94,6 +97,10 @@ const AppRoutes = () => {
         <Route path="activity-logs" element={<ActivityLogPage />} />
         <Route path="activity-logs/*" element={<ActivityLogPage />} />
 
+        {/* ⭐ NOUVEAU : Route pour Paramètres */}
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="settings/*" element={<SettingsPage />} />
+
         {/* Routes de détail - Fallback */}
         <Route path="orders/:id" element={<ModuleFallback module="order" />} />
         <Route path="customers/:id" element={<ModuleFallback module="customer" />} />
@@ -108,7 +115,6 @@ const AppRoutes = () => {
         <Route path="classifications" element={<ModuleFallback module="classification" />} />
         <Route path="classifications/:id" element={<ModuleFallback module="classification" />} />
         <Route path="employees" element={<ModuleFallback module="employees" />} />
-        <Route path="settings" element={<ModuleFallback module="settings" />} />
         <Route path="calendar" element={<ModuleFallback module="calendar" />} />
       </Route>
 

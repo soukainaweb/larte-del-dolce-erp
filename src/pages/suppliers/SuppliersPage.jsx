@@ -37,6 +37,19 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getSuppliers,
+  getSupplierById,
+  createSupplier,
+  updateSupplier,
+  updateSupplierStatus,
+  deleteSupplier,
+  getSupplierStatistics,
+  exportSuppliers,
+  getSupplierTypes,
+  getSupplierStatuses,
+  getSupplierPurchases
+} from '../../services/supplierService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -701,141 +714,74 @@ const SuppliersPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Load suppliers
-  useEffect(() => {
-    const fetchSuppliers = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockSuppliers = [
-          {
-            id: 1,
-            name: 'ABC Packaging',
-            supplierId: 'SUP-001',
-            company: 'ABC Packaging Solutions',
-            type: 'packaging',
-            contactPerson: 'Karim Lahlou',
-            phone: '+212 5 22 12 34 56',
-            email: 'contact@abcpackaging.ma',
-            address: 'Zone Industrielle, Casablanca',
-            taxId: '12345678',
-            paymentTerms: 'credit',
-            status: 'active',
-            totalPurchases: 45000,
-            totalOrders: 12,
-            notes: 'Fournisseur principal d\'emballages',
-            createdAt: new Date('2024-01-15')
-          },
-          {
-            id: 2,
-            name: 'Farine du Maroc',
-            supplierId: 'SUP-002',
-            company: 'Farine du Maroc SA',
-            type: 'raw',
-            contactPerson: 'Ahmed Benjelloun',
-            phone: '+212 5 37 65 43 21',
-            email: 'contact@farinedumaroc.ma',
-            address: 'Route de Rabat, Casablanca',
-            taxId: '87654321',
-            paymentTerms: 'cash',
-            status: 'active',
-            totalPurchases: 82000,
-            totalOrders: 25,
-            notes: 'Fournisseur de farine de blé',
-            createdAt: new Date('2024-02-01')
-          },
-          {
-            id: 3,
-            name: 'Choco Deluxe',
-            supplierId: 'SUP-003',
-            company: 'Choco Deluxe SARL',
-            type: 'raw',
-            contactPerson: 'Sara El Idrissi',
-            phone: '+212 5 29 98 76 54',
-            email: 'contact@chocodeluxe.ma',
-            address: '15 Rue des Artisans, Agadir',
-            taxId: '45678912',
-            paymentTerms: 'monthly',
-            status: 'active',
-            totalPurchases: 35000,
-            totalOrders: 8,
-            notes: 'Fournisseur de chocolat premium',
-            createdAt: new Date('2024-02-15')
-          },
-          {
-            id: 4,
-            name: 'Equip Cafe',
-            supplierId: 'SUP-004',
-            company: 'Equip Cafe Services',
-            type: 'equipment',
-            contactPerson: 'Mohamed Amine',
-            phone: '+212 6 12 34 56 78',
-            email: 'info@equipcafe.ma',
-            address: 'Boulevard Mohammed V, Casablanca',
-            taxId: '',
-            paymentTerms: 'cash',
-            status: 'inactive',
-            totalPurchases: 12000,
-            totalOrders: 3,
-            notes: 'Ancien fournisseur d\'équipements',
-            createdAt: new Date('2024-03-01')
-          }
-        ];
-        setSuppliers(mockSuppliers);
-      } catch (error) {
-        console.error('Error fetching suppliers:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchSuppliers = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        type: typeFilter !== 'all' ? typeFilter : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        sort_by: 'createdAt',
+        sort_order: 'desc'
+      };
+      const response = await getSuppliers(params);
+      const data = response.data.data || [];
+      setSuppliers(data);
+      setTotalCount(response.data.meta?.total || data.length);
+    } catch (error) {
+      console.error('Error fetching suppliers:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchSuppliers();
+  }, [currentPage, itemsPerPage, searchTerm, typeFilter, statusFilter]);
+
+  // Fetch KPIs from statistics API
+  const [kpis, setKpis] = useState({
+    total: 0,
+    active: 0,
+    raw: 0,
+    packaging: 0
+  });
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await getSupplierStatistics();
+      const stats = response.data.data || {};
+      setKpis({
+        total: stats.total || 0,
+        active: stats.active || 0,
+        raw: stats.raw || 0,
+        packaging: stats.packaging || 0
+      });
+    } catch (error) {
+      console.error('Error fetching supplier statistics:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatistics();
   }, []);
 
-  // Calculate KPIs
-  const kpis = useMemo(() => {
-    const total = suppliers.length;
-    const active = suppliers.filter(s => s.status === 'active').length;
-    const raw = suppliers.filter(s => s.type === 'raw').length;
-    const packaging = suppliers.filter(s => s.type === 'packaging').length;
-
-    return { total, active, raw, packaging };
-  }, [suppliers]);
-
-  // Filter suppliers
+  // Filter suppliers (API already handles filters)
   const filteredSuppliers = useMemo(() => {
-    let filtered = suppliers;
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(s =>
-        s.name.toLowerCase().includes(term) ||
-        s.company.toLowerCase().includes(term) ||
-        s.supplierId.toLowerCase().includes(term) ||
-        s.phone.includes(term) ||
-        s.email.toLowerCase().includes(term)
-      );
-    }
-
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(s => s.type === typeFilter);
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(s => s.status === statusFilter);
-    }
-
-    return filtered;
-  }, [suppliers, searchTerm, typeFilter, statusFilter]);
+    return suppliers;
+  }, [suppliers]);
 
   // Paginate
   const paginatedSuppliers = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredSuppliers.slice(start, start + itemsPerPage);
-  }, [filteredSuppliers, currentPage, itemsPerPage]);
+    return filteredSuppliers;
+  }, [filteredSuppliers]);
 
-  const totalPages = Math.ceil(filteredSuppliers.length / itemsPerPage);
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -890,17 +836,11 @@ const SuppliersPage = () => {
   const handleCreateSupplier = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newSupplier = {
-        id: suppliers.length + 1,
-        supplierId: `SUP-${String(suppliers.length + 1).padStart(3, '0')}`,
-        ...formData,
-        totalPurchases: 0,
-        totalOrders: 0,
-        createdAt: new Date()
-      };
+      const response = await createSupplier(formData);
+      const newSupplier = response.data.data;
       setSuppliers(prev => [newSupplier, ...prev]);
       setIsCreateModalOpen(false);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error creating supplier:', error);
     } finally {
@@ -911,12 +851,14 @@ const SuppliersPage = () => {
   const handleEditSupplier = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await updateSupplier(selectedSupplier.id, formData);
+      const updatedSupplier = response.data.data;
       setSuppliers(prev => prev.map(s =>
-        s.id === selectedSupplier.id ? { ...s, ...formData } : s
+        s.id === selectedSupplier.id ? updatedSupplier : s
       ));
       setIsEditModalOpen(false);
       setSelectedSupplier(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error updating supplier:', error);
     } finally {
@@ -928,10 +870,11 @@ const SuppliersPage = () => {
     if (selectedSupplier.totalPurchases > 0) return;
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await deleteSupplier(selectedSupplier.id);
       setSuppliers(prev => prev.filter(s => s.id !== selectedSupplier.id));
       setIsDeleteModalOpen(false);
       setSelectedSupplier(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error deleting supplier:', error);
     } finally {
@@ -941,9 +884,21 @@ const SuppliersPage = () => {
 
   const handleToggleStatus = async (supplier) => {
     const newStatus = supplier.status === 'active' ? 'inactive' : 'active';
-    setSuppliers(prev => prev.map(s =>
-      s.id === supplier.id ? { ...s, status: newStatus } : s
-    ));
+    try {
+      const response = await updateSupplierStatus(supplier.id, { status: newStatus });
+      const updatedSupplier = response.data.data;
+      setSuppliers(prev => prev.map(s =>
+        s.id === supplier.id ? updatedSupplier : s
+      ));
+      await fetchStatistics();
+    } catch (error) {
+      console.error('Error toggling supplier status:', error);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchSuppliers();
+    fetchStatistics();
   };
 
   useEffect(() => {
@@ -1003,9 +958,9 @@ const SuppliersPage = () => {
             </button>
           </div>
           <button
+            onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
             title="Actualiser"
-            onClick={() => window.location.reload()}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1210,7 +1165,7 @@ const SuppliersPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredSuppliers.length)} sur {filteredSuppliers.length} fournisseurs
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} fournisseurs
           </p>
           <div className="flex items-center gap-2">
             <button

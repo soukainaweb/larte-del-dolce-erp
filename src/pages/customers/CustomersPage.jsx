@@ -23,6 +23,19 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getCustomers,
+  getCustomerById,
+  createCustomer,
+  updateCustomer,
+  deleteCustomer,
+  updateCustomerStatus,
+  getCustomerStatistics,
+  exportCustomers,
+  getCustomerTypes,
+  getCustomerStatuses,
+  getCustomerOrders
+} from '../../services/customerService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -600,129 +613,78 @@ const CustomersPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Load customers
+  const fetchCustomers = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        type: typeFilter !== 'all' ? typeFilter : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        sort_by: 'createdAt',
+        sort_order: 'desc'
+      };
+      const response = await getCustomers(params);
+      const data = response.data.data || [];
+      setClients(data);
+      setTotalCount(response.data.meta?.total || data.length);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchClients = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockClients = [
-          {
-            id: 1,
-            name: 'Café Al Amir',
-            email: 'contact@cafealamir.com',
-            phone: '+212 5 22 12 34 56',
-            address: '12 Rue Al Amir, Quartier Maarif',
-            city: 'Casablanca',
-            country: 'Maroc',
-            type: 'enterprise',
-            status: 'active',
-            taxId: '12345678',
-            website: 'www.cafealamir.com',
-            notes: 'Client régulier, commandes importantes',
-            createdAt: new Date('2024-01-15')
-          },
-          {
-            id: 2,
-            name: 'Pâtisserie Nour',
-            email: 'contact@patisserienour.ma',
-            phone: '+212 5 37 65 43 21',
-            address: '45 Avenue Hassan II',
-            city: 'Rabat',
-            country: 'Maroc',
-            type: 'enterprise',
-            status: 'active',
-            taxId: '87654321',
-            website: 'www.patisserienour.ma',
-            notes: 'Commande de pâtisseries chaque semaine',
-            createdAt: new Date('2024-02-01')
-          },
-          {
-            id: 3,
-            name: 'Restaurant La Table',
-            email: 'info@restaurantlatable.com',
-            phone: '+212 5 29 98 76 54',
-            address: '8 Rue de la Plage',
-            city: 'Agadir',
-            country: 'Maroc',
-            type: 'enterprise',
-            status: 'active',
-            taxId: '45678912',
-            website: 'www.restaurantlatable.com',
-            notes: 'Client premium, commandes de grandes quantités',
-            createdAt: new Date('2024-02-15')
-          },
-          {
-            id: 4,
-            name: 'Snack City',
-            email: 'snackcity@gmail.com',
-            phone: '+212 6 12 34 56 78',
-            address: '23 Rue de la Liberté',
-            city: 'Casablanca',
-            country: 'Maroc',
-            type: 'individual',
-            status: 'inactive',
-            taxId: '',
-            website: '',
-            notes: 'Ancien client, plus de commandes depuis 3 mois',
-            createdAt: new Date('2024-03-01')
-          },
-          {
-            id: 5,
-            name: 'Boissons du Maroc',
-            email: 'contact@boissonsdumaroc.ma',
-            phone: '+212 5 22 98 76 54',
-            address: '56 Boulevard Mohammed V',
-            city: 'Casablanca',
-            country: 'Maroc',
-            type: 'enterprise',
-            status: 'suspended',
-            taxId: '78912345',
-            website: 'www.boissonsdumaroc.ma',
-            notes: 'Compte suspendu pour non-paiement',
-            createdAt: new Date('2024-03-15')
-          }
-        ];
-        setClients(mockClients);
-      } catch (error) {
-        console.error('Error fetching clients:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    fetchCustomers();
+  }, [currentPage, itemsPerPage, searchTerm, typeFilter, statusFilter]);
 
-    fetchClients();
+  // Fetch KPIs from statistics API
+  const [kpis, setKpis] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    suspended: 0,
+    enterprise: 0,
+    individual: 0
+  });
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await getCustomerStatistics();
+      const data = response.data.data || {};
+      setKpis({
+        total: data.total || 0,
+        active: data.active || 0,
+        inactive: data.inactive || 0,
+        suspended: data.suspended || 0,
+        enterprise: data.enterprise || 0,
+        individual: data.individual || 0
+      });
+    } catch (error) {
+      console.error('Error fetching customer statistics:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatistics();
   }, []);
 
+  // Filter customers (API already handles filters)
   const filteredClients = useMemo(() => {
-    let filtered = clients;
+    return clients;
+  }, [clients]);
 
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(c =>
-        c.name.toLowerCase().includes(term) ||
-        c.email.toLowerCase().includes(term) ||
-        c.city.toLowerCase().includes(term)
-      );
-    }
-
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(c => c.type === typeFilter);
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(c => c.status === statusFilter);
-    }
-
-    return filtered;
-  }, [clients, searchTerm, typeFilter, statusFilter]);
-
+  // Paginate
   const paginatedClients = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredClients.slice(start, start + itemsPerPage);
-  }, [filteredClients, currentPage, itemsPerPage]);
+    return filteredClients;
+  }, [filteredClients]);
 
-  const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -751,22 +713,15 @@ const CustomersPage = () => {
 
   // Calculate summary
   const summary = useMemo(() => {
-    const total = filteredClients.length;
-    const active = filteredClients.filter(c => c.status === 'active').length;
-    const inactive = filteredClients.filter(c => c.status === 'inactive').length;
-    const suspended = filteredClients.filter(c => c.status === 'suspended').length;
-    const enterprise = filteredClients.filter(c => c.type === 'enterprise').length;
-    const individual = filteredClients.filter(c => c.type === 'individual').length;
-
     return [
-      { label: 'Total clients', value: total },
-      { label: 'Actifs', value: active },
-      { label: 'Inactifs', value: inactive },
-      { label: 'Suspendus', value: suspended },
-      { label: 'Entreprises', value: enterprise },
-      { label: 'Particuliers', value: individual }
+      { label: 'Total clients', value: kpis.total },
+      { label: 'Actifs', value: kpis.active },
+      { label: 'Inactifs', value: kpis.inactive },
+      { label: 'Suspendus', value: kpis.suspended },
+      { label: 'Entreprises', value: kpis.enterprise },
+      { label: 'Particuliers', value: kpis.individual }
     ];
-  }, [filteredClients]);
+  }, [kpis]);
 
   // ==========================================
   // EXPORT HANDLERS
@@ -782,14 +737,11 @@ const CustomersPage = () => {
   const handleCreateClient = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newClient = {
-        id: clients.length + 1,
-        ...formData,
-        createdAt: new Date()
-      };
+      const response = await createCustomer(formData);
+      const newClient = response.data.data;
       setClients(prev => [newClient, ...prev]);
       setIsCreateModalOpen(false);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error creating client:', error);
     } finally {
@@ -800,12 +752,14 @@ const CustomersPage = () => {
   const handleEditClient = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await updateCustomer(selectedClient.id, formData);
+      const updatedClient = response.data.data;
       setClients(prev => prev.map(c =>
-        c.id === selectedClient.id ? { ...c, ...formData } : c
+        c.id === selectedClient.id ? updatedClient : c
       ));
       setIsEditModalOpen(false);
       setSelectedClient(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error updating client:', error);
     } finally {
@@ -816,15 +770,21 @@ const CustomersPage = () => {
   const handleDeleteClient = async () => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await deleteCustomer(selectedClient.id);
       setClients(prev => prev.filter(c => c.id !== selectedClient.id));
       setIsDeleteModalOpen(false);
       setSelectedClient(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error deleting client:', error);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchCustomers();
+    fetchStatistics();
   };
 
   useEffect(() => {
@@ -868,9 +828,9 @@ const CustomersPage = () => {
             Ajouter un client
           </button>
           <button
+            onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
             title="Actualiser"
-            onClick={() => window.location.reload()}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1022,7 +982,7 @@ const CustomersPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredClients.length)} sur {filteredClients.length} clients
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} clients
           </p>
           <div className="flex items-center gap-2">
             <button

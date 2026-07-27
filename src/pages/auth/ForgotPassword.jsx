@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FaEnvelope, FaArrowLeft } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { forgotPassword } from '../../services/authService';
 
 import Logo from '../../assets/images/logo.png';
 import Dessert from '../../assets/images/dessert.png';
@@ -13,14 +14,21 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    setError('');
+    try {
+      await forgotPassword({ email });
       setIsSubmitted(true);
-    }, 1500);
+    } catch (err) {
+      console.error('Forgot password error:', err);
+      setError(err.response?.data?.message || 'Erreur lors de l\'envoi du lien de réinitialisation');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -151,6 +159,16 @@ const ForgotPassword = () => {
                   <p className="text-[#777777] text-sm mt-2">Entrez votre email pour recevoir un lien de réinitialisation</p>
                 </div>
 
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm text-center"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* Champ Email */}
                   <div>
@@ -164,6 +182,7 @@ const ForgotPassword = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full h-[54px] pl-12 pr-4 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm focus:border-[#B88646] focus:ring-2 focus:ring-[#B88646]/20 focus:outline-none transition-all duration-300 text-[#2D2D2D] placeholder-[#B0A8A0] text-left"
                         required
+                        disabled={isLoading}
                       />
                     </div>
                   </div>

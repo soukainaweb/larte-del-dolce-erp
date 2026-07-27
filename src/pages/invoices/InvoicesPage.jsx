@@ -46,6 +46,22 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getInvoices,
+  getInvoiceById,
+  createInvoice,
+  updateInvoice,
+  deleteInvoice,
+  updateInvoicePaymentStatus,
+  updateInvoiceStatus,
+  getInvoiceStatistics,
+  exportInvoices,
+  sendInvoiceEmail,
+  printInvoice,
+  getInvoiceStatuses,
+  getPaymentStatuses,
+  getPaymentMethods
+} from '../../services/invoiceService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -290,6 +306,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [availableOrders, setAvailableOrders] = useState([]);
 
   useEffect(() => {
     if (invoice) {
@@ -309,6 +326,13 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
       });
     }
   }, [invoice]);
+
+  // Load available orders when the modal opens
+  useEffect(() => {
+    // In a real implementation, you would fetch from API
+    // const response = await getAvailableOrders();
+    setAvailableOrders(['ORD-1052', 'ORD-1048', 'ORD-1045', 'ORD-1042']);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -390,7 +414,6 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
   if (!isOpen) return null;
 
   const customers = ['Café Al Amir', 'Pâtisserie Nour', 'Restaurant La Table', 'Snack City'];
-  const orders = ['ORD-1052', 'ORD-1048', 'ORD-1045', 'ORD-1042'];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -442,7 +465,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                 }`}
               >
                 <option value="">Sélectionner</option>
-                {orders.map(o => (
+                {availableOrders.map(o => (
                   <option key={o} value={o}>{o}</option>
                 ))}
               </select>
@@ -906,166 +929,78 @@ const InvoicesPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Load invoices
-  useEffect(() => {
-    const fetchInvoices = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockInvoices = [
-          {
-            id: 1,
-            invoiceNumber: 'INV-0125',
-            orderNumber: 'ORD-1052',
-            customer: 'Café Al Amir',
-            invoiceDate: new Date('2025-07-10'),
-            dueDate: new Date('2025-08-09'),
-            paymentMethod: 'cash',
-            paymentStatus: 'unpaid',
-            status: 'sent',
-            notes: 'Facture pour commande urgente',
-            products: [
-              { name: 'Gâteau Chocolat', quantity: 3, price: 120, vat: 20, discount: 0, total: 432 },
-              { name: 'Tarte aux Fruits', quantity: 2, price: 85, vat: 20, discount: 0, total: 204 }
-            ],
-            subtotal: 530,
-            totalVat: 106,
-            deliveryFees: 25,
-            totalAmount: 661,
-            paidAmount: 0,
-            isOverdue: false,
-            createdAt: new Date('2025-07-10')
-          },
-          {
-            id: 2,
-            invoiceNumber: 'INV-0124',
-            orderNumber: 'ORD-1048',
-            customer: 'Pâtisserie Nour',
-            invoiceDate: new Date('2025-07-08'),
-            dueDate: new Date('2025-08-07'),
-            paymentMethod: 'card',
-            paymentStatus: 'paid',
-            status: 'paid',
-            notes: '',
-            products: [
-              { name: 'Croissant Beurre', quantity: 5, price: 15, vat: 20, discount: 0, total: 90 },
-              { name: 'Pain au Chocolat', quantity: 3, price: 18, vat: 20, discount: 0, total: 64.8 }
-            ],
-            subtotal: 129,
-            totalVat: 25.8,
-            deliveryFees: 15,
-            totalAmount: 169.8,
-            paidAmount: 169.8,
-            isOverdue: false,
-            createdAt: new Date('2025-07-08')
-          },
-          {
-            id: 3,
-            invoiceNumber: 'INV-0123',
-            orderNumber: 'ORD-1045',
-            customer: 'Restaurant La Table',
-            invoiceDate: new Date('2025-07-05'),
-            dueDate: new Date('2025-08-04'),
-            paymentMethod: 'transfer',
-            paymentStatus: 'partial',
-            status: 'sent',
-            notes: 'Paiement partiel reçu',
-            products: [
-              { name: 'Éclair Vanille', quantity: 4, price: 45, vat: 20, discount: 0, total: 216 },
-              { name: 'Macaron Coffret', quantity: 2, price: 85, vat: 20, discount: 0, total: 204 }
-            ],
-            subtotal: 350,
-            totalVat: 70,
-            deliveryFees: 0,
-            totalAmount: 420,
-            paidAmount: 200,
-            isOverdue: false,
-            createdAt: new Date('2025-07-05')
-          },
-          {
-            id: 4,
-            invoiceNumber: 'INV-0122',
-            orderNumber: 'ORD-1042',
-            customer: 'Snack City',
-            invoiceDate: new Date('2025-06-20'),
-            dueDate: new Date('2025-07-20'),
-            paymentMethod: 'cash',
-            paymentStatus: 'overdue',
-            status: 'sent',
-            notes: 'Facture en retard',
-            products: [
-              { name: 'Sandwich Mix', quantity: 10, price: 25, vat: 20, discount: 0, total: 300 }
-            ],
-            subtotal: 250,
-            totalVat: 50,
-            deliveryFees: 20,
-            totalAmount: 320,
-            paidAmount: 0,
-            isOverdue: true,
-            createdAt: new Date('2025-06-20')
-          }
-        ];
-        setInvoices(mockInvoices);
-      } catch (error) {
-        console.error('Error fetching invoices:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchInvoices = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        payment_status: paymentStatusFilter !== 'all' ? paymentStatusFilter : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        sort_by: 'invoiceDate',
+        sort_order: 'desc'
+      };
+      const response = await getInvoices(params);
+      const data = response.data.data || [];
+      setInvoices(data);
+      setTotalCount(response.data.meta?.total || data.length);
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchInvoices();
+  }, [currentPage, itemsPerPage, searchTerm, paymentStatusFilter, statusFilter]);
+
+  // Fetch KPIs from statistics API
+  const [kpis, setKpis] = useState({
+    total: 0,
+    paid: 0,
+    unpaid: 0,
+    overdue: 0,
+    today: 0,
+    revenue: 0
+  });
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await getInvoiceStatistics();
+      const data = response.data.data || {};
+      setKpis({
+        total: data.total || 0,
+        paid: data.paid || 0,
+        unpaid: data.unpaid || 0,
+        overdue: data.overdue || 0,
+        today: data.today || 0,
+        revenue: data.revenue || 0
+      });
+    } catch (error) {
+      console.error('Error fetching invoice statistics:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatistics();
   }, []);
 
-  // Calculate KPIs
-  const kpis = useMemo(() => {
-    const total = invoices.length;
-    const paid = invoices.filter(i => i.paymentStatus === 'paid').length;
-    const unpaid = invoices.filter(i => i.paymentStatus === 'unpaid').length;
-    const overdue = invoices.filter(i => i.isOverdue).length;
-    const today = invoices.filter(i => {
-      const today = new Date();
-      const invoiceDate = new Date(i.invoiceDate);
-      return invoiceDate.getDate() === today.getDate() &&
-             invoiceDate.getMonth() === today.getMonth() &&
-             invoiceDate.getFullYear() === today.getFullYear();
-    }).length;
-    const revenue = invoices.reduce((sum, i) => sum + i.totalAmount, 0);
-
-    return { total, paid, unpaid, overdue, today, revenue };
-  }, [invoices]);
-
-  // Filter invoices
+  // Filter invoices (API already handles filters)
   const filteredInvoices = useMemo(() => {
-    let filtered = invoices;
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(i =>
-        i.invoiceNumber.toLowerCase().includes(term) ||
-        i.orderNumber.toLowerCase().includes(term) ||
-        i.customer.toLowerCase().includes(term)
-      );
-    }
-
-    if (paymentStatusFilter !== 'all') {
-      filtered = filtered.filter(i => i.paymentStatus === paymentStatusFilter);
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(i => i.status === statusFilter);
-    }
-
-    return filtered;
-  }, [invoices, searchTerm, paymentStatusFilter, statusFilter]);
+    return invoices;
+  }, [invoices]);
 
   // Paginate
   const paginatedInvoices = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredInvoices.slice(start, start + itemsPerPage);
-  }, [filteredInvoices, currentPage, itemsPerPage]);
+    return filteredInvoices;
+  }, [filteredInvoices]);
 
-  const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -1125,14 +1060,11 @@ const InvoicesPage = () => {
   const handleCreateInvoice = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newInvoice = {
-        id: invoices.length + 1,
-        ...formData,
-        createdAt: new Date()
-      };
+      const response = await createInvoice(formData);
+      const newInvoice = response.data.data;
       setInvoices(prev => [newInvoice, ...prev]);
       setIsCreateModalOpen(false);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error creating invoice:', error);
     } finally {
@@ -1143,12 +1075,14 @@ const InvoicesPage = () => {
   const handleEditInvoice = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await updateInvoice(selectedInvoice.id, formData);
+      const updatedInvoice = response.data.data;
       setInvoices(prev => prev.map(i =>
-        i.id === selectedInvoice.id ? { ...i, ...formData } : i
+        i.id === selectedInvoice.id ? updatedInvoice : i
       ));
       setIsEditModalOpen(false);
       setSelectedInvoice(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error updating invoice:', error);
     } finally {
@@ -1160,15 +1094,21 @@ const InvoicesPage = () => {
     if (selectedInvoice.paymentStatus === 'paid') return;
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await deleteInvoice(selectedInvoice.id);
       setInvoices(prev => prev.filter(i => i.id !== selectedInvoice.id));
       setIsDeleteModalOpen(false);
       setSelectedInvoice(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error deleting invoice:', error);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchInvoices();
+    fetchStatistics();
   };
 
   useEffect(() => {
@@ -1228,9 +1168,9 @@ const InvoicesPage = () => {
             </button>
           </div>
           <button
+            onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
             title="Actualiser"
-            onClick={() => window.location.reload()}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1437,7 +1377,7 @@ const InvoicesPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredInvoices.length)} sur {filteredInvoices.length} factures
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} factures
           </p>
           <div className="flex items-center gap-2">
             <button

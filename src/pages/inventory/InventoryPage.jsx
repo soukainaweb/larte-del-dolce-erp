@@ -44,6 +44,21 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getInventory,
+  getInventoryItemById,
+  createInventoryItem,
+  updateInventoryItem,
+  deleteInventoryItem,
+  createStockMovement,
+  getStockMovements,
+  getInventoryStatistics,
+  exportInventory,
+  getInventoryCategories,
+  getInventoryTypes,
+  getInventoryStatuses,
+  updateInventoryStatus
+} from '../../services/inventoryService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -185,6 +200,9 @@ const InventoryCard = ({ item, onView, onEdit, onDelete }) => {
           <button onClick={() => onEdit(item)} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
+          <button onClick={() => onDelete(item)} className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors">
+            <Trash2 size={16} className="text-rose-500" />
+          </button>
         </div>
       </div>
     </div>
@@ -194,7 +212,7 @@ const InventoryCard = ({ item, onView, onEdit, onDelete }) => {
 // ==========================================
 // INVENTORY TABLE ROW (Desktop)
 // ==========================================
-const InventoryTableRow = ({ item, onView, onEdit, index }) => {
+const InventoryTableRow = ({ item, onView, onEdit, onDelete, index }) => {
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -246,6 +264,13 @@ const InventoryTableRow = ({ item, onView, onEdit, index }) => {
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
+          <button
+            onClick={() => onDelete(item)}
+            className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
+            title="Supprimer"
+          >
+            <Trash2 size={16} className="text-rose-500" />
+          </button>
         </div>
       </td>
     </motion.tr>
@@ -266,6 +291,20 @@ const StockMovementModal = ({ isOpen, onClose, onSave, isLoading }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    // Fetch products for dropdown
+    const fetchProducts = async () => {
+      try {
+        const response = await getInventory({ per_page: 100 });
+        setProducts(response.data.data || []);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -290,12 +329,6 @@ const StockMovementModal = ({ isOpen, onClose, onSave, isLoading }) => {
   };
 
   if (!isOpen) return null;
-
-  const products = [
-    { id: 1, name: 'Gâteau Chocolat', sku: 'CAKE-001' },
-    { id: 2, name: 'Tarte aux Fruits', sku: 'CAKE-002' },
-    { id: 3, name: 'Croissant Beurre', sku: 'BAK-001' }
-  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -590,176 +623,77 @@ const InventoryPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Load inventory data
-  useEffect(() => {
-    const fetchInventory = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockInventory = [
-          {
-            id: 1,
-            name: 'Gâteau Chocolat',
-            sku: 'CAKE-001',
-            category: 'Signature Cakes',
-            type: 'finished',
-            currentStock: 50,
-            minStock: 10,
-            maxStock: 100,
-            unit: 'piece',
-            status: 'available',
-            stockValue: 12500,
-            image: null,
-            batchNumber: 'BATCH-001',
-            expiryDate: new Date('2025-12-31'),
-            lastUpdated: new Date('2025-07-10'),
-            movements: [
-              { type: 'in', quantity: 20, reason: 'Production', date: new Date('2025-07-10') },
-              { type: 'out', quantity: 5, reason: 'Vente', date: new Date('2025-07-09') }
-            ]
-          },
-          {
-            id: 2,
-            name: 'Tarte aux Fruits',
-            sku: 'CAKE-002',
-            category: 'Signature Cakes',
-            type: 'finished',
-            currentStock: 5,
-            minStock: 15,
-            maxStock: 80,
-            unit: 'piece',
-            status: 'low_stock',
-            stockValue: 4250,
-            image: null,
-            batchNumber: 'BATCH-002',
-            expiryDate: new Date('2025-07-25'),
-            lastUpdated: new Date('2025-07-08'),
-            movements: [
-              { type: 'in', quantity: 10, reason: 'Production', date: new Date('2025-07-05') },
-              { type: 'out', quantity: 15, reason: 'Vente', date: new Date('2025-07-08') }
-            ]
-          },
-          {
-            id: 3,
-            name: 'Croissant Beurre',
-            sku: 'BAK-001',
-            category: 'Bakery',
-            type: 'finished',
-            currentStock: 0,
-            minStock: 20,
-            maxStock: 150,
-            unit: 'piece',
-            status: 'out_of_stock',
-            stockValue: 0,
-            image: null,
-            batchNumber: null,
-            expiryDate: null,
-            lastUpdated: new Date('2025-07-07'),
-            movements: [
-              { type: 'out', quantity: 30, reason: 'Vente', date: new Date('2025-07-07') },
-              { type: 'out', quantity: 20, reason: 'Vente', date: new Date('2025-07-06') }
-            ]
-          },
-          {
-            id: 4,
-            name: 'Farine de blé',
-            sku: 'RAW-001',
-            category: 'Raw Materials',
-            type: 'raw',
-            currentStock: 75,
-            minStock: 50,
-            maxStock: 200,
-            unit: 'kg',
-            status: 'available',
-            stockValue: 1500,
-            image: null,
-            batchNumber: 'RAW-001-01',
-            expiryDate: new Date('2025-12-01'),
-            lastUpdated: new Date('2025-07-09'),
-            movements: [
-              { type: 'in', quantity: 100, reason: 'Achat', date: new Date('2025-07-01') },
-              { type: 'out', quantity: 25, reason: 'Production', date: new Date('2025-07-09') }
-            ]
-          },
-          {
-            id: 5,
-            name: 'Boîte cadeau',
-            sku: 'PKG-001',
-            category: 'Packaging',
-            type: 'packaging',
-            currentStock: 30,
-            minStock: 20,
-            maxStock: 100,
-            unit: 'piece',
-            status: 'available',
-            stockValue: 450,
-            image: null,
-            batchNumber: null,
-            expiryDate: null,
-            lastUpdated: new Date('2025-07-08'),
-            movements: [
-              { type: 'in', quantity: 50, reason: 'Achat', date: new Date('2025-07-02') },
-              { type: 'out', quantity: 20, reason: 'Production', date: new Date('2025-07-08') }
-            ]
-          }
-        ];
-        setInventory(mockInventory);
-      } catch (error) {
-        console.error('Error fetching inventory:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchInventory = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        category: categoryFilter !== 'all' ? categoryFilter : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        type: typeFilter !== 'all' ? typeFilter : undefined,
+        sort_by: 'name',
+        sort_order: 'asc'
+      };
+      const response = await getInventory(params);
+      const data = response.data.data || [];
+      setInventory(data);
+      setTotalCount(response.data.meta?.total || data.length);
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchInventory();
+  }, [currentPage, itemsPerPage, searchTerm, categoryFilter, statusFilter, typeFilter]);
+
+  // Fetch KPIs from statistics API
+  const [kpis, setKpis] = useState({
+    totalProducts: 0,
+    totalStock: 0,
+    lowStock: 0,
+    outOfStock: 0,
+    totalValue: 0
+  });
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await getInventoryStatistics();
+      const data = response.data.data || {};
+      setKpis({
+        totalProducts: data.total_products || 0,
+        totalStock: data.total_stock || 0,
+        lowStock: data.low_stock || 0,
+        outOfStock: data.out_of_stock || 0,
+        totalValue: data.total_value || 0
+      });
+    } catch (error) {
+      console.error('Error fetching inventory statistics:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatistics();
   }, []);
 
-  // Calculate KPIs
-  const kpis = useMemo(() => {
-    const totalProducts = inventory.length;
-    const totalStock = inventory.reduce((sum, i) => sum + i.currentStock, 0);
-    const lowStock = inventory.filter(i => i.status === 'low_stock').length;
-    const outOfStock = inventory.filter(i => i.status === 'out_of_stock').length;
-    const totalValue = inventory.reduce((sum, i) => sum + i.stockValue, 0);
-
-    return { totalProducts, totalStock, lowStock, outOfStock, totalValue };
-  }, [inventory]);
-
-  // Filter inventory
+  // Filter inventory (API already handles filters)
   const filteredInventory = useMemo(() => {
-    let filtered = inventory;
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(i =>
-        i.name.toLowerCase().includes(term) ||
-        i.sku.toLowerCase().includes(term)
-      );
-    }
-
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(i => i.category === categoryFilter);
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(i => i.status === statusFilter);
-    }
-
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(i => i.type === typeFilter);
-    }
-
-    return filtered;
-  }, [inventory, searchTerm, categoryFilter, statusFilter, typeFilter]);
+    return inventory;
+  }, [inventory]);
 
   // Paginate
   const paginatedItems = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredInventory.slice(start, start + itemsPerPage);
-  }, [filteredInventory, currentPage, itemsPerPage]);
+    return filteredInventory;
+  }, [filteredInventory]);
 
-  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -812,12 +746,46 @@ const InventoryPage = () => {
   const handleAddMovement = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await createStockMovement(formData);
       setIsMovementModalOpen(false);
+      await fetchInventory();
+      await fetchStatistics();
     } catch (error) {
       console.error('Error adding movement:', error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleViewItem = async (item) => {
+    try {
+      const response = await getInventoryItemById(item.id);
+      setSelectedItem(response.data.data);
+      setIsViewModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching item details:', error);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchInventory();
+    fetchStatistics();
+  };
+
+  const handleEditItem = (item) => {
+    // Placeholder for edit functionality
+    console.log('Edit item:', item);
+  };
+
+  const handleDeleteItem = async (item) => {
+    if (window.confirm(`Supprimer l'article "${item.name}" ? Cette action est irréversible.`)) {
+      try {
+        await deleteInventoryItem(item.id);
+        await fetchInventory();
+        await fetchStatistics();
+      } catch (error) {
+        console.error('Error deleting item:', error);
+      }
     }
   };
 
@@ -878,9 +846,9 @@ const InventoryPage = () => {
             </button>
           </div>
           <button
+            onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
             title="Actualiser"
-            onClick={() => window.location.reload()}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -992,11 +960,9 @@ const InventoryPage = () => {
                       key={item.id}
                       item={item}
                       index={index}
-                      onView={(i) => {
-                        setSelectedItem(i);
-                        setIsViewModalOpen(true);
-                      }}
-                      onEdit={() => {}}
+                      onView={handleViewItem}
+                      onEdit={handleEditItem}
+                      onDelete={handleDeleteItem}
                     />
                   ))
                 )}
@@ -1024,12 +990,9 @@ const InventoryPage = () => {
               <InventoryCard
                 key={item.id}
                 item={item}
-                onView={(i) => {
-                  setSelectedItem(i);
-                  setIsViewModalOpen(true);
-                }}
-                onEdit={() => {}}
-                onDelete={() => {}}
+                onView={handleViewItem}
+                onEdit={handleEditItem}
+                onDelete={handleDeleteItem}
               />
             ))
           )}
@@ -1053,12 +1016,9 @@ const InventoryPage = () => {
             <InventoryCard
               key={item.id}
               item={item}
-              onView={(i) => {
-                setSelectedItem(i);
-                setIsViewModalOpen(true);
-              }}
-              onEdit={() => {}}
-              onDelete={() => {}}
+              onView={handleViewItem}
+              onEdit={handleEditItem}
+              onDelete={handleDeleteItem}
             />
           ))
         )}
@@ -1069,7 +1029,7 @@ const InventoryPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredInventory.length)} sur {filteredInventory.length} produits
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} produits
           </p>
           <div className="flex items-center gap-2">
             <button

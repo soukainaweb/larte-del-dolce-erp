@@ -22,3 +22,19 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Laravel Backend
+larte-backend/vendor/
+larte-backend/.env
+larte-backend/storage/*.key
+
+# PHP dependencies
+vendor/
+
+# Environment files
+.env
+*.env
+
+# Laravel cache
+larte-backend/bootstrap/cache/*
+# Ignore all vendor folders
+**/vendor/

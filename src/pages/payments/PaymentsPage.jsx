@@ -51,6 +51,21 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getPayments,
+  getPaymentById,
+  createPayment,
+  updatePayment,
+  deletePayment,
+  updatePaymentStatus,
+  getPaymentStatistics,
+  exportPayments,
+  getInvoiceDetails,
+  getPaymentMethods,
+  getPaymentStatuses,
+  sendPaymentReceipt,
+  printPaymentReceipt
+} from '../../services/paymentService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -293,18 +308,20 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
   // Load invoice data when invoice number changes
   useEffect(() => {
     if (formData.invoiceNumber) {
-      const mockInvoice = {
-        invoiceNumber: formData.invoiceNumber,
-        customer: 'Café Al Amir',
-        totalAmount: 1250,
-        paidAmount: 500,
-        remainingAmount: 750
+      const fetchInvoice = async () => {
+        try {
+          const response = await getInvoiceDetails(formData.invoiceNumber);
+          setInvoiceData(response.data.data);
+          setFormData(prev => ({
+            ...prev,
+            customer: response.data.data.customer
+          }));
+        } catch (error) {
+          console.error('Error fetching invoice details:', error);
+          setInvoiceData(null);
+        }
       };
-      setInvoiceData(mockInvoice);
-      setFormData(prev => ({
-        ...prev,
-        customer: mockInvoice.customer
-      }));
+      fetchInvoice();
     } else {
       setInvoiceData(null);
     }
@@ -342,8 +359,6 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
   };
 
   if (!isOpen) return null;
-
-  const mockInvoices = ['INV-0125', 'INV-0124', 'INV-0123', 'INV-0122'];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -405,9 +420,11 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
                 >
                   <option value="">Sélectionner une facture</option>
-                  {mockInvoices.map(inv => (
-                    <option key={inv} value={inv}>{inv}</option>
-                  ))}
+                  {/* Options will be loaded from API in a real implementation */}
+                  <option value="INV-0125">INV-0125</option>
+                  <option value="INV-0124">INV-0124</option>
+                  <option value="INV-0123">INV-0123</option>
+                  <option value="INV-0122">INV-0122</option>
                 </select>
               </div>
               {errors.invoiceNumber && <p className="text-[10px] text-rose-500 mt-1">{errors.invoiceNumber}</p>}
@@ -715,131 +732,77 @@ const PaymentsPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Load payments
-  useEffect(() => {
-    const fetchPayments = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockPayments = [
-          {
-            id: 1,
-            paymentId: 'PAY-000154',
-            invoiceNumber: 'INV-0125',
-            customer: 'Café Al Amir',
-            date: new Date('2025-07-10'),
-            method: 'cash',
-            amount: 1250,
-            remainingAmount: 0,
-            status: 'paid',
-            collectedBy: 'Ahmed Benjelloun',
-            reference: 'TRX-001',
-            notes: 'Paiement complet en espèces'
-          },
-          {
-            id: 2,
-            paymentId: 'PAY-000153',
-            invoiceNumber: 'INV-0124',
-            customer: 'Pâtisserie Nour',
-            date: new Date('2025-07-08'),
-            method: 'mada',
-            amount: 500,
-            remainingAmount: 200,
-            status: 'partial',
-            collectedBy: 'Sara El Idrissi',
-            reference: 'MADA-789',
-            notes: 'Paiement partiel par Mada'
-          },
-          {
-            id: 3,
-            paymentId: 'PAY-000152',
-            invoiceNumber: 'INV-0123',
-            customer: 'Restaurant La Table',
-            date: new Date('2025-07-05'),
-            method: 'bank_transfer',
-            amount: 1500,
-            remainingAmount: 0,
-            status: 'paid',
-            collectedBy: 'Mohamed Amine',
-            reference: 'TRF-456',
-            notes: 'Virement bancaire reçu'
-          },
-          {
-            id: 4,
-            paymentId: 'PAY-000151',
-            invoiceNumber: 'INV-0122',
-            customer: 'Snack City',
-            date: new Date('2025-06-20'),
-            method: 'stc_pay',
-            amount: 200,
-            remainingAmount: 120,
-            status: 'pending',
-            collectedBy: 'Karim Lahlou',
-            reference: 'STC-123',
-            notes: 'En attente de confirmation'
-          }
-        ];
-        setPayments(mockPayments);
-      } catch (error) {
-        console.error('Error fetching payments:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchPayments = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        sort_by: 'date',
+        sort_order: 'desc'
+      };
+      const response = await getPayments(params);
+      const data = response.data.data || [];
+      setPayments(data);
+      setTotalCount(response.data.meta?.total || data.length);
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPayments();
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  // Fetch KPIs from statistics API
+  const [kpis, setKpis] = useState({
+    total: 0,
+    today: 0,
+    pending: 0,
+    partiallyPaid: 0,
+    overdue: 0,
+    monthRevenue: 0
+  });
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await getPaymentStatistics();
+      const data = response.data.data || {};
+      setKpis({
+        total: data.total || 0,
+        today: data.today || 0,
+        pending: data.pending || 0,
+        partiallyPaid: data.partially_paid || 0,
+        overdue: data.overdue || 0,
+        monthRevenue: data.month_revenue || 0
+      });
+    } catch (error) {
+      console.error('Error fetching payment statistics:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatistics();
   }, []);
 
-  // Calculate KPIs
-  const kpis = useMemo(() => {
-    const total = payments.reduce((sum, p) => sum + p.amount, 0);
-    const today = payments.filter(p => {
-      const today = new Date();
-      const date = new Date(p.date);
-      return date.getDate() === today.getDate() &&
-             date.getMonth() === today.getMonth() &&
-             date.getFullYear() === today.getFullYear();
-    }).reduce((sum, p) => sum + p.amount, 0);
-    const pending = payments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.remainingAmount, 0);
-    const partiallyPaid = payments.filter(p => p.status === 'partial').length;
-    const overdue = payments.filter(p => p.status === 'overdue').reduce((sum, p) => sum + p.remainingAmount, 0);
-    const monthRevenue = payments.filter(p => {
-      const now = new Date();
-      const date = new Date(p.date);
-      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-    }).reduce((sum, p) => sum + p.amount, 0);
-
-    return { total, today, pending, partiallyPaid, overdue, monthRevenue };
-  }, [payments]);
-
-  // Filter payments
+  // Filter payments (API already handles filters)
   const filteredPayments = useMemo(() => {
-    let filtered = payments;
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(p =>
-        p.paymentId.toLowerCase().includes(term) ||
-        p.invoiceNumber.toLowerCase().includes(term) ||
-        p.customer.toLowerCase().includes(term)
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(p => p.status === statusFilter);
-    }
-
-    return filtered;
-  }, [payments, searchTerm, statusFilter]);
+    return payments;
+  }, [payments]);
 
   // Paginate
   const paginatedPayments = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredPayments.slice(start, start + itemsPerPage);
-  }, [filteredPayments, currentPage, itemsPerPage]);
+    return filteredPayments;
+  }, [filteredPayments]);
 
-  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -893,15 +856,11 @@ const PaymentsPage = () => {
   const handleCreatePayment = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newPayment = {
-        id: payments.length + 1,
-        paymentId: `PAY-${String(payments.length + 1).padStart(6, '0')}`,
-        ...formData,
-        createdAt: new Date()
-      };
+      const response = await createPayment(formData);
+      const newPayment = response.data.data;
       setPayments(prev => [newPayment, ...prev]);
       setIsCreateModalOpen(false);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error creating payment:', error);
     } finally {
@@ -912,12 +871,14 @@ const PaymentsPage = () => {
   const handleEditPayment = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await updatePayment(selectedPayment.id, formData);
+      const updatedPayment = response.data.data;
       setPayments(prev => prev.map(p =>
-        p.id === selectedPayment.id ? { ...p, ...formData } : p
+        p.id === selectedPayment.id ? updatedPayment : p
       ));
       setIsEditModalOpen(false);
       setSelectedPayment(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error updating payment:', error);
     } finally {
@@ -928,15 +889,21 @@ const PaymentsPage = () => {
   const handleDeletePayment = async () => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await deletePayment(selectedPayment.id);
       setPayments(prev => prev.filter(p => p.id !== selectedPayment.id));
       setIsDeleteModalOpen(false);
       setSelectedPayment(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error deleting payment:', error);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchPayments();
+    fetchStatistics();
   };
 
   useEffect(() => {
@@ -996,9 +963,9 @@ const PaymentsPage = () => {
             </button>
           </div>
           <button
+            onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
             title="Actualiser"
-            onClick={() => window.location.reload()}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1193,7 +1160,7 @@ const PaymentsPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredPayments.length)} sur {filteredPayments.length} paiements
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} paiements
           </p>
           <div className="flex items-center gap-2">
             <button

@@ -25,6 +25,20 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  updateProductStock,
+  updateProductStatus,
+  getProductStatistics,
+  exportProducts,
+  getProductCategories,
+  getProductStatuses,
+  uploadProductImage
+} from '../../services/productService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -571,113 +585,77 @@ const ProductsPage = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Load products
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockProducts = [
-          {
-            id: 1,
-            name: 'Gâteau Chocolat',
-            sku: 'PRD-001',
-            category: 'Pâtisserie',
-            price: 120,
-            stock: 45,
-            status: 'active',
-            description: 'Gâteau au chocolat noir avec ganache',
-            image: null,
-            createdAt: new Date('2024-01-15')
-          },
-          {
-            id: 2,
-            name: 'Tarte aux Fruits',
-            sku: 'PRD-002',
-            category: 'Pâtisserie',
-            price: 85,
-            stock: 28,
-            status: 'active',
-            description: 'Tarte aux fruits frais de saison',
-            image: null,
-            createdAt: new Date('2024-02-01')
-          },
-          {
-            id: 3,
-            name: 'Éclair Vanille',
-            sku: 'PRD-003',
-            category: 'Pâtisserie',
-            price: 45,
-            stock: 12,
-            status: 'low_stock',
-            description: 'Éclair à la vanille et crème pâtissière',
-            image: null,
-            createdAt: new Date('2024-02-15')
-          },
-          {
-            id: 4,
-            name: 'Croissant Beurre',
-            sku: 'PRD-004',
-            category: 'Boulangerie',
-            price: 15,
-            stock: 0,
-            status: 'out_of_stock',
-            description: 'Croissant pur beurre AOP',
-            image: null,
-            createdAt: new Date('2024-03-01')
-          },
-          {
-            id: 5,
-            name: 'Pain au Chocolat',
-            sku: 'PRD-005',
-            category: 'Boulangerie',
-            price: 18,
-            stock: 35,
-            status: 'active',
-            description: 'Pain au chocolat artisanal',
-            image: null,
-            createdAt: new Date('2024-03-15')
-          }
-        ];
-        setProducts(mockProducts);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        sort_by: 'createdAt',
+        sort_order: 'desc'
+      };
+      const response = await getProducts(params);
+      const data = response.data.data || [];
+      setProducts(data);
+      setTotalCount(response.data.meta?.total || data.length);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchProducts();
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  // Fetch KPIs from statistics API
+  const [kpis, setKpis] = useState({
+    total: 0,
+    active: 0,
+    lowStock: 0,
+    outOfStock: 0,
+    totalStock: 0,
+    totalValue: 0
+  });
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await getProductStatistics();
+      const data = response.data.data || {};
+      setKpis({
+        total: data.total || 0,
+        active: data.active || 0,
+        lowStock: data.low_stock || 0,
+        outOfStock: data.out_of_stock || 0,
+        totalStock: data.total_stock || 0,
+        totalValue: data.total_value || 0
+      });
+    } catch (error) {
+      console.error('Error fetching product statistics:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatistics();
   }, []);
 
-  // Filter products
+  // Filter products (API already handles filters)
   const filteredProducts = useMemo(() => {
-    let filtered = products;
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(term) ||
-        p.sku.toLowerCase().includes(term) ||
-        p.category.toLowerCase().includes(term)
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(p => p.status === statusFilter);
-    }
-
-    return filtered;
-  }, [products, searchTerm, statusFilter]);
+    return products;
+  }, [products]);
 
   // Paginate
   const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredProducts.slice(start, start + itemsPerPage);
-  }, [filteredProducts, currentPage, itemsPerPage]);
+    return filteredProducts;
+  }, [filteredProducts]);
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -705,23 +683,14 @@ const ProductsPage = () => {
     createdAt: new Date(item.createdAt).toLocaleDateString('fr-FR')
   });
 
-  const summary = useMemo(() => {
-    const total = filteredProducts.length;
-    const active = filteredProducts.filter(p => p.status === 'active').length;
-    const lowStock = filteredProducts.filter(p => p.status === 'low_stock').length;
-    const outOfStock = filteredProducts.filter(p => p.status === 'out_of_stock').length;
-    const totalStock = filteredProducts.reduce((sum, p) => sum + p.stock, 0);
-    const totalValue = filteredProducts.reduce((sum, p) => sum + (p.price * p.stock), 0);
-
-    return [
-      { label: 'Total produits', value: total },
-      { label: 'Actifs', value: active },
-      { label: 'Stock faible', value: lowStock },
-      { label: 'Rupture', value: outOfStock },
-      { label: 'Stock total', value: totalStock },
-      { label: 'Valeur stock', value: `${totalValue.toLocaleString()} ${CURRENCY}` }
-    ];
-  }, [filteredProducts]);
+  const summary = [
+    { label: 'Total produits', value: kpis.total },
+    { label: 'Actifs', value: kpis.active },
+    { label: 'Stock faible', value: kpis.lowStock },
+    { label: 'Rupture', value: kpis.outOfStock },
+    { label: 'Stock total', value: kpis.totalStock },
+    { label: 'Valeur stock', value: `${kpis.totalValue.toLocaleString()} ${CURRENCY}` }
+  ];
 
   // ==========================================
   // EXPORT HANDLERS
@@ -738,14 +707,11 @@ const ProductsPage = () => {
   const handleCreateProduct = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newProduct = {
-        id: products.length + 1,
-        ...formData,
-        createdAt: new Date()
-      };
+      const response = await createProduct(formData);
+      const newProduct = response.data.data;
       setProducts(prev => [newProduct, ...prev]);
       setIsCreateModalOpen(false);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error creating product:', error);
     } finally {
@@ -756,12 +722,14 @@ const ProductsPage = () => {
   const handleEditProduct = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await updateProduct(selectedProduct.id, formData);
+      const updatedProduct = response.data.data;
       setProducts(prev => prev.map(p =>
-        p.id === selectedProduct.id ? { ...p, ...formData } : p
+        p.id === selectedProduct.id ? updatedProduct : p
       ));
       setIsEditModalOpen(false);
       setSelectedProduct(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error updating product:', error);
     } finally {
@@ -772,15 +740,21 @@ const ProductsPage = () => {
   const handleDeleteProduct = async () => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await deleteProduct(selectedProduct.id);
       setProducts(prev => prev.filter(p => p.id !== selectedProduct.id));
       setIsDeleteModalOpen(false);
       setSelectedProduct(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error deleting product:', error);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchProducts();
+    fetchStatistics();
   };
 
   useEffect(() => {
@@ -840,9 +814,9 @@ const ProductsPage = () => {
             </button>
           </div>
           <button
+            onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
             title="Actualiser"
-            onClick={() => window.location.reload()}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1021,7 +995,7 @@ const ProductsPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredProducts.length)} sur {filteredProducts.length} produits
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} produits
           </p>
           <div className="flex items-center gap-2">
             <button

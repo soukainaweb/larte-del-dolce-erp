@@ -1,5 +1,5 @@
 // src/pages/Analytics/AnalyticsPage.jsx
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ==========================================
@@ -113,11 +113,26 @@ import {
 } from 'recharts';
 
 import { useAuth } from '../../contexts/AuthContext';
-
-// ==========================================
-// ⭐ NOUVEAU : IMPORT EXPORT BUTTONS
-// ==========================================
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getAnalyticsMetrics,
+  getSalesOverview,
+  getOrderAnalytics,
+  getProductionAnalytics,
+  getFinancialAnalytics,
+  getCustomerAnalytics,
+  getProductAnalytics,
+  getDeliveryAnalytics,
+  getSalesRepsAnalytics,
+  getSalesByRegion,
+  getYearlyComparison,
+  getForecastAnalytics,
+  getKpiComparison,
+  getRadarData,
+  getRecentActivities,
+  getAlerts,
+  exportAnalytics
+} from '../../services/analyticsService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -142,205 +157,6 @@ const formatCurrency = (value) => {
   if (value === undefined || value === null) return `0 ${CURRENCY}`;
   return `${Number(value).toLocaleString()} ${CURRENCY}`;
 };
-
-// ==========================================
-// MOCK DATA
-// ==========================================
-
-// Données de ventes mensuelles
-const monthlySalesData = [
-  { month: 'Jan', revenue: 85000, orders: 120, profit: 23000, target: 90000 },
-  { month: 'Fév', revenue: 92000, orders: 135, profit: 28000, target: 95000 },
-  { month: 'Mar', revenue: 105000, orders: 150, profit: 33000, target: 100000 },
-  { month: 'Avr', revenue: 98000, orders: 142, profit: 29000, target: 105000 },
-  { month: 'Mai', revenue: 112000, orders: 165, profit: 36000, target: 110000 },
-  { month: 'Jun', revenue: 125000, orders: 180, profit: 43000, target: 115000 },
-  { month: 'Jul', revenue: 118000, orders: 170, profit: 39000, target: 120000 },
-  { month: 'Aoû', revenue: 135000, orders: 195, profit: 48000, target: 125000 },
-  { month: 'Sep', revenue: 142000, orders: 205, profit: 51000, target: 130000 },
-  { month: 'Oct', revenue: 155000, orders: 220, profit: 58000, target: 140000 },
-  { month: 'Nov', revenue: 148000, orders: 210, profit: 54000, target: 145000 },
-  { month: 'Déc', revenue: 160000, orders: 230, profit: 62000, target: 150000 }
-];
-
-// Données de répartition des commandes
-const orderStatusDistribution = [
-  { name: 'Terminées', value: 45, color: '#22C55E' },
-  { name: 'En production', value: 28, color: '#3B82F6' },
-  { name: 'En attente', value: 15, color: '#F59E0B' },
-  { name: 'Annulées', value: 8, color: '#EF4444' },
-  { name: 'Validées', value: 4, color: '#8B5CF6' }
-];
-
-// Top produits
-const topProducts = [
-  { id: 1, name: 'Gâteau Chocolat', sales: 320, revenue: 38400, growth: 15.2, category: 'Pâtisserie' },
-  { id: 2, name: 'Tarte aux Fruits', sales: 280, revenue: 23800, growth: 12.5, category: 'Pâtisserie' },
-  { id: 3, name: 'Éclair Vanille', sales: 240, revenue: 10800, growth: 8.3, category: 'Viennoiserie' },
-  { id: 4, name: 'Croissant Beurre', sales: 210, revenue: 3150, growth: 5.7, category: 'Boulangerie' },
-  { id: 5, name: 'Pain au Chocolat', sales: 180, revenue: 3240, growth: 3.2, category: 'Boulangerie' },
-  { id: 6, name: 'Mille-Feuille', sales: 160, revenue: 19200, growth: 10.1, category: 'Pâtisserie' },
-  { id: 7, name: 'Macaron', sales: 150, revenue: 12000, growth: 7.8, category: 'Confiserie' },
-  { id: 8, name: 'Baguette', sales: 140, revenue: 980, growth: 2.4, category: 'Boulangerie' },
-  { id: 9, name: 'Pain aux Raisins', sales: 130, revenue: 1950, growth: 4.6, category: 'Viennoiserie' },
-  { id: 10, name: 'Tarte Tatin', sales: 120, revenue: 14400, growth: 6.9, category: 'Pâtisserie' }
-];
-
-// Top clients
-const topClients = [
-  { id: 1, name: 'Café Al Amir', orders: 120, revenue: 245000, growth: 18.5, city: 'Casablanca' },
-  { id: 2, name: 'Pâtisserie Nour', orders: 98, revenue: 185000, growth: 14.2, city: 'Rabat' },
-  { id: 3, name: 'Restaurant La Table', orders: 76, revenue: 132000, growth: 10.8, city: 'Marrakech' },
-  { id: 4, name: 'Snack City', orders: 68, revenue: 118000, growth: 7.3, city: 'Tanger' },
-  { id: 5, name: 'Boissons du Maroc', orders: 55, revenue: 98000, growth: 5.6, city: 'Casablanca' },
-  { id: 6, name: 'Café Parisien', orders: 48, revenue: 87000, growth: 12.1, city: 'Rabat' },
-  { id: 7, name: 'Boulangerie Moderne', orders: 42, revenue: 76000, growth: 8.9, city: 'Fès' },
-  { id: 8, name: 'Traiteur Elite', orders: 38, revenue: 69000, growth: 6.4, city: 'Casablanca' },
-  { id: 9, name: 'Pâtisserie Douceur', orders: 35, revenue: 62000, growth: 4.7, city: 'Marrakech' },
-  { id: 10, name: 'Restaurant Gourmet', orders: 32, revenue: 58000, growth: 9.2, city: 'Tanger' }
-];
-
-// Top catégories
-const topCategories = [
-  { name: 'Pâtisserie', sales: 850, revenue: 102000, growth: 20.3 },
-  { name: 'Boulangerie', sales: 620, revenue: 48000, growth: 15.7 },
-  { name: 'Viennoiserie', sales: 450, revenue: 36000, growth: 12.4 },
-  { name: 'Confiserie', sales: 320, revenue: 28000, growth: 8.9 },
-  { name: 'Boissons', sales: 180, revenue: 15000, growth: 5.2 }
-];
-
-// Top commerciaux
-const topSalesReps = [
-  { name: 'Ahmed Benjelloun', orders: 145, revenue: 185000, growth: 15.6 },
-  { name: 'Sara El Idrissi', orders: 132, revenue: 168000, growth: 12.3 },
-  { name: 'Mohamed Amine', orders: 118, revenue: 142000, growth: 10.1 },
-  { name: 'Karim Lahlou', orders: 105, revenue: 128000, growth: 8.8 },
-  { name: 'Nadia Fassi', orders: 95, revenue: 115000, growth: 6.5 }
-];
-
-// Données de production
-const productionDaily = [
-  { day: 'Lun', produced: 120, target: 150, time: 4.2 },
-  { day: 'Mar', produced: 135, target: 150, time: 4.5 },
-  { day: 'Mer', produced: 142, target: 150, time: 4.8 },
-  { day: 'Jeu', produced: 130, target: 150, time: 4.3 },
-  { day: 'Ven', produced: 155, target: 150, time: 5.0 },
-  { day: 'Sam', produced: 148, target: 150, time: 4.7 },
-  { day: 'Dim', produced: 110, target: 150, time: 3.8 }
-];
-
-// Données de livraison
-const deliveryStats = [
-  { month: 'Jan', delivered: 105, delayed: 15, onTime: 90 },
-  { month: 'Fév', delivered: 120, delayed: 15, onTime: 105 },
-  { month: 'Mar', delivered: 138, delayed: 12, onTime: 126 },
-  { month: 'Avr', delivered: 130, delayed: 12, onTime: 118 },
-  { month: 'Mai', delivered: 150, delayed: 15, onTime: 135 },
-  { month: 'Jun', delivered: 165, delayed: 15, onTime: 150 },
-  { month: 'Jul', delivered: 155, delayed: 15, onTime: 140 },
-  { month: 'Aoû', delivered: 180, delayed: 15, onTime: 165 },
-  { month: 'Sep', delivered: 190, delayed: 15, onTime: 175 },
-  { month: 'Oct', delivered: 205, delayed: 15, onTime: 190 },
-  { month: 'Nov', delivered: 195, delayed: 15, onTime: 180 },
-  { month: 'Déc', delivered: 215, delayed: 15, onTime: 200 }
-];
-
-// Données financières
-const financialData = [
-  { month: 'Jan', revenue: 85000, expenses: 45000, profit: 40000 },
-  { month: 'Fév', revenue: 92000, expenses: 48000, profit: 44000 },
-  { month: 'Mar', revenue: 105000, expenses: 52000, profit: 53000 },
-  { month: 'Avr', revenue: 98000, expenses: 50000, profit: 48000 },
-  { month: 'Mai', revenue: 112000, expenses: 55000, profit: 57000 },
-  { month: 'Jun', revenue: 125000, expenses: 60000, profit: 65000 },
-  { month: 'Jul', revenue: 118000, expenses: 58000, profit: 60000 },
-  { month: 'Aoû', revenue: 135000, expenses: 65000, profit: 70000 },
-  { month: 'Sep', revenue: 142000, expenses: 68000, profit: 74000 },
-  { month: 'Oct', revenue: 155000, expenses: 72000, profit: 83000 },
-  { month: 'Nov', revenue: 148000, expenses: 70000, profit: 78000 },
-  { month: 'Déc', revenue: 160000, expenses: 75000, profit: 85000 }
-];
-
-// Données de comparaison annuelle
-const yearlyComparison = [
-  { month: 'Jan', year2024: 78000, year2025: 85000 },
-  { month: 'Fév', year2024: 82000, year2025: 92000 },
-  { month: 'Mar', year2024: 95000, year2025: 105000 },
-  { month: 'Avr', year2024: 88000, year2025: 98000 },
-  { month: 'Mai', year2024: 102000, year2025: 112000 },
-  { month: 'Jun', year2024: 115000, year2025: 125000 },
-  { month: 'Jul', year2024: 108000, year2025: 118000 },
-  { month: 'Aoû', year2024: 125000, year2025: 135000 },
-  { month: 'Sep', year2024: 132000, year2025: 142000 },
-  { month: 'Oct', year2024: 145000, year2025: 155000 },
-  { month: 'Nov', year2024: 138000, year2025: 148000 },
-  { month: 'Déc', year2024: 150000, year2025: 160000 }
-];
-
-// Activités récentes
-const recentActivities = [
-  { id: 1, user: 'Ahmed Benjelloun', action: 'a créé une nouvelle commande', time: 'Il y a 2 min', type: 'order' },
-  { id: 2, user: 'Sara El Idrissi', action: 'a validé une commande', time: 'Il y a 5 min', type: 'validate' },
-  { id: 3, user: 'Mohamed Amine', action: 'a terminé la production', time: 'Il y a 10 min', type: 'production' },
-  { id: 4, user: 'Karim Lahlou', action: 'a effectué une livraison', time: 'Il y a 15 min', type: 'delivery' },
-  { id: 5, user: 'Nadia Fassi', action: 'a généré une facture', time: 'Il y a 20 min', type: 'invoice' },
-  { id: 6, user: 'Admin', action: 'a reçu un paiement', time: 'Il y a 30 min', type: 'payment' }
-];
-
-// Alertes
-const alerts = [
-  { id: 1, type: 'warning', title: 'Produits en rupture de stock', description: '5 produits sont en dessous du stock minimum', time: 'Il y a 10 min' },
-  { id: 2, type: 'danger', title: 'Factures impayées en retard', description: '3 factures sont en retard de paiement', time: 'Il y a 25 min' },
-  { id: 3, type: 'warning', title: 'Commandes en retard de production', description: '2 commandes ont dépassé le délai de production', time: 'Il y a 45 min' },
-  { id: 4, type: 'info', title: 'Livraisons en attente', description: '4 livraisons sont en attente d\'affectation', time: 'Il y a 1h' },
-  { id: 5, type: 'danger', title: 'Production bloquée', description: 'La ligne de production n°2 est en panne', time: 'Il y a 2h' },
-  { id: 6, type: 'warning', title: 'Stock critique', description: 'Farine : niveau critique (5% restant)', time: 'Il y a 3h' }
-];
-
-// Données de prévision
-const forecastData = [
-  { month: 'Jan', actual: 85000, forecast: 82000 },
-  { month: 'Fév', actual: 92000, forecast: 88000 },
-  { month: 'Mar', actual: 105000, forecast: 100000 },
-  { month: 'Avr', actual: 98000, forecast: 95000 },
-  { month: 'Mai', actual: 112000, forecast: 108000 },
-  { month: 'Jun', actual: 125000, forecast: 120000 },
-  { month: 'Jul', actual: 118000, forecast: 115000 },
-  { month: 'Aoû', actual: 135000, forecast: 130000 },
-  { month: 'Sep', actual: 142000, forecast: 138000 },
-  { month: 'Oct', actual: 155000, forecast: 150000 },
-  { month: 'Nov', actual: 148000, forecast: 145000 },
-  { month: 'Déc', actual: 160000, forecast: 155000 }
-];
-
-// Données de vente par région
-const salesByRegion = [
-  { region: 'Casablanca', revenue: 420000, orders: 380, growth: 12.5 },
-  { region: 'Rabat', revenue: 280000, orders: 250, growth: 10.2 },
-  { region: 'Marrakech', revenue: 220000, orders: 200, growth: 8.7 },
-  { region: 'Tanger', revenue: 180000, orders: 165, growth: 6.3 },
-  { region: 'Fès', revenue: 150000, orders: 135, growth: 4.8 }
-];
-
-// Données radar
-const radarData = [
-  { subject: 'Ventes', A: 120, B: 110, fullMark: 150 },
-  { subject: 'Production', A: 98, B: 130, fullMark: 150 },
-  { subject: 'Livraison', A: 86, B: 130, fullMark: 150 },
-  { subject: 'Qualité', A: 99, B: 100, fullMark: 150 },
-  { subject: 'Satisfaction', A: 85, B: 90, fullMark: 150 },
-  { subject: 'Performance', A: 65, B: 85, fullMark: 150 }
-];
-
-// Données de comparaison des KPI
-const kpiComparisonData = [
-  { indicator: 'Chiffre d\'affaires', current: 160000, previous: 150000, target: 155000, growth: 6.7 },
-  { indicator: 'Commandes', current: 230, previous: 215, target: 220, growth: 7.0 },
-  { indicator: 'Clients', current: 1356, previous: 1240, target: 1300, growth: 9.4 },
-  { indicator: 'Produits vendus', current: 600, previous: 550, target: 580, growth: 9.1 },
-  { indicator: 'Profit', current: 62000, previous: 54000, target: 58000, growth: 14.8 },
-  { indicator: 'Livraisons', current: 215, previous: 195, target: 210, growth: 10.3 }
-];
 
 // ==========================================
 // COMPOSANTS UI
@@ -1022,10 +838,28 @@ const AnalyticsPage = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
 
+  // Data states
+  const [metrics, setMetrics] = useState({});
+  const [salesData, setSalesData] = useState([]);
+  const [orderData, setOrderData] = useState([]);
+  const [productionData, setProductionData] = useState([]);
+  const [financialData, setFinancialData] = useState([]);
+  const [customerData, setCustomerData] = useState([]);
+  const [productData, setProductData] = useState([]);
+  const [deliveryData, setDeliveryData] = useState([]);
+  const [salesRepsData, setSalesRepsData] = useState([]);
+  const [regionData, setRegionData] = useState([]);
+  const [yearlyData, setYearlyData] = useState([]);
+  const [forecastData, setForecastData] = useState([]);
+  const [kpiComparison, setKpiComparison] = useState([]);
+  const [radarData, setRadarData] = useState([]);
+  const [activities, setActivities] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+
   // Mise à jour de l'heure
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    return () => clearTimeout(timer);
   }, []);
 
   // Toast
@@ -1038,36 +872,59 @@ const AnalyticsPage = () => {
   };
 
   // ==========================================
-  // HANDLERS - EXPORT
+  // LOAD DATA
   // ==========================================
-
-  const handleRefresh = () => {
+  const loadAllData = async () => {
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const params = { period: dateRange };
+      const [metricsRes, salesRes, orderRes, productionRes, financialRes, customerRes, productRes, deliveryRes, repsRes, regionRes, yearlyRes, forecastRes, kpiRes, radarRes, activitiesRes, alertsRes] = 
+        await Promise.all([
+          getAnalyticsMetrics(params),
+          getSalesOverview(params),
+          getOrderAnalytics(params),
+          getProductionAnalytics(params),
+          getFinancialAnalytics(params),
+          getCustomerAnalytics(params),
+          getProductAnalytics(params),
+          getDeliveryAnalytics(params),
+          getSalesRepsAnalytics(params),
+          getSalesByRegion(params),
+          getYearlyComparison(params),
+          getForecastAnalytics(params),
+          getKpiComparison(params),
+          getRadarData(params),
+          getRecentActivities({ limit: 10 }),
+          getAlerts({ limit: 10 })
+        ]);
+
+      setMetrics(metricsRes.data.data || {});
+      setSalesData(salesRes.data.data || []);
+      setOrderData(orderRes.data.data || []);
+      setProductionData(productionRes.data.data || []);
+      setFinancialData(financialRes.data.data || []);
+      setCustomerData(customerRes.data.data || []);
+      setProductData(productRes.data.data || []);
+      setDeliveryData(deliveryRes.data.data || []);
+      setSalesRepsData(repsRes.data.data || []);
+      setRegionData(regionRes.data.data || []);
+      setYearlyData(yearlyRes.data.data || []);
+      setForecastData(forecastRes.data.data || []);
+      setKpiComparison(kpiRes.data.data || []);
+      setRadarData(radarRes.data.data || []);
+      setActivities(activitiesRes.data.data || []);
+      setAlerts(alertsRes.data.data || []);
+    } catch (error) {
+      console.error('Error loading analytics data:', error);
+      showToast('Erreur lors du chargement des données', 'error');
+    } finally {
       setIsLoading(false);
-      showToast('🔄 Données actualisées avec succès', 'success');
-    }, 800);
+    }
   };
 
-  const handleShare = () => {
-    showToast('🔗 Lien de partage copié dans le presse-papier', 'success');
-  };
-
-  const handleResetFilters = () => {
-    setSearchTerm('');
-    setDateRange('month');
-    setFilters({});
-    showToast('🔄 Filtres réinitialisés avec succès', 'success');
-  };
-
-  const handleDateRangeChange = (e) => {
-    setDateRange(e.target.value);
-    showToast(`📅 Période changée : ${e.target.options[e.target.selectedIndex].text}`, 'info');
-  };
-
-  const handleDismissAlert = (alertId) => {
-    showToast(`🔔 Alerte ${alertId} marquée comme lue`, 'info');
-  };
+  useEffect(() => {
+    loadAllData();
+  }, [dateRange, searchTerm, filters]);
 
   // ==========================================
   // KPI CALCULATIONS
@@ -1075,25 +932,25 @@ const AnalyticsPage = () => {
   const kpis = useMemo(() => {
     const totalRevenue = financialData.reduce((sum, d) => sum + d.revenue, 0);
     const totalProfit = financialData.reduce((sum, d) => sum + d.profit, 0);
-    const totalOrders = monthlySalesData.reduce((sum, d) => sum + d.orders, 0);
-    const completedOrders = orderStatusDistribution.find(d => d.name === 'Terminées')?.value || 0;
-    const pendingOrders = orderStatusDistribution.find(d => d.name === 'En attente')?.value || 0;
-    const totalCustomers = 1356;
-    const newCustomers = 124;
-    const totalProductsSold = monthlySalesData.reduce((sum, d) => sum + d.products, 0);
-    const paidInvoices = 680;
-    const unpaidInvoices = 83;
-    const totalDeliveries = deliveryStats.reduce((sum, d) => sum + d.delivered, 0);
-    const totalProduction = productionDaily.reduce((sum, d) => sum + d.produced, 0);
+    const totalOrders = salesData.reduce((sum, d) => sum + d.orders, 0);
+    const completedOrders = orderData.find(d => d.name === 'Terminées')?.value || 0;
+    const pendingOrders = orderData.find(d => d.name === 'En attente')?.value || 0;
+    const totalCustomers = metrics.totalCustomers || 0;
+    const newCustomers = metrics.newCustomers || 0;
+    const totalProductsSold = productData.reduce((sum, d) => sum + d.sales, 0);
+    const paidInvoices = metrics.paidInvoices || 0;
+    const unpaidInvoices = metrics.unpaidInvoices || 0;
+    const totalDeliveries = deliveryData.reduce((sum, d) => sum + d.delivered, 0);
+    const totalProduction = productionData.reduce((sum, d) => sum + d.produced, 0);
 
     const lastMonth = financialData[financialData.length - 1];
     const prevMonth = financialData[financialData.length - 2];
-    const monthlyGrowth = prevMonth.revenue > 0 
-      ? ((lastMonth.revenue - prevMonth.revenue) / prevMonth.revenue) * 100 
+    const monthlyGrowth = prevMonth?.revenue > 0 
+      ? ((lastMonth?.revenue - prevMonth?.revenue) / prevMonth?.revenue) * 100 
       : 0;
 
     const revenueTrend = financialData.map(d => ({ value: d.revenue }));
-    const orderTrend = monthlySalesData.map(d => ({ value: d.orders }));
+    const orderTrend = salesData.map(d => ({ value: d.orders }));
     const profitTrend = financialData.map(d => ({ value: d.profit }));
 
     return {
@@ -1115,7 +972,7 @@ const AnalyticsPage = () => {
       profitTrend,
       avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0
     };
-  }, []);
+  }, [financialData, salesData, orderData, metrics, productData, deliveryData, productionData]);
 
   // ==========================================
   // ⭐ COLONNES POUR L'EXPORT
@@ -1142,24 +999,32 @@ const AnalyticsPage = () => {
   });
 
   // ==========================================
-  // ⭐ RÉSUMÉ POUR L'EXPORT
+  // ⭐ RÉSUMÉ POUR L'EXPORT (Transformé en tableau pour ExportButtons)
   // ==========================================
-  const exportSummary = {
-    'Total Revenus': formatCurrency(kpis.totalRevenue),
-    'Total Profit': formatCurrency(kpis.totalProfit),
-    'Total Commandes': kpis.totalOrders,
-    'Clients Actifs': kpis.totalCustomers,
-    'Produits Vendus': kpis.totalProductsSold,
-    'Factures Payées': kpis.paidInvoices,
-    'Livraisons': kpis.totalDeliveries,
-    'Croissance': formatPercentage(kpis.monthlyGrowth)
-  };
+  const exportSummary = useMemo(() => {
+    const summaryObject = {
+      'Total Revenus': formatCurrency(kpis.totalRevenue),
+      'Total Profit': formatCurrency(kpis.totalProfit),
+      'Total Commandes': kpis.totalOrders,
+      'Clients Actifs': kpis.totalCustomers,
+      'Produits Vendus': kpis.totalProductsSold,
+      'Factures Payées': kpis.paidInvoices,
+      'Livraisons': kpis.totalDeliveries,
+      'Croissance': formatPercentage(kpis.monthlyGrowth)
+    };
+    
+    // Return as an array of {label, value} objects
+    return Object.entries(summaryObject).map(([label, value]) => ({
+      label,
+      value
+    }));
+  }, [kpis]);
 
   // ==========================================
   // HANDLER SUCCÈS EXPORT
   // ==========================================
   const handleExportSuccess = (result) => {
-    showToast(`✅ ${result.filename} exporté avec succès (${result.rowCount || kpiComparisonData.length} lignes)`, 'success');
+    showToast(`✅ ${result.filename} exporté avec succès (${result.rowCount || kpiComparison.length} lignes)`, 'success');
   };
 
   // ==========================================
@@ -1167,6 +1032,34 @@ const AnalyticsPage = () => {
   // ==========================================
   const handleExportError = (error) => {
     showToast(`❌ Erreur lors de l'export : ${error.message || 'Erreur inconnue'}`, 'error');
+  };
+
+  // ==========================================
+  // HANDLERS - GÉNÉRAUX
+  // ==========================================
+  const handleRefresh = async () => {
+    await loadAllData();
+    showToast('🔄 Données actualisées avec succès', 'success');
+  };
+
+  const handleShare = () => {
+    showToast('🔗 Lien de partage copié dans le presse-papier', 'success');
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDateRange('month');
+    setFilters({});
+    showToast('🔄 Filtres réinitialisés avec succès', 'success');
+  };
+
+  const handleDateRangeChange = (e) => {
+    setDateRange(e.target.value);
+    showToast(`📅 Période changée : ${e.target.options[e.target.selectedIndex].text}`, 'info');
+  };
+
+  const handleDismissAlert = (alertId) => {
+    showToast(`🔔 Alerte ${alertId} marquée comme lue`, 'info');
   };
 
   // ==========================================
@@ -1271,7 +1164,7 @@ const AnalyticsPage = () => {
           subtitle="Comparaison mensuelle des revenus et profits"
         />
         <CustomPieChart
-          data={orderStatusDistribution}
+          data={orderData}
           title="Répartition des Commandes"
           subtitle="Distribution par statut"
         />
@@ -1279,7 +1172,7 @@ const AnalyticsPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <CustomBarChart
-          data={salesByRegion}
+          data={regionData}
           bars={[{ key: 'revenue', label: 'Revenus', color: '#B8863B' }]}
           xKey="region"
           title="Ventes par Région"
@@ -1295,7 +1188,7 @@ const AnalyticsPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <TopListCard 
           title="Top Produits" 
-          items={topProducts.map(c => ({ ...c, value: c.sales }))} 
+          items={productData.map(c => ({ ...c, value: c.sales }))} 
           valueLabel="Ventes" 
           icon={Package} 
           valueKey="sales"
@@ -1303,7 +1196,7 @@ const AnalyticsPage = () => {
         />
         <TopListCard 
           title="Top Clients" 
-          items={topClients.map(c => ({ ...c, value: c.revenue }))} 
+          items={customerData.map(c => ({ ...c, value: c.revenue }))} 
           valueLabel="Revenu" 
           icon={Users} 
           valueKey="revenue"
@@ -1311,7 +1204,7 @@ const AnalyticsPage = () => {
         />
         <TopListCard 
           title="Top Catégories" 
-          items={topCategories.map(c => ({ ...c, value: c.sales }))} 
+          items={metrics.topCategories || []} 
           valueLabel="Ventes" 
           icon={Layers} 
           valueKey="sales"
@@ -1319,7 +1212,7 @@ const AnalyticsPage = () => {
         />
         <TopListCard 
           title="Top Commerciaux" 
-          items={topSalesReps.map(c => ({ ...c, value: c.revenue }))} 
+          items={salesRepsData.map(c => ({ ...c, value: c.revenue }))} 
           valueLabel="Revenu" 
           icon={User} 
           valueKey="revenue"
@@ -1331,7 +1224,7 @@ const AnalyticsPage = () => {
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
           <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Activité Récente</h3>
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {recentActivities.map((activity) => (
+            {activities.map((activity) => (
               <ActivityItem key={activity.id} activity={activity} />
             ))}
           </div>
@@ -1358,7 +1251,7 @@ const AnalyticsPage = () => {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <CustomLineChart
-          data={monthlySalesData}
+          data={salesData}
           lines={[
             { key: 'revenue', label: 'Revenus', color: '#B8863B' },
             { key: 'profit', label: 'Profit', color: '#22C55E' },
@@ -1369,7 +1262,7 @@ const AnalyticsPage = () => {
           subtitle="Revenus, Profit et Objectifs"
         />
         <CustomBarChart
-          data={topSalesReps}
+          data={salesRepsData}
           bars={[{ key: 'revenue', label: 'Revenus', color: '#8B5CF6' }]}
           xKey="name"
           title="Performance des Commerciaux"
@@ -1378,14 +1271,14 @@ const AnalyticsPage = () => {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomBarChart
-          data={salesByRegion}
+          data={regionData}
           bars={[{ key: 'revenue', label: 'Revenus', color: '#B8863B' }]}
           xKey="region"
           title="Ventes par Région"
           subtitle="Répartition géographique"
         />
         <CustomBarChart
-          data={topCategories}
+          data={metrics.topCategories || []}
           bars={[{ key: 'sales', label: 'Ventes', color: '#3B82F6' }]}
           xKey="name"
           title="Ventes par Catégorie"
@@ -1405,7 +1298,7 @@ const AnalyticsPage = () => {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomLineChart
-          data={monthlySalesData}
+          data={salesData}
           lines={[
             { key: 'orders', label: 'Commandes', color: '#3B82F6' }
           ]}
@@ -1414,7 +1307,7 @@ const AnalyticsPage = () => {
           subtitle="Nombre de commandes par mois"
         />
         <CustomPieChart
-          data={orderStatusDistribution}
+          data={orderData}
           title="Répartition des Commandes"
           subtitle="Distribution par statut"
         />
@@ -1425,14 +1318,14 @@ const AnalyticsPage = () => {
   const renderProduction = () => (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={FactoryIcon} title="Production quotidienne" value={productionDaily.reduce((s, d) => s + d.produced, 0)} change={12.5} color="amber" />
+        <KPICard icon={FactoryIcon} title="Production quotidienne" value={productionData.reduce((s, d) => s + d.produced, 0)} change={12.5} color="amber" />
         <KPICard icon={CheckCircle} title="Produits terminés" value={kpis.totalProduction} change={10.2} color="green" />
         <KPICard icon={Timer} title="Temps moyen" value="4.5h" change={-3.1} color="blue" />
         <KPICard icon={Award} title="Rendement" value="94%" change={2.8} color="purple" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomBarChart
-          data={productionDaily}
+          data={productionData}
           bars={[
             { key: 'produced', label: 'Produits', color: '#22C55E' },
             { key: 'target', label: 'Objectif', color: '#EF4444' }
@@ -1442,7 +1335,7 @@ const AnalyticsPage = () => {
           subtitle="Production vs Objectif"
         />
         <CustomLineChart
-          data={productionDaily}
+          data={productionData}
           lines={[
             { key: 'produced', label: 'Produits', color: '#22C55E' },
             { key: 'target', label: 'Objectif', color: '#EF4444' }
@@ -1499,7 +1392,7 @@ const AnalyticsPage = () => {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomLineChart
-          data={monthlySalesData}
+          data={salesData}
           lines={[
             { key: 'orders', label: 'Clients actifs', color: '#3B82F6' }
           ]}
@@ -1520,7 +1413,7 @@ const AnalyticsPage = () => {
       <div className="mt-6">
         <TopListCard 
           title="Top 10 Clients" 
-          items={topClients.map(c => ({ ...c, value: c.revenue }))} 
+          items={customerData.map(c => ({ ...c, value: c.revenue }))} 
           valueLabel="Revenu" 
           icon={Users} 
           valueKey="revenue"
@@ -1534,20 +1427,20 @@ const AnalyticsPage = () => {
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <KPICard icon={Package} title="Produits vendus" value={kpis.totalProductsSold} change={8.7} color="purple" />
-        <KPICard icon={TrendingUp} title="Top produit" value={topProducts[0]?.name || '-'} change={0} color="gold" />
+        <KPICard icon={TrendingUp} title="Top produit" value={productData[0]?.name || '-'} change={0} color="gold" />
         <KPICard icon={AlertCircle} title="En rupture" value="5" change={-10.4} color="rose" />
         <KPICard icon={CheckCircle} title="Disponibles" value="52" change={8.9} color="green" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomBarChart
-          data={topProducts.slice(0, 5)}
+          data={productData.slice(0, 5)}
           bars={[{ key: 'sales', label: 'Ventes', color: '#B8863B' }]}
           xKey="name"
           title="Top Produits"
           subtitle="Les plus vendus"
         />
         <CustomPieChart
-          data={topCategories}
+          data={metrics.topCategories || []}
           title="Produits par Catégorie"
           subtitle="Distribution par catégorie"
         />
@@ -1555,7 +1448,7 @@ const AnalyticsPage = () => {
       <div className="mt-6">
         <TopListCard 
           title="Top 10 Produits" 
-          items={topProducts.map(c => ({ ...c, value: c.sales }))} 
+          items={productData.map(c => ({ ...c, value: c.sales }))} 
           valueLabel="Ventes" 
           icon={Package} 
           valueKey="sales"
@@ -1575,7 +1468,7 @@ const AnalyticsPage = () => {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomBarChart
-          data={deliveryStats.slice(0, 6)}
+          data={deliveryData.slice(0, 6)}
           bars={[
             { key: 'delivered', label: 'Livrées', color: '#22C55E' },
             { key: 'delayed', label: 'Retardées', color: '#EF4444' }
@@ -1635,7 +1528,7 @@ const AnalyticsPage = () => {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomBarChart
-          data={yearlyComparison}
+          data={yearlyData}
           bars={[
             { key: 'year2024', label: '2024', color: '#3B82F6' },
             { key: 'year2025', label: '2025', color: '#B8863B' }
@@ -1645,7 +1538,7 @@ const AnalyticsPage = () => {
           subtitle="2024 vs 2025"
         />
         <CustomLineChart
-          data={yearlyComparison}
+          data={yearlyData}
           lines={[
             { key: 'year2024', label: '2024', color: '#3B82F6' },
             { key: 'year2025', label: '2025', color: '#B8863B' }
@@ -1718,7 +1611,7 @@ const AnalyticsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#ECE8E1]">
-              {kpiComparisonData.map((item, index) => {
+              {kpiComparison.map((item, index) => {
                 const performance = (item.current / item.target) * 100;
                 const isPositive = item.growth > 0;
                 return (
@@ -1764,7 +1657,7 @@ const AnalyticsPage = () => {
   // RENDER PRINCIPAL
   // ==========================================
 
-  if (isLoading) {
+  if (isLoading && Object.keys(metrics).length === 0) {
     return (
       <div className="p-4 md:p-6 max-w-7xl mx-auto">
         <div className="space-y-6">
@@ -1872,9 +1765,9 @@ const AnalyticsPage = () => {
               <Filter size={18} />
             </button>
 
-            {/* ⭐ NOUVEAU : ExportButtons */}
+            {/* ExportButtons */}
             <ExportButtons
-              data={kpiComparisonData}
+              data={kpiComparison}
               columns={exportColumns}
               title="Tableau d'Analyse des KPI"
               subtitle="Analyse complète des indicateurs de performance"

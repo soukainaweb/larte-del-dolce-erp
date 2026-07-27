@@ -1,5 +1,5 @@
 // src/pages/Orders/OrdersPage.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag,
@@ -45,12 +45,23 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import orderService from '../../services/orderService';
+import { exportPDF } from '../../services/export/pdfExport';
+import { exportExcel } from '../../services/export/excelExport';
+import { exportCSV } from '../../services/export/csvExport';
+import { printData } from '../../services/export/printService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+
+// ==========================================
+// CONSTANTES - DEVISE
+// ==========================================
+const CURRENCY = 'SAR';
+const CURRENCY_SYMBOL = 'ر.س';
 
 // ==========================================
 // STATUS BADGE
@@ -169,7 +180,7 @@ const OrderCard = ({ order, onView, onEdit, onDelete }) => {
         </div>
         <div className="flex items-center gap-1">
           <DollarSign size={12} />
-          {order.total.toLocaleString()} DH
+          {order.total.toLocaleString()} {CURRENCY_SYMBOL}
         </div>
         <div className="flex items-center gap-1">
           <User size={12} />
@@ -235,7 +246,7 @@ const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{order.products?.length || 0}</td>
       <td className="px-4 py-3 text-sm font-bold text-[#3D2F24]">
-        {order.total.toLocaleString()} DH
+        {order.total.toLocaleString()} {CURRENCY_SYMBOL}
       </td>
       <td className="px-4 py-3">
         <StatusBadge status={order.status} />
@@ -527,7 +538,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Prix (DH)</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Prix ({CURRENCY_SYMBOL})</label>
                       <input
                         type="number"
                         value={product.price}
@@ -548,7 +559,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                       <div>
                         <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Total</label>
                         <p className="text-sm font-bold text-[#3D2F24]">
-                          {(product.total || 0).toFixed(2)} DH
+                          {(product.total || 0).toFixed(2)} {CURRENCY_SYMBOL}
                         </p>
                       </div>
                       {formData.products.length > 1 && (
@@ -573,17 +584,17 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-[#6D6D6D]">Sous-total</span>
-                <span className="font-medium text-[#3D2F24]">{calculateSubtotal().toFixed(2)} DH</span>
+                <span className="font-medium text-[#3D2F24]">{calculateSubtotal().toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#6D6D6D]">Remise totale</span>
                 <span className="font-medium text-[#3D2F24]">
-                  {(calculateSubtotal() - calculateTotal()).toFixed(2)} DH
+                  {(calculateSubtotal() - calculateTotal()).toFixed(2)} {CURRENCY_SYMBOL}
                 </span>
               </div>
               <div className="flex justify-between pt-2 border-t border-[#ECE8E1]">
                 <span className="font-bold text-[#3D2F24]">Total TTC</span>
-                <span className="font-bold text-[#3D2F24] text-lg">{calculateTotal().toFixed(2)} DH</span>
+                <span className="font-bold text-[#3D2F24] text-lg">{calculateTotal().toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
             </div>
           </div>
@@ -726,7 +737,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3">
               <p className="text-xs text-[#6D6D6D]">Total</p>
-              <p className="text-lg font-bold text-[#3D2F24]">{order.total.toLocaleString()} DH</p>
+              <p className="text-lg font-bold text-[#3D2F24]">{order.total.toLocaleString()} {CURRENCY_SYMBOL}</p>
             </div>
           </div>
 
@@ -740,7 +751,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
                     <p className="text-sm font-medium text-[#3D2F24]">{p.name}</p>
                     <p className="text-xs text-[#6D6D6D]">Quantité: {p.quantity}</p>
                   </div>
-                  <p className="text-sm font-bold text-[#3D2F24]">{p.total?.toFixed(2)} DH</p>
+                  <p className="text-sm font-bold text-[#3D2F24]">{p.total?.toFixed(2)} {CURRENCY_SYMBOL}</p>
                 </div>
               ))}
             </div>
@@ -776,6 +787,12 @@ const OrdersPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    perPage: 10,
+    total: 0,
+    lastPage: 1
+  });
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -785,99 +802,44 @@ const OrdersPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  // ==========================================
+  // FETCH ORDERS FROM API
+  // ==========================================
+  const fetchOrders = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await orderService.getOrders({
+        page: pagination.currentPage,
+        per_page: pagination.perPage,
+        search: searchTerm || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined
+      });
 
-  // Load orders
+      setOrders(response.data || []);
+      setPagination(prev => ({
+        ...prev,
+        total: response.meta?.total || 0,
+        lastPage: response.meta?.last_page || 1
+      }));
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      // Fallback: utiliser des données mock en cas d'erreur
+      setOrders([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [pagination.currentPage, pagination.perPage, searchTerm, statusFilter]);
+
+  // ==========================================
+  // INITIAL LOAD
+  // ==========================================
   useEffect(() => {
-    const fetchOrders = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockOrders = [
-          {
-            id: 1,
-            orderNumber: 'CMD-1258',
-            customer: 'Café Al Amir',
-            rep: 'Youssef Karim',
-            status: 'delivered',
-            priority: 'high',
-            paymentStatus: 'paid',
-            products: [{ name: 'Gâteau Chocolat', quantity: 3, price: 120, total: 360 }],
-            total: 12450,
-            createdAt: new Date('2025-05-12'),
-            deliveryDate: new Date('2025-05-14'),
-            notes: 'Livraison urgente'
-          },
-          {
-            id: 2,
-            orderNumber: 'CMD-1257',
-            customer: 'Pâtisserie Nour',
-            rep: 'Sara El Idrissi',
-            status: 'in_production',
-            priority: 'medium',
-            paymentStatus: 'partial',
-            products: [{ name: 'Tarte aux Fruits', quantity: 2, price: 85, total: 170 }],
-            total: 8750,
-            createdAt: new Date('2025-05-12'),
-            deliveryDate: new Date('2025-05-16'),
-            notes: 'Prévoir décoration spéciale'
-          },
-          {
-            id: 3,
-            orderNumber: 'CMD-1256',
-            customer: 'Restaurant La Table',
-            rep: 'Ahmed Benjelloun',
-            status: 'pending',
-            priority: 'high',
-            paymentStatus: 'unpaid',
-            products: [{ name: 'Éclair Vanille', quantity: 4, price: 45, total: 180 }],
-            total: 15200,
-            createdAt: new Date('2025-05-11'),
-            deliveryDate: new Date('2025-05-15'),
-            notes: 'Commande importante'
-          },
-          {
-            id: 4,
-            orderNumber: 'CMD-1255',
-            customer: 'Snack City',
-            rep: 'Fatima Zahra',
-            status: 'delivered',
-            priority: 'low',
-            paymentStatus: 'paid',
-            products: [{ name: 'Croissant Beurre', quantity: 5, price: 15, total: 75 }],
-            total: 4350,
-            createdAt: new Date('2025-05-11'),
-            deliveryDate: new Date('2025-05-12'),
-            notes: ''
-          },
-          {
-            id: 5,
-            orderNumber: 'CMD-1254',
-            customer: 'Boissons du Maroc',
-            rep: 'Karim Lahlou',
-            status: 'cancelled',
-            priority: 'medium',
-            paymentStatus: 'unpaid',
-            products: [{ name: 'Pain au Chocolat', quantity: 2, price: 18, total: 36 }],
-            total: 2800,
-            createdAt: new Date('2025-05-10'),
-            deliveryDate: new Date('2025-05-12'),
-            notes: 'Annulée par le client'
-          }
-        ];
-        setOrders(mockOrders);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchOrders();
-  }, []);
+  }, [fetchOrders]);
 
-  // Calculate KPIs
+  // ==========================================
+  // CALCULATE KPIS
+  // ==========================================
   const kpis = useMemo(() => {
     const total = orders.length;
     const pending = orders.filter(o => o.status === 'pending').length;
@@ -891,16 +853,18 @@ const OrdersPage = () => {
     return { total, pending, validated, inProduction, ready, delivered, cancelled, revenue };
   }, [orders]);
 
-  // Filter orders
+  // ==========================================
+  // FILTER ORDERS (CLIENT SIDE FOR NOW)
+  // ==========================================
   const filteredOrders = useMemo(() => {
     let filtered = orders;
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(o =>
-        o.orderNumber.toLowerCase().includes(term) ||
-        o.customer.toLowerCase().includes(term) ||
-        o.rep.toLowerCase().includes(term)
+        o.orderNumber?.toLowerCase().includes(term) ||
+        o.customer?.toLowerCase().includes(term) ||
+        o.rep?.toLowerCase().includes(term)
       );
     }
 
@@ -911,13 +875,15 @@ const OrdersPage = () => {
     return filtered;
   }, [orders, searchTerm, statusFilter]);
 
-  // Paginate
+  // ==========================================
+  // PAGINATE ORDERS
+  // ==========================================
   const paginatedOrders = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredOrders.slice(start, start + itemsPerPage);
-  }, [filteredOrders, currentPage, itemsPerPage]);
+    const start = (pagination.currentPage - 1) * pagination.perPage;
+    return filteredOrders.slice(start, start + pagination.perPage);
+  }, [filteredOrders, pagination.currentPage, pagination.perPage]);
 
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredOrders.length / pagination.perPage);
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -935,12 +901,12 @@ const OrdersPage = () => {
   ];
 
   const rowFormatter = (item) => ({
-    orderNumber: item.orderNumber,
-    customer: item.customer,
-    rep: item.rep,
-    createdAt: new Date(item.createdAt).toLocaleDateString('fr-FR'),
+    orderNumber: item.orderNumber || '—',
+    customer: item.customer || '—',
+    rep: item.rep || '—',
+    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString('fr-FR') : '—',
     productCount: item.products?.length || 0,
-    total: `${item.total.toLocaleString()} DH`,
+    total: `${(item.total || 0).toLocaleString()} ${CURRENCY_SYMBOL}`,
     status: item.status === 'draft' ? 'Brouillon' :
             item.status === 'pending' ? 'En attente' :
             item.status === 'validated' ? 'Validée' :
@@ -950,7 +916,7 @@ const OrdersPage = () => {
             item.status === 'delivered' ? 'Livrée' :
             item.status === 'cancelled' ? 'Annulée' :
             item.status === 'rejected' ? 'Refusée' :
-            item.status === 'archived' ? 'Archivée' : item.status,
+            item.status === 'archived' ? 'Archivée' : item.status || '—',
     priority: item.priority === 'high' ? 'Haute' :
               item.priority === 'medium' ? 'Moyenne' : 'Basse',
     paymentStatus: item.paymentStatus === 'paid' ? 'Payée' :
@@ -963,7 +929,7 @@ const OrdersPage = () => {
     { label: 'En production', value: kpis.inProduction },
     { label: 'Livrées', value: kpis.delivered },
     { label: 'Annulées', value: kpis.cancelled },
-    { label: 'CA', value: `${kpis.revenue.toLocaleString()} DH` }
+    { label: 'CA', value: `${kpis.revenue.toLocaleString()} ${CURRENCY_SYMBOL}` }
   ];
 
   // ==========================================
@@ -977,18 +943,67 @@ const OrdersPage = () => {
     // Toast notification handled by ExportButtons
   };
 
-  // Handlers
+  const handleExport = async (type) => {
+    try {
+      const exportData = filteredOrders.map(rowFormatter);
+      const filename = `commandes_${new Date().toISOString().split('T')[0]}`;
+
+      switch (type) {
+        case 'pdf':
+          await exportPDF({
+            title: 'Liste des commandes',
+            data: exportData,
+            columns: columns,
+            filename: `${filename}.pdf`,
+            userName: user?.firstName || 'Utilisateur',
+            summary: summary.reduce((acc, item) => {
+              acc[item.label] = item.value;
+              return acc;
+            }, {})
+          });
+          break;
+        case 'excel':
+          await exportExcel({
+            title: 'Liste des commandes',
+            data: exportData,
+            columns: columns,
+            filename: `${filename}.xlsx`,
+            userName: user?.firstName || 'Utilisateur'
+          });
+          break;
+        case 'csv':
+          await exportCSV({
+            title: 'Liste des commandes',
+            data: exportData,
+            columns: columns,
+            filename: `${filename}.csv`,
+            userName: user?.firstName || 'Utilisateur'
+          });
+          break;
+        case 'print':
+          await printData({
+            title: 'Liste des commandes',
+            data: exportData,
+            columns: columns,
+            userName: user?.firstName || 'Utilisateur'
+          });
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+    }
+  };
+
+  // ==========================================
+  // CRUD HANDLERS
+  // ==========================================
   const handleCreateOrder = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newOrder = {
-        id: orders.length + 1,
-        orderNumber: `CMD-${1258 + orders.length + 1}`,
-        ...formData,
-        createdAt: new Date()
-      };
-      setOrders(prev => [newOrder, ...prev]);
+      const response = await orderService.createOrder(formData);
+      setOrders(prev => [response.data, ...prev]);
       setIsCreateModalOpen(false);
     } catch (error) {
       console.error('Error creating order:', error);
@@ -1000,9 +1015,9 @@ const OrdersPage = () => {
   const handleEditOrder = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await orderService.updateOrder(selectedOrder.id, formData);
       setOrders(prev => prev.map(o =>
-        o.id === selectedOrder.id ? { ...o, ...formData } : o
+        o.id === selectedOrder.id ? response.data : o
       ));
       setIsEditModalOpen(false);
       setSelectedOrder(null);
@@ -1016,7 +1031,7 @@ const OrdersPage = () => {
   const handleDeleteOrder = async () => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await orderService.deleteOrder(selectedOrder.id);
       setOrders(prev => prev.filter(o => o.id !== selectedOrder.id));
       setIsDeleteModalOpen(false);
       setSelectedOrder(null);
@@ -1027,15 +1042,39 @@ const OrdersPage = () => {
     }
   };
 
+  // ==========================================
+  // PAGINATION HANDLERS
+  // ==========================================
+  const handlePageChange = (page) => {
+    setPagination(prev => ({ ...prev, currentPage: page }));
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    setPagination(prev => ({
+      ...prev,
+      perPage: Number(e.target.value),
+      currentPage: 1
+    }));
+  };
+
+  // ==========================================
+  // RESET FILTERS
+  // ==========================================
   useEffect(() => {
-    setCurrentPage(1);
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
   }, [searchTerm, statusFilter]);
 
+  // ==========================================
+  // UNIQUE STATUSES
+  // ==========================================
   const uniqueStatuses = useMemo(() => {
     const statuses = new Set(orders.map(o => o.status));
     return Array.from(statuses);
   }, [orders]);
 
+  // ==========================================
+  // RENDER
+  // ==========================================
   return (
     <div className="w-full min-h-screen bg-[#F8F7F4] text-[#202020] p-6" style={{ fontFamily: FONT_BODY }}>
       {/* Page Header */}
@@ -1052,7 +1091,7 @@ const OrdersPage = () => {
             data={filteredOrders}
             columns={columns}
             title="Liste des commandes"
-            subtitle={`${filteredOrders.length} commandes - CA: ${kpis.revenue.toLocaleString()} DH`}
+            subtitle={`${filteredOrders.length} commandes - CA: ${kpis.revenue.toLocaleString()} ${CURRENCY_SYMBOL}`}
             filename={`commandes_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -1068,9 +1107,9 @@ const OrdersPage = () => {
             Nouvelle commande
           </button>
           <button
+            onClick={fetchOrders}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
             title="Actualiser"
-            onClick={() => window.location.reload()}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1086,7 +1125,7 @@ const OrdersPage = () => {
         <KPICard icon={Package} title="Prêtes" value={kpis.ready} color="teal" />
         <KPICard icon={Truck} title="Livrées" value={kpis.delivered} color="emerald" />
         <KPICard icon={XCircle} title="Annulées" value={kpis.cancelled} color="rose" />
-        <KPICard icon={DollarSign} title="CA (DH)" value={kpis.revenue.toLocaleString()} color="gold" />
+        <KPICard icon={DollarSign} title={`CA (${CURRENCY_SYMBOL})`} value={kpis.revenue.toLocaleString()} color="gold" />
       </div>
 
       {/* Filters */}
@@ -1129,139 +1168,133 @@ const OrdersPage = () => {
       </div>
 
       {/* Orders Table - Desktop */}
-      <div className="hidden md:block bg-white border border-[#ECE8E1] rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">N° Commande</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Client</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Commercial</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Produits</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Montant</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Priorité</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Paiement</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan="10" className="text-center py-8">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                      <p className="text-sm text-[#6D6D6D]">Chargement des commandes...</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : paginatedOrders.length === 0 ? (
-                <tr>
-                  <td colSpan="10" className="text-center py-8">
-                    <div className="flex flex-col items-center gap-2">
-                      <ShoppingBag size={40} className="text-[#ECE8E1]" />
-                      <p className="text-sm text-[#6D6D6D]">Aucune commande trouvée</p>
-                      <button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="text-sm text-[#B8863B] font-medium hover:underline"
-                      >
-                        Créer une commande
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                paginatedOrders.map((order, index) => (
-                  <OrderTableRow
-                    key={order.id}
-                    order={order}
-                    index={index}
-                    onView={(o) => {
-                      setSelectedOrder(o);
-                      setIsDetailsModalOpen(true);
-                    }}
-                    onEdit={(o) => {
-                      setSelectedOrder(o);
-                      setIsEditModalOpen(true);
-                    }}
-                    onDelete={(o) => {
-                      setSelectedOrder(o);
-                      setIsDeleteModalOpen(true);
-                    }}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Orders Cards - Mobile */}
-      <div className="md:hidden space-y-3">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-8 gap-3">
+      {isLoading ? (
+        <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
+          <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-[#6D6D6D]">Chargement des commandes...</p>
           </div>
-        ) : paginatedOrders.length === 0 ? (
-          <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
-            <ShoppingBag size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucune commande trouvée</p>
+        </div>
+      ) : (
+        <>
+          <div className="hidden md:block bg-white border border-[#ECE8E1] rounded-xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">N° Commande</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Client</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Commercial</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Produits</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Montant</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Priorité</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Paiement</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan="10" className="text-center py-8">
+                        <div className="flex flex-col items-center gap-2">
+                          <ShoppingBag size={40} className="text-[#ECE8E1]" />
+                          <p className="text-sm text-[#6D6D6D]">Aucune commande trouvée</p>
+                          <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="text-sm text-[#B8863B] font-medium hover:underline"
+                          >
+                            Créer une commande
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedOrders.map((order, index) => (
+                      <OrderTableRow
+                        key={order.id}
+                        order={order}
+                        index={index}
+                        onView={(o) => {
+                          setSelectedOrder(o);
+                          setIsDetailsModalOpen(true);
+                        }}
+                        onEdit={(o) => {
+                          setSelectedOrder(o);
+                          setIsEditModalOpen(true);
+                        }}
+                        onDelete={(o) => {
+                          setSelectedOrder(o);
+                          setIsDeleteModalOpen(true);
+                        }}
+                      />
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        ) : (
-          paginatedOrders.map((order) => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              onView={(o) => {
-                setSelectedOrder(o);
-                setIsDetailsModalOpen(true);
-              }}
-              onEdit={(o) => {
-                setSelectedOrder(o);
-                setIsEditModalOpen(true);
-              }}
-              onDelete={(o) => {
-                setSelectedOrder(o);
-                setIsDeleteModalOpen(true);
-              }}
-            />
-          ))
-        )}
-      </div>
+
+          {/* Orders Cards - Mobile */}
+          <div className="md:hidden space-y-3">
+            {paginatedOrders.length === 0 ? (
+              <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
+                <ShoppingBag size={40} className="text-[#ECE8E1] mx-auto mb-3" />
+                <p className="text-sm text-[#6D6D6D]">Aucune commande trouvée</p>
+              </div>
+            ) : (
+              paginatedOrders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  onView={(o) => {
+                    setSelectedOrder(o);
+                    setIsDetailsModalOpen(true);
+                  }}
+                  onEdit={(o) => {
+                    setSelectedOrder(o);
+                    setIsEditModalOpen(true);
+                  }}
+                  onDelete={(o) => {
+                    setSelectedOrder(o);
+                    setIsDeleteModalOpen(true);
+                  }}
+                />
+              ))
+            )}
+          </div>
+        </>
+      )}
 
       {/* Pagination */}
       {filteredOrders.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
-            Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredOrders.length)} sur {filteredOrders.length} commandes
+            Affichage de {((pagination.currentPage - 1) * pagination.perPage) + 1} à{' '}
+            {Math.min(pagination.currentPage * pagination.perPage, filteredOrders.length)} sur {filteredOrders.length} commandes
           </p>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
+              onClick={() => handlePageChange(Math.max(pagination.currentPage - 1, 1))}
+              disabled={pagination.currentPage === 1}
               className="p-2 border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft size={16} className="text-[#6D6D6D]" />
             </button>
             <span className="text-sm font-medium text-[#3D2F24]">
-              Page {currentPage} sur {totalPages}
+              Page {pagination.currentPage} sur {totalPages}
             </span>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(Math.min(pagination.currentPage + 1, totalPages))}
+              disabled={pagination.currentPage === totalPages}
               className="p-2 border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronRight size={16} className="text-[#6D6D6D]" />
             </button>
             <select
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
+              value={pagination.perPage}
+              onChange={handleItemsPerPageChange}
               className="px-3 py-2 border border-[#ECE8E1] rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30"
             >
               <option value={5}>5</option>

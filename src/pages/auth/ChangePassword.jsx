@@ -13,7 +13,9 @@ import {
   FaTimes,
   FaArrowLeft,
 } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { changePassword } from '../../services/authService';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Validation Schema - French
 const schema = yup.object().shape({
@@ -40,6 +42,7 @@ const ChangePassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState('');
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [passwordRules, setPasswordRules] = useState({
     length: false,
@@ -48,6 +51,9 @@ const ChangePassword = () => {
     number: false,
     special: false,
   });
+
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const {
     register,
@@ -99,10 +105,15 @@ const ChangePassword = () => {
     return 'bg-[#9E6C30]'; // Dark Gold (full strength)
   };
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    setError('');
+    try {
+      await changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+        newPassword_confirmation: data.confirmPassword
+      });
       setIsSuccess(true);
       reset();
       setPasswordStrength(0);
@@ -113,7 +124,12 @@ const ChangePassword = () => {
         number: false,
         special: false,
       });
-    }, 2000);
+    } catch (err) {
+      console.error('Change password error:', err);
+      setError(err.response?.data?.message || 'Erreur lors du changement de mot de passe');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Animation Variants
@@ -163,6 +179,16 @@ const ChangePassword = () => {
 
         {/* Form */}
         <motion.div variants={itemVariants} className="p-8">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm text-center"
+            >
+              {error}
+            </motion.div>
+          )}
+
           {!isSuccess ? (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Current Password */}

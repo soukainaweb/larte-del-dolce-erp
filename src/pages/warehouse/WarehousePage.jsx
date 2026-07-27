@@ -34,6 +34,18 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getWarehouses,
+  createWarehouse,
+  updateWarehouse,
+  updateWarehouseStatus,
+  deleteWarehouse,
+  transferProducts,
+  getWarehouseStatistics,
+  exportWarehouses,
+  getWarehouseTypes,
+  getWarehouseStatuses
+} from '../../services/warehouseService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -817,109 +829,76 @@ const WarehousePage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Load warehouses
-  useEffect(() => {
-    const fetchWarehouses = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockWarehouses = [
-          {
-            id: 1,
-            name: 'Entrepôt Matières Premières',
-            code: 'WH-001',
-            type: 'raw',
-            location: 'Étage 0, Zone A, Casablanca',
-            manager: 'Ahmed Benjelloun',
-            description: 'Stockage des matières premières pour la production',
-            status: 'active',
-            isDefault: true,
-            productCount: 45,
-            stockValue: 125000,
-            createdAt: new Date('2024-01-15')
-          },
-          {
-            id: 2,
-            name: 'Entrepôt Produits Finis',
-            code: 'WH-002',
-            type: 'finished',
-            location: 'Étage 1, Zone B, Casablanca',
-            manager: 'Sara El Idrissi',
-            description: 'Stockage des produits finis prêts à la vente',
-            status: 'active',
-            isDefault: false,
-            productCount: 78,
-            stockValue: 320000,
-            createdAt: new Date('2024-02-01')
-          },
-          {
-            id: 3,
-            name: 'Entrepôt Emballages',
-            code: 'WH-003',
-            type: 'packaging',
-            location: 'Étage 0, Zone C, Casablanca',
-            manager: 'Mohamed Amine',
-            description: 'Stockage des emballages et matériaux de conditionnement',
-            status: 'inactive',
-            isDefault: false,
-            productCount: 12,
-            stockValue: 45000,
-            createdAt: new Date('2024-02-15')
-          }
-        ];
-        setWarehouses(mockWarehouses);
-      } catch (error) {
-        console.error('Error fetching warehouses:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchWarehouses = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        type: typeFilter !== 'all' ? typeFilter : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        sort_by: 'createdAt',
+        sort_order: 'desc'
+      };
+      const response = await getWarehouses(params);
+      const data = response.data.data || [];
+      setWarehouses(data);
+      setTotalCount(response.data.meta?.total || data.length);
+    } catch (error) {
+      console.error('Error fetching warehouses:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchWarehouses();
+  }, [currentPage, itemsPerPage, searchTerm, typeFilter, statusFilter]);
+
+  // Calculate KPIs from API statistics
+  const [kpis, setKpis] = useState({
+    total: 0,
+    active: 0,
+    totalProducts: 0,
+    totalValue: 0
+  });
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await getWarehouseStatistics();
+      const stats = response.data.data || {};
+      setKpis({
+        total: stats.total || 0,
+        active: stats.active || 0,
+        totalProducts: stats.totalProducts || 0,
+        totalValue: stats.totalValue || 0
+      });
+    } catch (error) {
+      console.error('Error fetching warehouse statistics:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatistics();
   }, []);
 
-  // Calculate KPIs
-  const kpis = useMemo(() => {
-    const total = warehouses.length;
-    const active = warehouses.filter(w => w.status === 'active').length;
-    const totalProducts = warehouses.reduce((sum, w) => sum + (w.productCount || 0), 0);
-    const totalValue = warehouses.reduce((sum, w) => sum + (w.stockValue || 0), 0);
-
-    return { total, active, totalProducts, totalValue };
-  }, [warehouses]);
-
-  // Filter warehouses
+  // Filter warehouses (client-side for demo, API already handles filters)
   const filteredWarehouses = useMemo(() => {
-    let filtered = warehouses;
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(w =>
-        w.name.toLowerCase().includes(term) ||
-        w.code.toLowerCase().includes(term) ||
-        (w.location && w.location.toLowerCase().includes(term))
-      );
-    }
-
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(w => w.type === typeFilter);
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(w => w.status === statusFilter);
-    }
-
-    return filtered;
-  }, [warehouses, searchTerm, typeFilter, statusFilter]);
+    return warehouses;
+  }, [warehouses]);
 
   // Paginate
   const paginatedWarehouses = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredWarehouses.slice(start, start + itemsPerPage);
-  }, [filteredWarehouses, currentPage, itemsPerPage]);
+    return filteredWarehouses;
+  }, [filteredWarehouses]);
 
-  const totalPages = Math.ceil(filteredWarehouses.length / itemsPerPage);
+  const totalPages = useMemo(() => {
+    return Math.ceil(totalCount / itemsPerPage) || 1;
+  }, [totalCount, itemsPerPage]);
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -971,16 +950,11 @@ const WarehousePage = () => {
   const handleCreateWarehouse = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newWarehouse = {
-        id: warehouses.length + 1,
-        ...formData,
-        productCount: 0,
-        stockValue: 0,
-        createdAt: new Date()
-      };
+      const response = await createWarehouse(formData);
+      const newWarehouse = response.data.data;
       setWarehouses(prev => [newWarehouse, ...prev]);
       setIsCreateModalOpen(false);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error creating warehouse:', error);
     } finally {
@@ -991,12 +965,14 @@ const WarehousePage = () => {
   const handleEditWarehouse = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await updateWarehouse(selectedWarehouse.id, formData);
+      const updatedWarehouse = response.data.data;
       setWarehouses(prev => prev.map(w =>
-        w.id === selectedWarehouse.id ? { ...w, ...formData } : w
+        w.id === selectedWarehouse.id ? updatedWarehouse : w
       ));
       setIsEditModalOpen(false);
       setSelectedWarehouse(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error updating warehouse:', error);
     } finally {
@@ -1008,10 +984,11 @@ const WarehousePage = () => {
     if (selectedWarehouse.productCount > 0) return;
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await deleteWarehouse(selectedWarehouse.id);
       setWarehouses(prev => prev.filter(w => w.id !== selectedWarehouse.id));
       setIsDeleteModalOpen(false);
       setSelectedWarehouse(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error deleting warehouse:', error);
     } finally {
@@ -1021,21 +998,34 @@ const WarehousePage = () => {
 
   const handleToggleStatus = async (warehouse) => {
     const newStatus = warehouse.status === 'active' ? 'inactive' : 'active';
-    setWarehouses(prev => prev.map(w =>
-      w.id === warehouse.id ? { ...w, status: newStatus } : w
-    ));
+    try {
+      const response = await updateWarehouseStatus(warehouse.id, { status: newStatus });
+      const updatedWarehouse = response.data.data;
+      setWarehouses(prev => prev.map(w =>
+        w.id === warehouse.id ? updatedWarehouse : w
+      ));
+      await fetchStatistics();
+    } catch (error) {
+      console.error('Error toggling warehouse status:', error);
+    }
   };
 
   const handleTransfer = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await transferProducts(formData);
       setIsTransferModalOpen(false);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error transferring:', error);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchWarehouses();
+    fetchStatistics();
   };
 
   useEffect(() => {
@@ -1102,9 +1092,9 @@ const WarehousePage = () => {
             </button>
           </div>
           <button
+            onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
             title="Actualiser"
-            onClick={() => window.location.reload()}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1308,7 +1298,7 @@ const WarehousePage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredWarehouses.length)} sur {filteredWarehouses.length} entrepôts
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} entrepôts
           </p>
           <div className="flex items-center gap-2">
             <button

@@ -118,6 +118,25 @@ import {
 } from 'recharts';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getSalesOverview,
+  getOrdersReport,
+  getProductionReport,
+  getProductsReport,
+  getCustomersReport,
+  getInvoicesReport,
+  getDeliveriesReport,
+  getSalesRepsReport,
+  getYearlyComparison,
+  getOrderStatusDistribution,
+  getRecentActivities,
+  getAlerts,
+  generateReport,
+  getGeneratedReports,
+  downloadReport,
+  deleteGeneratedReport,
+  exportReportData
+} from '../../services/reportService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -137,146 +156,6 @@ const formatPercentage = (value) => {
   if (value === undefined || value === null) return '0.00%';
   return `${Number(value).toFixed(2)}%`;
 };
-
-// ==========================================
-// MOCK DATA
-// ==========================================
-
-const salesData = [
-  { month: 'Jan', revenue: 85000, orders: 120, products: 340, profit: 23000, target: 90000 },
-  { month: 'Feb', revenue: 92000, orders: 135, products: 380, profit: 28000, target: 95000 },
-  { month: 'Mar', revenue: 105000, orders: 150, products: 420, profit: 33000, target: 100000 },
-  { month: 'Apr', revenue: 98000, orders: 142, products: 400, profit: 29000, target: 105000 },
-  { month: 'May', revenue: 112000, orders: 165, products: 450, profit: 36000, target: 110000 },
-  { month: 'Jun', revenue: 125000, orders: 180, products: 490, profit: 43000, target: 115000 },
-  { month: 'Jul', revenue: 118000, orders: 170, products: 470, profit: 39000, target: 120000 },
-  { month: 'Aug', revenue: 135000, orders: 195, products: 520, profit: 48000, target: 125000 },
-  { month: 'Sep', revenue: 142000, orders: 205, products: 550, profit: 51000, target: 130000 },
-  { month: 'Oct', revenue: 155000, orders: 220, products: 580, profit: 58000, target: 140000 },
-  { month: 'Nov', revenue: 148000, orders: 210, products: 560, profit: 54000, target: 145000 },
-  { month: 'Dec', revenue: 160000, orders: 230, products: 600, profit: 62000, target: 150000 }
-];
-
-const orderStatusData = [
-  { name: 'Terminées', value: 45, color: '#22C55E' },
-  { name: 'En production', value: 28, color: '#3B82F6' },
-  { name: 'En attente', value: 15, color: '#F59E0B' },
-  { name: 'Annulées', value: 8, color: '#EF4444' },
-  { name: 'Validées', value: 4, color: '#8B5CF6' }
-];
-
-const topProducts = [
-  { id: 1, name: 'Gâteau Chocolat', sales: 320, revenue: 38400, growth: 15, category: 'Pâtisserie' },
-  { id: 2, name: 'Tarte aux Fruits', sales: 280, revenue: 23800, growth: 12.5, category: 'Pâtisserie' },
-  { id: 3, name: 'Éclair Vanille', sales: 240, revenue: 10800, growth: 8.3, category: 'Viennoiserie' },
-  { id: 4, name: 'Croissant Beurre', sales: 210, revenue: 3150, growth: 5.7, category: 'Boulangerie' },
-  { id: 5, name: 'Pain au Chocolat', sales: 180, revenue: 3240, growth: 3.2, category: 'Boulangerie' },
-  { id: 6, name: 'Mille-Feuille', sales: 160, revenue: 19200, growth: 10.1, category: 'Pâtisserie' },
-  { id: 7, name: 'Macaron', sales: 150, revenue: 12000, growth: 7.8, category: 'Confiserie' },
-  { id: 8, name: 'Baguette', sales: 140, revenue: 980, growth: 2.4, category: 'Boulangerie' },
-  { id: 9, name: 'Pain aux Raisins', sales: 130, revenue: 1950, growth: 4.6, category: 'Viennoiserie' },
-  { id: 10, name: 'Tarte Tatin', sales: 120, revenue: 14400, growth: 6.9, category: 'Pâtisserie' }
-];
-
-const topCustomers = [
-  { id: 1, name: 'Café Al Amir', orders: 120, revenue: 245000, growth: 18.5, city: 'Casablanca', phone: '+212 5XX-XXXX', email: 'contact@alamir.ma' },
-  { id: 2, name: 'Pâtisserie Nour', orders: 98, revenue: 185000, growth: 14.2, city: 'Rabat', phone: '+212 5XX-XXXX', email: 'info@nour.ma' },
-  { id: 3, name: 'Restaurant La Table', orders: 76, revenue: 132000, growth: 10.8, city: 'Marrakech', phone: '+212 5XX-XXXX', email: 'contact@latable.ma' },
-  { id: 4, name: 'Snack City', orders: 68, revenue: 118000, growth: 7.3, city: 'Tanger', phone: '+212 5XX-XXXX', email: 'info@snackcity.ma' },
-  { id: 5, name: 'Boissons du Maroc', orders: 55, revenue: 98000, growth: 5.6, city: 'Casablanca', phone: '+212 5XX-XXXX', email: 'contact@boissons.ma' }
-];
-
-const topCategories = [
-  { name: 'Pâtisserie', sales: 850, revenue: 102000, growth: 20.3 },
-  { name: 'Boulangerie', sales: 620, revenue: 48000, growth: 15.7 },
-  { name: 'Viennoiserie', sales: 450, revenue: 36000, growth: 12.4 },
-  { name: 'Confiserie', sales: 320, revenue: 28000, growth: 8.9 },
-  { name: 'Boissons', sales: 180, revenue: 15000, growth: 5.2 }
-];
-
-const topSalesReps = [
-  { name: 'Ahmed Benjelloun', orders: 145, revenue: 185000, growth: 15.6 },
-  { name: 'Sara El Idrissi', orders: 132, revenue: 168000, growth: 12.3 },
-  { name: 'Mohamed Amine', orders: 118, revenue: 142000, growth: 10.1 },
-  { name: 'Karim Lahlou', orders: 105, revenue: 128000, growth: 8.8 },
-  { name: 'Nadia Fassi', orders: 95, revenue: 115000, growth: 6.5 }
-];
-
-const recentActivities = [
-  { id: 1, user: 'Ahmed Benjelloun', action: 'a exporté le rapport des ventes', time: 'Il y a 5 min', type: 'export' },
-  { id: 2, user: 'Sara El Idrissi', action: 'a généré un rapport de production', time: 'Il y a 15 min', type: 'generate' },
-  { id: 3, user: 'Mohamed Amine', action: 'a partagé le rapport financier', time: 'Il y a 30 min', type: 'share' },
-  { id: 4, user: 'Karim Lahlou', action: 'a imprimé le rapport des commandes', time: 'Il y a 1h', type: 'print' },
-  { id: 5, user: 'Nadia Fassi', action: 'a exporté le rapport des clients', time: 'Il y a 2h', type: 'export' }
-];
-
-const alerts = [
-  { id: 1, type: 'warning', title: 'Produits en rupture de stock', description: '5 produits sont en dessous du stock minimum', time: 'Il y a 10 min' },
-  { id: 2, type: 'danger', title: 'Factures impayées en retard', description: '3 factures sont en retard de paiement', time: 'Il y a 25 min' },
-  { id: 3, type: 'warning', title: 'Commandes en retard de production', description: '2 commandes ont dépassé le délai de production', time: 'Il y a 45 min' },
-  { id: 4, type: 'info', title: 'Livraisons en attente', description: '4 livraisons sont en attente d\'affectation', time: 'Il y a 1h' }
-];
-
-const productionData = [
-  { day: 'Lun', produced: 120, target: 150, time: 4.2 },
-  { day: 'Mar', produced: 135, target: 150, time: 4.5 },
-  { day: 'Mer', produced: 142, target: 150, time: 4.8 },
-  { day: 'Jeu', produced: 130, target: 150, time: 4.3 },
-  { day: 'Ven', produced: 155, target: 150, time: 5.0 },
-  { day: 'Sam', produced: 148, target: 150, time: 4.7 },
-  { day: 'Dim', produced: 110, target: 150, time: 3.8 }
-];
-
-const deliveryStats = [
-  { month: 'Jan', delivered: 105, delayed: 15 },
-  { month: 'Fév', delivered: 120, delayed: 15 },
-  { month: 'Mar', delivered: 138, delayed: 12 },
-  { month: 'Avr', delivered: 130, delayed: 12 },
-  { month: 'Mai', delivered: 150, delayed: 15 },
-  { month: 'Jun', delivered: 165, delayed: 15 }
-];
-
-const yearlyComparison = [
-  { month: 'Jan', year2024: 78000, year2025: 85000 },
-  { month: 'Fév', year2024: 82000, year2025: 92000 },
-  { month: 'Mar', year2024: 95000, year2025: 105000 },
-  { month: 'Avr', year2024: 88000, year2025: 98000 },
-  { month: 'Mai', year2024: 102000, year2025: 112000 },
-  { month: 'Jun', year2024: 115000, year2025: 125000 }
-];
-
-// DONNÉES INITIALES AVEC ID UNIQUES
-const initialOrdersData = [
-  { id: 'CMD-001', client: 'Café Al Amir', salesRep: 'Ahmed Benjelloun', date: '15/07/2025', amount: 12500, status: 'Livrée', production: 'Terminée', delivery: 'Effectuée', productName: 'Gâteau Chocolat' },
-  { id: 'CMD-002', client: 'Pâtisserie Nour', salesRep: 'Sara El Idrissi', date: '14/07/2025', amount: 8200, status: 'En production', production: 'En cours', delivery: 'En attente', productName: 'Éclair Vanille' },
-  { id: 'CMD-003', client: 'Restaurant La Table', salesRep: 'Mohamed Amine', date: '14/07/2025', amount: 15400, status: 'Validée', production: 'Non démarrée', delivery: 'Non planifiée', productName: 'Tarte aux Fruits' },
-  { id: 'CMD-004', client: 'Snack City', salesRep: 'Karim Lahlou', date: '13/07/2025', amount: 6300, status: 'En attente', production: 'Non démarrée', delivery: 'Non planifiée', productName: 'Croissant Beurre' },
-  { id: 'CMD-005', client: 'Boissons du Maroc', salesRep: 'Nadia Fassi', date: '13/07/2025', amount: 9800, status: 'Prête', production: 'Terminée', delivery: 'En attente', productName: 'Mille-Feuille' }
-];
-
-const initialInvoicesList = [
-  { id: 'FAC-001', client: 'Café Al Amir', date: '15/07/2025', amount: 12500, status: 'Payée' },
-  { id: 'FAC-002', client: 'Pâtisserie Nour', date: '14/07/2025', amount: 8200, status: 'En attente' },
-  { id: 'FAC-003', client: 'Restaurant La Table', date: '14/07/2025', amount: 15400, status: 'Impayée' },
-  { id: 'FAC-004', client: 'Snack City', date: '13/07/2025', amount: 6300, status: 'Payée' },
-  { id: 'FAC-005', client: 'Boissons du Maroc', date: '13/07/2025', amount: 9800, status: 'En attente' }
-];
-
-const initialDeliveriesList = [
-  { id: 'LIV-001', client: 'Café Al Amir', address: '123, Rue Mohamed V, Casablanca', date: '15/07/2025', status: 'Effectuée', phone: '+212 5XX-XXXX', notes: 'Livrée avec succès' },
-  { id: 'LIV-002', client: 'Pâtisserie Nour', address: '45, Avenue Hassan II, Rabat', date: '14/07/2025', status: 'En attente', phone: '+212 5XX-XXXX', notes: 'En attente de confirmation' },
-  { id: 'LIV-003', client: 'Restaurant La Table', address: '78, Rue de la Liberté, Marrakech', date: '14/07/2025', status: 'Retard', phone: '+212 5XX-XXXX', notes: 'Retard dû à la circulation' },
-  { id: 'LIV-004', client: 'Snack City', address: '12, Boulevard Moulay Youssef, Tanger', date: '13/07/2025', status: 'Effectuée', phone: '+212 5XX-XXXX', notes: 'Livrée avec succès' },
-  { id: 'LIV-005', client: 'Boissons du Maroc', address: '34, Rue de Fès, Casablanca', date: '13/07/2025', status: 'En attente', phone: '+212 5XX-XXXX', notes: 'En attente de confirmation' }
-];
-
-const initialGeneratedReports = [
-  { id: 1, name: 'Rapport des ventes - Juillet 2025', type: 'Ventes', period: 'Mensuel', createdBy: 'Admin', date: '15/07/2025', status: 'Généré', size: '2.4 MB' },
-  { id: 2, name: 'Rapport des commandes - Juin 2025', type: 'Commandes', period: 'Mensuel', createdBy: 'Comptable', date: '12/07/2025', status: 'Généré', size: '1.8 MB' },
-  { id: 3, name: 'Rapport de production - Semaine 28', type: 'Production', period: 'Hebdomadaire', createdBy: 'Manager', date: '10/07/2025', status: 'En cours', size: '0.5 MB' },
-  { id: 4, name: 'Rapport financier - Trimestre 2', type: 'Financier', period: 'Trimestriel', createdBy: 'Admin', date: '08/07/2025', status: 'Généré', size: '3.2 MB' },
-  { id: 5, name: 'Rapport des clients - Juin 2025', type: 'Clients', period: 'Mensuel', createdBy: 'Comptable', date: '05/07/2025', status: 'Généré', size: '1.2 MB' }
-];
 
 // ==========================================
 // COMPOSANT: CONFIRM DIALOG
@@ -502,8 +381,7 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
             <button
               onClick={() => {
                 onClose();
-                const event = new CustomEvent('showToast', { detail: { message: '▶️ Production reprise avec succès', type: 'success' } });
-                window.dispatchEvent(event);
+                window.dispatchEvent(new CustomEvent('showToast', { detail: { message: '▶️ Production reprise avec succès', type: 'success' } }));
               }}
               className="w-full sm:flex-1 px-4 py-2.5 bg-[#B8863B] text-white rounded-xl hover:bg-[#A07532] transition-colors text-sm font-medium flex items-center justify-center gap-2"
             >
@@ -569,13 +447,11 @@ const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
         </div>
 
         <div className="p-6">
-          {/* Statut */}
           <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${statusColors[delivery.status] || statusColors['En attente']} mb-6`}>
             {statusIcons[delivery.status] || statusIcons['En attente']}
             <span className="text-sm font-semibold">{delivery.status}</span>
           </div>
 
-          {/* Informations */}
           <div className="space-y-4">
             <div className="bg-[#F8F7F4] rounded-xl p-4">
               <p className="text-xs text-[#6D6D6D] mb-1">Client</p>
@@ -618,13 +494,11 @@ const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 pt-4 border-t border-[#ECE8E1]">
             <button
               onClick={() => {
                 onClose();
-                const event = new CustomEvent('showToast', { detail: { message: `📄 Livraison ${delivery.id} exportée avec succès`, type: 'success' } });
-                window.dispatchEvent(event);
+                window.dispatchEvent(new CustomEvent('showToast', { detail: { message: `📄 Livraison ${delivery.id} exportée avec succès`, type: 'success' } }));
               }}
               className="w-full sm:flex-1 px-4 py-2.5 bg-[#B8863B] text-white rounded-xl hover:bg-[#A07532] transition-colors text-sm font-medium flex items-center justify-center gap-2"
             >
@@ -729,8 +603,7 @@ const InvoiceDetailModal = ({ isOpen, onClose, invoice }) => {
             <button
               onClick={() => {
                 onClose();
-                const event = new CustomEvent('showToast', { detail: { message: `📄 Facture ${invoice.id} exportée avec succès`, type: 'success' } });
-                window.dispatchEvent(event);
+                window.dispatchEvent(new CustomEvent('showToast', { detail: { message: `📄 Facture ${invoice.id} exportée avec succès`, type: 'success' } }));
               }}
               className="w-full sm:flex-1 px-4 py-2.5 bg-[#B8863B] text-white rounded-xl hover:bg-[#A07532] transition-colors text-sm font-medium flex items-center justify-center gap-2"
             >
@@ -1639,10 +1512,23 @@ const ReportsPage = () => {
   const [isExporting, setIsExporting] = useState(false);
   
   // États pour les données dynamiques
-  const [ordersData, setOrdersData] = useState(initialOrdersData);
-  const [invoicesList, setInvoicesList] = useState(initialInvoicesList);
-  const [deliveriesList, setDeliveriesList] = useState(initialDeliveriesList);
-  const [generatedReports, setGeneratedReports] = useState(initialGeneratedReports);
+  const [ordersData, setOrdersData] = useState([]);
+  const [invoicesList, setInvoicesList] = useState([]);
+  const [deliveriesList, setDeliveriesList] = useState([]);
+  const [generatedReports, setGeneratedReports] = useState([]);
+  
+  // États pour les graphiques et KPIs
+  const [salesData, setSalesData] = useState([]);
+  const [orderStatusData, setOrderStatusData] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
+  const [topCustomers, setTopCustomers] = useState([]);
+  const [topCategories, setTopCategories] = useState([]);
+  const [topSalesReps, setTopSalesReps] = useState([]);
+  const [productionData, setProductionData] = useState([]);
+  const [deliveryStats, setDeliveryStats] = useState([]);
+  const [yearlyComparison, setYearlyComparison] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   
   // États pour les modals
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', description: '', onConfirm: null });
@@ -1657,49 +1543,149 @@ const ReportsPage = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // ==========================================
-  // FILTRAGE DES DONNÉES
+  // CHARGEMENT DES DONNÉES
   // ==========================================
-  const getFilteredData = useCallback((period) => {
-    switch (period) {
-      case 'today':
-        return salesData.slice(-1);
-      case 'week':
-        return salesData.slice(-7);
-      case 'month':
-        return salesData;
-      case 'year':
-        return salesData;
-      default:
-        return salesData;
+  const loadOverviewData = async () => {
+    try {
+      const params = { period: dateRange };
+      if (dateRange === 'custom') {
+        // Vous pouvez ajouter des dates spécifiques ici
+      }
+      
+      const salesRes = await getSalesOverview(params);
+      setSalesData(salesRes.data.data || []);
+      
+      const statusRes = await getOrderStatusDistribution(params);
+      setOrderStatusData(statusRes.data.data || []);
+      
+      const productsRes = await getProductsReport(params);
+      setTopProducts(productsRes.data.data || []);
+      
+      const customersRes = await getCustomersReport(params);
+      setTopCustomers(customersRes.data.data || []);
+      
+      const categoriesRes = await getProductsReport({ ...params, group_by: 'category' });
+      setTopCategories(categoriesRes.data.data || []);
+      
+      const repsRes = await getSalesRepsReport(params);
+      setTopSalesReps(repsRes.data.data || []);
+      
+      const productionRes = await getProductionReport(params);
+      setProductionData(productionRes.data.data || []);
+      
+      const deliveryRes = await getDeliveriesReport(params);
+      setDeliveryStats(deliveryRes.data.data || []);
+      
+      const yearlyRes = await getYearlyComparison(params);
+      setYearlyComparison(yearlyRes.data.data || []);
+      
+      const activitiesRes = await getRecentActivities({ limit: 10 });
+      setRecentActivities(activitiesRes.data.data || []);
+      
+      const alertsRes = await getAlerts({ limit: 10 });
+      setAlerts(alertsRes.data.data || []);
+      
+    } catch (error) {
+      console.error('Error loading overview data:', error);
     }
-  }, []);
+  };
+
+  const loadOrdersData = async () => {
+    try {
+      const params = {
+        page: 1,
+        per_page: 100,
+        search: searchTerm || undefined
+      };
+      const res = await getOrdersReport(params);
+      setOrdersData(res.data.data || []);
+    } catch (error) {
+      console.error('Error loading orders data:', error);
+    }
+  };
+
+  const loadInvoicesData = async () => {
+    try {
+      const params = {
+        page: 1,
+        per_page: 100,
+        search: searchTerm || undefined
+      };
+      const res = await getInvoicesReport(params);
+      setInvoicesList(res.data.data || []);
+    } catch (error) {
+      console.error('Error loading invoices data:', error);
+    }
+  };
+
+  const loadDeliveriesData = async () => {
+    try {
+      const params = {
+        page: 1,
+        per_page: 100,
+        search: searchTerm || undefined
+      };
+      const res = await getDeliveriesReport(params);
+      setDeliveriesList(res.data.data || []);
+    } catch (error) {
+      console.error('Error loading deliveries data:', error);
+    }
+  };
+
+  const loadReportsData = async () => {
+    try {
+      const res = await getGeneratedReports();
+      setGeneratedReports(res.data.data || []);
+    } catch (error) {
+      console.error('Error loading reports data:', error);
+    }
+  };
+
+  useEffect(() => {
+    const loadAllData = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([
+          loadOverviewData(),
+          loadOrdersData(),
+          loadInvoicesData(),
+          loadDeliveriesData(),
+          loadReportsData()
+        ]);
+      } catch (error) {
+        console.error('Error loading reports page data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadAllData();
+  }, [dateRange, searchTerm]);
 
   // ==========================================
   // KPI CALCULATIONS
   // ==========================================
   const kpis = useMemo(() => {
-    const filteredData = getFilteredData(dateRange);
-    const totalRevenue = filteredData.reduce((sum, d) => sum + d.revenue, 0);
-    const totalOrders = filteredData.reduce((sum, d) => sum + d.orders, 0);
-    const totalProducts = filteredData.reduce((sum, d) => sum + d.products, 0);
+    const totalRevenue = salesData.reduce((sum, d) => sum + (d.revenue || 0), 0);
+    const totalOrders = salesData.reduce((sum, d) => sum + (d.orders || 0), 0);
+    const totalProducts = salesData.reduce((sum, d) => sum + (d.products || 0), 0);
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     
     let monthlyGrowth = 0;
-    if (filteredData.length >= 2) {
-      const last = filteredData[filteredData.length - 1];
-      const prev = filteredData[filteredData.length - 2];
+    if (salesData.length >= 2) {
+      const last = salesData[salesData.length - 1];
+      const prev = salesData[salesData.length - 2];
       monthlyGrowth = prev.revenue > 0 ? ((last.revenue - prev.revenue) / prev.revenue) * 100 : 0;
     }
     
-    const totalInvoices = 763;
-    const totalDeliveries = 842;
-    const inProduction = orderStatusData.find(d => d.name === 'En production')?.value || 0;
-    const pendingOrders = orderStatusData.find(d => d.name === 'En attente')?.value || 0;
-    const totalCustomers = 1356;
+    const totalInvoices = invoicesList.length;
+    const totalDeliveries = deliveriesList.length;
+    const inProduction = ordersData.filter(o => o.status === 'En production').length;
+    const pendingOrders = ordersData.filter(o => o.status === 'En attente').length;
+    const totalCustomers = topCustomers.reduce((sum, c) => sum + (c.orders || 0), 0);
 
-    const revenueTrend = filteredData.map(d => ({ value: d.revenue }));
-    const orderTrend = filteredData.map(d => ({ value: d.orders }));
-    const productTrend = filteredData.map(d => ({ value: d.products }));
+    const revenueTrend = salesData.map(d => ({ value: d.revenue || 0 }));
+    const orderTrend = salesData.map(d => ({ value: d.orders || 0 }));
+    const productTrend = salesData.map(d => ({ value: d.products || 0 }));
 
     return {
       totalRevenue,
@@ -1716,7 +1702,7 @@ const ReportsPage = () => {
       orderTrend,
       productTrend
     };
-  }, [dateRange, getFilteredData]);
+  }, [salesData, invoicesList, deliveriesList, ordersData, topCustomers]);
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -1755,11 +1741,11 @@ const ReportsPage = () => {
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    showToast('Export réalisé avec succès', 'success');
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    showToast('Erreur lors de l\'export', 'error');
   };
 
   // ==========================================
@@ -1800,12 +1786,23 @@ const ReportsPage = () => {
     showToast('🖨️ Impression en cours...', 'info');
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await Promise.all([
+        loadOverviewData(),
+        loadOrdersData(),
+        loadInvoicesData(),
+        loadDeliveriesData(),
+        loadReportsData()
+      ]);
       showToast('🔄 Données actualisées avec succès', 'success');
-    }, 800);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      showToast('Erreur lors de l\'actualisation', 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleShare = () => {
@@ -1821,6 +1818,8 @@ const ReportsPage = () => {
       'Supprimer la commande',
       `Êtes-vous sûr de vouloir supprimer la commande ${order.id} ? Cette action est irréversible.`,
       () => {
+        // Dans un vrai back-end, vous appelleriez une API
+        // await deleteOrder(order.id);
         setOrdersData(prev => prev.filter(item => item.id !== order.id));
         showToast(`🗑️ Commande ${order.id} supprimée avec succès`, 'success');
         hideConfirm();
@@ -1852,13 +1851,20 @@ const ReportsPage = () => {
     );
   };
 
-  const handleDeleteReport = (report) => {
+  const handleDeleteReport = async (report) => {
     showConfirm(
       'Supprimer le rapport',
       `Êtes-vous sûr de vouloir supprimer le rapport "${report.name}" ? Cette action est irréversible.`,
-      () => {
-        setGeneratedReports(prev => prev.filter(item => item.id !== report.id));
-        showToast(`🗑️ Rapport "${report.name}" supprimé avec succès`, 'success');
+      async () => {
+        try {
+          await deleteGeneratedReport(report.id);
+          const res = await getGeneratedReports();
+          setGeneratedReports(res.data.data || []);
+          showToast(`🗑️ Rapport "${report.name}" supprimé avec succès`, 'success');
+        } catch (error) {
+          console.error('Error deleting report:', error);
+          showToast('Erreur lors de la suppression', 'error');
+        }
         hideConfirm();
       }
     );
@@ -1868,25 +1874,21 @@ const ReportsPage = () => {
   // HANDLERS - ACTIONS "VOIR" AVEC MODALS
   // ==========================================
   
-  // Commande → Production Modal
   const handleViewOrder = (order) => {
     setSelectedOrder(order);
     setIsProductionModalOpen(true);
   };
 
-  // Facture → Invoice Detail Modal
   const handleViewInvoice = (invoice) => {
     setSelectedInvoice(invoice);
     setIsInvoiceModalOpen(true);
   };
 
-  // Livraison → Delivery Detail Modal
   const handleViewDelivery = (delivery) => {
     setSelectedDelivery(delivery);
     setIsDeliveryModalOpen(true);
   };
 
-  // Rapport → View Report (avec toast pour l'instant)
   const handleViewReport = (report) => {
     setSelectedReport(report);
     showToast(`👁️ Consultation du rapport "${report.name}"`, 'info');
@@ -1908,11 +1910,21 @@ const ReportsPage = () => {
     showToast(`📄 Livraison ${delivery.id} exportée avec succès`, 'success');
   };
 
-  const handleDownloadReport = (report) => {
-    showToast(`📥 Téléchargement du rapport "${report.name}" en cours...`, 'info');
-    setTimeout(() => {
-      showToast(`📄 Rapport "${report.name}" téléchargé avec succès`, 'success');
-    }, 1000);
+  const handleDownloadReport = async (report) => {
+    try {
+      const response = await downloadReport(report.id, 'pdf');
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${report.name}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      showToast(`📥 Rapport "${report.name}" téléchargé avec succès`, 'success');
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      showToast('Erreur lors du téléchargement', 'error');
+    }
   };
 
   // ==========================================
@@ -2018,12 +2030,12 @@ const ReportsPage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <SalesChart data={getFilteredData(dateRange)} />
+        <SalesChart data={salesData} />
         <OrderStatusChart data={orderStatusData} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <MonthlyRevenueChart data={getFilteredData(dateRange)} />
+        <MonthlyRevenueChart data={salesData} />
         <TopProductsChart data={topProducts} />
       </div>
 
@@ -2116,8 +2128,8 @@ const ReportsPage = () => {
         <KPICard icon={Users} title="Clients" value={kpis.totalCustomers} change={9.20} color="green" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <SalesChart data={getFilteredData(dateRange)} />
-        <MonthlyRevenueChart data={getFilteredData(dateRange)} />
+        <SalesChart data={salesData} />
+        <MonthlyRevenueChart data={salesData} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TopProductsChart data={topProducts} />
@@ -2416,10 +2428,10 @@ const ReportsPage = () => {
     <div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <YearlyComparisonChart data={yearlyComparison} />
-        <SalesChart data={getFilteredData(dateRange)} />
+        <SalesChart data={salesData} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <MonthlyRevenueChart data={getFilteredData(dateRange)} />
+        <MonthlyRevenueChart data={salesData} />
         <OrderStatusChart data={orderStatusData} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -2475,7 +2487,7 @@ const ReportsPage = () => {
   // RENDER PRINCIPAL
   // ==========================================
 
-  if (isLoading) {
+  if (isLoading && salesData.length === 0) {
     return (
       <div className="p-4 md:p-6 max-w-7xl mx-auto">
         <div className="space-y-6">

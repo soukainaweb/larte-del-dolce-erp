@@ -40,6 +40,18 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  toggleCategoryStatus,
+  getCategoryStatistics,
+  exportCategories,
+  getCategoryTree,
+  getParentCategories,
+  getCategoryStatuses
+} from '../../services/categoryService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -289,6 +301,20 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
 
   const [errors, setErrors] = useState({});
   const [imageFile, setImageFile] = useState(null);
+  const [parentCategories, setParentCategories] = useState([]);
+
+  useEffect(() => {
+    // Fetch parent categories for dropdown
+    const fetchParentCategories = async () => {
+      try {
+        const response = await getParentCategories({ status: 'active' });
+        setParentCategories(response.data.data || []);
+      } catch (error) {
+        console.error('Error fetching parent categories:', error);
+      }
+    };
+    fetchParentCategories();
+  }, []);
 
   useEffect(() => {
     if (category) {
@@ -302,7 +328,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
         status: category.status || 'active',
         visible: category.visible !== undefined ? category.visible : true,
         displayOrder: category.displayOrder || 0,
-        parentCategory: category.parent || '',
+        parentCategory: category.parentId || '',
         showOnPOS: category.showOnPOS !== undefined ? category.showOnPOS : true,
         availableOnline: category.availableOnline !== undefined ? category.availableOnline : true,
         featured: category.featured || false,
@@ -364,15 +390,19 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
       return;
     }
 
-    onSave({ ...formData });
+    // Prepare data for API
+    const submitData = {
+      ...formData,
+      image: imageFile || formData.image,
+      parentId: formData.parentCategory || null
+    };
+    // Remove imagePreview before sending
+    delete submitData.imagePreview;
+
+    onSave(submitData);
   };
 
   if (!isOpen) return null;
-
-  const parentCategories = [
-    'Sweet Boxes', 'Signature Cakes', 'Desserts', 'Fruit Cakes', 
-    'Bakery', 'Savory Bakery', 'Croissants', 'Cookies'
-  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -526,7 +556,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
               >
                 <option value="">Aucune</option>
                 {parentCategories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
             </div>
@@ -851,141 +881,69 @@ const CategoriesPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Load categories
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockCategories = [
-          {
-            id: 1,
-            name: 'Sweet Boxes',
-            nameAr: 'بكجات سويت',
-            code: 'CAT-001',
-            description: 'Boîtes de desserts variés pour toutes les occasions',
-            icon: '🎁',
-            color: '#E8A33D',
-            status: 'active',
-            visible: true,
-            displayOrder: 1,
-            parent: null,
-            showOnPOS: true,
-            availableOnline: true,
-            featured: true,
-            productCount: 25,
-            createdAt: new Date('2024-01-15'),
-            updatedAt: new Date('2024-01-15'),
-            image: null
-          },
-          {
-            id: 2,
-            name: 'Signature Cakes',
-            nameAr: 'سيجنشر كيك',
-            code: 'CAT-002',
-            description: 'Gâteaux signature premium',
-            icon: '🎂',
-            color: '#B8863B',
-            status: 'active',
-            visible: true,
-            displayOrder: 2,
-            parent: null,
-            showOnPOS: true,
-            availableOnline: true,
-            featured: true,
-            productCount: 18,
-            createdAt: new Date('2024-02-01'),
-            updatedAt: new Date('2024-02-01'),
-            image: null
-          },
-          {
-            id: 3,
-            name: 'Desserts',
-            nameAr: 'سويت',
-            code: 'CAT-003',
-            description: 'Desserts individuels et portions',
-            icon: '🍰',
-            color: '#D48A3B',
-            status: 'active',
-            visible: true,
-            displayOrder: 3,
-            parent: null,
-            showOnPOS: true,
-            availableOnline: true,
-            featured: false,
-            productCount: 32,
-            createdAt: new Date('2024-02-15'),
-            updatedAt: new Date('2024-02-15'),
-            image: null
-          },
-          {
-            id: 4,
-            name: 'Bakery',
-            nameAr: 'المخبوزات',
-            code: 'CAT-004',
-            description: 'Pains et viennoiseries',
-            icon: '🥖',
-            color: '#C89B5A',
-            status: 'inactive',
-            visible: false,
-            displayOrder: 4,
-            parent: null,
-            showOnPOS: false,
-            availableOnline: false,
-            featured: false,
-            productCount: 12,
-            createdAt: new Date('2024-03-01'),
-            updatedAt: new Date('2024-03-01'),
-            image: null
-          },
-          {
-            id: 5,
-            name: 'Cookies',
-            nameAr: 'كوكيز',
-            code: 'CAT-005',
-            description: 'Cookies artisanaux',
-            icon: '🍪',
-            color: '#6B4C3B',
-            status: 'active',
-            visible: true,
-            displayOrder: 5,
-            parent: null,
-            showOnPOS: true,
-            availableOnline: true,
-            featured: false,
-            productCount: 8,
-            createdAt: new Date('2024-03-15'),
-            updatedAt: new Date('2024-03-15'),
-            image: null
-          }
-        ];
-        setCategories(mockCategories);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchCategories = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        sort_by: 'displayOrder',
+        sort_order: 'asc'
+      };
+      const response = await getCategories(params);
+      const data = response.data.data || [];
+      setCategories(data);
+      setTotalCount(response.data.meta?.total || data.length);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCategories();
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  // Calculate KPIs from API statistics
+  const [kpis, setKpis] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    totalProducts: 0,
+    mostUsed: null
+  });
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await getCategoryStatistics();
+      const stats = response.data.data || {};
+      setKpis({
+        total: stats.total || 0,
+        active: stats.active || 0,
+        inactive: stats.inactive || 0,
+        totalProducts: stats.totalProducts || 0,
+        mostUsed: stats.mostUsed || null
+      });
+    } catch (error) {
+      console.error('Error fetching category statistics:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatistics();
   }, []);
 
-  // Calculate KPIs
-  const kpis = useMemo(() => {
-    const total = categories.length;
-    const active = categories.filter(c => c.status === 'active').length;
-    const inactive = categories.filter(c => c.status === 'inactive').length;
-    const totalProducts = categories.reduce((sum, c) => sum + (c.productCount || 0), 0);
-    const mostUsed = categories.reduce((max, c) => c.productCount > (max?.productCount || 0) ? c : max, null);
-
-    return { total, active, inactive, totalProducts, mostUsed };
-  }, [categories]);
-
-  // Filter categories
+  // Filter categories (client-side for demo, but API already handles filters)
   const filteredCategories = useMemo(() => {
+    // Since API already filters, we just return categories
+    // But we keep the filter logic for compatibility
     let filtered = categories;
-
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(c =>
@@ -995,21 +953,20 @@ const CategoriesPage = () => {
         (c.nameAr && c.nameAr.includes(term))
       );
     }
-
     if (statusFilter !== 'all') {
       filtered = filtered.filter(c => c.status === statusFilter);
     }
-
     return filtered;
   }, [categories, searchTerm, statusFilter]);
 
-  // Paginate
+  // Paginate (API already paginates, but we keep for consistency)
   const paginatedCategories = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredCategories.slice(start, start + itemsPerPage);
-  }, [filteredCategories, currentPage, itemsPerPage]);
+    return filteredCategories; // API already returns paginated data
+  }, [filteredCategories]);
 
-  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
+  const totalPages = useMemo(() => {
+    return Math.ceil(totalCount / itemsPerPage) || 1;
+  }, [totalCount, itemsPerPage]);
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -1058,16 +1015,11 @@ const CategoriesPage = () => {
   const handleCreateCategory = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newCategory = {
-        id: categories.length + 1,
-        ...formData,
-        productCount: 0,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      const response = await createCategory(formData);
+      const newCategory = response.data.data;
       setCategories(prev => [newCategory, ...prev]);
       setIsCreateModalOpen(false);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error creating category:', error);
     } finally {
@@ -1078,12 +1030,14 @@ const CategoriesPage = () => {
   const handleEditCategory = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await updateCategory(selectedCategory.id, formData);
+      const updatedCategory = response.data.data;
       setCategories(prev => prev.map(c =>
-        c.id === selectedCategory.id ? { ...c, ...formData, updatedAt: new Date() } : c
+        c.id === selectedCategory.id ? updatedCategory : c
       ));
       setIsEditModalOpen(false);
       setSelectedCategory(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error updating category:', error);
     } finally {
@@ -1098,10 +1052,11 @@ const CategoriesPage = () => {
     }
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await deleteCategory(selectedCategory.id);
       setCategories(prev => prev.filter(c => c.id !== selectedCategory.id));
       setIsDeleteModalOpen(false);
       setSelectedCategory(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error deleting category:', error);
     } finally {
@@ -1111,19 +1066,22 @@ const CategoriesPage = () => {
 
   const handleToggleStatus = async (category) => {
     const newStatus = category.status === 'active' ? 'inactive' : 'active';
-    setCategories(prev => prev.map(c =>
-      c.id === category.id ? { ...c, status: newStatus, updatedAt: new Date() } : c
-    ));
+    try {
+      const response = await toggleCategoryStatus(category.id, { status: newStatus });
+      const updatedCategory = response.data.data;
+      setCategories(prev => prev.map(c =>
+        c.id === category.id ? updatedCategory : c
+      ));
+      await fetchStatistics();
+    } catch (error) {
+      console.error('Error toggling category status:', error);
+    }
   };
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
-
-  const uniqueStatuses = useMemo(() => {
-    const statuses = new Set(categories.map(c => c.status));
-    return Array.from(statuses);
-  }, [categories]);
+  const handleRefresh = () => {
+    fetchCategories();
+    fetchStatistics();
+  };
 
   return (
     <div className="w-full min-h-screen bg-[#F8F7F4] text-[#202020] p-6" style={{ fontFamily: FONT_BODY }}>
@@ -1173,9 +1131,9 @@ const CategoriesPage = () => {
             </button>
           </div>
           <button
+            onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
             title="Actualiser"
-            onClick={() => window.location.reload()}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1211,11 +1169,9 @@ const CategoriesPage = () => {
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
               <option value="all">Tous les statuts</option>
-              {uniqueStatuses.map(status => (
-                <option key={status} value={status}>
-                  {status === 'active' ? 'Actif' : status === 'inactive' ? 'Inactif' : 'Archivé'}
-                </option>
-              ))}
+              <option value="active">Actif</option>
+              <option value="inactive">Inactif</option>
+              <option value="archived">Archivé</option>
             </select>
           </div>
         </div>
@@ -1367,7 +1323,7 @@ const CategoriesPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredCategories.length)} sur {filteredCategories.length} catégories
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} catégories
           </p>
           <div className="flex items-center gap-2">
             <button

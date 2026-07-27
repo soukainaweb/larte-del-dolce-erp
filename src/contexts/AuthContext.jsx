@@ -1,136 +1,140 @@
 // src/contexts/AuthContext.jsx
-
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getUser as getUserService, logout as logoutService } from '../services/authService';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState(null);
+    const [user, setUser] = useState(null);
+    const [token, setToken] = useState(localStorage.getItem('token'));
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const savedUser = localStorage.getItem("user");
+    // Charger l'utilisateur si le token existe
+    useEffect(() => {
+        const loadUser = async () => {
+            const storedToken = localStorage.getItem('token');
+            const storedUser = localStorage.getItem('user');
+            
+            if (storedToken && storedUser) {
+                try {
+                    setToken(storedToken);
+                    setUser(JSON.parse(storedUser));
+                    
+                    // Vérifier si le token est toujours valide
+                    const userData = await getUserService();
 
-    if (token) {
-      setIsAuthenticated(true);
+const currentUser = userData.user || userData;
 
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
-      } else {
-        const defaultUser = {
-          id: 1,
-          firstName: "Mohamed",
-          lastName: "Amine",
-          email: "admin@larte.com",
-          phone: "0612345678",
-          birthDate: "2000-01-01",
-          gender: "Homme",
-          nationality: "Marocaine",
-          address: "Casablanca",
-          city: "Casablanca",
-          postalCode: "20000",
-          employeeId: "EMP001",
-          department: "Administration",
-          position: "Administrator",
-          hiringDate: "2025-01-01",
-          manager: "Admin",
-          company: "L'arte del dolce",
-          office: "Casablanca",
-          role: "Administrator",
-          status: "online",
-          avatar: null,
+setUser({
+    ...currentUser,
+
+    fullName: currentUser.name ||
+      `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim(),
+
+    firstName: currentUser.name?.split(' ')[0] || '',
+    lastName: currentUser.name?.split(' ').slice(1).join(' ') || '',
+    role: currentUser.role || {},
+    status: currentUser.status || 'Online',
+    avatar: currentUser.avatar || ''
+});
+                } catch (err) {
+                    console.error('Token invalide:', err);
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    setToken(null);
+                    setUser(null);
+                }
+            }
+            setLoading(false);
         };
 
-        setUser(defaultUser);
-        localStorage.setItem("user", JSON.stringify(defaultUser));
-      }
-    }
+        loadUser();
+    }, []);
 
-    setIsLoading(false);
-  }, []);
+    // Fonction de login
+   const login = async (userData, token) => {
 
-  const login = (email) => {
-    const loggedUser = {
-      id: 1,
-      firstName: "Mohamed",
-      lastName: "Amine",
-      email: email || "admin@larte.com",
-      phone: "0612345678",
-      birthDate: "2000-01-01",
-      gender: "Homme",
-      nationality: "Marocaine",
-      address: "Casablanca",
-      city: "Casablanca",
-      postalCode: "20000",
-      employeeId: "EMP001",
-      department: "Administration",
-      position: "Administrator",
-      hiringDate: "2025-01-01",
-      manager: "Admin",
-      company: "L'arte del dolce",
-      office: "Casablanca",
-      role: "Administrator",
-      status: "online",
-      avatar: null,
+    const formattedUser = {
+    ...userData,
+
+    fullName: userData.name || 
+      `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+
+
+        firstName: userData.name?.split(' ')[0] || '',
+        lastName: userData.name?.split(' ').slice(1).join(' ') || '',
+
+        role: userData.role || {
+            name: '',
+            display_name: ''
+        },
+
+        status: userData.status || 'Online',
+        avatar: userData.avatar || ''
     };
 
-    localStorage.setItem("token", "fake-jwt-token");
-    localStorage.setItem("user", JSON.stringify(loggedUser));
 
-    setIsAuthenticated(true);
-    setUser(loggedUser);
-  };
+    setUser(formattedUser);
+    setToken(token);
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.setItem(
+        'token',
+        token
+    );
 
-    setIsAuthenticated(false);
-    setUser(null);
-  };
+    localStorage.setItem(
+        'user',
+        JSON.stringify(formattedUser)
+    );
 
-  const updateUser = (newData) => {
-    const updatedUser = {
-      ...user,
-      ...newData,
+    setError(null);
+};
+
+    // Fonction de logout
+    const logout = async () => {
+        try {
+            await logoutService();
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+        }
     };
 
-    setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-  };
+    // Mettre à jour l'utilisateur
+    const updateUser = (userData) => {
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+    };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        isAuthenticated,
-        isLoading,
+    const value = {
         user,
-        setUser,
-        updateUser,
+        token,
+        loading,
+        error,
         login,
         logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+        updateUser,
+        isAuthenticated: !!user && !!token,
+    };
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-
-  return context;
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 };
 
 export default AuthContext;

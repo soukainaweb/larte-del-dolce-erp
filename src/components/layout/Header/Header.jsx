@@ -402,8 +402,8 @@ const Header = React.memo(({
               <span className="text-xs font-bold text-[#273338] leading-tight truncate group-hover:text-[#B88A44] transition-colors">
                 {user.firstName} {user.lastName}
               </span>
-              <span className="text-[11px] font-medium text-[#7A6855] mt-0.5 leading-none truncate">
-                {user.role}
+             <span className="text-[11px] font-medium text-[#7A6855] mt-0.5 leading-none truncate">
+              {user.role?.display_name || user.role?.name}
               </span>
             </div>
             
@@ -418,8 +418,10 @@ const Header = React.memo(({
               >
                 {/* User Info Card */}
                 <div className="px-3.5 py-3 border-b border-[#ECE5DB] bg-[#F7F5F2]/40 rounded-t-xl mb-1.5 lg:hidden">
-                  <p className="text-xs font-bold text-[#273338]">{user.firstName} {user.lastName}</p>
-                  <p className="text-[11px] text-[#7A6855] font-medium mt-0.5">{user.role}</p>
+                  <p className="text-[11px] text-[#7A6855] font-medium mt-0.5">
+                   {user.role?.display_name || user.role?.name}
+                  </p>
+                  <p className="text-[11px] text-[#7A6855] font-medium mt-0.5">{user.role?.display_name || user.role?.name || "Utilisateur"}</p>
                   <div className="flex items-center gap-1.5 mt-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E]" />
                     <span className="text-[10px] text-[#22C55E] font-bold uppercase tracking-wider">{user.status}</span>

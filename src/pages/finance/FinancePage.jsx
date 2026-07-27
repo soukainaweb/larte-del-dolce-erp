@@ -60,6 +60,22 @@ import {
 } from 'recharts';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getFinanceMetrics,
+  getRevenueExpensesData,
+  getExpenseCategories,
+  getRecentTransactions,
+  getPendingCustomerPayments,
+  getPendingSupplierPayments,
+  getTopCustomers,
+  getTopSuppliers,
+  getFinanceNotifications,
+  getFinanceSummary,
+  exportFinanceData,
+  createTransaction,
+  updateTransaction,
+  deleteTransaction
+} from '../../services/financeService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -71,78 +87,6 @@ const FONT_BODY = "'Inter', sans-serif";
 // CONSTANTS
 // ==========================================
 const CURRENCY = 'SAR';
-
-// ==========================================
-// MOCK DATA
-// ==========================================
-const monthlyData = [
-  { month: 'Jan', revenue: 85000, expenses: 62000, profit: 23000 },
-  { month: 'Feb', revenue: 92000, expenses: 58000, profit: 34000 },
-  { month: 'Mar', revenue: 105000, expenses: 72000, profit: 33000 },
-  { month: 'Apr', revenue: 98000, expenses: 65000, profit: 33000 },
-  { month: 'May', revenue: 112000, expenses: 78000, profit: 34000 },
-  { month: 'Jun', revenue: 125000, expenses: 82000, profit: 43000 },
-  { month: 'Jul', revenue: 118000, expenses: 79000, profit: 39000 },
-  { month: 'Aug', revenue: 135000, expenses: 85000, profit: 50000 },
-  { month: 'Sep', revenue: 142000, expenses: 88000, profit: 54000 },
-  { month: 'Oct', revenue: 155000, expenses: 95000, profit: 60000 },
-  { month: 'Nov', revenue: 148000, expenses: 92000, profit: 56000 },
-  { month: 'Dec', revenue: 160000, expenses: 98000, profit: 62000 }
-];
-
-const expenseCategories = [
-  { name: 'Matières premières', value: 35, color: '#B8863B' },
-  { name: 'Salaires', value: 25, color: '#D4AF37' },
-  { name: 'Emballages', value: 15, color: '#8B7355' },
-  { name: 'Services publics', value: 10, color: '#C8A98E' },
-  { name: 'Transport', value: 8, color: '#A68B6B' },
-  { name: 'Marketing', value: 5, color: '#E8D5B7' },
-  { name: 'Loyer', value: 2, color: '#6B5842' }
-];
-
-const recentTransactions = [
-  { id: 'TR-0001', date: '12 Jul 2025', type: 'Payment', customer: 'Ahmed Ali', amount: 350, method: 'Mada', status: 'Paid' },
-  { id: 'TR-0002', date: '12 Jul 2025', type: 'Expense', customer: 'ABC Supplier', amount: -980, method: 'Bank Transfer', status: 'Paid' },
-  { id: 'TR-0003', date: '11 Jul 2025', type: 'Payment', customer: 'Sara Mohamed', amount: 450, method: 'Card', status: 'Paid' },
-  { id: 'TR-0004', date: '11 Jul 2025', type: 'Expense', customer: 'Rent Payment', amount: -10000, method: 'Cash', status: 'Paid' },
-  { id: 'TR-0005', date: '10 Jul 2025', type: 'Refund', customer: 'Omar Hassan', amount: -120, method: 'STC Pay', status: 'Done' }
-];
-
-const pendingCustomerPayments = [
-  { invoice: 'INV-1025', customer: 'Ahmed Ali', dueDate: '15 Jul 2025', amount: 4500, status: 'Pending' },
-  { invoice: 'INV-1023', customer: 'Sara Mohamed', dueDate: '16 Jul 2025', amount: 2800, status: 'Pending' },
-  { invoice: 'INV-1022', customer: 'Omar Hassan', dueDate: '17 Jul 2025', amount: 3250, status: 'Overdue' },
-  { invoice: 'INV-1021', customer: 'Khalid Ahmed', dueDate: '18 Jul 2025', amount: 1950, status: 'Pending' }
-];
-
-const pendingSupplierPayments = [
-  { supplier: 'ABC Supplier', purchaseOrder: 'PO-001', dueDate: '15 Jul 2025', amount: 4500, status: 'Pending' },
-  { supplier: 'Fresh Milk Co.', purchaseOrder: 'PO-002', dueDate: '16 Jul 2025', amount: 2800, status: 'Pending' },
-  { supplier: 'Packaging Co.', purchaseOrder: 'PO-003', dueDate: '17 Jul 2025', amount: 3250, status: 'Overdue' },
-  { supplier: 'Fruit Supplier', purchaseOrder: 'PO-004', dueDate: '18 Jul 2025', amount: 1950, status: 'Pending' }
-];
-
-const topCustomers = [
-  { customer: 'Ahmed Ali', orders: 120, revenue: 245000, outstanding: 4500 },
-  { customer: 'Sara Mohamed', orders: 98, revenue: 185000, outstanding: 2800 },
-  { customer: 'Omar Hassan', orders: 76, revenue: 132000, outstanding: 3250 },
-  { customer: 'Khalid Ahmed', orders: 68, revenue: 118000, outstanding: 1950 }
-];
-
-const topSuppliers = [
-  { supplier: 'ABC Supplier', purchases: 85, amount: 245000, lastPurchase: '12 Jul 2024' },
-  { supplier: 'Fresh Milk Co.', purchases: 74, amount: 185000, lastPurchase: '11 Jul 2024' },
-  { supplier: 'Packaging Co.', purchases: 55, amount: 132000, lastPurchase: '10 Jul 2024' },
-  { supplier: 'Fruit Supplier', purchases: 45, amount: 118000, lastPurchase: '09 Jul 2024' }
-];
-
-const notifications = [
-  { id: 1, type: 'warning', title: 'Supplier payment to ABC Supplier is due tomorrow', time: '1 hour ago' },
-  { id: 2, type: 'info', title: 'High expenses detected this month', time: '2 hours ago' },
-  { id: 3, type: 'success', title: 'Revenue increased by 18% this month', time: '3 hours ago' },
-  { id: 4, type: 'warning', title: 'Low stock items affecting profit', time: '4 hours ago' },
-  { id: 5, type: 'success', title: 'Customer payment received from Ahmed Ali', time: '5 hours ago' }
-];
 
 // ==========================================
 // KPI CARD
@@ -433,28 +377,68 @@ const FinancePage = () => {
   const [viewMode, setViewMode] = useState('table');
   const [isExporting, setIsExporting] = useState(false);
 
-  // Calculate financial metrics
-  const metrics = useMemo(() => {
-    const totalRevenue = monthlyData.reduce((sum, m) => sum + m.revenue, 0);
-    const totalExpenses = monthlyData.reduce((sum, m) => sum + m.expenses, 0);
-    const netProfit = totalRevenue - totalExpenses;
-    const cashBalance = 510000;
-    const outstandingPayments = 45000;
-    const supplierPaymentsDue = 78000;
-    const todayRevenue = 12450;
-    const monthlyRevenue = 160000;
+  // State for API data
+  const [metrics, setMetrics] = useState({
+    totalRevenue: 0,
+    totalExpenses: 0,
+    netProfit: 0,
+    cashBalance: 0,
+    outstandingPayments: 0,
+    supplierPaymentsDue: 0,
+    todayRevenue: 0,
+    monthlyRevenue: 0
+  });
 
-    return {
-      totalRevenue,
-      totalExpenses,
-      netProfit,
-      cashBalance,
-      outstandingPayments,
-      supplierPaymentsDue,
-      todayRevenue,
-      monthlyRevenue
-    };
-  }, []);
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [expenseCategories, setExpenseCategories] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [customerPayments, setCustomerPayments] = useState([]);
+  const [supplierPayments, setSupplierPayments] = useState([]);
+  const [topCustomers, setTopCustomers] = useState([]);
+  const [topSuppliers, setTopSuppliers] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+
+  // Load all finance data
+  const loadFinanceData = async () => {
+    setIsLoading(true);
+    try {
+      const params = { period: dateRange };
+      if (dateRange === 'custom') {
+        // You can add custom date params here
+      }
+
+      const [metricsRes, revenueRes, expenseRes, transRes, custPayRes, suppPayRes, topCustRes, topSuppRes, notifRes] =
+        await Promise.all([
+          getFinanceMetrics(params),
+          getRevenueExpensesData(params),
+          getExpenseCategories(params),
+          getRecentTransactions({ ...params, per_page: 10 }),
+          getPendingCustomerPayments(params),
+          getPendingSupplierPayments(params),
+          getTopCustomers({ ...params, limit: 4 }),
+          getTopSuppliers({ ...params, limit: 4 }),
+          getFinanceNotifications({ limit: 5 })
+        ]);
+
+      setMetrics(metricsRes.data.data || metrics);
+      setMonthlyData(revenueRes.data.data || []);
+      setExpenseCategories(expenseRes.data.data || []);
+      setTransactions(transRes.data.data || []);
+      setCustomerPayments(custPayRes.data.data || []);
+      setSupplierPayments(suppPayRes.data.data || []);
+      setTopCustomers(topCustRes.data.data || []);
+      setTopSuppliers(topSuppRes.data.data || []);
+      setNotifications(notifRes.data.data || []);
+    } catch (error) {
+      console.error('Error loading finance data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFinanceData();
+  }, [dateRange]);
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -501,13 +485,9 @@ const FinancePage = () => {
     // Toast notification handled by ExportButtons
   };
 
-  // ===== FIX: Handler functions =====
-  const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      alert('Données actualisées');
-    }, 500);
+  const handleRefresh = async () => {
+    await loadFinanceData();
+    alert('Données actualisées avec succès');
   };
 
   const handleViewAllTransactions = () => {
@@ -550,7 +530,7 @@ const FinancePage = () => {
           </select>
           {/* Export Buttons */}
           <ExportButtons
-            data={recentTransactions}
+            data={transactions}
             columns={columns}
             title="Rapport financier"
             subtitle={`Période: ${dateRange} - ${new Date().toLocaleDateString('fr-FR')}`}
@@ -663,7 +643,7 @@ const FinancePage = () => {
               </tr>
             </thead>
             <tbody>
-              {recentTransactions.map((transaction, index) => (
+              {transactions.map((transaction, index) => (
                 <tr key={transaction.id} className="hover:bg-[#F8F7F4] transition-colors border-b border-[#ECE8E1]">
                   <td className="px-4 py-3 text-sm font-medium text-[#3D2F24]">{transaction.id}</td>
                   <td className="px-4 py-3 text-sm text-[#6D6D6D]">{transaction.date}</td>
@@ -695,7 +675,7 @@ const FinancePage = () => {
 
         {/* Mobile Cards */}
         <div className="md:hidden p-4 space-y-3">
-          {recentTransactions.map((transaction) => (
+          {transactions.map((transaction) => (
             <TransactionCard key={transaction.id} transaction={transaction} />
           ))}
         </div>
@@ -710,7 +690,7 @@ const FinancePage = () => {
             <p className="text-xs text-[#6D6D6D]">Paiements clients en attente</p>
           </div>
           <div className="p-4 space-y-3">
-            {pendingCustomerPayments.map((payment, idx) => (
+            {customerPayments.map((payment, idx) => (
               <PendingPaymentCard key={idx} payment={payment} type="customer" />
             ))}
             <button
@@ -729,7 +709,7 @@ const FinancePage = () => {
             <p className="text-xs text-[#6D6D6D]">Paiements fournisseurs en attente</p>
           </div>
           <div className="p-4 space-y-3">
-            {pendingSupplierPayments.map((payment, idx) => (
+            {supplierPayments.map((payment, idx) => (
               <PendingPaymentCard key={idx} payment={payment} type="supplier" />
             ))}
             <button

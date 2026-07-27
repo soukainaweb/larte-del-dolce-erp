@@ -24,6 +24,23 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getRoles,
+  getRoleById,
+  createRole,
+  updateRole,
+  deleteRole,
+  duplicateRole,
+  getRolePermissions,
+  updateRolePermissions,
+  getRoleUsers,
+  addUserToRole,
+  removeUserFromRole,
+  getRoleStatistics,
+  exportRoles,
+  getRoleStatuses,
+  getPermissionModules
+} from '../../services/roleService';
 
 // Components
 import RoleCard from './components/RoleCard';
@@ -39,113 +56,6 @@ import DeleteConfirmModal from './components/DeleteConfirmModal';
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
-
-// ==========================================
-// MOCK DATA
-// ==========================================
-
-const initialRoles = [
-  {
-    id: 1,
-    name: 'Administrateur',
-    description: 'Accès complet à toutes les fonctions du système',
-    color: '#C8A45D',
-    icon: 'Crown',
-    users: 1,
-    permissions: 48,
-    status: 'active',
-    createdAt: '01/01/2025',
-    updatedAt: '17/07/2026',
-    createdBy: 'Système'
-  },
-  {
-    id: 2,
-    name: 'Comptable',
-    description: 'Gère la comptabilité, les factures et les paiements',
-    color: '#3B82F6',
-    icon: 'DollarSign',
-    users: 3,
-    permissions: 32,
-    status: 'active',
-    createdAt: '01/01/2025',
-    updatedAt: '16/07/2026',
-    createdBy: 'Administrateur'
-  },
-  {
-    id: 3,
-    name: 'Responsable Production',
-    description: 'Gère la production, le stock et les produits',
-    color: '#F59E0B',
-    icon: 'Factory',
-    users: 4,
-    permissions: 28,
-    status: 'active',
-    createdAt: '15/02/2025',
-    updatedAt: '15/07/2026',
-    createdBy: 'Administrateur'
-  },
-  {
-    id: 4,
-    name: 'Commercial',
-    description: 'Gère les clients, les commandes et les devis',
-    color: '#22C55E',
-    icon: 'Users',
-    users: 6,
-    permissions: 24,
-    status: 'active',
-    createdAt: '01/03/2025',
-    updatedAt: '14/07/2026',
-    createdBy: 'Administrateur'
-  },
-  {
-    id: 5,
-    name: 'Livreur',
-    description: 'Gère uniquement les livraisons',
-    color: '#8B5CF6',
-    icon: 'Truck',
-    users: 3,
-    permissions: 12,
-    status: 'active',
-    createdAt: '01/04/2025',
-    updatedAt: '13/07/2026',
-    createdBy: 'Administrateur'
-  },
-  {
-    id: 6,
-    name: 'Manager',
-    description: 'Accès aux rapports et validation des opérations',
-    color: '#EC4899',
-    icon: 'Briefcase',
-    users: 2,
-    permissions: 36,
-    status: 'active',
-    createdAt: '01/05/2025',
-    updatedAt: '12/07/2026',
-    createdBy: 'Administrateur'
-  },
-  {
-    id: 7,
-    name: 'Invité',
-    description: 'Accès en lecture seule limité',
-    color: '#6B7280',
-    icon: 'User',
-    users: 0,
-    permissions: 8,
-    status: 'inactive',
-    createdAt: '01/06/2025',
-    updatedAt: '11/07/2026',
-    createdBy: 'Administrateur'
-  }
-];
-
-const initialUsers = [
-  { id: 1, name: 'Mohamed Amine', email: 'amine@lartedolce.com', department: 'Administration', position: 'Administrateur', roleId: 1, status: 'active', lastLogin: '17/07/2026 08:45', assignedDate: '01/01/2025', avatar: null },
-  { id: 2, name: 'Sara El Amrani', email: 'sara@lartedolce.com', department: 'Comptabilité', position: 'Responsable', roleId: 2, status: 'active', lastLogin: '17/07/2026 07:32', assignedDate: '15/01/2025', avatar: null },
-  { id: 3, name: 'Youssef Benali', email: 'youssef@lartedolce.com', department: 'Production', position: 'Responsable', roleId: 3, status: 'active', lastLogin: '17/07/2026 16:20', assignedDate: '01/03/2025', avatar: null },
-  { id: 4, name: 'Hanan Saidi', email: 'hanan@lartedolce.com', department: 'Commercial', position: 'Commercial', roleId: 4, status: 'active', lastLogin: '17/07/2026 14:11', assignedDate: '15/03/2025', avatar: null },
-  { id: 5, name: 'Karim Lahlou', email: 'karim@lartedolce.com', department: 'Production', position: 'Responsable', roleId: 3, status: 'active', lastLogin: '16/07/2026 09:30', assignedDate: '01/04/2025', avatar: null },
-  { id: 6, name: 'Nadia Fassi', email: 'nadia@lartedolce.com', department: 'Commercial', position: 'Commercial', roleId: 4, status: 'inactive', lastLogin: '16/07/2026 10:15', assignedDate: '15/04/2025', avatar: null }
-];
 
 // ==========================================
 // TOAST COMPONENT
@@ -235,14 +145,15 @@ const RolesPermissionsPage = () => {
 
   // States
   const [isLoading, setIsLoading] = useState(false);
-  const [roles, setRoles] = useState(initialRoles);
-  const [users, setUsers] = useState(initialUsers);
+  const [roles, setRoles] = useState([]);
+  const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6);
   const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
   const [isExporting, setIsExporting] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Selected role and modals
   const [selectedRole, setSelectedRole] = useState(null);
@@ -257,6 +168,7 @@ const RolesPermissionsPage = () => {
 
   // Permissions state for the selected role
   const [rolePermissions, setRolePermissions] = useState({});
+  const [permissionModules, setPermissionModules] = useState([]);
 
   // Toast helpers
   const showToast = (message, type = 'success') => {
@@ -267,48 +179,88 @@ const RolesPermissionsPage = () => {
     setToast({ isOpen: false, message: '', type: 'success' });
   };
 
-  // Filter and paginate roles
-  const filteredRoles = useMemo(() => {
-    let filtered = roles;
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(r =>
-        r.name.toLowerCase().includes(term) ||
-        r.description.toLowerCase().includes(term)
-      );
+  // ==========================================
+  // FETCH DATA
+  // ==========================================
+  const fetchRoles = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        sort_by: 'created_at',
+        sort_order: 'desc'
+      };
+      const response = await getRoles(params);
+      const data = response.data.data || [];
+      setRoles(data);
+      setTotalCount(response.data.meta?.total || data.length);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      showToast('Erreur lors du chargement des rôles', 'error');
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(r => r.status === statusFilter);
+  useEffect(() => {
+    fetchRoles();
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  const fetchUsersForRole = async (roleId) => {
+    try {
+      const response = await getRoleUsers(roleId);
+      setUsers(response.data.data || []);
+    } catch (error) {
+      console.error('Error fetching role users:', error);
     }
+  };
 
-    return filtered;
-  }, [roles, searchTerm, statusFilter]);
+  const fetchStats = async () => {
+    try {
+      const response = await getRoleStatistics();
+      const data = response.data.data || {};
+      setStats(data);
+    } catch (error) {
+      console.error('Error fetching role statistics:', error);
+    }
+  };
 
-  const paginatedRoles = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredRoles.slice(start, start + itemsPerPage);
-  }, [filteredRoles, currentPage, itemsPerPage]);
+  const fetchPermissionModules = async () => {
+    try {
+      const response = await getPermissionModules();
+      setPermissionModules(response.data.data || []);
+    } catch (error) {
+      console.error('Error fetching permission modules:', error);
+    }
+  };
 
-  const totalPages = Math.ceil(filteredRoles.length / itemsPerPage);
+  useEffect(() => {
+    fetchStats();
+    fetchPermissionModules();
+  }, []);
 
   // Stats
-  const stats = useMemo(() => {
-    const totalRoles = roles.length;
-    const totalPermissions = roles.reduce((sum, r) => sum + r.permissions, 0);
-    const totalUsers = roles.reduce((sum, r) => sum + r.users, 0);
-    const activePermissions = roles.filter(r => r.status === 'active').length;
-    const pendingRequests = 3;
+  const [stats, setStats] = useState({
+    totalRoles: 0,
+    totalPermissions: 0,
+    totalUsers: 0,
+    activePermissions: 0,
+    pendingRequests: 0
+  });
 
-    return {
-      totalRoles,
-      totalPermissions,
-      totalUsers,
-      activePermissions,
-      pendingRequests
-    };
+  // Filter and paginate roles
+  const filteredRoles = useMemo(() => {
+    return roles;
   }, [roles]);
+
+  const paginatedRoles = useMemo(() => {
+    return filteredRoles;
+  }, [filteredRoles]);
+
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -368,100 +320,112 @@ const RolesPermissionsPage = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleSaveEdit = (formData) => {
+  const handleSaveEdit = async (formData) => {
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      const response = await updateRole(selectedRole.id, formData);
+      const updatedRole = response.data.data;
       setRoles(prev => prev.map(r =>
-        r.id === selectedRole.id ? { ...r, ...formData, updatedAt: new Date().toLocaleDateString('fr-FR') } : r
+        r.id === selectedRole.id ? updatedRole : r
       ));
       setIsEditModalOpen(false);
       setSelectedRole(null);
-      setIsSaving(false);
+      await fetchStats();
       showToast('✅ Rôle modifié avec succès', 'success');
-    }, 800);
+    } catch (error) {
+      console.error('Error updating role:', error);
+      showToast('Erreur lors de la modification du rôle', 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Create Role
-  const handleCreateRole = (formData) => {
+  const handleCreateRole = async (formData) => {
     setIsSaving(true);
-    setTimeout(() => {
-      const newRole = {
-        id: roles.length + 1,
-        ...formData,
-        users: 0,
-        permissions: 0,
-        createdAt: new Date().toLocaleDateString('fr-FR'),
-        updatedAt: new Date().toLocaleDateString('fr-FR'),
-        createdBy: user?.firstName || 'Administrateur'
-      };
+    try {
+      const response = await createRole(formData);
+      const newRole = response.data.data;
       setRoles(prev => [newRole, ...prev]);
       setIsCreateModalOpen(false);
-      setIsSaving(false);
+      await fetchStats();
       showToast('✅ Rôle créé avec succès', 'success');
-    }, 800);
+    } catch (error) {
+      console.error('Error creating role:', error);
+      showToast('Erreur lors de la création du rôle', 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Duplicate Role
-  const handleDuplicateRole = (formData) => {
+  const handleDuplicateRole = async (formData) => {
     setIsSaving(true);
-    setTimeout(() => {
-      const newRole = {
-        ...selectedRole,
-        id: roles.length + 1,
-        name: formData.name,
-        users: formData.copyUsers ? selectedRole.users : 0,
-        permissions: formData.copyPermissions ? selectedRole.permissions : 0,
-        createdAt: new Date().toLocaleDateString('fr-FR'),
-        updatedAt: new Date().toLocaleDateString('fr-FR'),
-        createdBy: user?.firstName || 'Administrateur'
-      };
+    try {
+      const response = await duplicateRole(selectedRole.id, formData);
+      const newRole = response.data.data;
       setRoles(prev => [newRole, ...prev]);
       setIsDuplicateModalOpen(false);
       setSelectedRole(null);
-      setIsSaving(false);
+      await fetchStats();
       showToast('📋 Rôle dupliqué avec succès', 'success');
-    }, 800);
+    } catch (error) {
+      console.error('Error duplicating role:', error);
+      showToast('Erreur lors de la duplication du rôle', 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Delete Role
-  const handleDeleteRole = () => {
+  const handleDeleteRole = async () => {
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      await deleteRole(selectedRole.id);
       setRoles(prev => prev.filter(r => r.id !== selectedRole.id));
       setIsDeleteModalOpen(false);
       setSelectedRole(null);
-      setIsSaving(false);
+      await fetchStats();
       showToast('🗑️ Rôle supprimé avec succès', 'success');
-    }, 800);
+    } catch (error) {
+      console.error('Error deleting role:', error);
+      showToast('Erreur lors de la suppression du rôle', 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Users Management
-  const handleUsersRole = (role) => {
+  const handleUsersRole = async (role) => {
     setSelectedRole(role);
+    await fetchUsersForRole(role.id);
     setIsUsersModalOpen(true);
   };
 
-  const handleAddUserToRole = (user) => {
-    const newUser = {
-      ...user,
-      id: users.length + 1,
-      roleId: selectedRole.id,
-      assignedDate: new Date().toLocaleDateString('fr-FR'),
-      status: 'active'
-    };
-    setUsers(prev => [...prev, newUser]);
-    setRoles(prev => prev.map(r =>
-      r.id === selectedRole.id ? { ...r, users: r.users + 1 } : r
-    ));
-    showToast('✅ Utilisateur ajouté au rôle', 'success');
+  const handleAddUserToRole = async (user) => {
+    try {
+      await addUserToRole(selectedRole.id, { userId: user.id });
+      await fetchUsersForRole(selectedRole.id);
+      await fetchRoles();
+      await fetchStats();
+      showToast('✅ Utilisateur ajouté au rôle', 'success');
+    } catch (error) {
+      console.error('Error adding user to role:', error);
+      showToast('Erreur lors de l\'ajout de l\'utilisateur', 'error');
+    }
   };
 
-  const handleRemoveUserFromRole = (user) => {
-    setUsers(prev => prev.filter(u => u.id !== user.id));
-    setRoles(prev => prev.map(r =>
-      r.id === selectedRole.id ? { ...r, users: Math.max(0, r.users - 1) } : r
-    ));
-    showToast('👤 Utilisateur retiré du rôle', 'info');
+  const handleRemoveUserFromRole = async (user) => {
+    try {
+      await removeUserFromRole(selectedRole.id, user.id);
+      await fetchUsersForRole(selectedRole.id);
+      await fetchRoles();
+      await fetchStats();
+      showToast('👤 Utilisateur retiré du rôle', 'info');
+    } catch (error) {
+      console.error('Error removing user from role:', error);
+      showToast('Erreur lors du retrait de l\'utilisateur', 'error');
+    }
   };
 
   const handleEditUser = (user) => {
@@ -469,45 +433,43 @@ const RolesPermissionsPage = () => {
   };
 
   // Permissions Management
-  const handlePermissionsRole = (role) => {
+  const handlePermissionsRole = async (role) => {
     setSelectedRole(role);
-    // Générer des permissions pour le rôle
-    const perms = {};
-    const modules = ['dashboard', 'orders', 'customers', 'products', 'production', 'inventory'];
-    const permTypes = ['view', 'create', 'edit', 'delete', 'export', 'validate', 'approve'];
-    modules.forEach(module => {
-      perms[module] = {};
-      permTypes.forEach(perm => {
-        perms[module][perm] = role.id === 1;
-      });
-    });
-    setRolePermissions(perms);
-    setIsPermissionsModalOpen(true);
+    try {
+      const response = await getRolePermissions(role.id);
+      setRolePermissions(response.data.data || {});
+      setIsPermissionsModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching role permissions:', error);
+      showToast('Erreur lors du chargement des permissions', 'error');
+    }
   };
 
-  const handleSavePermissions = (permissions) => {
+  const handleSavePermissions = async (permissions) => {
     setIsSaving(true);
-    setTimeout(() => {
-      const count = Object.values(permissions).reduce((sum, module) => {
-        return sum + Object.values(module).filter(v => v === true).length;
-      }, 0);
+    try {
+      const response = await updateRolePermissions(selectedRole.id, { permissions });
+      const updatedRole = response.data.data;
       setRoles(prev => prev.map(r =>
-        r.id === selectedRole.id ? { ...r, permissions: count, updatedAt: new Date().toLocaleDateString('fr-FR') } : r
+        r.id === selectedRole.id ? updatedRole : r
       ));
       setIsPermissionsModalOpen(false);
       setSelectedRole(null);
-      setIsSaving(false);
+      await fetchStats();
       showToast('✅ Permissions mises à jour avec succès', 'success');
-    }, 800);
+    } catch (error) {
+      console.error('Error updating permissions:', error);
+      showToast('Erreur lors de la mise à jour des permissions', 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // General actions
-  const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      showToast('🔄 Données actualisées', 'success');
-    }, 800);
+  const handleRefresh = async () => {
+    await fetchRoles();
+    await fetchStats();
+    showToast('🔄 Données actualisées', 'success');
   };
 
   const handleHistory = () => {
@@ -711,7 +673,7 @@ const RolesPermissionsPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
           <p className="text-sm text-[#7A7A7A]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredRoles.length)} sur {filteredRoles.length} rôles
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} rôles
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -800,6 +762,7 @@ const RolesPermissionsPage = () => {
             }}
             role={selectedRole}
             permissions={rolePermissions}
+            modules={permissionModules}
             onSave={handleSavePermissions}
             isLoading={isSaving}
           />
@@ -814,7 +777,7 @@ const RolesPermissionsPage = () => {
               resetSelectedRole();
             }}
             role={selectedRole}
-            users={users.filter(u => u.roleId === selectedRole?.id)}
+            users={users}
             onAddUser={handleAddUserToRole}
             onEditUser={handleEditUser}
             onRemoveUser={handleRemoveUserFromRole}

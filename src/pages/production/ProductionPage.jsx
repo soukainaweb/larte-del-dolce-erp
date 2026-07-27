@@ -29,6 +29,18 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getProductions,
+  createProduction,
+  updateProduction,
+  deleteProduction,
+  updateProductionStatus,
+  updateProductionProgress,
+  getProductionStatistics,
+  exportProductions,
+  getProductionStatuses,
+  getProductionPriorities
+} from '../../services/productionService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -659,129 +671,78 @@ const ProductionPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Load productions
-  useEffect(() => {
-    const fetchProductions = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockProductions = [
-          {
-            id: 1,
-            name: 'Gâteau Chocolat - Commande CMD-1258',
-            orderId: 'CMD-1258',
-            product: 'Gâteau Chocolat',
-            quantity: 50,
-            status: 'in_progress',
-            priority: 'high',
-            progress: 75,
-            assignedTo: 'Mohamed Amine',
-            startDate: new Date('2025-05-10'),
-            endDate: new Date('2025-05-14'),
-            notes: 'Production en cours, avancement rapide',
-            createdAt: new Date('2025-05-09')
-          },
-          {
-            id: 2,
-            name: 'Tarte aux Fruits - Commande CMD-1257',
-            orderId: 'CMD-1257',
-            product: 'Tarte aux Fruits',
-            quantity: 30,
-            status: 'pending',
-            priority: 'medium',
-            progress: 0,
-            assignedTo: 'Sara El Idrissi',
-            startDate: null,
-            endDate: new Date('2025-05-16'),
-            notes: 'En attente de matière première',
-            createdAt: new Date('2025-05-11')
-          },
-          {
-            id: 3,
-            name: 'Éclair Vanille - Commande CMD-1256',
-            orderId: 'CMD-1256',
-            product: 'Éclair Vanille',
-            quantity: 100,
-            status: 'paused',
-            priority: 'low',
-            progress: 45,
-            assignedTo: 'Ahmed Benjelloun',
-            startDate: new Date('2025-05-08'),
-            endDate: null,
-            notes: 'Suspendue pour maintenance',
-            createdAt: new Date('2025-05-08')
-          },
-          {
-            id: 4,
-            name: 'Croissant Beurre - Commande CMD-1255',
-            orderId: 'CMD-1255',
-            product: 'Croissant Beurre',
-            quantity: 200,
-            status: 'completed',
-            priority: 'medium',
-            progress: 100,
-            assignedTo: 'Fatima Zahra',
-            startDate: new Date('2025-05-06'),
-            endDate: new Date('2025-05-09'),
-            notes: 'Production terminée avec succès',
-            createdAt: new Date('2025-05-05')
-          },
-          {
-            id: 5,
-            name: 'Pain au Chocolat - Commande CMD-1254',
-            orderId: 'CMD-1254',
-            product: 'Pain au Chocolat',
-            quantity: 150,
-            status: 'cancelled',
-            priority: 'high',
-            progress: 20,
-            assignedTo: 'Karim Lahlou',
-            startDate: new Date('2025-05-07'),
-            endDate: null,
-            notes: 'Annulée par le client',
-            createdAt: new Date('2025-05-07')
-          }
-        ];
-        setProductions(mockProductions);
-      } catch (error) {
-        console.error('Error fetching productions:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchProductions = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        sort_by: 'createdAt',
+        sort_order: 'desc'
+      };
+      const response = await getProductions(params);
+      setProductions(response.data.data || []);
+      setTotalCount(response.data.meta?.total || 0);
+    } catch (error) {
+      console.error('Error fetching productions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchProductions();
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  // Calculate KPIs from API statistics
+  const [kpis, setKpis] = useState({
+    total: 0,
+    inProgress: 0,
+    pending: 0,
+    completed: 0,
+    cancelled: 0,
+    avgProgress: 0
+  });
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await getProductionStatistics();
+      const stats = response.data.data || {};
+      setKpis({
+        total: stats.total || 0,
+        inProgress: stats.in_progress || 0,
+        pending: stats.pending || 0,
+        completed: stats.completed || 0,
+        cancelled: stats.cancelled || 0,
+        avgProgress: stats.avg_progress || 0
+      });
+    } catch (error) {
+      console.error('Error fetching production statistics:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatistics();
   }, []);
 
-  // Filter productions
+  // Filter productions (client-side for demo, API already handles filters)
   const filteredProductions = useMemo(() => {
-    let filtered = productions;
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(term) ||
-        p.orderId.toLowerCase().includes(term) ||
-        p.product.toLowerCase().includes(term) ||
-        p.assignedTo.toLowerCase().includes(term)
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(p => p.status === statusFilter);
-    }
-
-    return filtered;
-  }, [productions, searchTerm, statusFilter]);
+    return productions;
+  }, [productions]);
 
   // Paginate
   const paginatedProductions = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredProductions.slice(start, start + itemsPerPage);
-  }, [filteredProductions, currentPage, itemsPerPage]);
+    return filteredProductions;
+  }, [filteredProductions]);
 
-  const totalPages = Math.ceil(filteredProductions.length / itemsPerPage);
+  const totalPages = useMemo(() => {
+    return Math.ceil(totalCount / itemsPerPage) || 1;
+  }, [totalCount, itemsPerPage]);
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -818,24 +779,15 @@ const ProductionPage = () => {
   });
 
   const summary = useMemo(() => {
-    const total = filteredProductions.length;
-    const inProgress = filteredProductions.filter(p => p.status === 'in_progress').length;
-    const pending = filteredProductions.filter(p => p.status === 'pending').length;
-    const completed = filteredProductions.filter(p => p.status === 'completed').length;
-    const cancelled = filteredProductions.filter(p => p.status === 'cancelled').length;
-    const avgProgress = filteredProductions.length > 0 
-      ? Math.round(filteredProductions.reduce((sum, p) => sum + p.progress, 0) / filteredProductions.length) 
-      : 0;
-
     return [
-      { label: 'Total productions', value: total },
-      { label: 'En production', value: inProgress },
-      { label: 'En attente', value: pending },
-      { label: 'Terminées', value: completed },
-      { label: 'Annulées', value: cancelled },
-      { label: 'Progression moyenne', value: `${avgProgress}%` }
+      { label: 'Total productions', value: kpis.total },
+      { label: 'En production', value: kpis.inProgress },
+      { label: 'En attente', value: kpis.pending },
+      { label: 'Terminées', value: kpis.completed },
+      { label: 'Annulées', value: kpis.cancelled },
+      { label: 'Progression moyenne', value: `${kpis.avgProgress}%` }
     ];
-  }, [filteredProductions]);
+  }, [kpis]);
 
   // ==========================================
   // EXPORT HANDLERS
@@ -852,14 +804,11 @@ const ProductionPage = () => {
   const handleCreateProduction = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newProduction = {
-        id: productions.length + 1,
-        ...formData,
-        createdAt: new Date()
-      };
+      const response = await createProduction(formData);
+      const newProduction = response.data.data;
       setProductions(prev => [newProduction, ...prev]);
       setIsCreateModalOpen(false);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error creating production:', error);
     } finally {
@@ -870,12 +819,14 @@ const ProductionPage = () => {
   const handleEditProduction = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await updateProduction(selectedProduction.id, formData);
+      const updatedProduction = response.data.data;
       setProductions(prev => prev.map(p =>
-        p.id === selectedProduction.id ? { ...p, ...formData } : p
+        p.id === selectedProduction.id ? updatedProduction : p
       ));
       setIsEditModalOpen(false);
       setSelectedProduction(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error updating production:', error);
     } finally {
@@ -886,10 +837,11 @@ const ProductionPage = () => {
   const handleDeleteProduction = async () => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await deleteProduction(selectedProduction.id);
       setProductions(prev => prev.filter(p => p.id !== selectedProduction.id));
       setIsDeleteModalOpen(false);
       setSelectedProduction(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error deleting production:', error);
     } finally {
@@ -897,9 +849,10 @@ const ProductionPage = () => {
     }
   };
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  const handleRefresh = () => {
+    fetchProductions();
+    fetchStatistics();
+  };
 
   const uniqueStatuses = useMemo(() => {
     const statuses = new Set(productions.map(p => p.status));
@@ -922,7 +875,7 @@ const ProductionPage = () => {
             data={filteredProductions}
             columns={columns}
             title="Liste des productions"
-            subtitle={`${filteredProductions.length} productions - Progression moyenne: ${Math.round(filteredProductions.reduce((sum, p) => sum + p.progress, 0) / (filteredProductions.length || 1))}%`}
+            subtitle={`${filteredProductions.length} productions - Progression moyenne: ${kpis.avgProgress}%`}
             filename={`production_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -938,9 +891,9 @@ const ProductionPage = () => {
             Nouvelle production
           </button>
           <button
+            onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
             title="Actualiser"
-            onClick={() => window.location.reload()}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1087,7 +1040,7 @@ const ProductionPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredProductions.length)} sur {filteredProductions.length} productions
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} productions
           </p>
           <div className="flex items-center gap-2">
             <button

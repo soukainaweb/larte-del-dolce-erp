@@ -56,6 +56,12 @@ const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
 
 // ==========================================
+// CONSTANTES - DEVISE
+// ==========================================
+const CURRENCY = 'SAR';
+const CURRENCY_SYMBOL = 'ر.س';
+
+// ==========================================
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
@@ -156,44 +162,49 @@ const KPICard = ({ icon: Icon, title, value, color, subtitle }) => {
 // DELIVERY CARD (Mobile)
 // ==========================================
 const DeliveryCard = ({ delivery, onView, onEdit, onDelete, onStatusChange }) => {
+  // Valeur par défaut pour éviter les erreurs
+  const totalAmount = delivery?.totalAmount || 0;
+  const deliveryDate = delivery?.deliveryDate ? new Date(delivery.deliveryDate) : new Date();
+  const createdAt = delivery?.createdAt ? new Date(delivery.createdAt) : new Date();
+
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-bold text-[#3D2F24]">{delivery.deliveryId}</p>
-          <p className="text-xs text-[#6D6D6D]">Commande: {delivery.orderNumber}</p>
+          <p className="text-sm font-bold text-[#3D2F24]">{delivery?.deliveryId || '—'}</p>
+          <p className="text-xs text-[#6D6D6D]">Commande: {delivery?.orderNumber || '—'}</p>
         </div>
-        <StatusBadge status={delivery.status} />
+        <StatusBadge status={delivery?.status} />
       </div>
       <div className="flex items-center gap-2">
         <User size={14} className="text-[#6D6D6D]" />
-        <p className="text-sm font-medium text-[#3D2F24]">{delivery.customer}</p>
+        <p className="text-sm font-medium text-[#3D2F24]">{delivery?.customer || '—'}</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <PaymentBadge status={delivery.paymentStatus} />
-        <VehicleBadge vehicle={delivery.vehicle} />
+        <PaymentBadge status={delivery?.paymentStatus} />
+        <VehicleBadge vehicle={delivery?.vehicle} />
       </div>
       <div className="grid grid-cols-2 gap-2 text-xs text-[#6D6D6D]">
         <div className="flex items-center gap-1">
           <Calendar size={12} />
-          {new Date(delivery.deliveryDate).toLocaleDateString('fr-FR')}
+          {deliveryDate.toLocaleDateString('fr-FR')}
         </div>
         <div className="flex items-center gap-1">
           <Clock size={12} />
-          {delivery.deliveryTime}
+          {delivery?.deliveryTime || '—'}
         </div>
         <div className="flex items-center gap-1">
           <User size={12} />
-          {delivery.deliveryPerson || 'Non assigné'}
+          {delivery?.deliveryPerson || 'Non assigné'}
         </div>
         <div className="flex items-center gap-1">
           <DollarSign size={12} />
-          {delivery.totalAmount.toLocaleString()} DH
+          {totalAmount.toLocaleString()} {CURRENCY_SYMBOL}
         </div>
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#ECE8E1]">
         <div className="flex items-center gap-1">
-          {delivery.isUrgent && (
+          {delivery?.isUrgent && (
             <span className="text-[10px] font-semibold px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full">Urgent</span>
           )}
         </div>
@@ -217,6 +228,10 @@ const DeliveryCard = ({ delivery, onView, onEdit, onDelete, onStatusChange }) =>
 // DELIVERY TABLE ROW (Desktop)
 // ==========================================
 const DeliveryTableRow = ({ delivery, onView, onEdit, onDelete, onStatusChange, index }) => {
+  // Valeur par défaut pour éviter les erreurs
+  const totalAmount = delivery?.totalAmount || 0;
+  const deliveryDate = delivery?.deliveryDate ? new Date(delivery.deliveryDate) : new Date();
+
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -225,23 +240,23 @@ const DeliveryTableRow = ({ delivery, onView, onEdit, onDelete, onStatusChange, 
       className="hover:bg-[#F8F7F4] transition-colors border-b border-[#ECE8E1]"
     >
       <td className="px-4 py-3">
-        <p className="text-sm font-bold text-[#3D2F24]">{delivery.deliveryId}</p>
-        <p className="text-xs text-[#6D6D6D]">{delivery.orderNumber}</p>
+        <p className="text-sm font-bold text-[#3D2F24]">{delivery?.deliveryId || '—'}</p>
+        <p className="text-xs text-[#6D6D6D]">{delivery?.orderNumber || '—'}</p>
       </td>
-      <td className="px-4 py-3 text-sm text-[#3D2F24]">{delivery.customer}</td>
-      <td className="px-4 py-3 text-sm text-[#6D6D6D]">{delivery.deliveryPerson || '—'}</td>
+      <td className="px-4 py-3 text-sm text-[#3D2F24]">{delivery?.customer || '—'}</td>
+      <td className="px-4 py-3 text-sm text-[#6D6D6D]">{delivery?.deliveryPerson || '—'}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {new Date(delivery.deliveryDate).toLocaleDateString('fr-FR')}
+        {deliveryDate.toLocaleDateString('fr-FR')}
       </td>
-      <td className="px-4 py-3 text-sm text-[#6D6D6D]">{delivery.deliveryTime}</td>
+      <td className="px-4 py-3 text-sm text-[#6D6D6D]">{delivery?.deliveryTime || '—'}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#3D2F24]">
-        {delivery.totalAmount.toLocaleString()} DH
+        {totalAmount.toLocaleString()} {CURRENCY_SYMBOL}
       </td>
       <td className="px-4 py-3">
-        <PaymentBadge status={delivery.paymentStatus} />
+        <PaymentBadge status={delivery?.paymentStatus} />
       </td>
       <td className="px-4 py-3">
-        <StatusBadge status={delivery.status} />
+        <StatusBadge status={delivery?.status} />
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1">
@@ -273,7 +288,7 @@ const DeliveryTableRow = ({ delivery, onView, onEdit, onDelete, onStatusChange, 
 };
 
 // ==========================================
-// DELIVERY MODAL (Add/Edit)
+// DELIVERY MODAL (Add/Edit) - CORRIGÉ
 // ==========================================
 const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -297,6 +312,16 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
 
   useEffect(() => {
     if (delivery) {
+      // CORRECTION: Vérifier si deliveryDate est une chaîne ou un objet Date
+      let deliveryDateStr = '';
+      if (delivery.deliveryDate) {
+        if (typeof delivery.deliveryDate === 'string') {
+          deliveryDateStr = delivery.deliveryDate.split('T')[0];
+        } else if (delivery.deliveryDate instanceof Date) {
+          deliveryDateStr = delivery.deliveryDate.toISOString().split('T')[0];
+        }
+      }
+
       setFormData({
         orderNumber: delivery.orderNumber || '',
         customer: delivery.customer || '',
@@ -304,7 +329,7 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
         phone: delivery.phone || '',
         deliveryPerson: delivery.deliveryPerson || '',
         vehicle: delivery.vehicle || 'car',
-        deliveryDate: delivery.deliveryDate ? delivery.deliveryDate.split('T')[0] : '',
+        deliveryDate: deliveryDateStr,
         deliveryTime: delivery.deliveryTime || '',
         notes: delivery.notes || '',
         status: delivery.status || 'pending',
@@ -549,7 +574,7 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Frais de livraison</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Frais de livraison ({CURRENCY_SYMBOL})</label>
               <input
                 type="number"
                 name="deliveryFees"
@@ -668,13 +693,18 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, delivery, isLoading }) => {
 const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
   if (!isOpen || !delivery) return null;
 
+  const totalAmount = delivery?.totalAmount || 0;
+  const deliveryFees = delivery?.deliveryFees || 0;
+  const deliveryDate = delivery?.deliveryDate ? new Date(delivery.deliveryDate) : new Date();
+  const createdAt = delivery?.createdAt ? new Date(delivery.createdAt) : new Date();
+
   const timeline = [
-    { status: 'Order Created', date: new Date(delivery.createdAt || Date.now()), completed: true },
-    { status: 'Preparing', date: new Date(delivery.createdAt || Date.now()), completed: true },
-    { status: 'Ready', date: new Date(delivery.createdAt || Date.now()), completed: delivery.status !== 'pending' },
-    { status: 'Assigned', date: new Date(delivery.createdAt || Date.now()), completed: delivery.status !== 'pending' && delivery.status !== 'preparing' },
-    { status: 'Out for Delivery', date: new Date(delivery.createdAt || Date.now()), completed: delivery.status === 'out_for_delivery' || delivery.status === 'delivered' },
-    { status: 'Delivered', date: new Date(delivery.createdAt || Date.now()), completed: delivery.status === 'delivered' }
+    { status: 'Order Created', date: createdAt, completed: true },
+    { status: 'Preparing', date: createdAt, completed: true },
+    { status: 'Ready', date: createdAt, completed: delivery.status !== 'pending' },
+    { status: 'Assigned', date: createdAt, completed: delivery.status !== 'pending' && delivery.status !== 'preparing' },
+    { status: 'Out for Delivery', date: createdAt, completed: delivery.status === 'out_for_delivery' || delivery.status === 'delivered' },
+    { status: 'Delivered', date: createdAt, completed: delivery.status === 'delivered' }
   ];
 
   return (
@@ -733,7 +763,7 @@ const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">Date</p>
               <p className="text-sm font-medium text-[#3D2F24]">
-                {new Date(delivery.deliveryDate).toLocaleDateString('fr-FR')}
+                {deliveryDate.toLocaleDateString('fr-FR')}
               </p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
@@ -742,11 +772,11 @@ const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">Total</p>
-              <p className="text-sm font-bold text-[#3D2F24]">{delivery.totalAmount.toLocaleString()} DH</p>
+              <p className="text-sm font-bold text-[#3D2F24]">{totalAmount.toLocaleString()} {CURRENCY_SYMBOL}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">Frais</p>
-              <p className="text-sm font-medium text-[#3D2F24]">{delivery.deliveryFees || 0} DH</p>
+              <p className="text-sm font-medium text-[#3D2F24]">{deliveryFees.toLocaleString()} {CURRENCY_SYMBOL}</p>
             </div>
           </div>
 
@@ -980,13 +1010,13 @@ const DeliveriesPage = () => {
   ];
 
   const rowFormatter = (item) => ({
-    deliveryId: item.deliveryId,
-    orderNumber: item.orderNumber,
-    customer: item.customer,
+    deliveryId: item.deliveryId || '—',
+    orderNumber: item.orderNumber || '—',
+    customer: item.customer || '—',
     deliveryPerson: item.deliveryPerson || 'Non assigné',
-    deliveryDate: new Date(item.deliveryDate).toLocaleDateString('fr-FR'),
-    deliveryTime: item.deliveryTime,
-    totalAmount: `${item.totalAmount.toLocaleString()} DH`,
+    deliveryDate: item.deliveryDate ? new Date(item.deliveryDate).toLocaleDateString('fr-FR') : '—',
+    deliveryTime: item.deliveryTime || '—',
+    totalAmount: `${(item.totalAmount || 0).toLocaleString()} ${CURRENCY_SYMBOL}`,
     paymentStatus: item.paymentStatus === 'paid' ? 'Payée' : item.paymentStatus === 'partial' ? 'Partielle' : 'Non payée',
     status: item.status === 'pending' ? 'En attente' :
             item.status === 'assigned' ? 'Assignée' :
@@ -994,7 +1024,7 @@ const DeliveriesPage = () => {
             item.status === 'out_for_delivery' ? 'En livraison' :
             item.status === 'delivered' ? 'Livrée' :
             item.status === 'cancelled' ? 'Annulée' :
-            item.status === 'failed' ? 'Échouée' : item.status
+            item.status === 'failed' ? 'Échouée' : item.status || '—'
   });
 
   const summary = [
@@ -1069,6 +1099,7 @@ const DeliveriesPage = () => {
         id: deliveries.length + 1,
         deliveryId: `DEL-${String(deliveries.length + 1).padStart(4, '0')}`,
         ...formData,
+        totalAmount: 0,
         createdAt: new Date()
       };
       setDeliveries(prev => [newDelivery, ...prev]);

@@ -1,224 +1,48 @@
 // src/pages/MyProfile/MyProfilePage.jsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom'; // ✅ Ajout
 import {
-  User,
-  Mail,
-  Phone,
-  Calendar,
-  MapPin,
-  Globe,
-  Clock,
-  Building,
-  Briefcase,
-  Shield,
-  Lock,
-  Key,
-  Eye,
-  EyeOff,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Info,
-  Upload,
-  Trash2,
-  Edit2,
-  Save,
-  X,
-  ChevronDown,
-  ChevronUp,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  Filter,
-  Download,
-  FileSpreadsheet,
-  Printer,
-  RefreshCw,
-  LogOut,
-  Smartphone,
-  Monitor,
-  Server,
-  Wifi,
-  Globe as GlobeIcon,
-  Languages,
-  Sun,
-  Moon,
-  Laptop,
-  Activity,
-  Bell,
-  BellOff,
-  BellRing,
-  MessageSquare,
-  UserPlus,
-  UserCheck,
-  UserX,
-  Fingerprint,
-  Scan,
-  QrCode,
-  ShieldCheck,
-  ShieldAlert,
-  ShieldOff,
-  Database,
-  HardDrive,
-  Cpu,
-  Network,
-  Cloud,
-  WifiOff,
-  Bluetooth,
-  Battery,
-  BatteryCharging,
-  BatteryFull,
-  BatteryMedium,
-  BatteryLow,
-  Camera,
-  Image,
-  FileImage,
-  FileText,
-  File,
-  Folder,
-  FolderOpen,
-  FolderTree,
-  Home,
-  LayoutDashboard,
-  ClipboardList,
-  Package,
-  Users,
-  Truck,
-  Factory,
-  FileText as FileTextIcon,
-  CreditCard,
-  DollarSign,
-  BarChart3,
-  PieChart,
-  Settings,
-  HelpCircle,
-  BookOpen,
-  LifeBuoy,
-  LogOut as LogOutIcon,
-  Plus,
-  Minus,
-  ZoomIn,
-  ZoomOut,
-  RotateCw,
-  RotateCcw,
-  Crop,
-  Maximize2,
-  Minimize2,
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Mic,
-  MicOff,
-  Headphones,
-  Music,
-  Radio,
-  Tv,
-  Monitor as MonitorIcon,
-  Tablet,
-  Smartphone as SmartphoneIcon,
-  Laptop as LaptopIcon,
-  Server as ServerIcon,
-  Database as DatabaseIcon,
-  Cloud as CloudIcon,
-  Wifi as WifiIcon,
-  Bluetooth as BluetoothIcon,
-  Battery as BatteryIcon,
-  BatteryCharging as BatteryChargingIcon,
-  BatteryFull as BatteryFullIcon,
-  BatteryMedium as BatteryMediumIcon,
-  BatteryLow as BatteryLowIcon,
-  Camera as CameraIcon,
-  Image as ImageIcon,
-  FileImage as FileImageIcon,
-  FileText as FileTextIcon2,
-  File as FileIcon,
-  Folder as FolderIcon,
-  FolderOpen as FolderOpenIcon,
-  FolderTree as FolderTreeIcon,
-  Home as HomeIcon,
-  LayoutDashboard as LayoutDashboardIcon,
-  ClipboardList as ClipboardListIcon,
-  Package as PackageIcon,
-  Users as UsersIcon,
-  Truck as TruckIcon,
-  Factory as FactoryIcon,
-  FileText as FileTextIcon3,
-  CreditCard as CreditCardIcon,
-  DollarSign as DollarSignIcon,
-  BarChart3 as BarChart3Icon,
-  PieChart as PieChartIcon,
-  Settings as SettingsIcon,
-  HelpCircle as HelpCircleIcon,
-  BookOpen as BookOpenIcon,
-  LifeBuoy as LifeBuoyIcon,
-  LogOut as LogOutIcon2
+  User, Mail, Phone, Calendar, MapPin, Globe, Clock,
+  Building, Briefcase, Shield, Lock, Key, Eye, EyeOff,
+  CheckCircle, XCircle, AlertCircle, Info, Upload, Trash2,
+  Edit2, Save, X, Plus, Download, LogOut, Smartphone, Monitor,
+  Laptop, Activity, Bell, BellOff, BellRing, MessageSquare,
+  ShieldCheck, Camera, FileText as FileTextIcon, Users, Package,
+  ClipboardList, CreditCard, DollarSign, BarChart3, Settings
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getProfile,
+  updateProfile,
+  uploadAvatar,
+  removeAvatar,
+  changePassword,
+  updatePreferences,
+  getActivityLog,
+  getSessions,
+  revokeSession,
+  revokeAllSessions,
+  getDocuments,
+  uploadDocument,
+  deleteDocument,
+  downloadDocument,
+  getPermissions,
+  getUserStats,
+  updateTwoFactorAuth,
+} from '../../services/userService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
-
-// ==========================================
-// CONSTANTS
-// ==========================================
 const CURRENCY = 'SAR';
 
 // ==========================================
-// DONNÉES STATIQUES (en dehors du composant)
+// COMPOSANT: TOAST
 // ==========================================
-
-// Activités récentes - STATIQUE
-const recentActivities = [
-  { id: 1, type: 'login', action: 'Connexion', module: 'Authentification', date: '17/07/2026', time: '08:30', ip: '197.74.12.45', device: 'Windows PC', browser: 'Chrome' },
-  { id: 2, type: 'update', action: 'Profil mis à jour', module: 'Mon Profil', date: '17/07/2026', time: '07:45', ip: '197.74.12.45', device: 'Windows PC', browser: 'Chrome' },
-  { id: 3, type: 'password', action: 'Mot de passe changé', module: 'Sécurité', date: '16/07/2026', time: '14:20', ip: '41.105.19.33', device: 'MacBook Pro', browser: 'Safari' },
-  { id: 4, type: 'photo', action: 'Photo modifiée', module: 'Mon Profil', date: '16/07/2026', time: '13:10', ip: '41.105.19.33', device: 'MacBook Pro', browser: 'Safari' },
-  { id: 5, type: 'order', action: 'Commande créée', module: 'Commandes', date: '15/07/2026', time: '16:45', ip: '105.156.7.21', device: 'iPhone 14', browser: 'Safari' },
-  { id: 6, type: 'invoice', action: 'Facture générée', module: 'Factures', date: '15/07/2026', time: '15:30', ip: '105.156.7.21', device: 'iPhone 14', browser: 'Safari' },
-  { id: 7, type: 'report', action: 'Rapport téléchargé', module: 'Rapports', date: '14/07/2026', time: '11:20', ip: '197.74.12.45', device: 'Windows PC', browser: 'Chrome' },
-  { id: 8, type: 'notification', action: 'Notification consultée', module: 'Notifications', date: '14/07/2026', time: '09:15', ip: '197.74.12.45', device: 'Windows PC', browser: 'Chrome' }
-];
-
-// Données initiales des sessions
-const initialActiveSessions = [
-  { id: 1, device: 'Windows PC', browser: 'Chrome', os: 'Windows 11', ip: '197.74.12.45', city: 'Casablanca', lastActivity: '17/07/2026 08:30', status: 'active', current: true },
-  { id: 2, device: 'MacBook Pro', browser: 'Safari', os: 'macOS 14', ip: '41.105.19.33', city: 'Rabat', lastActivity: '16/07/2026 14:20', status: 'active', current: false },
-  { id: 3, device: 'iPhone 14', browser: 'Safari', os: 'iOS 17', ip: '105.156.7.21', city: 'Casablanca', lastActivity: '15/07/2026 16:45', status: 'active', current: false },
-  { id: 4, device: 'Android', browser: 'Chrome', os: 'Android 14', ip: '197.74.12.45', city: 'Casablanca', lastActivity: '14/07/2026 09:15', status: 'inactive', current: false }
-];
-
-// Données initiales des documents
-const initialDocuments = [
-  { id: 1, name: 'Photo de profil', type: 'image', size: '2.4 MB', date: '17/07/2026', icon: ImageIcon },
-  { id: 2, name: 'CV', type: 'pdf', size: '1.2 MB', date: '15/07/2026', icon: FileTextIcon },
-  { id: 3, name: 'Contrat de travail', type: 'pdf', size: '3.5 MB', date: '10/07/2026', icon: FileTextIcon },
-  { id: 4, name: 'Carte d\'identité', type: 'image', size: '1.1 MB', date: '05/07/2026', icon: FileImageIcon }
-];
-
-// Permissions - STATIQUE
-const permissions = [
-  { module: 'Dashboard', view: true, create: true, edit: true, delete: true },
-  { module: 'Commandes', view: true, create: true, edit: true, delete: true },
-  { module: 'Produits', view: true, create: true, edit: true, delete: false },
-  { module: 'Clients', view: true, create: true, edit: true, delete: false },
-  { module: 'Factures', view: true, create: true, edit: true, delete: false },
-  { module: 'Rapports', view: true, create: true, edit: true, delete: false },
-  { module: 'Analytics', view: true, create: false, edit: false, delete: false },
-  { module: 'Production', view: true, create: false, edit: false, delete: false },
-  { module: 'Paramètres', view: false, create: false, edit: false, delete: false }
-];
-
-// ==========================================
-// COMPOSANTS UI
-// ==========================================
-
-// Toast Notification
 const Toast = ({ message, type = 'success', onClose }) => {
   const typeConfig = {
     success: 'bg-emerald-50 border-emerald-200 text-emerald-700',
@@ -397,14 +221,14 @@ const StatCard = ({ icon: Icon, title, value, color, subtitle }) => {
 };
 
 // ==========================================
-// COMPOSANT: ACTIVITY TIMELINE
+// COMPOSANT: ACTIVITY ITEM
 // ==========================================
 const ActivityItem = ({ activity }) => {
   const typeConfig = {
-    login: { icon: LogOutIcon, color: 'bg-blue-50 text-blue-600' },
+    login: { icon: LogOut, color: 'bg-blue-50 text-blue-600' },
     update: { icon: Edit2, color: 'bg-amber-50 text-amber-600' },
     password: { icon: Lock, color: 'bg-rose-50 text-rose-600' },
-    photo: { icon: ImageIcon, color: 'bg-purple-50 text-purple-600' },
+    photo: { icon: Image, color: 'bg-purple-50 text-purple-600' },
     order: { icon: ClipboardList, color: 'bg-green-50 text-green-600' },
     invoice: { icon: FileTextIcon, color: 'bg-indigo-50 text-indigo-600' },
     report: { icon: Download, color: 'bg-cyan-50 text-cyan-600' },
@@ -446,14 +270,14 @@ const SessionCard = ({ session, onDisconnect }) => {
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2 md:gap-3">
           <div className="p-1.5 md:p-2 rounded-xl bg-[#F8F7F4]">
-            {session.device.includes('Windows') && <Monitor size={16} className="md:w-[18px] md:h-[18px] text-[#6D6D6D]" />}
-            {session.device.includes('Mac') && <Laptop size={16} className="md:w-[18px] md:h-[18px] text-[#6D6D6D]" />}
-            {session.device.includes('iPhone') && <Smartphone size={16} className="md:w-[18px] md:h-[18px] text-[#6D6D6D]" />}
-            {session.device.includes('Android') && <Smartphone size={16} className="md:w-[18px] md:h-[18px] text-[#6D6D6D]" />}
+            {session.device?.includes('Windows') && <Monitor size={16} className="md:w-[18px] md:h-[18px] text-[#6D6D6D]" />}
+            {session.device?.includes('Mac') && <Laptop size={16} className="md:w-[18px] md:h-[18px] text-[#6D6D6D]" />}
+            {session.device?.includes('iPhone') && <Smartphone size={16} className="md:w-[18px] md:h-[18px] text-[#6D6D6D]" />}
+            {session.device?.includes('Android') && <Smartphone size={16} className="md:w-[18px] md:h-[18px] text-[#6D6D6D]" />}
           </div>
           <div>
-            <p className="text-xs md:text-sm font-medium text-[#3D2F24]">{session.device}</p>
-            <p className="text-[10px] md:text-xs text-[#6D6D6D]">{session.browser} • {session.os}</p>
+            <p className="text-xs md:text-sm font-medium text-[#3D2F24]">{session.device || 'Appareil inconnu'}</p>
+            <p className="text-[10px] md:text-xs text-[#6D6D6D]">{session.browser || '—'} • {session.os || '—'}</p>
           </div>
         </div>
         <div className="flex items-center gap-1 md:gap-2">
@@ -462,19 +286,21 @@ const SessionCard = ({ session, onDisconnect }) => {
               Actuelle
             </span>
           )}
-          <button
-            onClick={() => onDisconnect(session.id)}
-            className="p-1 md:p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Déconnecter"
-          >
-            <LogOut size={12} className="md:w-[14px] md:h-[14px] text-rose-500" />
-          </button>
+          {!session.current && (
+            <button
+              onClick={() => onDisconnect(session.id)}
+              className="p-1 md:p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
+              title="Déconnecter"
+            >
+              <LogOut size={12} className="md:w-[14px] md:h-[14px] text-rose-500" />
+            </button>
+          )}
         </div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-1 text-[10px] md:text-xs text-[#6D6D6D]">
-        <span>IP: {session.ip}</span>
-        <span>Ville: {session.city}</span>
-        <span className="col-span-2 truncate">Dernière: {session.lastActivity}</span>
+        <span>IP: {session.ip || '—'}</span>
+        <span>Ville: {session.city || '—'}</span>
+        <span className="col-span-2 truncate">Dernière: {session.lastActivity || session.created_at || '—'}</span>
       </div>
     </div>
   );
@@ -483,11 +309,11 @@ const SessionCard = ({ session, onDisconnect }) => {
 // ==========================================
 // COMPOSANT: CHANGE PASSWORD MODAL
 // ==========================================
-const ChangePasswordModal = ({ isOpen, onClose, onChangePassword }) => {
+const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) => {
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
-    confirmPassword: ''
+    newPassword_confirmation: ''
   });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
@@ -520,8 +346,8 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword }) => {
     if (!formData.currentPassword) newErrors.currentPassword = 'Mot de passe actuel requis';
     if (!formData.newPassword) newErrors.newPassword = 'Nouveau mot de passe requis';
     else if (formData.newPassword.length < 8) newErrors.newPassword = 'Minimum 8 caractères';
-    if (formData.newPassword !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
+    if (formData.newPassword !== formData.newPassword_confirmation) {
+      newErrors.newPassword_confirmation = 'Les mots de passe ne correspondent pas';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -617,14 +443,14 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword }) => {
             </label>
             <input
               type={showPassword ? 'text' : 'password'}
-              name="confirmPassword"
-              value={formData.confirmPassword}
+              name="newPassword_confirmation"
+              value={formData.newPassword_confirmation}
               onChange={handleChange}
               className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all ${
-                errors.confirmPassword ? 'border-rose-500' : 'border-[#ECE8E1]'
+                errors.newPassword_confirmation ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}
             />
-            {errors.confirmPassword && <p className="text-xs text-rose-500 mt-1">{errors.confirmPassword}</p>}
+            {errors.newPassword_confirmation && <p className="text-xs text-rose-500 mt-1">{errors.newPassword_confirmation}</p>}
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-[#ECE8E1]">
@@ -637,9 +463,10 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword }) => {
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all"
+              disabled={isLoading}
+              className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              Changer le mot de passe
+              {isLoading ? 'Changement...' : 'Changer le mot de passe'}
             </button>
           </div>
         </form>
@@ -653,48 +480,44 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword }) => {
 // ==========================================
 const MyProfilePage = () => {
   const { user, updateUser, logout } = useAuth();
+  const navigate = useNavigate(); // ✅ Ajout
 
-  // ⭐ TOUS LES HOOKS SONT À L'INTÉRIEUR DU COMPOSANT
   // États
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
-  const [isExporting, setIsExporting] = useState(false);
-  
-  // ⭐ HOOKS POUR LES DONNÉES DYNAMIQUES (corrigé)
-  const [localActiveSessions, setLocalActiveSessions] = useState(initialActiveSessions);
-  const [localDocuments, setLocalDocuments] = useState(initialDocuments);
 
-  // Form data
+  // Données du profil
   const [profileData, setProfileData] = useState({
-    firstName: user?.firstName || 'Mohamed',
-    lastName: user?.lastName || 'Amine',
-    email: user?.email || 'mohamed.amine@larte.com',
-    phone: user?.phone || '+212 612 345 678',
-    birthDate: user?.birthDate || '01/01/2000',
-    gender: user?.gender || 'Homme',
-    nationality: user?.nationality || 'Marocaine',
-    address: user?.address || '123, Rue Mohamed V',
-    city: user?.city || 'Casablanca',
-    postalCode: user?.postalCode || '20000',
-    country: user?.country || 'Maroc',
-    language: user?.language || 'Français',
-    timezone: user?.timezone || 'GMT +01:00'
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    birthDate: '',
+    gender: '',
+    nationality: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: '',
+    language: 'Français',
+    timezone: 'GMT +01:00'
   });
 
   const [professionalData, setProfessionalData] = useState({
-    employeeId: user?.employeeId || 'EMP001',
-    department: user?.department || 'Administration',
-    position: user?.position || 'Administrator',
-    manager: user?.manager || 'Admin',
-    hiringDate: user?.hiringDate || '01/01/2025',
-    company: user?.company || "L'arte del dolce",
-    office: user?.office || 'Casablanca',
-    role: user?.role || 'Administrator',
-    status: user?.status || 'En ligne',
-    lastLogin: '17/07/2026 08:30'
+    employeeId: '',
+    department: '',
+    position: '',
+    manager: '',
+    hiringDate: '',
+    company: '',
+    office: '',
+    role: '',
+    status: 'En ligne',
+    lastLogin: ''
   });
 
   const [preferences, setPreferences] = useState({
@@ -712,7 +535,23 @@ const MyProfilePage = () => {
     compactMode: false
   });
 
-  const [avatar, setAvatar] = useState(user?.avatar || null);
+  const [avatar, setAvatar] = useState(null);
+  const [activityLog, setActivityLog] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [permissionsData, setPermissionsData] = useState([]);
+  const [stats, setStats] = useState({
+    orders: 0,
+    clients: 0,
+    products: 0,
+    lastLogin: '',
+    avgTime: '0h',
+    validatedOrders: 0,
+    notifications: 0,
+    documents: 0
+  });
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
 
   // Toast
   const showToast = (message, type = 'success') => {
@@ -723,7 +562,165 @@ const MyProfilePage = () => {
     setToast({ isOpen: false, message: '', type: 'success' });
   };
 
-  // Handlers
+  // Gestion d'erreur Axios
+  const handleApiError = (error, defaultMessage = 'Une erreur est survenue') => {
+    console.error('API Error:', error);
+    
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      if (status === 422) {
+        // Erreur de validation
+        const errors = data.errors || {};
+        const firstError = Object.values(errors)[0]?.[0] || 'Données invalides';
+        showToast(firstError, 'error');
+        return firstError;
+      } else if (status === 401) {
+        showToast('Session expirée. Veuillez vous reconnecter.', 'error');
+        return 'Session expirée';
+      } else if (status === 403) {
+        showToast('Vous n\'avez pas les permissions nécessaires.', 'error');
+        return 'Permission refusée';
+      } else if (status === 404) {
+        showToast('Ressource non trouvée.', 'error');
+        return 'Ressource non trouvée';
+      } else if (status === 500) {
+        showToast('Erreur interne du serveur.', 'error');
+        return 'Erreur serveur';
+      }
+      
+      showToast(data.message || defaultMessage, 'error');
+      return data.message || defaultMessage;
+    } else if (error.request) {
+      showToast('Impossible de contacter le serveur.', 'error');
+      return 'Erreur réseau';
+    } else {
+      showToast(defaultMessage, 'error');
+      return defaultMessage;
+    }
+  };
+
+  // ==========================================
+  // CHARGEMENT INITIAL
+  // ==========================================
+  const loadProfileData = async () => {
+    setIsLoading(true);
+    try {
+      const profileRes = await getProfile();
+      const userData = profileRes.data.data || profileRes.data;
+      
+      setProfileData({
+        firstName: userData.first_name || userData.firstName || '',
+        lastName: userData.last_name || userData.lastName || '',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        birthDate: userData.birth_date || userData.birthDate || '',
+        gender: userData.gender || '',
+        nationality: userData.nationality || '',
+        address: userData.address || '',
+        city: userData.city || '',
+        postalCode: userData.postal_code || userData.postalCode || '',
+        country: userData.country || '',
+        language: userData.language || 'Français',
+        timezone: userData.timezone || 'GMT +01:00'
+      });
+
+      setProfessionalData({
+        employeeId: userData.employee_id || userData.employeeId || '—',
+        department: userData.department || '—',
+        position: userData.position || '—',
+        manager: userData.manager || '—',
+        hiringDate: userData.hiring_date || userData.hiringDate || '—',
+        company: userData.company || "L'arte del dolce",
+        office: userData.office || '—',
+        role: userData.role || '—',
+        status: userData.status || 'En ligne',
+        lastLogin: userData.last_login_at 
+          ? new Date(userData.last_login_at).toLocaleString('fr-FR') 
+          : '—'
+      });
+
+      setAvatar(userData.avatar || null);
+      setTwoFactorEnabled(userData.two_factor_enabled || false);
+
+      // Préférences
+      if (userData.preferences) {
+        setPreferences(prev => ({
+          ...prev,
+          ...userData.preferences,
+          notifications: {
+            ...prev.notifications,
+            ...(userData.preferences.notifications || {})
+          }
+        }));
+      }
+
+      // Activités
+      try {
+        const activityRes = await getActivityLog({ per_page: 8 });
+        setActivityLog(activityRes.data.data || []);
+      } catch (e) {
+        console.warn('Could not load activities:', e);
+      }
+
+      // Sessions
+      try {
+        const sessionsRes = await getSessions();
+        setSessions(sessionsRes.data.data || []);
+      } catch (e) {
+        console.warn('Could not load sessions:', e);
+      }
+
+      // Documents
+      try {
+        const docsRes = await getDocuments();
+        setDocuments(docsRes.data.data || []);
+      } catch (e) {
+        console.warn('Could not load documents:', e);
+      }
+
+      // Permissions
+      try {
+        const permsRes = await getPermissions();
+        setPermissionsData(permsRes.data.data || []);
+      } catch (e) {
+        console.warn('Could not load permissions:', e);
+      }
+
+      // Statistiques
+      try {
+        const statsRes = await getUserStats();
+        const statsData = statsRes.data.data || statsRes.data;
+        setStats({
+          orders: statsData.orders || 0,
+          clients: statsData.clients || 0,
+          products: statsData.products || 0,
+          lastLogin: statsData.last_login || '',
+          avgTime: statsData.avg_time || statsData.avgTime || '0h',
+          validatedOrders: statsData.validated_orders || statsData.validatedOrders || 0,
+          notifications: statsData.notifications || 0,
+          documents: statsData.documents || 0
+        });
+      } catch (e) {
+        console.warn('Could not load stats:', e);
+      }
+
+    } catch (error) {
+      handleApiError(error, 'Erreur lors du chargement du profil');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProfileData();
+  }, []);
+
+  // ==========================================
+  // HANDLERS
+  // ==========================================
+
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
     setProfileData(prev => ({ ...prev, [name]: value }));
@@ -741,113 +738,182 @@ const MyProfilePage = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      updateUser({
-        ...profileData,
-        ...professionalData,
-        avatar
+    try {
+      const data = {
+        first_name: profileData.firstName,
+        last_name: profileData.lastName,
+        email: profileData.email,
+        phone: profileData.phone,
+        birth_date: profileData.birthDate,
+        gender: profileData.gender,
+        nationality: profileData.nationality,
+        address: profileData.address,
+        city: profileData.city,
+        postal_code: profileData.postalCode,
+        country: profileData.country,
+        language: profileData.language,
+        timezone: profileData.timezone
+      };
+      
+      const profileRes = await updateProfile(data);
+      const updatedUser = profileRes.data.data || profileRes.data;
+      updateUser(updatedUser);
+      
+      // Enregistrer les préférences
+      await updatePreferences({
+        language: preferences.language,
+        theme: preferences.theme,
+        currency: preferences.currency,
+        dateFormat: preferences.dateFormat,
+        timeFormat: preferences.timeFormat,
+        notifications: preferences.notifications,
+        animations: preferences.animations,
+        compactMode: preferences.compactMode
       });
-      setIsLoading(false);
+
       setIsEditing(false);
       showToast('✅ Profil mis à jour avec succès', 'success');
-    }, 800);
+    } catch (error) {
+      handleApiError(error, 'Erreur lors de l\'enregistrement du profil');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
-    setProfileData({
-      firstName: user?.firstName || 'Mohamed',
-      lastName: user?.lastName || 'Amine',
-      email: user?.email || 'mohamed.amine@larte.com',
-      phone: user?.phone || '+212 612 345 678',
-      birthDate: user?.birthDate || '01/01/2000',
-      gender: user?.gender || 'Homme',
-      nationality: user?.nationality || 'Marocaine',
-      address: user?.address || '123, Rue Mohamed V',
-      city: user?.city || 'Casablanca',
-      postalCode: user?.postalCode || '20000',
-      country: user?.country || 'Maroc',
-      language: user?.language || 'Français',
-      timezone: user?.timezone || 'GMT +01:00'
-    });
-    setProfessionalData({
-      employeeId: user?.employeeId || 'EMP001',
-      department: user?.department || 'Administration',
-      position: user?.position || 'Administrator',
-      manager: user?.manager || 'Admin',
-      hiringDate: user?.hiringDate || '01/01/2025',
-      company: user?.company || "L'arte del dolce",
-      office: user?.office || 'Casablanca',
-      role: user?.role || 'Administrator',
-      status: user?.status || 'En ligne',
-      lastLogin: '17/07/2026 08:30'
-    });
-    setAvatar(user?.avatar || null);
+    loadProfileData();
     setIsEditing(false);
     showToast('🔁 Modifications annulées', 'info');
   };
 
-  const handleAvatarUpload = (file, dataUrl) => {
+  const handleAvatarUpload = async (file, dataUrl) => {
     setIsUploading(true);
-    setTimeout(() => {
+    try {
+      await uploadAvatar(file);
       setAvatar(dataUrl);
-      setIsUploading(false);
       showToast('📸 Photo de profil mise à jour', 'success');
-    }, 800);
+    } catch (error) {
+      handleApiError(error, 'Erreur lors de l\'upload de la photo');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const handleAvatarRemove = () => {
-    setAvatar(null);
-    showToast('🗑️ Photo de profil supprimée', 'info');
+  const handleAvatarRemove = async () => {
+    try {
+      await removeAvatar();
+      setAvatar(null);
+      showToast('🗑️ Photo de profil supprimée', 'info');
+    } catch (error) {
+      handleApiError(error, 'Erreur lors de la suppression de la photo');
+    }
   };
 
-  const handleChangePassword = (data) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+  const handleChangePassword = async (data) => {
+    setIsChangingPassword(true);
+    try {
+      await changePassword(data);
       setIsPasswordModalOpen(false);
       showToast('🔑 Mot de passe changé avec succès', 'success');
-    }, 800);
+    } catch (error) {
+      handleApiError(error, 'Erreur lors du changement de mot de passe');
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
-  const handleDisconnectSession = (sessionId) => {
-    setLocalActiveSessions(prev => prev.filter(s => s.id !== sessionId));
-    showToast('🔒 Session déconnectée avec succès', 'success');
+  const handleDisconnectSession = async (sessionId) => {
+    try {
+      await revokeSession(sessionId);
+      const sessionsRes = await getSessions();
+      setSessions(sessionsRes.data.data || []);
+      showToast('🔒 Session déconnectée avec succès', 'success');
+    } catch (error) {
+      handleApiError(error, 'Erreur lors de la déconnexion de la session');
+    }
   };
 
+  // ✅ Fonction avec confirmation
   const handleDisconnectAllSessions = () => {
-    setLocalActiveSessions(prev => prev.filter(s => s.current));
-    showToast('🔒 Toutes les sessions ont été déconnectées', 'success');
+    if (window.confirm('Êtes-vous sûr de vouloir déconnecter toutes vos sessions actives ?')) {
+      setIsLoadingSessions(true);
+      revokeAllSessions()
+        .then(async () => {
+          const sessionsRes = await getSessions();
+          setSessions(sessionsRes.data.data || []);
+          showToast('🔒 Toutes les sessions ont été déconnectées', 'success');
+        })
+        .catch((error) => {
+          handleApiError(error, 'Erreur lors de la déconnexion des sessions');
+        })
+        .finally(() => {
+          setIsLoadingSessions(false);
+        });
+    }
   };
 
-  const handleDeleteDocument = (docId) => {
-    setLocalDocuments(prev => prev.filter(d => d.id !== docId));
-    showToast('🗑️ Document supprimé avec succès', 'success');
+  // ✅ Fonction pour voir toutes les activités
+  const handleViewAllActivities = () => {
+    navigate('/dashboard/activity-logs');
   };
 
-  const handleDownloadDocument = (doc) => {
-    showToast(`📥 Téléchargement de "${doc.name}" en cours...`, 'info');
-    setTimeout(() => {
-      showToast(`✅ "${doc.name}" téléchargé avec succès`, 'success');
-    }, 1000);
+  const handleDeleteDocument = async (docId) => {
+    try {
+      await deleteDocument(docId);
+      const docsRes = await getDocuments();
+      setDocuments(docsRes.data.data || []);
+      showToast('🗑️ Document supprimé avec succès', 'success');
+    } catch (error) {
+      handleApiError(error, 'Erreur lors de la suppression du document');
+    }
   };
 
-  const handleViewDocument = (doc) => {
-    showToast(`👁️ Visualisation de "${doc.name}"`, 'info');
+  const handleDownloadDocument = async (doc) => {
+    try {
+      const response = await downloadDocument(doc.id);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', doc.name || 'document');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      showToast(`📥 "${doc.name}" téléchargé avec succès`, 'success');
+    } catch (error) {
+      handleApiError(error, 'Erreur lors du téléchargement');
+    }
   };
 
   const handleAddDocument = () => {
-    const newDoc = {
-      id: localDocuments.length + 1,
-      name: `Document ${localDocuments.length + 1}`,
-      type: 'pdf',
-      size: '0.5 MB',
-      date: new Date().toLocaleDateString('fr-FR'),
-      icon: FileTextIcon
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,application/pdf,.doc,.docx';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        try {
+          await uploadDocument(file, file.name, file.type);
+          const docsRes = await getDocuments();
+          setDocuments(docsRes.data.data || []);
+          showToast('📄 Document ajouté avec succès', 'success');
+        } catch (error) {
+          handleApiError(error, 'Erreur lors de l\'ajout du document');
+        }
+      }
     };
-    setLocalDocuments(prev => [...prev, newDoc]);
-    showToast('📄 Document ajouté avec succès', 'success');
+    input.click();
+  };
+
+  const handleToggle2FA = async () => {
+    try {
+      await updateTwoFactorAuth({ enabled: !twoFactorEnabled, method: 'app' });
+      setTwoFactorEnabled(!twoFactorEnabled);
+      showToast(`🔐 2FA ${!twoFactorEnabled ? 'activé' : 'désactivé'} avec succès`, 'success');
+    } catch (error) {
+      handleApiError(error, 'Erreur lors du changement de 2FA');
+    }
   };
 
   const handleLogout = () => {
@@ -858,7 +924,7 @@ const MyProfilePage = () => {
   };
 
   // ==========================================
-  // EXPORT CONFIGURATION - Activités
+  // EXPORT CONFIGURATION
   // ==========================================
   const activityColumns = [
     { label: 'Action', accessor: 'action', width: 20 },
@@ -880,104 +946,27 @@ const MyProfilePage = () => {
     browser: item.browser
   });
 
-  // ==========================================
-  // EXPORT CONFIGURATION - Sessions
-  // ==========================================
-  const sessionColumns = [
-    { label: 'Appareil', accessor: 'device', width: 20 },
-    { label: 'Navigateur', accessor: 'browser', width: 15 },
-    { label: 'OS', accessor: 'os', width: 15 },
-    { label: 'IP', accessor: 'ip', width: 15 },
-    { label: 'Ville', accessor: 'city', width: 12 },
-    { label: 'Dernière activité', accessor: 'lastActivity', width: 18 },
-    { label: 'Statut', accessor: 'status', width: 10 }
-  ];
-
-  const sessionRowFormatter = (item) => ({
-    device: item.device,
-    browser: item.browser,
-    os: item.os,
-    ip: item.ip,
-    city: item.city,
-    lastActivity: item.lastActivity,
-    status: item.current ? 'Active (Courante)' : item.status === 'active' ? 'Active' : 'Inactive'
-  });
-
-  // ==========================================
-  // EXPORT CONFIGURATION - Documents
-  // ==========================================
-  const documentColumns = [
-    { label: 'Nom', accessor: 'name', width: 30 },
-    { label: 'Type', accessor: 'type', width: 15 },
-    { label: 'Taille', accessor: 'size', width: 15 },
-    { label: 'Date', accessor: 'date', width: 15 }
-  ];
-
-  const documentRowFormatter = (item) => ({
-    name: item.name,
-    type: item.type,
-    size: item.size,
-    date: item.date
-  });
-
-  // ==========================================
-  // EXPORT CONFIGURATION - Permissions
-  // ==========================================
-  const permissionColumns = [
-    { label: 'Module', accessor: 'module', width: 30 },
-    { label: 'Voir', accessor: 'view', width: 15 },
-    { label: 'Créer', accessor: 'create', width: 15 },
-    { label: 'Modifier', accessor: 'edit', width: 15 },
-    { label: 'Supprimer', accessor: 'delete', width: 15 }
-  ];
-
-  const permissionRowFormatter = (item) => ({
-    module: item.module,
-    view: item.view ? '✓' : '✗',
-    create: item.create ? '✓' : '✗',
-    edit: item.edit ? '✓' : '✗',
-    delete: item.delete ? '✓' : '✗'
-  });
-
-  // ==========================================
-  // EXPORT HANDLERS
-  // ==========================================
-  const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
-  };
-
-  const handleExportError = () => {
-    // Toast notification handled by ExportButtons
-  };
-
-  // Statistiques
-  const stats = {
-    orders: 56,
-    clients: 24,
-    products: 118,
-    lastLogin: '17/07/2026 08:30',
-    avgTime: '12h 45m',
-    validatedOrders: 32,
-    notifications: 8,
-    documents: localDocuments.length
-  };
-
-  const activeSessionsCount = localActiveSessions.filter(s => s.status === 'active').length;
-
-  // ==========================================
-  // SUMMARY POUR EXPORT
-  // ==========================================
   const profileSummary = [
     { label: 'Nom complet', value: `${profileData.firstName} ${profileData.lastName}` },
     { label: 'Email', value: profileData.email },
     { label: 'Téléphone', value: profileData.phone },
-    { label: 'Fonction', value: professionalData.position },
-    { label: 'Département', value: professionalData.department },
+    { label: 'Fonction', value: professionalData.position || '—' },
+    { label: 'Département', value: professionalData.department || '—' },
     { label: 'Total commandes', value: stats.orders },
     { label: 'Clients', value: stats.clients },
     { label: 'Produits', value: stats.products },
     { label: 'Documents', value: stats.documents }
   ];
+
+  const handleExportSuccess = () => {
+    showToast('Export réalisé avec succès', 'success');
+  };
+
+  const handleExportError = () => {
+    showToast('Erreur lors de l\'export', 'error');
+  };
+
+  const activeSessionsCount = sessions.filter(s => s.status === 'active' || s.current).length;
 
   return (
     <div className="w-full min-h-screen bg-[#F8F7F4] p-3 md:p-6" style={{ fontFamily: FONT_BODY }}>
@@ -1003,12 +992,11 @@ const MyProfilePage = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Export Buttons */}
           <ExportButtons
-            data={recentActivities}
+            data={activityLog}
             columns={activityColumns}
             title="Activités récentes"
-            subtitle={`${recentActivities.length} activités - ${profileData.firstName} ${profileData.lastName}`}
+            subtitle={`${activityLog.length} activités - ${profileData.firstName} ${profileData.lastName}`}
             filename={`activites_${new Date().toISOString().split('T')[0]}`}
             summary={profileSummary}
             rowFormatter={activityRowFormatter}
@@ -1059,19 +1047,19 @@ const MyProfilePage = () => {
             <h2 className="text-xl md:text-2xl font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
               {profileData.firstName} {profileData.lastName}
             </h2>
-            <p className="text-xs md:text-sm text-[#B8863B] font-medium">{professionalData.position}</p>
+            <p className="text-xs md:text-sm text-[#B8863B] font-medium">{professionalData.position || '—'}</p>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 md:gap-4 mt-2 text-xs md:text-sm text-[#6D6D6D]">
               <span className="flex items-center gap-1">
                 <Briefcase size={12} className="md:w-[14px] md:h-[14px]" />
-                {professionalData.department}
+                {professionalData.department || '—'}
               </span>
               <span className="flex items-center gap-1">
                 <User size={12} className="md:w-[14px] md:h-[14px]" />
-                {professionalData.employeeId}
+                {professionalData.employeeId || '—'}
               </span>
               <span className="flex items-center gap-1 text-emerald-600">
                 <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-emerald-500 inline-block" />
-                {professionalData.status}
+                {professionalData.status || 'En ligne'}
               </span>
             </div>
           </div>
@@ -1084,6 +1072,7 @@ const MyProfilePage = () => {
           Informations personnelles
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          {/* ... mêmes champs ... */}
           <div>
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Prénom</label>
             <input
@@ -1160,11 +1149,13 @@ const MyProfilePage = () => {
                 isEditing ? 'border-[#ECE8E1]' : 'bg-[#F8F7F4] border-transparent'
               }`}
             >
+              <option value="">Sélectionner</option>
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
               <option value="Autre">Autre</option>
             </select>
           </div>
+          {/* ... suite des champs ... */}
           <div>
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Nationalité</label>
             <input
@@ -1272,7 +1263,7 @@ const MyProfilePage = () => {
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Matricule</label>
             <input
               type="text"
-              value={professionalData.employeeId}
+              value={professionalData.employeeId || '—'}
               disabled
               className="w-full px-3 py-2 text-sm bg-[#F8F7F4] border-transparent rounded-lg"
             />
@@ -1281,7 +1272,7 @@ const MyProfilePage = () => {
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Département</label>
             <input
               type="text"
-              value={professionalData.department}
+              value={professionalData.department || '—'}
               disabled
               className="w-full px-3 py-2 text-sm bg-[#F8F7F4] border-transparent rounded-lg"
             />
@@ -1290,7 +1281,7 @@ const MyProfilePage = () => {
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Fonction</label>
             <input
               type="text"
-              value={professionalData.position}
+              value={professionalData.position || '—'}
               disabled
               className="w-full px-3 py-2 text-sm bg-[#F8F7F4] border-transparent rounded-lg"
             />
@@ -1299,7 +1290,7 @@ const MyProfilePage = () => {
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Manager</label>
             <input
               type="text"
-              value={professionalData.manager}
+              value={professionalData.manager || '—'}
               disabled
               className="w-full px-3 py-2 text-sm bg-[#F8F7F4] border-transparent rounded-lg"
             />
@@ -1308,7 +1299,7 @@ const MyProfilePage = () => {
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Date d'embauche</label>
             <input
               type="text"
-              value={professionalData.hiringDate}
+              value={professionalData.hiringDate || '—'}
               disabled
               className="w-full px-3 py-2 text-sm bg-[#F8F7F4] border-transparent rounded-lg"
             />
@@ -1317,7 +1308,7 @@ const MyProfilePage = () => {
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Entreprise</label>
             <input
               type="text"
-              value={professionalData.company}
+              value={professionalData.company || "L'arte del dolce"}
               disabled
               className="w-full px-3 py-2 text-sm bg-[#F8F7F4] border-transparent rounded-lg"
             />
@@ -1326,7 +1317,7 @@ const MyProfilePage = () => {
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Bureau</label>
             <input
               type="text"
-              value={professionalData.office}
+              value={professionalData.office || '—'}
               disabled
               className="w-full px-3 py-2 text-sm bg-[#F8F7F4] border-transparent rounded-lg"
             />
@@ -1335,7 +1326,7 @@ const MyProfilePage = () => {
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Rôle</label>
             <input
               type="text"
-              value={professionalData.role}
+              value={professionalData.role || '—'}
               disabled
               className="w-full px-3 py-2 text-sm bg-[#F8F7F4] border-transparent rounded-lg"
             />
@@ -1344,7 +1335,7 @@ const MyProfilePage = () => {
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Dernière connexion</label>
             <input
               type="text"
-              value={professionalData.lastLogin}
+              value={professionalData.lastLogin || '—'}
               disabled
               className="w-full px-3 py-2 text-sm bg-[#F8F7F4] border-transparent rounded-lg"
             />
@@ -1382,20 +1373,20 @@ const MyProfilePage = () => {
               </div>
               <div className="flex-1">
                 <p className="text-xs md:text-sm font-medium text-[#3D2F24]">Authentification à deux facteurs</p>
-                <p className="text-[10px] md:text-xs text-[#6D6D6D]">Désactivé</p>
+                <p className="text-[10px] md:text-xs text-[#6D6D6D]">{twoFactorEnabled ? 'Activé' : 'Désactivé'}</p>
               </div>
               <button
-                onClick={() => showToast('🔐 2FA activé avec succès', 'success')}
+                onClick={handleToggle2FA}
                 className="px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium text-[#B8863B] hover:bg-[#B8863B]/10 rounded-lg transition-colors"
               >
-                Activer
+                {twoFactorEnabled ? 'Désactiver' : 'Activer'}
               </button>
             </div>
           </div>
           <div className="bg-[#F8F7F4] rounded-xl p-3 md:p-4">
             <div className="flex items-center gap-2 md:gap-3">
               <div className="p-1.5 md:p-2 rounded-xl bg-amber-50 text-amber-600">
-                <LogOutIcon size={16} className="md:w-[18px] md:h-[18px]" />
+                <LogOut size={16} className="md:w-[18px] md:h-[18px]" />
               </div>
               <div className="flex-1">
                 <p className="text-xs md:text-sm font-medium text-[#3D2F24]">Sessions actives</p>
@@ -1403,16 +1394,17 @@ const MyProfilePage = () => {
               </div>
               <button
                 onClick={handleDisconnectAllSessions}
-                className="px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                disabled={isLoadingSessions}
+                className="px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium text-rose-500 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50"
               >
-                Tout déconnecter
+                {isLoadingSessions ? '...' : 'Tout déconnecter'}
               </button>
             </div>
           </div>
           <div className="bg-[#F8F7F4] rounded-xl p-3 md:p-4">
             <div className="flex items-center gap-2 md:gap-3">
               <div className="p-1.5 md:p-2 rounded-xl bg-rose-50 text-rose-600">
-                <LogOutIcon size={16} className="md:w-[18px] md:h-[18px]" />
+                <LogOut size={16} className="md:w-[18px] md:h-[18px]" />
               </div>
               <div className="flex-1">
                 <p className="text-xs md:text-sm font-medium text-[#3D2F24]">Déconnexion</p>
@@ -1556,17 +1548,24 @@ const MyProfilePage = () => {
           <h3 className="text-sm md:text-base font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
             Activité récente
           </h3>
+          {/* ✅ Voir tout - Navigation réelle */}
           <button 
-            onClick={() => showToast('📋 Toutes les activités affichées', 'info')}
+            onClick={handleViewAllActivities}
             className="text-[10px] md:text-xs font-medium text-[#B8863B] hover:text-[#A07532] transition-colors"
           >
             Voir tout
           </button>
         </div>
         <div className="space-y-1 max-h-48 md:max-h-64 overflow-y-auto">
-          {recentActivities.map((activity) => (
-            <ActivityItem key={activity.id} activity={activity} />
-          ))}
+          {activityLog.length === 0 ? (
+            <div className="text-center py-4 text-[#6D6D6D] text-sm">
+              Aucune activité récente
+            </div>
+          ) : (
+            activityLog.slice(0, 8).map((activity) => (
+              <ActivityItem key={activity.id || activity.created_at} activity={activity} />
+            ))
+          )}
         </div>
       </div>
 
@@ -1578,19 +1577,26 @@ const MyProfilePage = () => {
           </h3>
           <button
             onClick={handleDisconnectAllSessions}
-            className="text-[10px] md:text-xs font-medium text-rose-500 hover:text-rose-600 transition-colors"
+            disabled={isLoadingSessions}
+            className="text-[10px] md:text-xs font-medium text-rose-500 hover:text-rose-600 transition-colors disabled:opacity-50"
           >
-            Déconnecter tout
+            {isLoadingSessions ? 'Déconnexion...' : 'Déconnecter tout'}
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-          {localActiveSessions.map((session) => (
-            <SessionCard
-              key={session.id}
-              session={session}
-              onDisconnect={handleDisconnectSession}
-            />
-          ))}
+          {sessions.length === 0 ? (
+            <div className="col-span-2 text-center py-4 text-[#6D6D6D] text-sm">
+              Aucune session active
+            </div>
+          ) : (
+            sessions.map((session) => (
+              <SessionCard
+                key={session.id}
+                session={session}
+                onDisconnect={handleDisconnectSession}
+              />
+            ))
+          )}
         </div>
       </div>
 
@@ -1609,23 +1615,19 @@ const MyProfilePage = () => {
           </button>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-          {localDocuments.map((doc) => {
-            const Icon = doc.icon;
-            return (
+          {documents.length === 0 ? (
+            <div className="col-span-4 text-center py-4 text-[#6D6D6D] text-sm">
+              Aucun document
+            </div>
+          ) : (
+            documents.map((doc) => (
               <div key={doc.id} className="bg-[#F8F7F4] rounded-xl p-3 md:p-4 text-center hover:shadow-md transition-all">
                 <div className="flex justify-center mb-1 md:mb-2">
-                  <Icon size={24} className="md:w-8 md:h-8 text-[#6D6D6D]" />
+                  <FileTextIcon size={24} className="md:w-8 md:h-8 text-[#6D6D6D]" />
                 </div>
                 <p className="text-[10px] md:text-xs font-medium text-[#3D2F24] truncate">{doc.name}</p>
                 <p className="text-[9px] md:text-[10px] text-[#6D6D6D]">{doc.size}</p>
                 <div className="flex items-center justify-center gap-1 md:gap-2 mt-1 md:mt-2">
-                  <button
-                    onClick={() => handleViewDocument(doc)}
-                    className="p-1 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-                    title="Voir"
-                  >
-                    <Eye size={12} className="md:w-[14px] md:h-[14px] text-[#6D6D6D]" />
-                  </button>
                   <button
                     onClick={() => handleDownloadDocument(doc)}
                     className="p-1 hover:bg-[#F8F7F4] rounded-lg transition-colors"
@@ -1642,8 +1644,8 @@ const MyProfilePage = () => {
                   </button>
                 </div>
               </div>
-            );
-          })}
+            ))
+          )}
         </div>
       </div>
 
@@ -1664,23 +1666,29 @@ const MyProfilePage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#ECE8E1]">
-              {permissions.map((perm, idx) => (
-                <tr key={idx} className="hover:bg-[#F8F7F4] transition-colors">
-                  <td className="px-2 md:px-4 py-2 text-[10px] md:text-sm font-medium text-[#3D2F24]">{perm.module}</td>
-                  <td className="px-2 md:px-4 py-2 text-center">
-                    {perm.view ? <CheckCircle size={12} className="md:w-4 md:h-4 text-emerald-500 mx-auto" /> : <XCircle size={12} className="md:w-4 md:h-4 text-rose-500 mx-auto" />}
-                  </td>
-                  <td className="px-2 md:px-4 py-2 text-center">
-                    {perm.create ? <CheckCircle size={12} className="md:w-4 md:h-4 text-emerald-500 mx-auto" /> : <XCircle size={12} className="md:w-4 md:h-4 text-rose-500 mx-auto" />}
-                  </td>
-                  <td className="px-2 md:px-4 py-2 text-center">
-                    {perm.edit ? <CheckCircle size={12} className="md:w-4 md:h-4 text-emerald-500 mx-auto" /> : <XCircle size={12} className="md:w-4 md:h-4 text-rose-500 mx-auto" />}
-                  </td>
-                  <td className="px-2 md:px-4 py-2 text-center">
-                    {perm.delete ? <CheckCircle size={12} className="md:w-4 md:h-4 text-emerald-500 mx-auto" /> : <XCircle size={12} className="md:w-4 md:h-4 text-rose-500 mx-auto" />}
-                  </td>
+              {permissionsData.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-4 text-[#6D6D6D]">Aucune permission</td>
                 </tr>
-              ))}
+              ) : (
+                permissionsData.map((perm, idx) => (
+                  <tr key={idx} className="hover:bg-[#F8F7F4] transition-colors">
+                    <td className="px-2 md:px-4 py-2 text-[10px] md:text-sm font-medium text-[#3D2F24]">{perm.module}</td>
+                    <td className="px-2 md:px-4 py-2 text-center">
+                      {perm.view ? <CheckCircle size={12} className="md:w-4 md:h-4 text-emerald-500 mx-auto" /> : <XCircle size={12} className="md:w-4 md:h-4 text-rose-500 mx-auto" />}
+                    </td>
+                    <td className="px-2 md:px-4 py-2 text-center">
+                      {perm.create ? <CheckCircle size={12} className="md:w-4 md:h-4 text-emerald-500 mx-auto" /> : <XCircle size={12} className="md:w-4 md:h-4 text-rose-500 mx-auto" />}
+                    </td>
+                    <td className="px-2 md:px-4 py-2 text-center">
+                      {perm.edit ? <CheckCircle size={12} className="md:w-4 md:h-4 text-emerald-500 mx-auto" /> : <XCircle size={12} className="md:w-4 md:h-4 text-rose-500 mx-auto" />}
+                    </td>
+                    <td className="px-2 md:px-4 py-2 text-center">
+                      {perm.delete ? <CheckCircle size={12} className="md:w-4 md:h-4 text-emerald-500 mx-auto" /> : <XCircle size={12} className="md:w-4 md:h-4 text-rose-500 mx-auto" />}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -1691,7 +1699,7 @@ const MyProfilePage = () => {
         <StatCard icon={ClipboardList} title="Commandes" value={stats.orders} color="blue" />
         <StatCard icon={Users} title="Clients" value={stats.clients} color="green" />
         <StatCard icon={Package} title="Produits" value={stats.products} color="purple" />
-        <StatCard icon={LogOutIcon} title="Dernière connexion" value="08:30" color="amber" subtitle="17/07/2026" />
+        <StatCard icon={LogOut} title="Dernière connexion" value={stats.lastLogin?.split(' ')[1] || '08:30'} color="amber" subtitle={stats.lastLogin?.split(' ')[0] || '—'} />
         <StatCard icon={Clock} title="Temps moyen" value={stats.avgTime} color="indigo" />
         <StatCard icon={CheckCircle} title="Validées" value={stats.validatedOrders} color="emerald" />
         <StatCard icon={Bell} title="Notifications" value={stats.notifications} color="rose" />
@@ -1704,17 +1712,11 @@ const MyProfilePage = () => {
           isOpen={isPasswordModalOpen}
           onClose={() => setIsPasswordModalOpen(false)}
           onChangePassword={handleChangePassword}
+          isLoading={isChangingPassword}
         />
       </AnimatePresence>
 
-      {/* Footer */}
-      <div className="text-center py-3 md:py-4">
-        <p className="text-[10px] md:text-xs text-[#6D6D6D]">
-          © 2026 L'arte del dolce ERP. Tous droits réservés.
-          <br className="sm:hidden" />
-          Version 2.1.0
-        </p>
-      </div>
+     
     </div>
   );
 };

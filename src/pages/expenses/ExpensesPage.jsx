@@ -54,6 +54,21 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ExportButtons from '../../components/ExportButtons';
+import {
+  getExpenses,
+  getExpenseById,
+  getExpenseByNumber,
+  createExpense,
+  updateExpense,
+  deleteExpense,
+  updateExpensePaymentStatus,
+  getExpenseStatistics,
+  exportExpenses,
+  getExpenseCategories,
+  getPaymentMethods,
+  getPaymentStatuses,
+  downloadExpenseAttachment
+} from '../../services/expenseService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -370,8 +385,6 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
 
   if (!isOpen) return null;
 
-  const suppliers = ['Farine du Maroc', 'ABC Packaging', 'Choco Deluxe', 'Equip Cafe'];
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <motion.div
@@ -463,9 +476,10 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
                 >
                   <option value="">Sélectionner un fournisseur</option>
-                  {suppliers.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
+                  <option value="Farine du Maroc">Farine du Maroc</option>
+                  <option value="ABC Packaging">ABC Packaging</option>
+                  <option value="Choco Deluxe">Choco Deluxe</option>
+                  <option value="Equip Cafe">Equip Cafe</option>
                 </select>
               </div>
             </div>
@@ -833,157 +847,78 @@ const ExpensesPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Load expenses
-  useEffect(() => {
-    const fetchExpenses = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockExpenses = [
-          {
-            id: 1,
-            expenseId: 'EXP-0125',
-            date: new Date('2025-07-10'),
-            category: 'raw_materials',
-            supplier: 'Farine du Maroc',
-            description: 'Achat de farine de blé',
-            amount: 2500,
-            vat: 15,
-            total: 2875,
-            paymentMethod: 'bank_transfer',
-            paymentStatus: 'paid',
-            referenceNumber: 'INV-458',
-            notes: 'Commande mensuelle',
-            createdBy: 'Ahmed Benjelloun',
-            attachment: null,
-            createdAt: new Date('2025-07-10')
-          },
-          {
-            id: 2,
-            expenseId: 'EXP-0124',
-            date: new Date('2025-07-08'),
-            category: 'packaging',
-            supplier: 'ABC Packaging',
-            description: 'Boîtes cadeaux',
-            amount: 1200,
-            vat: 15,
-            total: 1380,
-            paymentMethod: 'mada',
-            paymentStatus: 'pending',
-            referenceNumber: 'INV-459',
-            notes: '',
-            createdBy: 'Sara El Idrissi',
-            attachment: null,
-            createdAt: new Date('2025-07-08')
-          },
-          {
-            id: 3,
-            expenseId: 'EXP-0123',
-            date: new Date('2025-07-05'),
-            category: 'equipment',
-            supplier: 'Equip Cafe',
-            description: 'Nouveau four professionnel',
-            amount: 8500,
-            vat: 15,
-            total: 9775,
-            paymentMethod: 'cash',
-            paymentStatus: 'partial',
-            referenceNumber: 'REC-123',
-            notes: 'Paiement en deux fois',
-            createdBy: 'Mohamed Amine',
-            attachment: null,
-            createdAt: new Date('2025-07-05')
-          },
-          {
-            id: 4,
-            expenseId: 'EXP-0122',
-            date: new Date('2025-07-01'),
-            category: 'utilities',
-            supplier: 'ONEE',
-            description: 'Facture électricité',
-            amount: 850,
-            vat: 20,
-            total: 1020,
-            paymentMethod: 'card',
-            paymentStatus: 'paid',
-            referenceNumber: 'E-2025-07',
-            notes: '',
-            createdBy: 'Karim Lahlou',
-            attachment: null,
-            createdAt: new Date('2025-07-01')
-          }
-        ];
-        setExpenses(mockExpenses);
-      } catch (error) {
-        console.error('Error fetching expenses:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchExpenses = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        category: categoryFilter !== 'all' ? categoryFilter : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        sort_by: 'date',
+        sort_order: 'desc'
+      };
+      const response = await getExpenses(params);
+      const data = response.data.data || [];
+      setExpenses(data);
+      setTotalCount(response.data.meta?.total || data.length);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchExpenses();
+  }, [currentPage, itemsPerPage, searchTerm, categoryFilter, statusFilter]);
+
+  // Fetch KPIs from statistics API
+  const [kpis, setKpis] = useState({
+    total: 0,
+    today: 0,
+    month: 0,
+    pending: 0,
+    highestCategory: '—',
+    count: 0
+  });
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await getExpenseStatistics();
+      const data = response.data.data || {};
+      setKpis({
+        total: data.total || 0,
+        today: data.today || 0,
+        month: data.month || 0,
+        pending: data.pending || 0,
+        highestCategory: data.highestCategory || '—',
+        count: data.count || 0
+      });
+    } catch (error) {
+      console.error('Error fetching expense statistics:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatistics();
   }, []);
 
-  // Calculate KPIs
-  const kpis = useMemo(() => {
-    const total = expenses.reduce((sum, e) => sum + e.total, 0);
-    const today = expenses.filter(e => {
-      const today = new Date();
-      const date = new Date(e.date);
-      return date.getDate() === today.getDate() &&
-             date.getMonth() === today.getMonth() &&
-             date.getFullYear() === today.getFullYear();
-    }).reduce((sum, e) => sum + e.total, 0);
-    const month = expenses.filter(e => {
-      const now = new Date();
-      const date = new Date(e.date);
-      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-    }).reduce((sum, e) => sum + e.total, 0);
-    const pending = expenses.filter(e => e.paymentStatus === 'pending').reduce((sum, e) => sum + e.total, 0);
-
-    const categories = expenses.reduce((acc, e) => {
-      acc[e.category] = (acc[e.category] || 0) + e.total;
-      return acc;
-    }, {});
-    const highestCategory = Object.entries(categories).sort((a, b) => b[1] - a[1])[0];
-    const highestCategoryName = EXPENSE_CATEGORIES.find(c => c.value === highestCategory?.[0])?.label || '—';
-
-    return { total, today, month, pending, highestCategory: highestCategoryName, count: expenses.length };
-  }, [expenses]);
-
-  // Filter expenses
+  // Filter expenses (API already handles filters)
   const filteredExpenses = useMemo(() => {
-    let filtered = expenses;
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(e =>
-        e.expenseId.toLowerCase().includes(term) ||
-        e.description.toLowerCase().includes(term) ||
-        (e.supplier && e.supplier.toLowerCase().includes(term)) ||
-        (e.referenceNumber && e.referenceNumber.toLowerCase().includes(term))
-      );
-    }
-
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(e => e.category === categoryFilter);
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(e => e.paymentStatus === statusFilter);
-    }
-
-    return filtered;
-  }, [expenses, searchTerm, categoryFilter, statusFilter]);
+    return expenses;
+  }, [expenses]);
 
   // Paginate
   const paginatedExpenses = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredExpenses.slice(start, start + itemsPerPage);
-  }, [filteredExpenses, currentPage, itemsPerPage]);
+    return filteredExpenses;
+  }, [filteredExpenses]);
 
-  const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -1041,19 +976,22 @@ const ExpensesPage = () => {
     setIsCreateModalOpen(true);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      await fetchExpenses();
+      await fetchStatistics();
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
       setIsLoading(false);
-      alert('Données actualisées');
-    }, 500);
+    }
   };
 
   const handleResetFilters = () => {
     setSearchTerm('');
     setCategoryFilter('all');
     setStatusFilter('all');
-    alert('Filtres réinitialisés');
   };
 
   const handlePrevPage = () => {
@@ -1076,16 +1014,11 @@ const ExpensesPage = () => {
   const handleCreateExpense = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newExpense = {
-        id: expenses.length + 1,
-        expenseId: `EXP-${String(expenses.length + 1).padStart(4, '0')}`,
-        ...formData,
-        createdBy: user?.firstName || 'Admin',
-        createdAt: new Date()
-      };
+      const response = await createExpense(formData);
+      const newExpense = response.data.data;
       setExpenses(prev => [newExpense, ...prev]);
       setIsCreateModalOpen(false);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error creating expense:', error);
     } finally {
@@ -1096,12 +1029,14 @@ const ExpensesPage = () => {
   const handleEditExpense = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await updateExpense(selectedExpense.id, formData);
+      const updatedExpense = response.data.data;
       setExpenses(prev => prev.map(e =>
-        e.id === selectedExpense.id ? { ...e, ...formData } : e
+        e.id === selectedExpense.id ? updatedExpense : e
       ));
       setIsEditModalOpen(false);
       setSelectedExpense(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error updating expense:', error);
     } finally {
@@ -1112,10 +1047,11 @@ const ExpensesPage = () => {
   const handleDeleteExpense = async () => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await deleteExpense(selectedExpense.id);
       setExpenses(prev => prev.filter(e => e.id !== selectedExpense.id));
       setIsDeleteModalOpen(false);
       setSelectedExpense(null);
+      await fetchStatistics();
     } catch (error) {
       console.error('Error deleting expense:', error);
     } finally {
@@ -1385,7 +1321,7 @@ const ExpensesPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, filteredExpenses.length)} sur {filteredExpenses.length} dépenses
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} dépenses
           </p>
           <div className="flex items-center gap-2">
             <button

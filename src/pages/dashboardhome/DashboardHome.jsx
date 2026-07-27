@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+// src/pages/dashboardhome/DashboardHome.jsx
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+
 import {
   ResponsiveContainer,
   LineChart,
@@ -13,6 +16,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+
 import {
   ShoppingBag,
   Settings,
@@ -37,7 +41,12 @@ import {
   Trash2,
   MoreHorizontal,
   X,
+  RefreshCw,
 } from 'lucide-react';
+
+import { useAuth } from '../../contexts/AuthContext';
+import dashboardService from '../../services/dashboardService';
+
 
 // ==========================================
 // TYPOGRAPHY SYSTEM — L'arte ERP
@@ -46,102 +55,136 @@ const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
 const FONT_NUMBER = "'Inter', sans-serif";
 
+
 // ==========================================
-// BACKEND STRUCTURING PLACEHOLDER DATA
+// FALLBACK DATA (Utilisé uniquement si l'API échoue)
 // ==========================================
-const dashboardData = {
-  user: {
-    fullName: "Mohamed Amine",
-    role: "Comptable",
-    status: "Online"
-  },
+const FALLBACK_DATA = {
   periods: {
     Today: {
       kpi: {
-        orders: { value: 24, growth: "+20.5%", isPositive: true, trend: [10, 15, 8, 14, 20, 24] },
-        production: { value: 18, growth: "-8.3%", isPositive: false, trend: [25, 22, 20, 19, 18, 18] },
-        deliveries: { value: 32, growth: "+14.2%", isPositive: true, trend: [15, 20, 22, 25, 28, 32] },
-        revenue: { value: 24580, growth: "+18.7%", isPositive: true, trend: [12000, 15000, 14000, 19000, 22000, 24580] },
-        customers: { value: 156, growth: "+9.4%", isPositive: true, trend: [140, 142, 145, 148, 152, 156] },
-        invoices: { value: 11, growth: "+5.1%", isPositive: true, trend: [8, 9, 7, 10, 10, 11] }
+        orders: {
+          value: 0,
+          growth: "0%",
+          isPositive: true,
+          trend: [0, 0, 0, 0, 0, 0]
+        },
+        production: {
+          value: 0,
+          growth: "0%",
+          isPositive: true,
+          trend: [0, 0, 0, 0, 0, 0]
+        },
+        deliveries: {
+          value: 0,
+          growth: "0%",
+          isPositive: true,
+          trend: [0, 0, 0, 0, 0, 0]
+        },
+        revenue: {
+          value: 0,
+          growth: "0%",
+          isPositive: true,
+          trend: [0, 0, 0, 0, 0, 0]
+        },
+        customers: {
+          value: 0,
+          growth: "0%",
+          isPositive: true,
+          trend: [0, 0, 0, 0, 0, 0]
+        },
+        invoices: {
+          value: 0,
+          growth: "0%",
+          isPositive: true,
+          trend: [0, 0, 0, 0, 0, 0]
+        }
       },
+
       chartData: {
-        labels: ["7 Mai", "8 Mai", "9 Mai", "10 Mai", "11 Mai", "12 Mai", "13 Mai"],
-        revenue: [15000, 23000, 19500, 25000, 18000, 36000, 24580],
-        orders: [12, 22, 18, 26, 15, 34, 24],
-        production: [10, 18, 14, 20, 12, 28, 18],
-        invoices: [3, 5, 4, 6, 4, 9, 11]
+        labels: [],
+        revenue: [],
+        orders: [],
+        production: [],
+        invoices: []
       },
-      distribution: { total: 74, enAttente: 24, enProduction: 18, pretes: 20, livrees: 12 },
-      recentOrders: [
-        { id: "CMD-1258", customer: "Café Al Amir", rep: "Ahmed Al Harbi", status: "En production", statusColor: "warning", amount: 3250, date: "13 Mai 2026" },
-        { id: "CMD-1257", customer: "Royal Café", rep: "Omar Hassan", status: "En attente", statusColor: "danger", amount: 1850, date: "13 Mai 2026" },
-        { id: "CMD-1256", customer: "Café Paris", rep: "Ahmed Al Harbi", status: "Prête", statusColor: "info", amount: 2450, date: "12 Mai 2026" },
-        { id: "CMD-1255", customer: "Boulangerie D'Or", rep: "Khalid Fahad", status: "Livrée", statusColor: "success", amount: 1200, date: "12 Mai 2026" },
-        { id: "CMD-1254", customer: "Café Al Noor", rep: "Omar Hassan", status: "Livrée", statusColor: "success", amount: 980, date: "12 Mai 2026" }
-      ],
-      liveProduction: [
-        { name: "Gâteau Chocolat", workshop: "Atelier Pâtisserie", progress: 75, img: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=80&auto=format&fit=crop&q=60" },
-        { name: "Tarte aux Fruits", workshop: "Atelier Pâtisserie", progress: 60, img: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=80&auto=format&fit=crop&q=60" },
-        { name: "Éclair Vanille", workshop: "Atelier Pâtisserie", progress: 40, img: "https://images.unsplash.com/photo-1603532648955-039310d9ed75?w=80&auto=format&fit=crop&q=60" },
-        { name: "Croissant Beurre", workshop: "Boulangerie", progress: 90, img: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=80&auto=format&fit=crop&q=60" }
-      ],
-      topProducts: [
-        { name: "Gâteau Chocolat", units: 320, amount: 12800, progress: 85 },
-        { name: "Tarte aux Fruits", units: 280, amount: 9520, progress: 75 },
-        { name: "Éclair Vanille", units: 240, amount: 7680, progress: 65 },
-        { name: "Croissant Beurre", units: 210, amount: 6090, progress: 55 },
-        { name: "Pain au Chocolat", units: 180, amount: 4860, progress: 45 }
-      ]
+
+      distribution: {
+        total: 0,
+        enAttente: 0,
+        enProduction: 0,
+        pretes: 0,
+        livrees: 0
+      },
+
+      recentOrders: [],
+      liveProduction: [],
+      topProducts: []
     },
+
     Week: {
       kpi: {
-        orders: { value: 168, growth: "+12.3%", isPositive: true, trend: [130, 140, 135, 150, 160, 168] },
-        production: { value: 112, growth: "+4.1%", isPositive: true, trend: [100, 105, 102, 108, 110, 112] },
-        deliveries: { value: 145, growth: "+8.9%", isPositive: true, trend: [120, 125, 130, 132, 140, 145] },
-        revenue: { value: 184200, growth: "+14.2%", isPositive: true, trend: [140000, 150000, 155000, 168000, 175000, 184200] },
-        customers: { value: 162, growth: "+2.5%", isPositive: true, trend: [155, 156, 158, 159, 160, 162] },
-        invoices: { value: 84, growth: "+6.8%", isPositive: true, trend: [70, 75, 74, 80, 82, 84] }
+        orders: {
+          value: 0,
+          growth: "0%",
+          isPositive: true,
+          trend: [0, 0, 0, 0, 0, 0]
+        },
+        production: {
+          value: 0,
+          growth: "0%",
+          isPositive: true,
+          trend: [0, 0, 0, 0, 0, 0]
+        },
+        deliveries: {
+          value: 0,
+          growth: "0%",
+          isPositive: true,
+          trend: [0, 0, 0, 0, 0, 0]
+        },
+        revenue: {
+          value: 0,
+          growth: "0%",
+          isPositive: true,
+          trend: [0, 0, 0, 0, 0, 0]
+        },
+        customers: {
+          value: 0,
+          growth: "0%",
+          isPositive: true,
+          trend: [0, 0, 0, 0, 0, 0]
+        },
+        invoices: {
+          value: 0,
+          growth: "0%",
+          isPositive: true,
+          trend: [0, 0, 0, 0, 0, 0]
+        }
       },
+
       chartData: {
-        labels: ["Sem 23", "Sem 24", "Sem 25", "Sem 26", "Sem 27", "Sem 28"],
-        revenue: [140000, 165000, 152000, 178000, 160000, 184200],
-        orders: [120, 145, 132, 158, 140, 168],
-        production: [95, 110, 100, 118, 108, 112],
-        invoices: [60, 68, 64, 74, 78, 84]
+        labels: [],
+        revenue: [],
+        orders: [],
+        production: [],
+        invoices: []
       },
-      distribution: { total: 425, enAttente: 110, enProduction: 112, pretes: 123, livrees: 80 },
-      recentOrders: [
-        { id: "CMD-1230", customer: "Al Faisaliah Hotel", rep: "Ahmed Al Harbi", status: "Livrée", statusColor: "success", amount: 14200, date: "10 Mai 2026" },
-        { id: "CMD-1225", customer: "Kingdom Bakery", rep: "Omar Hassan", status: "Prête", statusColor: "info", amount: 8900, date: "09 Mai 2026" }
-      ],
-      liveProduction: [
-        { name: "Macarons Coffret", workshop: "Atelier Confiserie", progress: 85, img: "https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=80&auto=format&fit=crop&q=60" }
-      ],
-      topProducts: [
-        { name: "Macarons Coffret", units: 1200, amount: 48000, progress: 90 },
-        { name: "Gâteau Chocolat", units: 980, amount: 39200, progress: 80 }
-      ]
+
+      distribution: {
+        total: 0,
+        enAttente: 0,
+        enProduction: 0,
+        pretes: 0,
+        livrees: 0
+      },
+
+      recentOrders: [],
+      liveProduction: [],
+      topProducts: []
     }
   },
-  notifications: [
-    { id: 1, type: "success", title: "Commande CMD-1258 approuvée", desc: "Approuvée par le comptable", time: "Il y a 5 min", unread: true },
-    { id: 2, type: "info", title: "Production terminée pour CMD-1256", desc: "Atelier Pâtisserie", time: "Il y a 15 min", unread: true },
-    { id: 3, type: "success", title: "Paiement reçu de Café Paris", desc: "Transaction #TR-8942", time: "Il y a 30 min", unread: false },
-    { id: 4, type: "danger", title: "Stock faible pour Café en grains", desc: "Reste (1.2 kg) - Action requise", time: "Il y a 45 min", unread: true },
-    { id: 5, type: "info", title: "Livraison terminée pour CMD-1254", desc: "Livreur: Ahmed", time: "Il y a 1 heure", unread: false }
-  ],
-  calendarEvents: {
-    "2026-05-13": [
-      { time: "14:30", title: "Livraison - Café Al Amir", type: "en-cours", label: "En cours" },
-      { time: "16:00", title: "Réunion équipe de production", type: "reunion", label: "Réunion" },
-      { time: "18:30", title: "Facture due - Café Château", type: "payer", label: "À payer" }
-    ],
-    "2026-05-14": [
-      { time: "10:00", title: "Audit Financier Trimestriel", type: "reunion", label: "Stratégie" },
-      { time: "11:30", title: "Réception Matières Premières", type: "en-cours", label: "Logistique" }
-    ]
-  }
+
+  notifications: []
 };
 
 // ==========================================
@@ -218,7 +261,10 @@ const MicroChart = ({ data, isPositive }) => {
   const range = max - min === 0 ? 1 : max - min;
 
   const points = data.map((val, index) => {
-    const x = padding + (index / (data.length - 1)) * (width - padding * 2);
+    const x =
+  data.length === 1
+    ? width / 2
+    : padding + (index / (data.length - 1)) * (width - padding * 2);
     const y = height - padding - ((val - min) / range) * (height - padding * 2);
     return `${x},${y}`;
   }).join(' ');
@@ -339,23 +385,118 @@ const DistributionTooltip = ({ active, payload }) => {
 // ==========================================
 // MAIN DASHBOARD COMPONENT
 // ==========================================
-export default function DashboardHome({ currentUser, isLoading = false }) {
+export default function DashboardHome({ isLoading: initialLoading = false }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+ const activeUser = {
+  fullName:
+    user?.name ||
+    `${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
+    'Utilisateur',
+
+  role:
+    user?.role?.display_name ||
+    user?.role?.name ||
+    'Utilisateur',
+
+  status:
+    user?.status || 'Offline',
+
+  avatar:
+    user?.avatar || ''
+};
+  
+  // ===== STATE =====
   const [selectedPeriod, setSelectedPeriod] = useState('Today');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState('2026-05-13');
   const [orderPendingDelete, setOrderPendingDelete] = useState(null);
   const [hoveredProduct, setHoveredProduct] = useState(null);
+  
+  // Dashboard data states
+  const [loading, setLoading] = useState(initialLoading);
+  const [error, setError] = useState(null);
+  const [dashboardData, setDashboardData] = useState(FALLBACK_DATA);
+  const [notifications, setNotifications] = useState([]);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [liveProduction, setLiveProduction] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
 
+  // ===== FETCH DATA =====
+  const fetchDashboardData = useCallback(async (period) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Récupérer toutes les données en parallèle
+      const [statsResponse, analyticsResponse, ordersResponse, notificationsResponse, productionResponse, topProductsResponse] = await Promise.all([
+        dashboardService.getDashboardStats({ period }),
+        dashboardService.getDashboardAnalytics({ period }),
+        dashboardService.getRecentOrders({ limit: 5 }),
+        dashboardService.getNotifications({ limit: 5 }),
+        dashboardService.getProductionStatus({ limit: 4 }),
+        dashboardService.getTopProducts({ limit: 5, period })
+      ]);
+
+      // Construire les données du dashboard
+      const data = {
+        periods: {
+          [period]: {
+            kpi: statsResponse.data?.kpi || FALLBACK_DATA.periods[period]?.kpi,
+            chartData: analyticsResponse.data?.chartData || FALLBACK_DATA.periods[period]?.chartData,
+            distribution: statsResponse.data?.distribution || FALLBACK_DATA.periods[period]?.distribution,
+            recentOrders: ordersResponse.data || [],
+            liveProduction: productionResponse.data || [],
+            topProducts: topProductsResponse.data || []
+          }
+        }
+      };
+
+      setDashboardData(data);
+      setRecentOrders(ordersResponse.data || []);
+      setLiveProduction(productionResponse.data || []);
+      setTopProducts(topProductsResponse.data || []);
+      setNotifications(notificationsResponse.data || []);
+      
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError(err.message || 'Erreur lors du chargement des données');
+      // Utiliser les données de fallback
+      setDashboardData(FALLBACK_DATA);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ===== INITIAL LOAD =====
+  useEffect(() => {
+    fetchDashboardData(selectedPeriod);
+  }, [fetchDashboardData, selectedPeriod]);
+
+  // ===== CLOCK =====
   useEffect(() => {
     const timer = setInterval(() => setCurrentDate(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const activeUser = currentUser || dashboardData.user;
-  const activeDataset = dashboardData.periods[selectedPeriod] || dashboardData.periods['Today'];
-  const { kpi, chartData, distribution, recentOrders, liveProduction, topProducts } = activeDataset;
+  // ===== GET ACTIVE DATASET =====
+  const getActiveDataset = () => {
+    if (dashboardData.periods && dashboardData.periods[selectedPeriod]) {
+      return dashboardData.periods[selectedPeriod];
+    }
+    return FALLBACK_DATA.periods[selectedPeriod] || FALLBACK_DATA.periods['Today'];
+  };
 
+  const activeDataset = getActiveDataset();
+  const { kpi, chartData, distribution } = activeDataset;
+
+  // Use real data or fallback
+  const displayOrders = recentOrders.length > 0 ? recentOrders : activeDataset.recentOrders || [];
+  const displayProduction = liveProduction.length > 0 ? liveProduction : activeDataset.liveProduction || [];
+  const displayTopProducts = topProducts.length > 0 ? topProducts : activeDataset.topProducts || [];
+  const displayNotifications = notifications.length > 0 ? notifications : FALLBACK_DATA.notifications;
+
+  // ===== HANDLERS =====
   const handleQuickAction = (route, callback) => {
     if (callback) callback();
     navigate(route);
@@ -365,19 +506,10 @@ export default function DashboardHome({ currentUser, isLoading = false }) {
     setSelectedPeriod(period);
   };
 
-  const distributionData = [
-    { name: 'En attente', value: distribution.enAttente, color: '#F59E0B' },
-    { name: 'En production', value: distribution.enProduction, color: '#F97316' },
-    { name: 'Prêtes', value: distribution.pretes, color: '#C6923B' },
-    { name: 'Livrées', value: distribution.livrees, color: '#22C55E' },
-  ];
-
-  const confirmDeleteOrder = () => {
-    setOrderPendingDelete(null);
-    // TODO(Laravel): call DELETE /api/orders/{id} here.
+  const handleRefresh = () => {
+    fetchDashboardData(selectedPeriod);
   };
 
-  // ===== FIX: Export and Print handlers =====
   const handleExportPDF = () => {
     alert('Export PDF - Fonctionnalité disponible prochainement');
   };
@@ -390,11 +522,52 @@ export default function DashboardHome({ currentUser, isLoading = false }) {
     window.print();
   };
 
-  const handleRefresh = () => {
-    // Re-render by updating a state
-    setSelectedPeriod(prev => prev);
-    alert('Données actualisées');
+  const confirmDeleteOrder = () => {
+    setOrderPendingDelete(null);
+    // TODO(Laravel): call DELETE /api/orders/{id} here.
   };
+
+  // ===== DISTRIBUTION DATA =====
+  const distributionData = distribution ? [
+    { name: 'En attente', value: distribution.enAttente || 0, color: '#F59E0B' },
+    { name: 'En production', value: distribution.enProduction || 0, color: '#F97316' },
+    { name: 'Prêtes', value: distribution.pretes || 0, color: '#C6923B' },
+    { name: 'Livrées', value: distribution.livrees || 0, color: '#22C55E' },
+  ] : [];
+
+  // ===== LOADING STATE =====
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen bg-[#F8F7F4] text-[#202020] p-6 space-y-6" style={{ fontFamily: FONT_BODY }}>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-[#C6923B] border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-[#707070]">Chargement du tableau de bord...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ===== ERROR STATE =====
+  if (error) {
+    return (
+      <div className="w-full min-h-screen bg-[#F8F7F4] text-[#202020] p-6 space-y-6" style={{ fontFamily: FONT_BODY }}>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <AlertTriangle className="w-12 h-12 text-rose-500" />
+            <p className="text-sm text-[#707070]">{error}</p>
+            <button
+              onClick={handleRefresh}
+              className="px-4 py-2 text-sm font-semibold text-white bg-[#C6923B] rounded-lg hover:bg-[#B8863B] transition-colors"
+            >
+              Réessayer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-[#F8F7F4] text-[#202020] p-6 space-y-6" style={{ fontFamily: FONT_BODY }}>
@@ -406,13 +579,15 @@ export default function DashboardHome({ currentUser, isLoading = false }) {
         <div>
           <span className="text-xs font-semibold tracking-wider uppercase text-[#C6923B]">Système ERP L'arte</span>
           <h1 className="text-2xl font-bold tracking-tight text-[#202020] mt-0.5" style={{ fontFamily: FONT_HEADING }}>
-            Bienvenue, {activeUser.fullName}
+            Bienvenue, {activeUser.fullName || 'Utilisateur'}
           </h1>
           <div className="flex items-center gap-2 mt-1.5 text-sm text-[#707070]">
-            <span className="font-medium">{activeUser.role}</span>
+            <span className="font-medium">
+             {activeUser.role || '—'}
+            </span>
             <span className={`inline-block w-1.5 h-1.5 rounded-full ${activeUser.status === 'Online' ? 'bg-[#22C55E]' : 'bg-[#B9B4AC]'}`} />
             <span className={`text-[12px] font-medium ${activeUser.status === 'Online' ? 'text-[#22C55E]' : 'text-[#B9B4AC]'}`}>
-              {activeUser.status === 'Online' ? 'En ligne' : activeUser.status}
+              {activeUser.status === 'Online' ? 'En ligne' : activeUser.status || 'Déconnecté'}
             </span>
           </div>
         </div>
@@ -451,8 +626,17 @@ export default function DashboardHome({ currentUser, isLoading = false }) {
             </button>
           ))}
         </div>
-        <div className="text-xs text-[#707070] font-medium px-3">
-          Scope actuel: <span className="text-[#C6923B] font-bold">{selectedPeriod}</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            className="p-2 text-[#707070] hover:text-[#202020] hover:bg-[#F8F7F4] rounded-lg transition-colors"
+            title="Actualiser"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <span className="text-xs text-[#707070] font-medium px-3">
+            Scope actuel: <span className="text-[#C6923B] font-bold">{selectedPeriod}</span>
+          </span>
         </div>
       </div>
 
@@ -468,20 +652,7 @@ export default function DashboardHome({ currentUser, isLoading = false }) {
           { key: 'customers', title: 'Clients actifs', icon: Users, color: 'bg-blue-500', isCurrency: false },
           { key: 'invoices', title: 'Factures en attente', icon: FileText, color: 'bg-rose-500', isCurrency: false }
         ].map((card, idx) => {
-          const item = kpi[card.key];
-
-          if (isLoading) {
-            return (
-              <div key={idx} className="bg-white border border-[#ECE8E1] p-4 rounded-[18px] shadow-sm h-[155px] animate-pulse space-y-3">
-                <div className="flex justify-between">
-                  <div className="w-8 h-8 rounded-xl bg-[#F0EEE9]" />
-                  <div className="w-10 h-3 rounded bg-[#F0EEE9]" />
-                </div>
-                <div className="w-2/3 h-3 rounded bg-[#F0EEE9]" />
-                <div className="w-1/2 h-5 rounded bg-[#F0EEE9]" />
-              </div>
-            );
-          }
+          const item = kpi?.[card.key];
 
           return (
             <motion.div
@@ -542,11 +713,11 @@ export default function DashboardHome({ currentUser, isLoading = false }) {
             </div>
           </div>
           <AnalyticsChart
-            labels={chartData.labels}
-            series1={chartData.revenue}
-            series2={chartData.orders}
-            series3={chartData.production}
-            series4={chartData.invoices}
+            labels={chartData?.labels || []}
+            series1={chartData?.revenue || []}
+            series2={chartData?.orders || []}
+            series3={chartData?.production || []}
+            series4={chartData?.invoices || []}
           />
         </div>
 
@@ -577,7 +748,7 @@ export default function DashboardHome({ currentUser, isLoading = false }) {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute text-center pointer-events-none">
-              <span className="text-2xl font-bold text-[#202020] block" style={{ fontFamily: FONT_NUMBER }}>{distribution.total}</span>
+              <span className="text-2xl font-bold text-[#202020] block" style={{ fontFamily: FONT_NUMBER }}>{distribution?.total || 0}</span>
               <span className="text-[10px] font-semibold text-[#707070] uppercase tracking-wider">Total</span>
             </div>
           </div>
@@ -649,7 +820,7 @@ export default function DashboardHome({ currentUser, isLoading = false }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#ECE8E1]">
-                  {recentOrders.map((order, idx) => (
+                  {displayOrders.map((order, idx) => (
                     <tr key={idx} className="hover:bg-[#F8F7F4]/50 transition-colors">
                       <td className="p-3 font-bold text-[#C6923B]" style={{ fontFamily: FONT_NUMBER }}>{order.id}</td>
                       <td className="p-3 font-medium">{order.customer}</td>
@@ -685,7 +856,7 @@ export default function DashboardHome({ currentUser, isLoading = false }) {
             </div>
 
             <div className="md:hidden space-y-3">
-              {recentOrders.map((order, idx) => (
+              {displayOrders.map((order, idx) => (
                 <div key={idx} className="border border-[#ECE8E1] rounded-xl p-3 bg-[#F8F7F4]/40">
                   <div className="flex justify-between items-start">
                     <span className="font-bold text-[#C6923B] text-xs" style={{ fontFamily: FONT_NUMBER }}>{order.id}</span>
@@ -727,7 +898,7 @@ export default function DashboardHome({ currentUser, isLoading = false }) {
             </div>
 
             <div className="space-y-3 max-h-[290px] overflow-y-auto pr-1">
-              {dashboardData.notifications.map((notif) => (
+              {displayNotifications.map((notif) => (
                 <div
                   key={notif.id}
                   className={`p-3 rounded-xl border flex gap-3 items-start transition-all cursor-pointer ${
@@ -754,16 +925,16 @@ export default function DashboardHome({ currentUser, isLoading = false }) {
       </div>
 
       {/* ==========================================
-          LIVE PRODUCTION & CALENDAR
+          LIVE PRODUCTION & TOP PRODUCTS
           ========================================== */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div className="bg-white border border-[#ECE8E1] p-6 rounded-[18px] shadow-sm">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>Production aujourd'hui</h3>
             <p className="text-xs text-[#707070]">Suivi d'avancement des ateliers</p>
           </div>
           <div className="space-y-4">
-            {liveProduction.map((prod, idx) => (
+            {displayProduction.map((prod, idx) => (
               <div key={idx} className="flex items-center gap-3 p-2 border border-[#ECE8E1] rounded-xl hover:border-[#C6923B]/50 transition-colors">
                 <img src={prod.img} alt={prod.name} className="w-10 h-10 object-cover rounded-lg border border-[#ECE8E1]" />
                 <div className="flex-1 min-w-0">
@@ -786,78 +957,13 @@ export default function DashboardHome({ currentUser, isLoading = false }) {
           </div>
         </div>
 
-        <div className="bg-white border border-[#ECE8E1] p-6 rounded-[18px] shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <div>
-                <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>Calendrier</h3>
-                <p className="text-xs text-[#707070]">Planification logistique</p>
-              </div>
-              <div className="flex items-center gap-1 bg-[#F8F7F4] border border-[#ECE8E1] rounded-lg p-0.5">
-                <button
-                  onClick={() => setSelectedCalendarDate('2026-05-13')}
-                  className={`p-1.5 rounded-md ${selectedCalendarDate === '2026-05-13' ? 'bg-white shadow-xs text-[#C6923B]' : 'text-[#707070]'}`}
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                <span className="text-[10px] font-bold px-1 text-[#202020]">Mai 2026</span>
-                <button
-                  onClick={() => setSelectedCalendarDate('2026-05-14')}
-                  className={`p-1.5 rounded-md ${selectedCalendarDate === '2026-05-14' ? 'bg-white shadow-xs text-[#C6923B]' : 'text-[#707070]'}`}
-                >
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold border-b border-[#ECE8E1] pb-2 mb-2 text-[#707070]">
-              {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(d => <span key={d}>{d}</span>)}
-            </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold mb-4" style={{ fontFamily: FONT_NUMBER }}>
-              {Array.from({ length: 14 }, (_, i) => {
-                const dayStr = `2026-05-${String(i + 11).padStart(2, '0')}`;
-                const hasEvents = !!dashboardData.calendarEvents[dayStr];
-                const isSelected = selectedCalendarDate === dayStr;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => dashboardData.calendarEvents[dayStr] && setSelectedCalendarDate(dayStr)}
-                    className={`p-1.5 rounded-md flex flex-col items-center relative ${
-                      isSelected ? 'bg-[#C6923B] text-white font-bold' : 'text-[#202020] hover:bg-[#F8F7F4]'
-                    } ${!hasEvents && 'opacity-40 cursor-not-allowed'}`}
-                    disabled={!hasEvents}
-                  >
-                    <span>{i + 11}</span>
-                    {hasEvents && !isSelected && <span className="w-1 h-1 bg-[#C6923B] rounded-full absolute bottom-0.5" />}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="space-y-2 border-t border-[#ECE8E1] pt-3">
-              <span className="text-[10px] font-bold text-[#707070] uppercase tracking-wider block mb-1">Événements du jour</span>
-              {dashboardData.calendarEvents[selectedCalendarDate]?.map((ev, idx) => (
-                <div key={idx} className="flex justify-between items-center p-2 bg-[#F8F7F4] border-l-2 border-[#C6923B] rounded-r-lg">
-                  <div className="flex gap-3 items-center min-w-0">
-                    <span className="text-[11px] font-bold text-[#707070]" style={{ fontFamily: FONT_NUMBER }}>{ev.time}</span>
-                    <span className="text-xs font-medium text-[#202020] truncate">{ev.title}</span>
-                  </div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-white border border-[#ECE8E1] rounded text-[#707070]">
-                    {ev.label}
-                  </span>
-                </div>
-              )) || <p className="text-xs text-[#707070] italic">Aucun événement planifié pour cette date.</p>}
-            </div>
-          </div>
-        </div>
-
         <div className="bg-white border border-[#ECE8E1] p-6 rounded-[18px] shadow-sm">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>Top produits</h3>
             <p className="text-xs text-[#707070]">Performances des ventes</p>
           </div>
           <div className="space-y-3">
-            {topProducts.map((item, idx) => (
+            {displayTopProducts.map((item, idx) => (
               <div
                 key={idx}
                 className="space-y-1 relative"

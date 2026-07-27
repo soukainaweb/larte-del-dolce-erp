@@ -13,12 +13,12 @@ import {
 } from "react-icons/hi";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { login as loginService } from "../../services/authService";
 
 // Import des images
 import Logo from '../../assets/images/logo.png';
 import Dessert from '../../assets/images/dessert.png';
 import Coffee from '../../assets/images/coffee.png';
-import Leaves from '../../assets/images/leaves.png';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +27,8 @@ const Login = () => {
     password: "",
     remember: false,
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -39,19 +41,72 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
-    // Utiliser la fonction login du contexte
-    login(formData.email, formData.password);
-    // Rediriger vers dashboard avec navigate au lieu de window.location
-    navigate('/dashboard');
+    setError("");
+    setIsLoading(true);
+    
+    try {
+      const data = await loginService({
+        email: formData.email,
+        password: formData.password,
+        remember: formData.remember
+      });
+      
+      const userData = data.user || data.data?.user;
+      const token = data.token || data.data?.token;
+      
+      if (!userData || !token) {
+        throw new Error("Données de connexion invalides");
+      }
+      
+      login(userData, token);
+      navigate('/dashboard');
+    } catch (err) {
+      console.error("Login error:", err);
+      
+      let errorMessage = "Erreur de connexion. Veuillez vérifier vos identifiants.";
+      
+      if (err.response) {
+        errorMessage = err.response.data?.message || 
+                       err.response.data?.errors?.email?.[0] || 
+                       "Email ou mot de passe incorrect";
+      } else if (err.request) {
+        errorMessage = "Impossible de contacter le serveur. Vérifiez votre connexion.";
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Connexion rapide pour les tests
-  const handleQuickLogin = () => {
-    login('admin@larte.com', 'password');
-    navigate('/dashboard');
+  const handleQuickLogin = async () => {
+    setError("");
+    setIsLoading(true);
+    
+    try {
+      const data = await loginService({
+        email: 'madina7ali7@gmail.com',
+        password: '123456',
+        remember: false
+      });
+      
+      const userData = data.user || data.data?.user;
+      const token = data.token || data.data?.token;
+      
+      if (!userData || !token) {
+        throw new Error("Données de connexion invalides");
+      }
+      
+      login(userData, token);
+      navigate('/dashboard');
+    } catch (err) {
+      console.error("Quick login error:", err);
+      setError("Erreur de connexion rapide. Veuillez utiliser le formulaire.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -118,14 +173,33 @@ const Login = () => {
               <p className="text-[#777777] text-sm mt-2">Connectez-vous pour continuer</p>
             </div>
 
+            {/* Message d'erreur */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm text-center"
+              >
+                {error}
+              </motion.div>
+            )}
+
             {/* Bouton de connexion rapide pour les tests */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleQuickLogin}
-              className="w-full h-[48px] rounded-[18px] bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all duration-300 mb-6"
+              disabled={isLoading}
+              className="w-full h-[48px] rounded-[18px] bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all duration-300 mb-6 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              ⚡ Connexion rapide (Test)
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Connexion...
+                </span>
+              ) : (
+                "⚡ Connexion rapide (Test)"
+              )}
             </motion.button>
 
             <div className="relative mb-6">
@@ -151,6 +225,7 @@ const Login = () => {
                     onChange={handleChange}
                     className="w-full h-[54px] pl-12 pr-4 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm focus:border-[#B88646] focus:ring-2 focus:ring-[#B88646]/20 focus:outline-none transition-all duration-300 text-[#2D2D2D] placeholder-[#B0A8A0] text-left"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -168,6 +243,7 @@ const Login = () => {
                     onChange={handleChange}
                     className="w-full h-[54px] pl-12 pr-12 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm focus:border-[#B88646] focus:ring-2 focus:ring-[#B88646]/20 focus:outline-none transition-all duration-300 text-[#2D2D2D] placeholder-[#B0A8A0] text-left"
                     required
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
@@ -188,6 +264,7 @@ const Login = () => {
                     checked={formData.remember}
                     onChange={handleChange}
                     className="w-4 h-4 rounded border-[#E9DDCF] text-[#B88646] focus:ring-[#B88646]/20 focus:ring-offset-0 cursor-pointer"
+                    disabled={isLoading}
                   />
                   <span>Se souvenir de moi</span>
                 </label>
@@ -201,9 +278,17 @@ const Login = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full h-[56px] rounded-[18px] bg-gradient-to-r from-[#B88646] to-[#9E6C30] text-white font-semibold text-lg shadow-lg shadow-[#B88646]/30 hover:shadow-xl hover:shadow-[#B88646]/40 transition-all duration-300"
+                disabled={isLoading}
+                className="w-full h-[56px] rounded-[18px] bg-gradient-to-r from-[#B88646] to-[#9E6C30] text-white font-semibold text-lg shadow-lg shadow-[#B88646]/30 hover:shadow-xl hover:shadow-[#B88646]/40 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Se connecter
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Connexion...
+                  </span>
+                ) : (
+                  "Se connecter"
+                )}
               </motion.button>
 
               {/* Séparateur */}
@@ -219,7 +304,8 @@ const Login = () => {
               {/* Google */}
               <button
                 type="button"
-                className="w-full h-[54px] flex items-center justify-center gap-3 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm hover:bg-[#FAF7F2] hover:border-[#B88646] transition-all duration-300 text-[#2D2D2D] font-medium"
+                disabled={isLoading}
+                className="w-full h-[54px] flex items-center justify-center gap-3 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm hover:bg-[#FAF7F2] hover:border-[#B88646] transition-all duration-300 text-[#2D2D2D] font-medium disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <FaGoogle className="text-[#EA4335] text-lg" />
                 <span>Se connecter avec Google</span>
@@ -228,7 +314,8 @@ const Login = () => {
               {/* Apple */}
               <button
                 type="button"
-                className="w-full h-[54px] flex items-center justify-center gap-3 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm hover:bg-[#FAF7F2] hover:border-[#B88646] transition-all duration-300 text-[#2D2D2D] font-medium"
+                disabled={isLoading}
+                className="w-full h-[54px] flex items-center justify-center gap-3 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm hover:bg-[#FAF7F2] hover:border-[#B88646] transition-all duration-300 text-[#2D2D2D] font-medium disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <FaApple className="text-[#2D2D2D] text-xl" />
                 <span>Se connecter avec Apple</span>
