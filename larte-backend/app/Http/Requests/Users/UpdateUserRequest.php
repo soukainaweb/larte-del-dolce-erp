@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Users;
 
+use App\Support\UserStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,7 +25,7 @@ class UpdateUserRequest extends FormRequest
             'email' => ['sometimes', 'email', Rule::unique('users')->ignore($userId)],
             'phone' => 'nullable|string|max:20',
             'role_id' => 'sometimes|exists:roles,id',
-            'status' => 'sometimes|in:active,inactive,online,offline,away',
+            'status' => ['sometimes', Rule::in(UserStatus::all())],
         ];
     }
 }

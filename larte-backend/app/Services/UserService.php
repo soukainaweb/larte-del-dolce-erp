@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\Role;
+use App\Support\UserStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -44,7 +45,7 @@ class UserService
             'password' => Hash::make($data['password']),
             'role_id' => $data['role_id'],
             'phone' => $data['phone'] ?? null,
-            'status' => $data['status'] ?? 'offline',
+            'status' => UserStatus::normalize($data['status'] ?? null, UserStatus::OFFLINE),
         ]))->load('role');
     }
 
@@ -54,8 +55,11 @@ class UserService
             'email' => $data['email'] ?? null,
             'phone' => $data['phone'] ?? null,
             'role_id' => $data['role_id'] ?? null,
-            'status' => $data['status'] ?? null,
         ], fn ($v) => $v !== null);
+
+        if (array_key_exists('status', $data) && $data['status'] !== null) {
+            $payload['status'] = UserStatus::normalize($data['status']);
+        }
 
         $payload = array_merge($payload, $this->userPayload($data));
 
@@ -70,7 +74,7 @@ class UserService
 
     public function updateStatus(User $user, string $status): User
     {
-        $user->update(['status' => $status]);
+        $user->update(['status' => UserStatus::normalize($status)]);
 
         return $user->fresh()->load('role');
     }
@@ -119,7 +123,7 @@ class UserService
 
     public function statuses(): array
     {
-        return ['active', 'inactive', 'online', 'offline', 'away'];
+        return UserStatus::all();
     }
 
     public function sendPasswordReset(string $email): string

@@ -27,11 +27,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        $user->update([
-            'last_login_at' => now(),
-            'last_login_ip' => $request->ip(),
-            'status' => 'online',
-        ]);
+        $user->markOnline($request->ip());
 
         return $this->success([
             'user' => $user->fresh()->load('role'),
@@ -41,7 +37,9 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        $user = $request->user();
         $request->user()->currentAccessToken()->delete();
+        $user?->markOffline();
 
         return $this->success(null, 'Déconnexion réussie');
     }

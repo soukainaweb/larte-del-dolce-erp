@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Users;
 
+use App\Support\UserStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreUserRequest extends FormRequest
 {
@@ -21,7 +23,7 @@ class StoreUserRequest extends FormRequest
             'password' => 'required|min:8',
             'role_id' => 'required|exists:roles,id',
             'phone' => 'nullable|string|max:20',
-            'status' => 'nullable|in:active,inactive,online,offline,away',
+            'status' => ['nullable', Rule::in(UserStatus::all())],
         ];
     }
 }

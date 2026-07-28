@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Users;
 
+use App\Support\UserStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateUserStatusRequest extends FormRequest
 {
@@ -14,7 +16,7 @@ class UpdateUserStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'required|in:active,inactive,online,offline,away',
+            'status' => ['required', Rule::in(UserStatus::all())],
         ];
     }
 }

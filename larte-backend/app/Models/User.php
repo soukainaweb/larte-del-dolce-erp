@@ -10,6 +10,7 @@ use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Support\UserStatus;
 
 class User extends Authenticatable implements CanResetPasswordContract
 {
@@ -156,5 +157,34 @@ class User extends Authenticatable implements CanResetPasswordContract
         }
 
         return false;
+    }
+
+    /**
+     * Mark the user as online after a successful login.
+     */
+    public function markOnline(?string $ip = null): void
+    {
+        $this->forceFill([
+            'status' => UserStatus::ONLINE,
+            'last_login_at' => now(),
+            'last_login_ip' => $ip,
+        ])->save();
+    }
+
+    /**
+     * Mark presence offline without touching account-level statuses.
+     */
+    public function markOffline(): void
+    {
+        if (! UserStatus::isPresence($this->status)) {
+            return;
+        }
+
+        $this->forceFill(['status' => UserStatus::OFFLINE])->save();
+    }
+
+    public function isOnline(): bool
+    {
+        return $this->status === UserStatus::ONLINE;
     }
 }
