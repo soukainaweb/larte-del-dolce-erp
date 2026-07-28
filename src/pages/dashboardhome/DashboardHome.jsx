@@ -45,7 +45,11 @@ import {
 } from 'lucide-react';
 
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '../../contexts/ToastContext';
 import dashboardService from '../../services/dashboardService';
+import orderService from '../../services/orderService';
+import { getApiErrorMessage } from '../../utils/apiHelpers';
 
 
 // ==========================================
@@ -388,6 +392,8 @@ const DistributionTooltip = ({ active, payload }) => {
 export default function DashboardHome({ isLoading: initialLoading = false }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
   
  const activeUser = {
   fullName:
@@ -398,6 +404,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
   role:
     user?.role?.display_name ||
     user?.role?.name ||
+    user?.role?.frontendKey ||
     'Utilisateur',
 
   status:
@@ -429,7 +436,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
     
     try {
       // Récupérer toutes les données en parallèle
-      const [statsResponse, analyticsResponse, ordersResponse, notificationsResponse, productionResponse, topProductsResponse] = await Promise.all([
+      const [statsData, analyticsData, ordersData, notificationsData, productionData, topProductsData] = await Promise.all([
         dashboardService.getDashboardStats({ period }),
         dashboardService.getDashboardAnalytics({ period }),
         dashboardService.getRecentOrders({ limit: 5 }),
@@ -438,35 +445,36 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
         dashboardService.getTopProducts({ limit: 5, period })
       ]);
 
-      // Construire les données du dashboard
       const data = {
         periods: {
           [period]: {
-            kpi: statsResponse.data?.kpi || FALLBACK_DATA.periods[period]?.kpi,
-            chartData: analyticsResponse.data?.chartData || FALLBACK_DATA.periods[period]?.chartData,
-            distribution: statsResponse.data?.distribution || FALLBACK_DATA.periods[period]?.distribution,
-            recentOrders: ordersResponse.data || [],
-            liveProduction: productionResponse.data || [],
-            topProducts: topProductsResponse.data || []
+            kpi: statsData?.kpi || FALLBACK_DATA.periods[period]?.kpi,
+            chartData: analyticsData?.chartData || FALLBACK_DATA.periods[period]?.chartData,
+            distribution: statsData?.distribution || FALLBACK_DATA.periods[period]?.distribution,
+            recentOrders: ordersData || [],
+            liveProduction: productionData || [],
+            topProducts: topProductsData || []
           }
         }
       };
 
       setDashboardData(data);
-      setRecentOrders(ordersResponse.data || []);
-      setLiveProduction(productionResponse.data || []);
-      setTopProducts(topProductsResponse.data || []);
-      setNotifications(notificationsResponse.data || []);
+      setRecentOrders(ordersData || []);
+      setLiveProduction(productionData || []);
+      setTopProducts(topProductsData || []);
+      setNotifications(notificationsData || []);
       
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
-      setError(err.message || 'Erreur lors du chargement des données');
+      const message = getApiErrorMessage(err, 'Erreur lors du chargement des données');
+      setError(message);
+      showToast(message, 'error');
       // Utiliser les données de fallback
       setDashboardData(FALLBACK_DATA);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showToast]);
 
   // ===== INITIAL LOAD =====
   useEffect(() => {
@@ -511,20 +519,31 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
   };
 
   const handleExportPDF = () => {
-    alert('Export PDF - Fonctionnalité disponible prochainement');
+    window.print();
   };
 
   const handleExportExcel = () => {
-    alert('Export Excel - Fonctionnalité disponible prochainement');
+    showToast(t('dashboard.exportExcelSoon'), 'info');
   };
 
   const handlePrint = () => {
     window.print();
   };
 
-  const confirmDeleteOrder = () => {
-    setOrderPendingDelete(null);
-    // TODO(Laravel): call DELETE /api/orders/{id} here.
+  const confirmDeleteOrder = async () => {
+    if (!orderPendingDelete?.id) {
+      setOrderPendingDelete(null);
+      return;
+    }
+    try {
+      await orderService.deleteOrder(orderPendingDelete.id);
+      showToast(t('dashboard.orderDeleted'), 'success');
+      fetchDashboardData(selectedPeriod);
+    } catch {
+      showToast(t('errors.deleteFailed'), 'error');
+    } finally {
+      setOrderPendingDelete(null);
+    }
   };
 
   // ===== DISTRIBUTION DATA =====
@@ -542,7 +561,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
         <div className="flex items-center justify-center h-64">
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-4 border-[#C6923B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#707070]">Chargement du tableau de bord...</p>
+            <p className="text-sm text-[#707070]">{t('common.loading')}</p>
           </div>
         </div>
       </div>

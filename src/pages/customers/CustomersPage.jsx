@@ -22,6 +22,7 @@ import {
   FileText
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getCustomers,
@@ -596,6 +597,7 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
 // ==========================================
 const CustomersPage = () => {
   const { user } = useAuth();
+  const { title, subtitle, searchPlaceholder, t } = usePageI18n('customers');
 
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -802,9 +804,9 @@ const CustomersPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Clients
+            {title}
           </h1>
-          <p className="text-sm text-[#6D6D6D]">Gérez vos clients et leurs informations</p>
+          <p className="text-sm text-[#6D6D6D]">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
@@ -844,7 +846,7 @@ const CustomersPage = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" size={18} />
             <input
               type="text"
-              placeholder="Rechercher un client..."
+              placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-[#F8F7F4] text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"

@@ -151,6 +151,7 @@ import {
 } from 'lucide-react';
 
 import { useAuth } from '../../contexts/AuthContext';
+import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
 import { 
   getNotificationRoute, 
@@ -716,6 +717,7 @@ const NotificationFilters = ({
 // ==========================================
 const NotificationsPage = () => {
   const { user } = useAuth();
+  const { title, subtitle, searchPlaceholder, t } = usePageI18n('notifications');
   const navigate = useNavigate();
   
   const [isLoading, setIsLoading] = useState(false);
@@ -1065,7 +1067,7 @@ const NotificationsPage = () => {
             </nav>
             <div className="flex items-center gap-2 md:gap-3">
               <h1 className="text-lg md:text-2xl font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-                Notifications
+                {title}
               </h1>
               <div className="flex items-center gap-1 md:gap-2">
                 <span className="text-[9px] md:text-xs bg-[#B8863B]/10 text-[#B8863B] px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-full font-medium">
@@ -1099,7 +1101,7 @@ const NotificationsPage = () => {
               <Search size={14} className="md:w-4 md:h-4 absolute left-2 md:left-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" />
               <input
                 type="text"
-                placeholder="Rechercher..."
+                placeholder={searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);

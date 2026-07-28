@@ -3,130 +3,89 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customers\StoreCustomerRequest;
+use App\Http\Requests\Customers\UpdateCustomerRequest;
 use App\Models\Customer;
-use App\Models\Order;
+use App\Services\CustomerService;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(private CustomerService $customerService)
     {
-        $query = Customer::query();
-
-        if ($request->search) {
-            $query->where('name', 'LIKE', "%{$request->search}%")
-                ->orWhere('email', 'LIKE', "%{$request->search}%")
-                ->orWhere('phone', 'LIKE', "%{$request->search}%");
-        }
-
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
-
-        $customers = $query->paginate($request->per_page ?? 10);
-
-        return response()->json([
-            'success' => true,
-            'data' => $customers
-        ]);
     }
 
-    public function store(Request $request)
+    public function index(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:200',
-            'phone' => 'required|string|max:20',
-            'email' => 'nullable|email|unique:customers',
-            'address' => 'nullable|string',
-        ]);
+        $this->authorize('viewAny', Customer::class);
 
-        $customer = Customer::create($request->all());
+        return $this->success($this->customerService->list($request->all()));
+    }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Client créé avec succès',
-            'data' => $customer
-        ], 201);
+    public function store(StoreCustomerRequest $request)
+    {
+        $this->authorize('create', Customer::class);
+
+        return $this->success(
+            $this->customerService->create($request->validated()),
+            'Client créé avec succès',
+            201
+        );
     }
 
     public function show(Customer $customer)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $customer->load(['orders' => function($query) {
-                $query->latest()->take(10);
-            }])
-        ]);
+        $this->authorize('view', $customer);
+
+        return $this->success($customer->load(['orders' => fn ($q) => $q->latest()->take(10)]));
     }
 
-    public function update(Request $request, Customer $customer)
+    public function update(UpdateCustomerRequest $request, Customer $customer)
     {
-        $request->validate([
-            'name' => 'sometimes|string|max:200',
-            'phone' => 'sometimes|string|max:20',
-            'email' => 'nullable|email|unique:customers,email,' . $customer->id,
-            'address' => 'nullable|string',
-            'status' => 'sometimes|in:active,inactive,blocked',
-        ]);
+        $this->authorize('update', $customer);
 
-        $customer->update($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Client mis à jour avec succès',
-            'data' => $customer->fresh()
-        ]);
+        return $this->success(
+            $this->customerService->update($customer, $request->validated()),
+            'Client mis à jour avec succès'
+        );
     }
 
     public function destroy(Customer $customer)
     {
-        if ($customer->orders()->count() > 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Impossible de supprimer un client qui a des commandes'
-            ], 403);
+        $this->authorize('delete', $customer);
+
+        try {
+            $this->customerService->delete($customer);
+
+            return $this->success(null, 'Client supprimé avec succès');
+        } catch (\RuntimeException $e) {
+            return $this->error($e->getMessage(), [], 403);
         }
-
-        $customer->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Client supprimé avec succès'
-        ]);
     }
 
     public function statistics()
     {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'total' => Customer::count(),
-                'active' => Customer::where('status', 'active')->count(),
-                'inactive' => Customer::where('status', 'inactive')->count(),
-                'blocked' => Customer::where('status', 'blocked')->count(),
-            ]
-        ]);
+        $this->authorize('viewAny', Customer::class);
+
+        return $this->success($this->customerService->statistics());
     }
 
     public function export(Request $request)
     {
-        $customers = Customer::withCount('orders')->get();
-        
-        $data = $customers->map(function($customer) {
-            return [
-                'Nom' => $customer->name,
-                'Email' => $customer->email,
-                'Téléphone' => $customer->phone,
-                'Adresse' => $customer->address,
-                'Commandes' => $customer->orders_count,
-                'Statut' => $customer->status,
-                'Date création' => $customer->created_at->format('Y-m-d H:i'),
-            ];
-        });
+        $this->authorize('viewAny', Customer::class);
 
-        return response()->json([
-            'success' => true,
-            'data' => $data
-        ]);
+        return $this->success($this->customerService->export());
+    }
+
+    public function types()
+    {
+        $this->authorize('viewAny', Customer::class);
+
+        return $this->success($this->customerService->types());
+    }
+
+    public function statuses()
+    {
+        return $this->success($this->customerService->statuses());
     }
 }

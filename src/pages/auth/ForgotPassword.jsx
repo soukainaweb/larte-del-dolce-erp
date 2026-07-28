@@ -3,14 +3,12 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FaEnvelope, FaArrowLeft } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Cookie } from 'lucide-react';
 import { forgotPassword } from '../../services/authService';
 
-import Logo from '../../assets/images/logo.png';
-import Dessert from '../../assets/images/dessert.png';
-import Coffee from '../../assets/images/coffee.png';
-import Leaves from '../../assets/images/leaves.png';
-
 const ForgotPassword = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -39,16 +37,9 @@ const ForgotPassword = () => {
       <div className="absolute top-1/3 right-1/4 w-[200px] h-[200px] rounded-full border border-[#B88646]/10" />
       <div className="absolute bottom-1/3 left-1/4 w-[200px] h-[200px] rounded-full border border-[#B88646]/10" />
       
-      <img 
-        src={Leaves} 
-        alt=""
-        className="absolute top-10 right-10 opacity-20 w-20 h-20 rotate-45"
-      />
-      <img 
-        src={Leaves} 
-        alt=""
-        className="absolute bottom-10 left-10 opacity-20 w-20 h-20 -rotate-45"
-      />
+      {/* Decorations */}
+      <div className="absolute top-10 end-10 opacity-20 w-20 h-20 rounded-full border border-[#B88646]/30" />
+      <div className="absolute bottom-10 start-10 opacity-20 w-20 h-20 rounded-full border border-[#B88646]/30" />
 
       {/* Conteneur Principal */}
       <motion.div
@@ -65,68 +56,39 @@ const ForgotPassword = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
           >
-            {/* Logo */}
             <motion.div 
               className="flex flex-col items-center gap-2"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.6 }}
             >
-              <img 
-                src={Logo} 
-                alt="L'arte del dolce Logo"
-                className="w-28 h-28 object-contain"
-              />
-              <h1 className="text-3xl font-bold text-[#2D2D2D] leading-tight text-center">L'arte del dolce</h1>
-              <p className="text-[#777777] text-sm tracking-wider text-center">DESSERT & COFFEE SHOP</p>
+              <div className="w-28 h-28 rounded-full bg-[#B88646]/10 flex items-center justify-center border border-[#B88646]/20">
+                <Cookie className="w-14 h-14 text-[#B88646]" strokeWidth={1.5} />
+              </div>
+              <h1 className="text-3xl font-bold text-[#2D2D2D] leading-tight text-center">{t('common.appName')}</h1>
+              <p className="text-[#777777] text-sm tracking-wider text-center">{t('common.erp')}</p>
             </motion.div>
 
-            {/* Dessert */}
             <motion.div 
               className="flex items-center justify-center relative w-full"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.8 }}
             >
-              <div className="relative flex items-center justify-center">
-                <img 
-                  src={Dessert} 
-                  alt="Dessert"
-                  className="w-[380px] h-[380px] object-contain rounded-full shadow-2xl"
-                />
-                <motion.div
-                  className="absolute -bottom-6 -left-6"
-                  animate={{
-                    y: [0, -12, 0],
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <img 
-                    src={Coffee} 
-                    alt="Café"
-                    className="w-28 h-28 object-contain rounded-full shadow-xl bg-white p-3 border-2 border-[#B88646]/20"
-                  />
-                </motion.div>
+              <div className="w-[280px] h-[280px] rounded-full bg-gradient-to-br from-[#B88646]/20 to-[#E9DDCF]/40 shadow-2xl flex items-center justify-center">
+                <Cookie className="w-32 h-32 text-[#B88646]/60" strokeWidth={1} />
               </div>
             </motion.div>
 
-            {/* Texte */}
             <motion.div 
               className="text-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
             >
-              <span className="inline-block px-3 py-1 rounded-full bg-[#B88646]/10 text-[#B88646] text-xs font-semibold tracking-wider mb-3">
-                RÉINITIALISATION DU MOT DE PASSE
-              </span>
-              <h2 className="text-2xl font-bold text-[#2D2D2D]">Mot de passe oublié ?</h2>
+              <h2 className="text-2xl font-bold text-[#2D2D2D]">{t('auth.forgotPasswordTitle')}</h2>
               <p className="text-[#777777] text-sm mt-2 leading-relaxed max-w-xs">
-                Entrez votre email et nous vous enverrons un lien pour réinitialiser votre mot de passe
+                {t('auth.forgotPasswordSubtitle')}
               </p>
             </motion.div>
           </motion.div>
@@ -140,23 +102,18 @@ const ForgotPassword = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.8 }}
           >
-            {/* Logo pour petits écrans */}
             <div className="md:hidden flex flex-col items-center gap-2 mb-8">
-              <img 
-                src={Logo} 
-                alt="L'arte del dolce Logo"
-                className="w-16 h-16 object-contain"
-              />
-              <h1 className="text-xl font-bold text-[#2D2D2D] leading-tight text-center">L'arte del dolce</h1>
-              <p className="text-[#777777] text-[10px] tracking-wider text-center">DESSERT & COFFEE SHOP</p>
+              <div className="w-16 h-16 rounded-full bg-[#B88646]/10 flex items-center justify-center">
+                <Cookie className="w-8 h-8 text-[#B88646]" />
+              </div>
+              <h1 className="text-xl font-bold text-[#2D2D2D] leading-tight text-center">{t('common.appName')}</h1>
             </div>
 
             {!isSubmitted ? (
               <>
-                {/* En-tête */}
                 <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-[#2D2D2D]">Mot de passe oublié ?</h2>
-                  <p className="text-[#777777] text-sm mt-2">Entrez votre email pour recevoir un lien de réinitialisation</p>
+                  <h2 className="text-3xl font-bold text-[#2D2D2D]">{t('auth.forgotPasswordTitle')}</h2>
+                  <p className="text-[#777777] text-sm mt-2">{t('auth.forgotPasswordSubtitle')}</p>
                 </div>
 
                 {error && (

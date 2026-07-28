@@ -46,6 +46,7 @@ import {
   Save,
   RotateCcw
 } from 'lucide-react';
+import { getRoles } from '../../../services/roleService';
 
 // ==========================================
 // TYPOGRAPHY
@@ -798,6 +799,7 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
   const [localUsers, setLocalUsers] = useState(initialUsers || []);
+  const [roles, setRoles] = useState([]);
 
   // Mettre à jour les utilisateurs locaux quand les props changent
   useEffect(() => {
@@ -806,15 +808,14 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
     }
   }, [initialUsers]);
 
-  // Données mock des rôles pour la démonstration
-  const roles = [
-    { id: 1, name: 'Administrateur' },
-    { id: 2, name: 'Comptable' },
-    { id: 3, name: 'Responsable Production' },
-    { id: 4, name: 'Commercial' },
-    { id: 5, name: 'Livreur' },
-    { id: 6, name: 'Manager' }
-  ];
+  useEffect(() => {
+    getRoles({ per_page: 100 })
+      .then((res) => {
+        const data = res.data?.data?.data ?? res.data?.data ?? res.data ?? [];
+        setRoles(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setRoles([]));
+  }, []);
 
   // Toast
   const showToast = (message, type = 'success') => {

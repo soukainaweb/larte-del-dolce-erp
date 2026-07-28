@@ -6,74 +6,69 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-use App\Models\Product;
-
 class Category extends Model
 {
     use HasFactory, SoftDeletes;
 
-
-    /**
-     * Mass assignable attributes
-     */
     protected $fillable = [
         'name',
+        'name_ar',
+        'slug',
+        'code',
         'description',
         'image',
+        'icon',
+        'color',
         'status',
+        'visible',
+        'featured',
+        'display_order',
+        'parent_id',
+        'show_on_pos',
+        'available_online',
+        'product_count',
+        'created_by',
+        'updated_by',
     ];
 
-
-    /**
-     * Cast attributes
-     */
     protected function casts(): array
     {
         return [
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
-            'deleted_at' => 'datetime',
+            'visible' => 'boolean',
+            'featured' => 'boolean',
+            'show_on_pos' => 'boolean',
+            'available_online' => 'boolean',
+            'display_order' => 'integer',
+            'product_count' => 'integer',
         ];
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
-
-
-    /**
-     * Category has many products
-     */
     public function products()
     {
         return $this->hasMany(Product::class);
     }
 
+    public function parent()
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Scopes
-    |--------------------------------------------------------------------------
-    */
+    public function children()
+    {
+        return $this->hasMany(Category::class, 'parent_id');
+    }
 
-
-    /**
-     * Get only active categories
-     */
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
     }
 
-
-    /**
-     * Search categories
-     */
     public function scopeSearch($query, $search)
     {
-        return $query->where('name', 'like', "%{$search}%");
+        return $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+                ->orWhere('name_ar', 'like', "%{$search}%")
+                ->orWhere('code', 'like', "%{$search}%");
+        });
     }
 }

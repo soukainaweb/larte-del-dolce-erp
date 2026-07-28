@@ -7,7 +7,9 @@ import React, {
   useCallback,
   memo,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getNavLabel } from '../../../utils/navI18n';
 import {
   LayoutDashboard,
   ClipboardList,
@@ -553,7 +555,7 @@ const MenuItem = memo(function MenuItem({ item, isCollapsed, activeItemId, onNav
 
       {!isCollapsed ? (
         <>
-          <span className="flex-1 truncate text-left">{item.title}</span>
+          <span className="flex-1 truncate text-start">{item.title}</span>
           {item.badge ? (
             <span
               className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold"
@@ -647,8 +649,8 @@ const BrandCard = memo(function BrandCard({ appName, appSuffix, version, isColla
 // ==================================================
 const Sidebar = ({
   logo,
-  appName = "L'arte del dolce",
-  appSuffix = 'ERP',
+  appName,
+  appSuffix,
   version = '1.0.0',
   currentUser = {
     firstName: 'John',
@@ -671,7 +673,20 @@ const Sidebar = ({
   language = 'fr',
   className = '',
 }) => {
+  const { t } = useTranslation();
   const isRTL = language === 'ar';
+
+  const translatedDashboard = useMemo(() => ({
+    ...DASHBOARD_ITEM,
+    title: getNavLabel(t, 'dashboard'),
+  }), [t, language]);
+
+  const translatedMenuItems = useMemo(() =>
+    menuItems.map((item) => ({
+      ...item,
+      title: getNavLabel(t, item.id),
+    })),
+  [menuItems, t, language]);
 
   const handleNavigate = useCallback(
     (item) => {
@@ -682,8 +697,8 @@ const Sidebar = ({
   );
 
   const visibleMenuItems = useMemo(
-    () => menuItems.filter((item) => isItemVisible(item, currentUser?.role, permissions)),
-    [menuItems, currentUser?.role, permissions],
+    () => translatedMenuItems.filter((item) => isItemVisible(item, currentUser?.role, permissions)),
+    [translatedMenuItems, currentUser?.role, permissions],
   );
 
   const dashboardVisible = isItemVisible(DASHBOARD_ITEM, currentUser?.role, permissions);
@@ -693,7 +708,7 @@ const Sidebar = ({
       <div className="flex flex-col gap-1">
         {dashboardVisible ? (
           <MenuItem
-            item={DASHBOARD_ITEM}
+            item={translatedDashboard}
             isCollapsed={isCollapsed && !isMobile}
             activeItemId={activeItemId}
             onNavigate={handleNavigate}
@@ -712,24 +727,24 @@ const Sidebar = ({
 
       {/* Footer links */}
       <div className="mt-3 flex flex-col gap-0.5 border-t pt-3" style={{ borderColor: COLORS.border }}>
-        <FooterLink 
-          icon={LifeBuoy} 
-          label="Centre d'aide" 
-          onClick={onHelp} 
-          isCollapsed={isCollapsed && !isMobile} 
+        <FooterLink
+          icon={LifeBuoy}
+          label={t('nav.helpCenter')}
+          onClick={onHelp}
+          isCollapsed={isCollapsed && !isMobile}
         />
-        <FooterLink 
-          icon={BookOpen} 
-          label="Documentation" 
-          onClick={onDocumentation} 
-          isCollapsed={isCollapsed && !isMobile} 
+        <FooterLink
+          icon={BookOpen}
+          label={t('nav.documentation')}
+          onClick={onDocumentation}
+          isCollapsed={isCollapsed && !isMobile}
         />
-        <FooterLink 
-          icon={LogOut} 
-          label="Déconnexion" 
-          onClick={onLogout} 
-          isCollapsed={isCollapsed && !isMobile} 
-          danger 
+        <FooterLink
+          icon={LogOut}
+          label={t('nav.logout')}
+          onClick={onLogout}
+          isCollapsed={isCollapsed && !isMobile}
+          danger
         />
       </div>
     </nav>

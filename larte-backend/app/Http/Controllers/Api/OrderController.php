@@ -3,193 +3,223 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Orders\CancelOrderRequest;
+use App\Http\Requests\Orders\StoreOrderProductRequest;
+use App\Http\Requests\Orders\StoreOrderRequest;
+use App\Http\Requests\Orders\UpdateOrderPaymentRequest;
+use App\Http\Requests\Orders\UpdateOrderProductRequest;
+use App\Http\Requests\Orders\UpdateOrderRequest;
+use App\Http\Requests\Orders\UpdateOrderStatusRequest;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Product;
+use App\Services\OrderService;
+use App\Support\StatusMapper;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(private OrderService $orderService)
     {
-        $query = Order::with(['customer', 'user', 'items.product']);
-
-        if ($request->search) {
-            $query->where('order_number', 'LIKE', "%{$request->search}%");
-        }
-
-        if ($request->customer_id) {
-            $query->where('customer_id', $request->customer_id);
-        }
-
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->payment_status) {
-            $query->where('payment_status', $request->payment_status);
-        }
-
-        if ($request->date_from) {
-            $query->whereDate('order_date', '>=', $request->date_from);
-        }
-
-        if ($request->date_to) {
-            $query->whereDate('order_date', '<=', $request->date_to);
-        }
-
-        $orders = $query->orderBy('created_at', 'desc')
-            ->paginate($request->per_page ?? 10);
-
-        return response()->json([
-            'success' => true,
-            'data' => $orders
-        ]);
     }
 
-    public function store(Request $request)
+    public function index(Request $request)
     {
-        $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'notes' => 'nullable|string',
-        ]);
+        $this->authorize('viewAny', Order::class);
 
-        $orderNumber = 'ORD-' . date('Ymd') . '-' . str_pad(Order::count() + 1, 4, '0', STR_PAD_LEFT);
+        return $this->success($this->orderService->list($request->all()));
+    }
 
-        $order = Order::create([
-            'order_number' => $orderNumber,
-            'customer_id' => $request->customer_id,
-            'user_id' => auth()->id(),
-            'order_date' => now(),
-            'status' => 'pending',
-            'payment_status' => 'pending',
-            'notes' => $request->notes,
-        ]);
+    public function store(StoreOrderRequest $request)
+    {
+        $this->authorize('create', Order::class);
 
-        $subtotal = 0;
+        try {
+            $order = $this->orderService->create($request->validated(), auth()->id());
 
-        foreach ($request->items as $item) {
-            $product = Product::find($item['product_id']);
-            $price = $product->price;
-            $subtotalItem = $price * $item['quantity'];
-
-            OrderItem::create([
-                'order_id' => $order->id,
-                'product_id' => $item['product_id'],
-                'quantity' => $item['quantity'],
-                'price' => $price,
-                'subtotal' => $subtotalItem,
-            ]);
-
-            $subtotal += $subtotalItem;
+            return response()->json([
+                'success' => true,
+                'message' => 'Commande créée avec succès',
+                'data' => $order,
+            ], 201);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
-
-        $order->update([
-            'total_amount' => $subtotal,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Commande créée avec succès',
-            'data' => $order->load(['customer', 'items.product'])
-        ], 201);
     }
 
     public function show(Order $order)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $order->load(['customer', 'user', 'items.product'])
-        ]);
+        $this->authorize('view', $order);
+
+        return $this->success(StatusMapper::transformOrder($order->load(['customer', 'user', 'items.product'])));
     }
 
-    public function update(Request $request, Order $order)
+    public function update(UpdateOrderRequest $request, Order $order)
     {
-        $request->validate([
-            'status' => 'sometimes|in:pending,approved,production,ready,delivered,cancelled',
-            'payment_status' => 'sometimes|in:pending,partial,paid,refunded',
-            'notes' => 'nullable|string',
-        ]);
-
-        $order->update($request->all());
+        $this->authorize('update', $order);
 
         return response()->json([
             'success' => true,
             'message' => 'Commande mise à jour avec succès',
-            'data' => $order->fresh()->load(['customer', 'items.product'])
+            'data' => $this->orderService->update($order, $request->validated()),
         ]);
     }
 
     public function destroy(Order $order)
     {
-        if ($order->status === 'delivered') {
+        $this->authorize('delete', $order);
+
+        try {
+            $this->orderService->delete($order);
+
             return response()->json([
-                'success' => false,
-                'message' => 'Impossible de supprimer une commande livrée'
-            ], 403);
+                'success' => true,
+                'message' => 'Commande supprimée avec succès',
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
         }
-
-        $order->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Commande supprimée avec succès'
-        ]);
     }
 
-    public function updateStatus(Request $request, Order $order)
+    public function updateStatus(UpdateOrderStatusRequest $request, Order $order)
     {
-        $request->validate([
-            'status' => 'required|in:pending,approved,production,ready,delivered,cancelled'
-        ]);
-
-        $order->update(['status' => $request->status]);
+        $this->authorize('update', $order);
 
         return response()->json([
             'success' => true,
             'message' => 'Statut mis à jour avec succès',
-            'data' => $order->fresh()
+            'data' => $this->orderService->updateStatus($order, $request->validated('status')),
+        ]);
+    }
+
+    public function validateOrder(Order $order)
+    {
+        $this->authorize('update', $order);
+
+        try {
+            return response()->json([
+                'success' => true,
+                'message' => 'Commande validée',
+                'data' => $this->orderService->validate($order),
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function cancel(CancelOrderRequest $request, Order $order)
+    {
+        $this->authorize('update', $order);
+
+        try {
+            return response()->json([
+                'success' => true,
+                'message' => 'Commande annulée',
+                'data' => $this->orderService->cancel($order, $request->validated('reason')),
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function updatePayment(UpdateOrderPaymentRequest $request, Order $order)
+    {
+        $this->authorize('update', $order);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Paiement mis à jour',
+            'data' => $this->orderService->updatePayment($order, $request->validated()),
+        ]);
+    }
+
+    public function startProduction(Request $request, Order $order)
+    {
+        $this->authorize('update', $order);
+
+        try {
+            return response()->json([
+                'success' => true,
+                'message' => 'Production démarrée',
+                'data' => $this->orderService->startProduction($order, $request->all()),
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function products(Order $order)
+    {
+        $this->authorize('view', $order);
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->orderService->getProducts($order),
+        ]);
+    }
+
+    public function addProduct(StoreOrderProductRequest $request, Order $order)
+    {
+        $this->authorize('update', $order);
+
+        $item = $this->orderService->addProduct($order, $request->validated());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Produit ajouté à la commande',
+            'data' => $item,
+        ], 201);
+    }
+
+    public function updateProduct(UpdateOrderProductRequest $request, Order $order, OrderItem $orderItem)
+    {
+        $this->authorize('update', $order);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quantité mise à jour',
+            'data' => $this->orderService->updateProductQuantity($order, $orderItem, $request->validated('quantity')),
+        ]);
+    }
+
+    public function removeProduct(Order $order, OrderItem $orderItem)
+    {
+        $this->authorize('update', $order);
+
+        $this->orderService->removeProduct($order, $orderItem);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Produit retiré de la commande',
+        ]);
+    }
+
+    public function history(Request $request)
+    {
+        $this->authorize('viewAny', Order::class);
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->orderService->history($request->all()),
         ]);
     }
 
     public function statistics()
     {
+        $this->authorize('viewAny', Order::class);
+
         return response()->json([
             'success' => true,
-            'data' => [
-                'total' => Order::count(),
-                'pending' => Order::where('status', 'pending')->count(),
-                'approved' => Order::where('status', 'approved')->count(),
-                'production' => Order::where('status', 'production')->count(),
-                'ready' => Order::where('status', 'ready')->count(),
-                'delivered' => Order::where('status', 'delivered')->count(),
-                'cancelled' => Order::where('status', 'cancelled')->count(),
-                'total_revenue' => Order::where('payment_status', 'paid')->sum('total_amount'),
-            ]
+            'data' => $this->orderService->statistics(),
         ]);
     }
 
     public function export(Request $request)
     {
-        $orders = Order::with(['customer', 'user'])->get();
-        
-        $data = $orders->map(function($order) {
-            return [
-                'N° Commande' => $order->order_number,
-                'Client' => $order->customer->name ?? '—',
-                'Total' => $order->total_amount,
-                'Statut' => $order->status,
-                'Paiement' => $order->payment_status,
-                'Date' => $order->created_at->format('Y-m-d H:i'),
-            ];
-        });
+        $this->authorize('viewAny', Order::class);
 
         return response()->json([
             'success' => true,
-            'data' => $data
+            'data' => $this->orderService->export(),
         ]);
     }
 }

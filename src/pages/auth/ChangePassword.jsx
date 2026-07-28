@@ -373,7 +373,7 @@ const ChangePassword = () => {
                 </motion.button>
 
                 <Link
-                  to="/profile"
+                  to="/dashboard/profile"
                   className="flex-1 h-[54px] rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <FaTimes className="text-lg" />

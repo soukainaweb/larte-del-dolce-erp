@@ -113,6 +113,7 @@ import {
 } from 'recharts';
 
 import { useAuth } from '../../contexts/AuthContext';
+import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getAnalyticsMetrics,
@@ -827,6 +828,7 @@ const TopListCard = ({ title, items, valueLabel, icon: Icon, valueKey, nameKey, 
 // ==========================================
 const AnalyticsPage = () => {
   const { user: currentUser } = useAuth();
+  const { title, subtitle, searchPlaceholder, t } = usePageI18n('analytics');
 
   // States
   const [isLoading, setIsLoading] = useState(false);
@@ -1699,10 +1701,10 @@ const AnalyticsPage = () => {
               <span>Analytics</span>
             </nav>
             <h1 className="text-2xl font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-              Analytics
+              {title}
             </h1>
             <p className="text-sm text-[#6D6D6D]">
-              Analyse complète des performances de l'entreprise
+              {subtitle}
             </p>
           </div>
 
@@ -1742,7 +1744,7 @@ const AnalyticsPage = () => {
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" />
               <input
                 type="text"
-                placeholder="Rechercher..."
+                placeholder={searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 pr-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B] focus:border-transparent w-36 md:w-48"

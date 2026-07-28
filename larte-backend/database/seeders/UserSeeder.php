@@ -14,22 +14,37 @@ class UserSeeder extends Seeder
         $adminRole = Role::where('name', 'admin')->first();
 
         User::updateOrCreate(
-            ['email' => 'madina7ali7@gmail.com'],
             [
-                'name' => 'مدينه محمد علي',
+                'email' => 'madina7ali7@gmail.com'
+            ],
+            [
+                'first_name' => 'مدينه',
+                'last_name' => 'محمد علي',
+
                 'password' => Hash::make('123456'),
+
                 'role_id' => $adminRole->id,
-                'status' => 'active',
+
+                'status' => 'online',
             ]
         );
 
+
+        $managerRole = Role::where('name', 'manager')->first();
+
         User::updateOrCreate(
-            ['email' => 'manager@larte.com'],
             [
-                'name' => 'Manager User',
+                'email' => 'manager@larte.com'
+            ],
+            [
+                'first_name' => 'Manager',
+                'last_name' => 'User',
+
                 'password' => Hash::make('123456'),
-                'role_id' => Role::where('name', 'manager')->first()->id,
-                'status' => 'active',
+
+                'role_id' => $managerRole->id,
+
+                'status' => 'online',
             ]
         );
     }

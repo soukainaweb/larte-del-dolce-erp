@@ -1,4 +1,5 @@
 <?php
+// database/migrations/2026_07_21_000007_create_stock_movements_table.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,48 +10,25 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('stock_movements', function (Blueprint $table) {
-
             $table->id();
-
-            // Product relation
             $table->foreignId('product_id')
-                  ->constrained('products')
-                  ->cascadeOnDelete();
-
-            // Warehouse relation
+                ->constrained('products')
+                ->cascadeOnDelete();
             $table->foreignId('warehouse_id')
-                  ->constrained('warehouses')
-                  ->cascadeOnDelete();
-
-            // User who made the movement
+                ->constrained('warehouses')
+                ->cascadeOnDelete();
             $table->foreignId('user_id')
-                  ->constrained('users')
-                  ->cascadeOnDelete();
-
-            $table->enum('type', [
-                'IN',
-                'OUT',
-                'ADJUSTMENT'
-            ]);
-
+                ->constrained('users')
+                ->cascadeOnDelete();
+            $table->enum('type', ['IN', 'OUT', 'ADJUSTMENT']);
             $table->integer('quantity');
-
-            $table->string('reason', 200)
-                  ->nullable();
-
+            $table->string('reason')->nullable();
             $table->timestamps();
 
-
-            // Indexes
-            $table->index('product_id');
-            $table->index('warehouse_id');
-            $table->index('user_id');
             $table->index('type');
             $table->index('created_at');
-
         });
     }
-
 
     public function down(): void
     {

@@ -3,137 +3,87 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Suppliers\StoreSupplierRequest;
+use App\Http\Requests\Suppliers\UpdateSupplierRequest;
 use App\Models\Supplier;
+use App\Services\SupplierService;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(private SupplierService $supplierService)
     {
-        $query = Supplier::query();
-
-        if ($request->search) {
-            $query->where('company_name', 'LIKE', "%{$request->search}%")
-                ->orWhere('contact_name', 'LIKE', "%{$request->search}%")
-                ->orWhere('email', 'LIKE', "%{$request->search}%");
-        }
-
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->city) {
-            $query->where('city', $request->city);
-        }
-
-        $suppliers = $query->paginate($request->per_page ?? 10);
-
-        return response()->json([
-            'success' => true,
-            'data' => $suppliers
-        ]);
     }
 
-    public function store(Request $request)
+    public function index(Request $request)
     {
-        $request->validate([
-            'company_name' => 'required|string|max:100',
-            'contact_name' => 'nullable|string|max:100',
-            'email' => 'required|email|unique:suppliers',
-            'phone' => 'required|string|max:20',
-            'address' => 'nullable|string',
-            'city' => 'nullable|string|max:100',
-            'postal_code' => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:100',
-            'vat_number' => 'nullable|string|max:50',
-            'tax_id' => 'nullable|string|max:50',
-            'website' => 'nullable|url|max:200',
-            'notes' => 'nullable|string',
-            'status' => 'nullable|in:active,inactive,blocked',
-        ]);
+        $this->authorize('viewAny', Supplier::class);
 
-        $supplier = Supplier::create($request->all());
+        return $this->success($this->supplierService->list($request->all()));
+    }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Fournisseur créé avec succès',
-            'data' => $supplier
-        ], 201);
+    public function store(StoreSupplierRequest $request)
+    {
+        $this->authorize('create', Supplier::class);
+
+        return $this->success($this->supplierService->create($request->validated()), 'Fournisseur créé avec succès', 201);
     }
 
     public function show(Supplier $supplier)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $supplier
-        ]);
+        $this->authorize('view', $supplier);
+
+        return $this->success($supplier);
     }
 
-    public function update(Request $request, Supplier $supplier)
+    public function update(UpdateSupplierRequest $request, Supplier $supplier)
     {
-        $request->validate([
-            'company_name' => 'sometimes|string|max:100',
-            'contact_name' => 'nullable|string|max:100',
-            'email' => 'sometimes|email|unique:suppliers,email,' . $supplier->id,
-            'phone' => 'sometimes|string|max:20',
-            'address' => 'nullable|string',
-            'city' => 'nullable|string|max:100',
-            'postal_code' => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:100',
-            'vat_number' => 'nullable|string|max:50',
-            'tax_id' => 'nullable|string|max:50',
-            'website' => 'nullable|url|max:200',
-            'notes' => 'nullable|string',
-            'status' => 'nullable|in:active,inactive,blocked',
-        ]);
+        $this->authorize('update', $supplier);
 
-        $supplier->update($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Fournisseur mis à jour avec succès',
-            'data' => $supplier->fresh()
-        ]);
+        return $this->success($this->supplierService->update($supplier, $request->validated()), 'Fournisseur mis à jour avec succès');
     }
 
     public function destroy(Supplier $supplier)
     {
-        $supplier->delete();
+        $this->authorize('delete', $supplier);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Fournisseur supprimé avec succès'
-        ]);
+        $this->supplierService->delete($supplier);
+
+        return $this->success(null, 'Fournisseur supprimé avec succès');
     }
 
     public function toggleStatus(Request $request, Supplier $supplier)
     {
-        $request->validate([
-            'status' => 'required|in:active,inactive,blocked'
-        ]);
+        $this->authorize('update', $supplier);
 
-        $supplier->update(['status' => $request->status]);
+        $request->validate(['status' => 'required|in:active,inactive,blocked']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Statut mis à jour avec succès',
-            'data' => $supplier->fresh()
-        ]);
+        return $this->success($this->supplierService->toggleStatus($supplier, $request->status), 'Statut mis à jour avec succès');
     }
 
     public function statistics()
     {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'total' => Supplier::count(),
-                'active' => Supplier::where('status', 'active')->count(),
-                'inactive' => Supplier::where('status', 'inactive')->count(),
-                'blocked' => Supplier::where('status', 'blocked')->count(),
-                'by_city' => Supplier::selectRaw('city, count(*) as count')
-                    ->groupBy('city')
-                    ->get(),
-            ]
-        ]);
+        $this->authorize('viewAny', Supplier::class);
+
+        return $this->success($this->supplierService->statistics());
+    }
+
+    public function export(Request $request)
+    {
+        $this->authorize('viewAny', Supplier::class);
+
+        return $this->success($this->supplierService->export());
+    }
+
+    public function types()
+    {
+        $this->authorize('viewAny', Supplier::class);
+
+        return $this->success($this->supplierService->types());
+    }
+
+    public function statuses()
+    {
+        return $this->success($this->supplierService->statuses());
     }
 }

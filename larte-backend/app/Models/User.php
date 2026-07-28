@@ -2,139 +2,159 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Role;
-use App\Models\ActivityLog;
-use App\Models\UserSession;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements CanResetPasswordContract
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, CanResetPassword;
 
-
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
-    'role_id',
-    'name',
-    'email',
-    'password',
-    'phone',
-    'avatar',
-    'address',
-    'city',
-    'country',
-    'timezone',
-    'date_format',
-    'currency',
-    'last_device',
-    'last_login_ip',
-    'last_login_at',
-];
+        'role_id',
+        'first_name',
+        'last_name',
+        'email',
+        'password',
+        'phone',
+        'avatar',
+        'birth_date',
+        'gender',
+        'nationality',
+        'address',
+        'city',
+        'postal_code',
+        'country',
+        'timezone',
+        'date_format',
+        'currency',
+        'employee_id',
+        'department',
+        'position',
+        'hiring_date',
+        'company',
+        'office',
+        'manager_id',
+        'status',
+        'two_factor_enabled',
+        'two_factor_method',
+        'last_device',
+        'last_login_ip',
+        'last_login_at',
+        'created_by',
+        'updated_by',
+    ];
 
-
-    /**
-     * The attributes that should be hidden for serialization.
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    protected $appends = [
+        'name',
+    ];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
+            'birth_date' => 'date',
+            'hiring_date' => 'date',
             'last_login_at' => 'datetime',
+            'two_factor_enabled' => 'boolean',
             'password' => 'hashed',
         ];
     }
 
+    protected function name(): Attribute
+    {
+        return Attribute::get(function () {
+            return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+        });
+    }
 
-    /**
-     * User belongs to one Role
-     */
     public function role()
     {
         return $this->belongsTo(Role::class);
     }
 
-
-    /**
-     * User activity logs
-     */
     public function activityLogs()
     {
         return $this->hasMany(ActivityLog::class);
     }
 
-
-    /**
-     * User notifications
-     */
     public function notifications()
     {
         return $this->hasMany(Notification::class);
     }
 
-
-    /**
-     * User expenses
-     */
     public function expenses()
     {
         return $this->hasMany(Expense::class);
     }
 
-
-    /**
-     * User managed warehouses
-     */
     public function warehouses()
     {
         return $this->hasMany(Warehouse::class, 'manager_id');
     }
 
-
-    /**
-     * User stock movements
-     */
     public function stockMovements()
     {
         return $this->hasMany(StockMovement::class);
     }
 
-
-    /**
-     * User orders
-     */
     public function orders()
     {
         return $this->hasMany(Order::class);
     }
 
-
-    /**
-     * User deliveries (as driver)
-     */
     public function deliveries()
     {
         return $this->hasMany(Delivery::class, 'driver_id');
     }
-    /**
- * User sessions
- */
-public function sessions()
-{
-    return $this->hasMany(UserSession::class);
-}
+
+    public function sessions()
+    {
+        return $this->hasMany(UserSession::class);
+    }
+
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        if (!$this->relationLoaded('role')) {
+            $this->load('role.permissions');
+        } elseif ($this->role && !$this->role->relationLoaded('permissions')) {
+            $this->role->load('permissions');
+        }
+
+        if ($this->role?->name === 'admin') {
+            return true;
+        }
+
+        if (!$this->role) {
+            return false;
+        }
+
+        return $this->role->permissions->contains('name', $permission);
+    }
+
+    public function hasAnyPermission(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if ($this->hasPermission($permission)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

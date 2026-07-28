@@ -1,5 +1,5 @@
 // src/pages/Deliveries/DeliveriesPage.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Truck,
@@ -47,7 +47,10 @@ import {
   UserCog
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePageI18n } from '../../hooks/usePageI18n';
+import { useToast } from '../../contexts/ToastContext';
 import ExportButtons from '../../components/ExportButtons';
+import deliveryService from '../../services/deliveryService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -829,6 +832,8 @@ const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
 // ==========================================
 const DeliveriesPage = () => {
   const { user } = useAuth();
+  const { title, subtitle, searchPlaceholder, t } = usePageI18n('deliveries');
+  const { showToast } = useToast();
 
   const [deliveries, setDeliveries] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -847,104 +852,28 @@ const DeliveriesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Load deliveries
-  useEffect(() => {
-    const fetchDeliveries = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockDeliveries = [
-          {
-            id: 1,
-            deliveryId: 'DEL-0001',
-            orderNumber: 'ORD-1052',
-            customer: 'Café Al Amir',
-            phone: '+212 5 22 12 34 56',
-            address: '12 Rue Al Amir, Quartier Maarif, Casablanca',
-            deliveryPerson: 'Ahmed Benjelloun',
-            vehicle: 'car',
-            deliveryDate: new Date('2025-07-15'),
-            deliveryTime: '14:30',
-            notes: 'Livraison urgente, contacter le client avant départ',
-            status: 'out_for_delivery',
-            paymentMethod: 'cash',
-            paymentStatus: 'unpaid',
-            deliveryFees: 25,
-            totalAmount: 12450,
-            isUrgent: true,
-            createdAt: new Date('2025-07-14')
-          },
-          {
-            id: 2,
-            deliveryId: 'DEL-0002',
-            orderNumber: 'ORD-1048',
-            customer: 'Pâtisserie Nour',
-            phone: '+212 5 37 65 43 21',
-            address: '45 Avenue Hassan II, Rabat',
-            deliveryPerson: 'Sara El Idrissi',
-            vehicle: 'van',
-            deliveryDate: new Date('2025-07-15'),
-            deliveryTime: '10:00',
-            notes: '',
-            status: 'delivered',
-            paymentMethod: 'card',
-            paymentStatus: 'paid',
-            deliveryFees: 40,
-            totalAmount: 8750,
-            isUrgent: false,
-            createdAt: new Date('2025-07-13')
-          },
-          {
-            id: 3,
-            deliveryId: 'DEL-0003',
-            orderNumber: 'ORD-1045',
-            customer: 'Restaurant La Table',
-            phone: '+212 5 29 98 76 54',
-            address: '8 Rue de la Plage, Agadir',
-            deliveryPerson: '',
-            vehicle: 'car',
-            deliveryDate: new Date('2025-07-16'),
-            deliveryTime: '12:00',
-            notes: 'Client demande livraison avant 12h',
-            status: 'pending',
-            paymentMethod: 'online',
-            paymentStatus: 'partial',
-            deliveryFees: 35,
-            totalAmount: 15200,
-            isUrgent: false,
-            createdAt: new Date('2025-07-14')
-          },
-          {
-            id: 4,
-            deliveryId: 'DEL-0004',
-            orderNumber: 'ORD-1042',
-            customer: 'Snack City',
-            phone: '+212 6 12 34 56 78',
-            address: '23 Rue de la Liberté, Casablanca',
-            deliveryPerson: 'Karim Lahlou',
-            vehicle: 'moto',
-            deliveryDate: new Date('2025-07-14'),
-            deliveryTime: '18:00',
-            notes: '',
-            status: 'cancelled',
-            paymentMethod: 'cash',
-            paymentStatus: 'unpaid',
-            deliveryFees: 15,
-            totalAmount: 4350,
-            isUrgent: false,
-            createdAt: new Date('2025-07-13')
-          }
-        ];
-        setDeliveries(mockDeliveries);
-      } catch (error) {
-        console.error('Error fetching deliveries:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchDeliveries = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await deliveryService.getDeliveries({
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+      });
+      const data = response.data?.data || response.data || [];
+      setDeliveries(Array.isArray(data) ? data : (data.data || []));
+    } catch (err) {
+      setDeliveries([]);
+      showToast(t('errors.loadFailed'), 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter, showToast, t]);
 
+  useEffect(() => {
     fetchDeliveries();
-  }, []);
+  }, [fetchDeliveries]);
 
   // Calculate KPIs
   const kpis = useMemo(() => {
@@ -971,11 +900,11 @@ const DeliveriesPage = () => {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(d =>
-        d.deliveryId.toLowerCase().includes(term) ||
-        d.orderNumber.toLowerCase().includes(term) ||
-        d.customer.toLowerCase().includes(term) ||
-        d.phone.includes(term) ||
-        (d.deliveryPerson && d.deliveryPerson.toLowerCase().includes(term))
+        (d.deliveryId || d.delivery_number || '').toLowerCase().includes(term) ||
+        (d.orderNumber || d.order_number || '').toLowerCase().includes(term) ||
+        (d.customer || d.customer_name || '').toLowerCase().includes(term) ||
+        (d.phone || '').includes(term) ||
+        (d.deliveryPerson || d.driver_name || '').toLowerCase().includes(term)
       );
     }
 
@@ -1053,13 +982,8 @@ const DeliveriesPage = () => {
   };
 
   const handleRefresh = () => {
-    // Re-fetch data by toggling loading state
-    setIsLoading(true);
-    setTimeout(() => {
-      // Simulate data refresh
-      setIsLoading(false);
-      alert('Données actualisées');
-    }, 500);
+    fetchDeliveries();
+    showToast(t('common.dataRefreshed'), 'success');
   };
 
   const handlePageChange = (page) => {
@@ -1088,24 +1012,18 @@ const DeliveriesPage = () => {
   const handleResetFilters = () => {
     setSearchTerm('');
     setStatusFilter('all');
-    alert('Filtres réinitialisés');
+    showToast(t('common.filtersReset'), 'info');
   };
 
   const handleCreateDelivery = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const newDelivery = {
-        id: deliveries.length + 1,
-        deliveryId: `DEL-${String(deliveries.length + 1).padStart(4, '0')}`,
-        ...formData,
-        totalAmount: 0,
-        createdAt: new Date()
-      };
-      setDeliveries(prev => [newDelivery, ...prev]);
+      await deliveryService.createDelivery(formData);
       setIsCreateModalOpen(false);
+      showToast(t('success.created'), 'success');
+      fetchDeliveries();
     } catch (error) {
-      console.error('Error creating delivery:', error);
+      showToast(t('errors.saveFailed'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -1114,14 +1032,13 @@ const DeliveriesPage = () => {
   const handleEditDelivery = async (formData) => {
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setDeliveries(prev => prev.map(d =>
-        d.id === selectedDelivery.id ? { ...d, ...formData } : d
-      ));
+      await deliveryService.updateDelivery(selectedDelivery.id, formData);
       setIsEditModalOpen(false);
       setSelectedDelivery(null);
+      showToast(t('success.updated'), 'success');
+      fetchDeliveries();
     } catch (error) {
-      console.error('Error updating delivery:', error);
+      showToast(t('errors.saveFailed'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -1131,12 +1048,13 @@ const DeliveriesPage = () => {
     if (selectedDelivery.status === 'delivered' || selectedDelivery.status === 'out_for_delivery') return;
     setIsSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setDeliveries(prev => prev.filter(d => d.id !== selectedDelivery.id));
+      await deliveryService.deleteDelivery(selectedDelivery.id);
       setIsDeleteModalOpen(false);
       setSelectedDelivery(null);
+      showToast(t('success.deleted'), 'success');
+      fetchDeliveries();
     } catch (error) {
-      console.error('Error deleting delivery:', error);
+      showToast(t('errors.deleteFailed'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -1157,9 +1075,9 @@ const DeliveriesPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Livraisons
+            {title}
           </h1>
-          <p className="text-sm text-[#6D6D6D]">Gérez toutes vos livraisons</p>
+          <p className="text-sm text-[#6D6D6D]">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
@@ -1225,7 +1143,7 @@ const DeliveriesPage = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" size={18} />
             <input
               type="text"
-              placeholder="Rechercher une livraison..."
+              placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-[#F8F7F4] text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"

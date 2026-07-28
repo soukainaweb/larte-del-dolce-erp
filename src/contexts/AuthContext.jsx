@@ -1,6 +1,8 @@
 // src/contexts/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getUser as getUserService, logout as logoutService } from '../services/authService';
+import { extractUserFromResponse, normalizeUser } from '../utils/apiHelpers';
+import { mapRoleToFrontendKey } from '../utils/roleMapping';
 
 const AuthContext = createContext();
 
@@ -10,93 +12,64 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Charger l'utilisateur si le token existe
     useEffect(() => {
         const loadUser = async () => {
             const storedToken = localStorage.getItem('token');
             const storedUser = localStorage.getItem('user');
-            
-            if (storedToken && storedUser) {
+
+            if (!storedToken) {
+                setLoading(false);
+                return;
+            }
+
+            setToken(storedToken);
+
+            // Optimistic restore from localStorage
+            if (storedUser) {
                 try {
-                    setToken(storedToken);
-                    setUser(JSON.parse(storedUser));
-                    
-                    // Vérifier si le token est toujours valide
-                    const userData = await getUserService();
-
-const currentUser = userData.user || userData;
-
-setUser({
-    ...currentUser,
-
-    fullName: currentUser.name ||
-      `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim(),
-
-    firstName: currentUser.name?.split(' ')[0] || '',
-    lastName: currentUser.name?.split(' ').slice(1).join(' ') || '',
-    role: currentUser.role || {},
-    status: currentUser.status || 'Online',
-    avatar: currentUser.avatar || ''
-});
-                } catch (err) {
-                    console.error('Token invalide:', err);
-                    localStorage.removeItem('token');
+                    setUser(normalizeUser(JSON.parse(storedUser)));
+                } catch {
                     localStorage.removeItem('user');
-                    setToken(null);
-                    setUser(null);
                 }
             }
-            setLoading(false);
+
+            try {
+                const response = await getUserService();
+                const currentUser = extractUserFromResponse(response);
+                if (currentUser) {
+                    const formatted = normalizeUser(currentUser);
+                    setUser(formatted);
+                    localStorage.setItem('user', JSON.stringify(formatted));
+                }
+            } catch (err) {
+                console.error('Token invalide:', err);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                setToken(null);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
         };
 
         loadUser();
     }, []);
 
-    // Fonction de login
-   const login = async (userData, token) => {
+    const login = (userData, authToken) => {
+        const formattedUser = normalizeUser(userData);
 
-    const formattedUser = {
-    ...userData,
-
-    fullName: userData.name || 
-      `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
-
-
-        firstName: userData.name?.split(' ')[0] || '',
-        lastName: userData.name?.split(' ').slice(1).join(' ') || '',
-
-        role: userData.role || {
-            name: '',
-            display_name: ''
-        },
-
-        status: userData.status || 'Online',
-        avatar: userData.avatar || ''
+        setUser(formattedUser);
+        setToken(authToken);
+        localStorage.setItem('token', authToken);
+        localStorage.setItem('user', JSON.stringify(formattedUser));
+        setError(null);
     };
 
-
-    setUser(formattedUser);
-    setToken(token);
-
-    localStorage.setItem(
-        'token',
-        token
-    );
-
-    localStorage.setItem(
-        'user',
-        JSON.stringify(formattedUser)
-    );
-
-    setError(null);
-};
-
-    // Fonction de logout
     const logout = async () => {
         try {
             await logoutService();
-        } catch (error) {
-            console.error('Logout error:', error);
+        } catch (err) {
+            console.error('Logout error:', err);
         } finally {
             setUser(null);
             setToken(null);
@@ -105,10 +78,10 @@ setUser({
         }
     };
 
-    // Mettre à jour l'utilisateur
     const updateUser = (userData) => {
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
+        const formatted = normalizeUser(userData);
+        setUser(formatted);
+        localStorage.setItem('user', JSON.stringify(formatted));
     };
 
     const value = {
@@ -120,6 +93,9 @@ setUser({
         logout,
         updateUser,
         isAuthenticated: !!user && !!token,
+        /** Frontend sidebar role key (e.g. sales_rep) */
+        roleKey: user ? mapRoleToFrontendKey(user.role) : null,
+        permissions: user?.permissions || [],
     };
 
     return (

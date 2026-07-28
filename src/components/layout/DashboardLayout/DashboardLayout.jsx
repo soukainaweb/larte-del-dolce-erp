@@ -1,45 +1,65 @@
 // src/components/layout/DashboardLayout/DashboardLayout.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { useToast } from '../../../contexts/ToastContext';
+import { getNotifications, getUnreadCount, markNotificationAsRead } from '../../../services/notificationService';
+import { findSearchRoute, getActiveMenuId } from '../../../utils/searchRoutes';
+import { getNotificationRoute } from '../../../utils/notificationRoutes';
+import { getRoleDisplayName } from '../../../utils/roleMapping';
 
-// Import des composants
 import Header from '../Header/Header';
 import Sidebar from '../Sidebar/Sidebar';
-
-// =============================================
-// BREAKPOINTS
-// =============================================
+import Breadcrumb from '../Breadcrumb/Breadcrumb';
 
 const BREAKPOINTS = {
   MOBILE: 768,
   TABLET: 1024,
 };
 
-// =============================================
-// MAIN COMPONENT
-// =============================================
-
 const DashboardLayout = () => {
-  const { isAuthenticated, isLoading, user, logout } = useAuth();
+  const { isAuthenticated, isLoading, user, logout, roleKey, permissions } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const { showToast } = useToast();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-
-  // =============================================
-  // STATE
-  // =============================================
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < BREAKPOINTS.MOBILE);
   const [isTablet, setIsTablet] = useState(
-    window.innerWidth >= BREAKPOINTS.MOBILE && 
+    window.innerWidth >= BREAKPOINTS.MOBILE &&
     window.innerWidth < BREAKPOINTS.TABLET
   );
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  // =============================================
-  // HANDLERS
-  // =============================================
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const [listRes, countRes] = await Promise.all([
+        getNotifications({ per_page: 5, status: 'unread' }),
+        getUnreadCount(),
+      ]);
+      const list = listRes.data?.data?.data || listRes.data?.data || listRes.data || [];
+      setNotifications(Array.isArray(list) ? list : []);
+      const count = countRes.data?.data?.count ?? countRes.data?.count ?? countRes.data?.data ?? 0;
+      setUnreadCount(typeof count === 'number' ? count : 0);
+    } catch {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, fetchNotifications]);
 
   const handleResize = useCallback(() => {
     const width = window.innerWidth;
@@ -49,133 +69,121 @@ const DashboardLayout = () => {
     setIsMobile(mobile);
     setIsTablet(tablet);
 
-    // Fermer le sidebar mobile si on passe en desktop
     if (!mobile && isMobileOpen) {
       setIsMobileOpen(false);
     }
 
-    // Sur tablette, réduire automatiquement
     if (tablet && !isCollapsed) {
       setIsCollapsed(true);
     }
 
-    // Sur desktop, agrandir si réduit
-    if (!mobile && !tablet && isCollapsed && window.innerWidth >= BREAKPOINTS.TABLET) {
+    if (!mobile && !tablet && isCollapsed && width >= BREAKPOINTS.TABLET) {
       setIsCollapsed(false);
     }
   }, [isMobileOpen, isCollapsed]);
 
-  // Toggle sidebar (mobile: drawer, desktop: collapse)
   const toggleSidebar = useCallback(() => {
     if (isMobile) {
-      setIsMobileOpen(prev => !prev);
+      setIsMobileOpen((prev) => !prev);
     } else {
-      setIsCollapsed(prev => !prev);
+      setIsCollapsed((prev) => !prev);
     }
   }, [isMobile]);
 
-  // Fermer le sidebar mobile
   const handleCloseMobile = useCallback(() => {
     setIsMobileOpen(false);
   }, []);
 
-  // Toggle collapse desktop
   const handleToggleCollapse = useCallback(() => {
-    setIsCollapsed(prev => !prev);
+    setIsCollapsed((prev) => !prev);
   }, []);
 
-  // Navigation handler - Sidebar onClick
   const handleNavigate = useCallback((item) => {
-    // Fermer le sidebar mobile avant navigation
     if (isMobile) {
       setIsMobileOpen(false);
     }
-    
-    // Naviguer vers la route de l'item
     if (item?.route) {
       navigate(item.route);
     }
   }, [isMobile, navigate]);
 
-  // =============================================
-  // HEADER HANDLERS
-  // =============================================
-
-  // Gestion de la déconnexion
-  const handleLogout = useCallback(() => {
-    logout();
+  const handleLogout = useCallback(async () => {
+    await logout();
     navigate('/login', { replace: true });
   }, [logout, navigate]);
 
-  // Gestion des notifications
-  const handleNotificationClick = useCallback((notificationId) => {
-    // Rediriger vers la page des notifications avec l'ID
-    navigate('/dashboard/notifications');
-  }, [navigate]);
+  const handleNotificationClick = useCallback(async (notification) => {
+    try {
+      if (notification?.id && !notification.read_at && !notification.is_read) {
+        await markNotificationAsRead(notification.id);
+        setUnreadCount((c) => Math.max(0, c - 1));
+      }
+      const route = getNotificationRoute(notification);
+      navigate(route);
+      fetchNotifications();
+    } catch {
+      navigate('/dashboard/notifications');
+    }
+  }, [navigate, fetchNotifications]);
 
   const handleAllNotificationsView = useCallback(() => {
     navigate('/dashboard/notifications');
   }, [navigate]);
 
-  // Gestion de la recherche
   const handleSearchSubmit = useCallback((searchTerm) => {
-    if (searchTerm && searchTerm.trim().length > 0) {
-      // Rediriger vers la page de recherche ou filtrer
-      console.log('Recherche:', searchTerm);
+    if (!searchTerm || searchTerm.trim().length < 2) return;
+    const match = findSearchRoute(searchTerm);
+    if (match) {
+      navigate(match.route);
+    } else {
+      showToast(t('search.noResults', { term: searchTerm }), 'info');
     }
-  }, []);
+  }, [navigate, showToast, t]);
 
-  // =============================================
-  // EFFECTS
-  // =============================================
+  const handleLanguageChange = useCallback((code) => {
+    i18n.changeLanguage(code);
+  }, [i18n]);
 
-  // Gestion du resize
+  const handleHelp = useCallback(() => {
+    navigate('/dashboard/settings');
+  }, [navigate]);
+
+  const handleDocumentation = useCallback(() => {
+    navigate('/dashboard/settings');
+  }, [navigate]);
+
   useEffect(() => {
     window.addEventListener('resize', handleResize);
     handleResize();
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
+    return () => window.removeEventListener('resize', handleResize);
   }, [handleResize]);
 
-  // Gestion du scroll body quand mobile sidebar est ouvert
   useEffect(() => {
     if (isMobile && isMobileOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
-
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [isMobile, isMobileOpen]);
 
-  // Fermer avec la touche ESC
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isMobileOpen) {
         setIsMobileOpen(false);
       }
     };
-
     document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isMobileOpen]);
 
-  // ⭐ CORRECTION: Fermer le sidebar mobile lors d'un changement de route
   useEffect(() => {
     if (isMobile && isMobileOpen) {
       setIsMobileOpen(false);
     }
   }, [location.pathname, isMobile]);
-
-  // =============================================
-  // LOADING STATE
-  // =============================================
 
   if (isLoading) {
     return (
@@ -189,27 +197,20 @@ const DashboardLayout = () => {
             <div className="w-2 h-2 rounded-full bg-[#B88A44] animate-bounce" style={{ animationDelay: '150ms' }} />
             <div className="w-2 h-2 rounded-full bg-[#B88A44] animate-bounce" style={{ animationDelay: '300ms' }} />
           </div>
-          <p className="mt-4 text-sm text-[#7A6855]">Chargement de votre espace de travail...</p>
+          <p className="mt-4 text-sm text-[#7A6855]">{t('common.loading')}</p>
         </div>
       </div>
     );
   }
 
-  // =============================================
-  // AUTHENTICATION CHECK
-  // =============================================
-
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // =============================================
-  // RENDER
-  // =============================================
+  const activeItemId = getActiveMenuId(location.pathname);
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] flex">
-      {/* Sidebar */}
       <Sidebar
         isCollapsed={isCollapsed}
         onToggleCollapse={handleToggleCollapse}
@@ -217,45 +218,58 @@ const DashboardLayout = () => {
         isMobileOpen={isMobileOpen}
         onCloseMobile={handleCloseMobile}
         currentUser={{
-        ...user,
-        role: user?.role?.name
+          ...user,
+          role: roleKey || user?.role?.frontendKey || user?.role?.name || user?.role,
         }}
+        permissions={permissions}
         onNavigate={handleNavigate}
-        activeItemId={location.pathname.split('/').filter(Boolean).pop() || 'dashboard'}
+        activeItemId={activeItemId}
         onLogout={handleLogout}
+        onHelp={handleHelp}
+        onDocumentation={handleDocumentation}
+        language={i18n.language}
+        appName={t('common.appName')}
+        appSuffix={t('common.erp')}
       />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
-        {/* Header */}
+      <div className="flex-1 flex flex-col min-h-screen overflow-hidden min-w-0">
         <Header
           onMenuClick={toggleSidebar}
+          onToggleSidebar={handleToggleCollapse}
           isMobile={isMobile}
           isTablet={isTablet}
           isCollapsed={isCollapsed}
-          user={user}
-          unreadNotificationCount={5}
+          user={{
+            ...user,
+            role: user?.role ? { ...user.role, display_name: getRoleDisplayName(user.role) } : user?.role,
+          }}
+          notifications={notifications}
+          unreadNotificationCount={unreadCount}
           onNotificationClick={handleNotificationClick}
           onAllNotificationsView={handleAllNotificationsView}
           onSearchSubmit={handleSearchSubmit}
           onLogoutClick={handleLogout}
+          theme={theme}
+          onThemeChange={setTheme}
+          language={i18n.language}
+          onLanguageChange={handleLanguageChange}
         />
 
-        {/* Outlet - Contenu des pages */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <Breadcrumb />
+
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
           <Outlet />
         </main>
 
-        {/* Footer */}
-        <footer className="bg-white border-t border-[#ECE7DF] px-6 py-4 flex-shrink-0">
+        <footer className="bg-white border-t border-[#ECE7DF] px-4 md:px-6 py-4 flex-shrink-0">
           <div className="flex flex-col md:flex-row items-center justify-between gap-2">
-            <p className="text-sm text-[#7A6855]">
-              © 2026 L'arte ERP - Tous droits réservés
+            <p className="text-sm text-[#7A6855] text-center md:text-start">
+              {t('common.copyright')}
             </p>
             <div className="flex items-center gap-4 text-xs text-[#7A6855]">
-              <span>Version 1.0.0</span>
+              <span>{t('common.version')} 1.0.0</span>
               <span className="w-px h-4 bg-[#ECE7DF]" />
-              <span>En ligne</span>
+              <span>{t('common.online')}</span>
               <span className="w-2 h-2 rounded-full bg-[#22C55E] inline-block" />
             </div>
           </div>

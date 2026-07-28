@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -11,16 +14,12 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        $credentials = $request->validated();
+        $user = User::where('email', $credentials['email'])->first();
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['Les identifiants sont incorrects.'],
             ]);
@@ -28,84 +27,56 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
-            'success' => true,
-            'user' => $user->load('role'),
-            'token' => $token,
+        $user->update([
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
+            'status' => 'online',
         ]);
-    }
 
+        return $this->success([
+            'user' => $user->fresh()->load('role'),
+            'token' => $token,
+        ], 'Connexion réussie');
+    }
 
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Déconnexion réussie'
-        ]);
+        return $this->success(null, 'Déconnexion réussie');
     }
-
 
     public function user(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'user' => $request->user()->load('role')
+        return $this->success([
+            'user' => $request->user()->load('role'),
         ]);
     }
 
-
-    public function updateProfile(Request $request)
+    public function forgotPassword(ForgotPasswordRequest $request)
     {
-        $user = $request->user();
+        $status = Password::sendResetLink($request->only('email'));
 
-        $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
-            'phone' => 'sometimes|string|max:20',
-            'avatar' => 'sometimes|string|nullable',
-        ]);
-
-        $user->update(
-            $request->only([
-                'name',
-                'email',
-                'phone',
-                'avatar'
-            ])
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Profil mis à jour avec succès',
-            'user' => $user->fresh()->load('role')
-        ]);
-    }
-
-
-    public function changePassword(Request $request)
-    {
-        $request->validate([
-            'current_password' => 'required',
-            'password' => 'required|min:8|confirmed',
-        ]);
-
-        $user = $request->user();
-
-        if (!Hash::check($request->current_password, $user->password)) {
-            throw ValidationException::withMessages([
-                'current_password' => ['Le mot de passe actuel est incorrect.'],
-            ]);
+        if ($status !== Password::RESET_LINK_SENT) {
+            return $this->error(__($status), [], 422);
         }
 
-        $user->update([
-            'password' => Hash::make($request->password)
-        ]);
+        return $this->success(null, 'Reset link sent to your email');
+    }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Mot de passe modifié avec succès'
-        ]);
+    public function resetPassword(ResetPasswordRequest $request)
+    {
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill(['password' => Hash::make($password)])->save();
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            return $this->error(__($status), [], 422);
+        }
+
+        return $this->success(null, 'Password reset successfully');
     }
 }

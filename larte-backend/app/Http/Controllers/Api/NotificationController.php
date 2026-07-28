@@ -3,113 +3,108 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Notifications\StoreNotificationRequest;
 use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(private NotificationService $notificationService)
     {
-        $query = Notification::where('user_id', auth()->id());
-
-        if ($request->is_read !== null) {
-            $query->where('is_read', $request->is_read);
-        }
-
-        $notifications = $query->orderBy('created_at', 'desc')
-            ->paginate($request->per_page ?? 10);
-
-        return response()->json([
-            'success' => true,
-            'data' => $notifications
-        ]);
     }
 
-    public function store(Request $request)
+    public function index(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:200',
-            'message' => 'required|string',
-            'type' => 'required|string|max:50',
-            'user_id' => 'nullable|exists:users,id',
-        ]);
+        $this->authorize('viewAny', Notification::class);
 
-        $notification = Notification::create([
-            'title' => $request->title,
-            'message' => $request->message,
-            'type' => $request->type,
-            'user_id' => $request->user_id ?? auth()->id(),
-        ]);
+        return $this->success($this->notificationService->list($request->all()));
+    }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Notification créée avec succès',
-            'data' => $notification
-        ], 201);
+    public function store(StoreNotificationRequest $request)
+    {
+        $this->authorize('create', Notification::class);
+
+        return $this->success($this->notificationService->create($request->validated()), 'Notification créée avec succès', 201);
     }
 
     public function show(Notification $notification)
     {
-        if ($notification->user_id !== auth()->id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Non autorisé'
-            ], 403);
-        }
+        $this->authorize('view', $notification);
 
-        return response()->json([
-            'success' => true,
-            'data' => $notification
-        ]);
+        return $this->success($notification);
     }
 
     public function markAsRead(Notification $notification)
     {
-        if ($notification->user_id !== auth()->id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Non autorisé'
-            ], 403);
-        }
+        $this->authorize('update', $notification);
 
-        $notification->update([
-            'is_read' => true,
-            'read_at' => now(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Notification marquée comme lue',
-            'data' => $notification->fresh()
-        ]);
+        return $this->success($this->notificationService->markAsRead($notification), 'Notification marquée comme lue');
     }
 
     public function destroy(Notification $notification)
     {
-        if ($notification->user_id !== auth()->id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Non autorisé'
-            ], 403);
-        }
+        $this->authorize('delete', $notification);
 
-        $notification->delete();
+        $this->notificationService->delete($notification);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Notification supprimée avec succès'
-        ]);
+        return $this->success(null, 'Notification supprimée avec succès');
     }
 
     public function getUnreadCount()
     {
-        $count = Notification::where('user_id', auth()->id())
-            ->where('is_read', false)
-            ->count();
+        return $this->success(['count' => $this->notificationService->unreadCount(auth()->id())]);
+    }
 
-        return response()->json([
-            'success' => true,
-            'data' => ['count' => $count]
-        ]);
+    public function markBatchRead(Request $request)
+    {
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
+
+        $this->notificationService->markBatchRead($request->ids, auth()->id());
+
+        return $this->success(null, 'Notifications marquées comme lues');
+    }
+
+    public function markAllRead()
+    {
+        $this->notificationService->markAllRead(auth()->id());
+
+        return $this->success(null, 'Toutes les notifications marquées comme lues');
+    }
+
+    public function deleteBatch(Request $request)
+    {
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
+
+        $this->notificationService->deleteBatch($request->ids, auth()->id());
+
+        return $this->success(null, 'Notifications supprimées');
+    }
+
+    public function deleteRead()
+    {
+        $this->notificationService->deleteRead(auth()->id());
+
+        return $this->success(null, 'Notifications lues supprimées');
+    }
+
+    public function statistics()
+    {
+        return $this->success($this->notificationService->statistics(auth()->id()));
+    }
+
+    public function export(Request $request)
+    {
+        return $this->success($this->notificationService->export(auth()->id()));
+    }
+
+    public function modules()
+    {
+        return $this->success($this->notificationService->modules());
+    }
+
+    public function priorities()
+    {
+        return $this->success($this->notificationService->priorities());
     }
 }

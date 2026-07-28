@@ -1,5 +1,6 @@
 // src/services/orderService.js
 import api from './api';
+import { unwrapData, unwrapPaginated } from '../utils/apiHelpers';
 
 /**
  * Service de gestion des commandes
@@ -43,7 +44,8 @@ const orderService = {
       
       const url = `/orders${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       const response = await api.get(url);
-      return response.data;
+      const { items, meta } = unwrapPaginated(response);
+      return { data: items, meta, success: true };
     } catch (error) {
       console.error('Error fetching orders:', error);
       throw error;
@@ -58,7 +60,7 @@ const orderService = {
   getOrderById: async (id) => {
     try {
       const response = await api.get(`/orders/${id}`);
-      return response.data;
+      return { data: unwrapData(response), success: true };
     } catch (error) {
       console.error(`Error fetching order ${id}:`, error);
       throw error;
@@ -83,7 +85,7 @@ const orderService = {
   createOrder: async (data) => {
     try {
       const response = await api.post('/orders', data);
-      return response.data;
+      return { data: unwrapData(response), success: true };
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -99,7 +101,7 @@ const orderService = {
   updateOrder: async (id, data) => {
     try {
       const response = await api.put(`/orders/${id}`, data);
-      return response.data;
+      return { data: unwrapData(response), success: true };
     } catch (error) {
       console.error(`Error updating order ${id}:`, error);
       throw error;

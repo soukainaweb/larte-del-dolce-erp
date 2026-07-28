@@ -12,7 +12,11 @@ export const updateProfile = (data) => {
 
 // Change password
 export const changePassword = (data) => {
-    return api.put("/profile/change-password", data);
+    return api.put("/profile/password", {
+        current_password: data.current_password ?? data.currentPassword,
+        password: data.password ?? data.newPassword,
+        password_confirmation: data.password_confirmation ?? data.newPassword_confirmation ?? data.confirmPassword,
+    });
 };
 
 // Upload avatar

@@ -1,0 +1,378 @@
+{
+  "common": {
+    "appName": "L'arte del dolce",
+    "erp": "ERP",
+    "loading": "جاري تحميل مساحة العمل...",
+    "search": "بحث...",
+    "searchInErp": "البحث في النظام...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "view": "عرض",
+    "add": "إضافة",
+    "create": "إنشاء",
+    "update": "تحديث",
+    "refresh": "تحديث",
+    "export": "تصدير",
+    "import": "استيراد",
+    "filter": "تصفية",
+    "filters": "الفلاتر",
+    "resetFilters": "إعادة تعيين الفلاتر",
+    "actions": "الإجراءات",
+    "status": "الحالة",
+    "all": "الكل",
+    "yes": "نعم",
+    "no": "لا",
+    "close": "إغلاق",
+    "confirm": "تأكيد",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "noData": "لا توجد بيانات",
+    "error": "حدث خطأ",
+    "success": "تمت العملية بنجاح",
+    "online": "متصل",
+    "offline": "غير متصل",
+    "version": "الإصدار",
+    "copyright": "© 2026 L'arte ERP - جميع الحقوق محفوظة",
+    "pdf": "PDF",
+    "excel": "Excel",
+    "csv": "CSV",
+    "print": "طباعة",
+    "exportSuccess": "تم تصدير {{type}} بنجاح ({{count}} صف)",
+    "exportError": "خطأ في التصدير",
+    "dataRefreshed": "تم تحديث البيانات بنجاح",
+    "filtersReset": "تم إعادة تعيين الفلاتر",
+    "perPage": "لكل صفحة",
+    "showing": "عرض",
+    "of": "من",
+    "results": "نتائج",
+    "required": "حقل مطلوب",
+    "notes": "ملاحظات",
+    "description": "الوصف",
+    "date": "التاريخ",
+    "amount": "المبلغ",
+    "total": "المجموع",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "address": "العنوان",
+    "city": "المدينة",
+    "country": "البلد",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "pending": "قيد الانتظار",
+    "completed": "مكتمل",
+    "cancelled": "ملغى",
+    "details": "التفاصيل",
+    "statistics": "الإحصائيات",
+    "overview": "نظرة عامة",
+    "today": "اليوم",
+    "thisWeek": "هذا الأسبوع",
+    "thisMonth": "هذا الشهر",
+    "thisYear": "هذا العام",
+    "custom": "مخصص"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "users": "المستخدمون",
+    "customers": "العملاء",
+    "categories": "الفئات",
+    "products": "المنتجات",
+    "orders": "الطلبات",
+    "production": "الإنتاج",
+    "inventory": "المخزون",
+    "warehouse": "المستودع",
+    "suppliers": "الموردون",
+    "deliveries": "التوصيل",
+    "invoices": "الفواتير",
+    "payments": "المدفوعات",
+    "expenses": "المصروفات",
+    "finance": "المالية",
+    "reports": "التقارير",
+    "analytics": "التحليلات",
+    "notifications": "الإشعارات",
+    "roles": "الأدوار والصلاحيات",
+    "activityLogs": "سجل النشاط",
+    "settings": "الإعدادات",
+    "profile": "ملفي الشخصي",
+    "helpCenter": "مركز المساعدة",
+    "documentation": "التوثيق",
+    "logout": "تسجيل الخروج",
+    "groups": {
+      "gestion": "الإدارة",
+      "stock": "المخزون والإنتاج",
+      "finance": "المالية",
+      "rapports": "التقارير",
+      "parametres": "الإعدادات"
+    }
+  },
+  "header": {
+    "searchShortcut": "Ctrl K",
+    "notifications": "الإشعارات",
+    "newNotifications": "{{count}} جديد",
+    "viewAllNotifications": "عرض جميع الإشعارات",
+    "noNotifications": "لا توجد إشعارات",
+    "myProfile": "ملفي الشخصي",
+    "settings": "الإعدادات",
+    "activityLog": "سجل النشاط",
+    "helpCenter": "مركز المساعدة",
+    "logout": "تسجيل الخروج",
+    "themes": {
+      "light": "فاتح",
+      "dark": "داكن",
+      "system": "النظام"
+    },
+    "languages": {
+      "en": "English",
+      "fr": "Français",
+      "ar": "العربية"
+    }
+  },
+  "breadcrumb": {
+    "dashboard": "لوحة التحكم",
+    "orders": "الطلبات",
+    "orderDetails": "تفاصيل الطلب",
+    "products": "المنتجات",
+    "customers": "العملاء",
+    "categories": "الفئات",
+    "invoices": "الفواتير",
+    "payments": "المدفوعات",
+    "expenses": "المصروفات",
+    "deliveries": "التوصيل",
+    "production": "الإنتاج",
+    "inventory": "المخزون",
+    "warehouse": "المستودع",
+    "suppliers": "الموردون",
+    "reports": "التقارير",
+    "analytics": "التحليلات",
+    "users": "المستخدمون",
+    "roles": "الأدوار والصلاحيات",
+    "settings": "الإعدادات",
+    "profile": "الملف الشخصي",
+    "notifications": "الإشعارات",
+    "finance": "المالية",
+    "activityLogs": "سجل النشاط"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "rememberMe": "تذكرني",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "signIn": "دخول",
+    "signingIn": "جاري الدخول...",
+    "welcomeBack": "مرحباً بعودتك",
+    "loginSubtitle": "سجل الدخول للوصول إلى مساحة العمل",
+    "invalidCredentials": "بيانات الدخول غير صحيحة",
+    "loginError": "خطأ في تسجيل الدخول. حاول مرة أخرى.",
+    "forgotPasswordTitle": "نسيت كلمة المرور",
+    "forgotPasswordSubtitle": "أدخل بريدك الإلكتروني لاستلام رابط إعادة التعيين",
+    "sendResetLink": "إرسال الرابط",
+    "sending": "جاري الإرسال...",
+    "resetLinkSent": "تم إرسال رابط إعادة التعيين إلى بريدك",
+    "backToLogin": "العودة لتسجيل الدخول",
+    "changePassword": "تغيير كلمة المرور",
+    "currentPassword": "كلمة المرور الحالية",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "updatePassword": "تحديث كلمة المرور",
+    "passwordUpdated": "تم تحديث كلمة المرور بنجاح",
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "emailPlaceholder": "example@email.com",
+    "passwordPlaceholder": "••••••••",
+    "quickLogin": "تسجيل دخول سريع (اختبار)",
+    "orSignInWith": "أو سجّل الدخول",
+    "or": "أو",
+    "signInWithGoogle": "تسجيل الدخول عبر Google",
+    "signInWithApple": "تسجيل الدخول عبر Apple",
+    "oauthNotConfigured": "تسجيل الدخول الاجتماعي غير مفعّل بعد.",
+    "serverUnreachable": "تعذّر الاتصال بالخادم. تحقق من اتصالك.",
+    "invalidLoginData": "استجابة تسجيل دخول غير صالحة من الخادم.",
+    "quickLoginError": "فشل تسجيل الدخول السريع. يرجى استخدام النموذج.",
+    "copyright": "© 2026 L'arte del dolce",
+    "platformTagline": "منصة إدارة متكاملة"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "subtitle": "نظرة عامة على نشاطك",
+    "recentOrders": "الطلبات الأخيرة",
+    "liveProduction": "الإنتاج المباشر",
+    "topProducts": "المنتجات الأكثر مبيعاً",
+    "notifications": "الإشعارات",
+    "kpiOrders": "الطلبات",
+    "kpiProduction": "الإنتاج",
+    "kpiRevenue": "الإيرادات",
+    "kpiCustomers": "العملاء",
+    "exportPdfSoon": "تصدير PDF متاح عبر أزرار التصدير",
+    "exportExcelSoon": "تصدير Excel متاح عبر أزرار التصدير",
+    "deleteOrderConfirm": "هل أنت متأكد من حذف هذا الطلب؟",
+    "orderDeleted": "تم حذف الطلب بنجاح"
+  },
+  "orders": {
+    "title": "الطلبات",
+    "subtitle": "إدارة طلبات العملاء",
+    "search": "البحث عن طلب...",
+    "addOrder": "طلب جديد",
+    "status": {
+      "draft": "مسودة",
+      "pending": "قيد الانتظار",
+      "validated": "تم التحقق",
+      "in_production": "قيد الإنتاج",
+      "ready": "جاهز",
+      "in_delivery": "قيد التوصيل",
+      "delivered": "تم التوصيل",
+      "cancelled": "ملغى",
+      "rejected": "مرفوض",
+      "archived": "مؤرشف"
+    },
+    "priority": {
+      "high": "عالية",
+      "medium": "متوسطة",
+      "low": "منخفضة"
+    }
+  },
+  "customers": {
+    "title": "العملاء",
+    "subtitle": "إدارة قاعدة العملاء",
+    "search": "البحث عن عميل...",
+    "addCustomer": "عميل جديد"
+  },
+  "products": {
+    "title": "المنتجات",
+    "subtitle": "إدارة كatalog المنتجات",
+    "search": "البحث عن منتج...",
+    "addProduct": "منتج جديد"
+  },
+  "categories": {
+    "title": "الفئات",
+    "subtitle": "تنظيم المنتجات",
+    "search": "البحث عن فئة...",
+    "addCategory": "فئة جديدة"
+  },
+  "deliveries": {
+    "title": "التوصيل",
+    "subtitle": "تتبع وإدارة التوصيل",
+    "search": "البحث عن توصيل...",
+    "addDelivery": "توصيل جديد",
+    "status": {
+      "pending": "قيد الانتظار",
+      "assigned": "تم التعيين",
+      "preparing": "قيد التحضير",
+      "out_for_delivery": "في الطريق",
+      "delivered": "تم التوصيل",
+      "cancelled": "ملغى",
+      "failed": "فشل"
+    }
+  },
+  "finance": {
+    "title": "لوحة المالية",
+    "subtitle": "نظرة عامة على الصحة المالية",
+    "viewTransactions": "عرض المعاملات",
+    "viewPayments": "عرض المدفوعات",
+    "viewSuppliers": "عرض الموردين"
+  },
+  "inventory": {
+    "title": "المخزون",
+    "subtitle": "إدارة المخزون",
+    "search": "البحث عن منتج..."
+  },
+  "warehouse": {
+    "title": "المستودع",
+    "subtitle": "إدارة المستودعات",
+    "search": "البحث عن مستودع..."
+  },
+  "suppliers": {
+    "title": "الموردون",
+    "subtitle": "إدارة الموردين",
+    "search": "البحث عن مورد..."
+  },
+  "invoices": {
+    "title": "الفواتير",
+    "subtitle": "إدارة الفواتير",
+    "search": "البحث عن فاتورة..."
+  },
+  "payments": {
+    "title": "المدفوعات",
+    "subtitle": "تتبع المدفوعات",
+    "search": "البحث عن دفعة..."
+  },
+  "expenses": {
+    "title": "المصروفات",
+    "subtitle": "إدارة المصروفات",
+    "search": "البحث عن مصروف..."
+  },
+  "production": {
+    "title": "الإنتاج",
+    "subtitle": "تتبع الإنتاج",
+    "search": "البحث عن إنتاج..."
+  },
+  "reports": {
+    "title": "التقارير",
+    "subtitle": "تقارير النشاط",
+    "search": "بحث..."
+  },
+  "analytics": {
+    "title": "التحليلات",
+    "subtitle": "تحليل البيانات",
+    "search": "بحث..."
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "subtitle": "مركز الإشعارات",
+    "search": "بحث...",
+    "markAsRead": "تحديد كمقروء",
+    "markAllRead": "تحديد الكل كمقروء",
+    "noNotifications": "لا توجد إشعارات"
+  },
+  "users": {
+    "title": "المستخدمون",
+    "subtitle": "إدارة المستخدمين",
+    "search": "البحث عن مستخدم...",
+    "addUser": "مستخدم جديد"
+  },
+  "roles": {
+    "title": "الأدوار والصلاحيات",
+    "subtitle": "التحكم في الوصول",
+    "search": "البحث عن دور..."
+  },
+  "activityLog": {
+    "title": "سجل النشاط",
+    "subtitle": "سجل إجراءات النظام",
+    "search": "البحث عن مستخدم، إجراء، وحدة..."
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "subtitle": "إعدادات النظام",
+    "search": "البحث عن إعداد..."
+  },
+  "profile": {
+    "title": "ملفي الشخصي",
+    "subtitle": "إدارة معلوماتك الشخصية"
+  },
+  "moduleFallback": {
+    "detailUnavailable": "صفحة التفاصيل غير متاحة بعد",
+    "reference": "المرجع",
+    "redirecting": "جاري التوجيه إلى قائمة {{module}}...",
+    "backToList": "العودة إلى القائمة"
+  },
+  "search": {
+    "noResults": "لا توجد نتائج لـ \"{{term}}\"",
+    "placeholder": "البحث في الوحدات والصفحات..."
+  },
+  "errors": {
+    "loadFailed": "فشل تحميل البيانات",
+    "saveFailed": "فشل الحفظ",
+    "deleteFailed": "فشل الحذف",
+    "networkError": "خطأ في الشبكة. تحقق من اتصالك.",
+    "unauthorized": "انتهت الجلسة. يرجى تسجيل الدخول مجدداً."
+  },
+  "success": {
+    "created": "تم الإنشاء بنجاح",
+    "updated": "تم التحديث بنجاح",
+    "deleted": "تم الحذف بنجاح",
+    "saved": "تم الحفظ بنجاح"
+  }
+}

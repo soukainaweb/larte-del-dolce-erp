@@ -48,7 +48,8 @@ return new class extends Migration
             $table->enum('payment_status',[
                 'unpaid',
                 'paid',
-                'partial'
+                'partial',
+                'refunded'
             ])
             ->default('unpaid');
 

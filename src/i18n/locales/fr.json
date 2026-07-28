@@ -1,0 +1,378 @@
+{
+  "common": {
+    "appName": "L'arte del dolce",
+    "erp": "ERP",
+    "loading": "Chargement de votre espace de travail...",
+    "search": "Rechercher...",
+    "searchInErp": "Rechercher dans l'ERP...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "view": "Voir",
+    "add": "Ajouter",
+    "create": "Créer",
+    "update": "Mettre à jour",
+    "refresh": "Actualiser",
+    "export": "Exporter",
+    "import": "Importer",
+    "filter": "Filtrer",
+    "filters": "Filtres",
+    "resetFilters": "Réinitialiser les filtres",
+    "actions": "Actions",
+    "status": "Statut",
+    "all": "Tous",
+    "yes": "Oui",
+    "no": "Non",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "noData": "Aucune donnée disponible",
+    "error": "Une erreur est survenue",
+    "success": "Opération réussie",
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "version": "Version",
+    "copyright": "© 2026 L'arte ERP - Tous droits réservés",
+    "pdf": "PDF",
+    "excel": "Excel",
+    "csv": "CSV",
+    "print": "Imprimer",
+    "exportSuccess": "{{type}} exporté avec succès ({{count}} lignes)",
+    "exportError": "Erreur d'export",
+    "dataRefreshed": "Données actualisées avec succès",
+    "filtersReset": "Filtres réinitialisés",
+    "perPage": "Par page",
+    "showing": "Affichage",
+    "of": "sur",
+    "results": "résultats",
+    "required": "Champ requis",
+    "notes": "Notes",
+    "description": "Description",
+    "date": "Date",
+    "amount": "Montant",
+    "total": "Total",
+    "name": "Nom",
+    "email": "Email",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "city": "Ville",
+    "country": "Pays",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "pending": "En attente",
+    "completed": "Terminé",
+    "cancelled": "Annulé",
+    "details": "Détails",
+    "statistics": "Statistiques",
+    "overview": "Vue d'ensemble",
+    "today": "Aujourd'hui",
+    "thisWeek": "Cette semaine",
+    "thisMonth": "Ce mois",
+    "thisYear": "Cette année",
+    "custom": "Personnalisé"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "users": "Utilisateurs",
+    "customers": "Clients",
+    "categories": "Catégories",
+    "products": "Produits",
+    "orders": "Commandes",
+    "production": "Production",
+    "inventory": "Inventaire",
+    "warehouse": "Entrepôt",
+    "suppliers": "Fournisseurs",
+    "deliveries": "Livraisons",
+    "invoices": "Factures",
+    "payments": "Paiements",
+    "expenses": "Dépenses",
+    "finance": "Finance",
+    "reports": "Rapports",
+    "analytics": "Analytics",
+    "notifications": "Notifications",
+    "roles": "Rôles & Permissions",
+    "activityLogs": "Journal d'activité",
+    "settings": "Paramètres",
+    "profile": "Mon profil",
+    "helpCenter": "Centre d'aide",
+    "documentation": "Documentation",
+    "logout": "Déconnexion",
+    "groups": {
+      "gestion": "GESTION",
+      "stock": "STOCK & PRODUCTION",
+      "finance": "FINANCE",
+      "rapports": "RAPPORTS",
+      "parametres": "PARAMÈTRES"
+    }
+  },
+  "header": {
+    "searchShortcut": "Ctrl K",
+    "notifications": "Notifications",
+    "newNotifications": "{{count}} Nouvelles",
+    "viewAllNotifications": "Voir toutes les notifications",
+    "noNotifications": "Aucune notification",
+    "myProfile": "Mon profil",
+    "settings": "Paramètres",
+    "activityLog": "Journal d'activité",
+    "helpCenter": "Centre d'aide",
+    "logout": "Déconnexion",
+    "themes": {
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système"
+    },
+    "languages": {
+      "en": "English",
+      "fr": "Français",
+      "ar": "العربية"
+    }
+  },
+  "breadcrumb": {
+    "dashboard": "Tableau de bord",
+    "orders": "Commandes",
+    "orderDetails": "Détail commande",
+    "products": "Produits",
+    "customers": "Clients",
+    "categories": "Catégories",
+    "invoices": "Factures",
+    "payments": "Paiements",
+    "expenses": "Dépenses",
+    "deliveries": "Livraisons",
+    "production": "Production",
+    "inventory": "Inventaire",
+    "warehouse": "Entrepôt",
+    "suppliers": "Fournisseurs",
+    "reports": "Rapports",
+    "analytics": "Analytics",
+    "users": "Utilisateurs",
+    "roles": "Rôles & Permissions",
+    "settings": "Paramètres",
+    "profile": "Profil",
+    "notifications": "Notifications",
+    "finance": "Finance",
+    "activityLogs": "Journal d'activité"
+  },
+  "auth": {
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "email": "Adresse email",
+    "password": "Mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion...",
+    "welcomeBack": "Bon retour",
+    "loginSubtitle": "Connectez-vous pour accéder à votre espace",
+    "invalidCredentials": "Identifiants incorrects",
+    "loginError": "Erreur de connexion. Veuillez réessayer.",
+    "forgotPasswordTitle": "Mot de passe oublié",
+    "forgotPasswordSubtitle": "Entrez votre email pour recevoir un lien de réinitialisation",
+    "sendResetLink": "Envoyer le lien",
+    "sending": "Envoi...",
+    "resetLinkSent": "Lien de réinitialisation envoyé à votre email",
+    "backToLogin": "Retour à la connexion",
+    "changePassword": "Changer le mot de passe",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "updatePassword": "Mettre à jour le mot de passe",
+    "passwordUpdated": "Mot de passe mis à jour avec succès",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "emailPlaceholder": "exemple@email.com",
+    "passwordPlaceholder": "••••••••",
+    "quickLogin": "Connexion rapide (Test)",
+    "orSignInWith": "ou connectez-vous",
+    "or": "ou",
+    "signInWithGoogle": "Se connecter avec Google",
+    "signInWithApple": "Se connecter avec Apple",
+    "oauthNotConfigured": "La connexion sociale n'est pas encore configurée.",
+    "serverUnreachable": "Impossible de contacter le serveur. Vérifiez votre connexion.",
+    "invalidLoginData": "Données de connexion invalides.",
+    "quickLoginError": "Erreur de connexion rapide. Veuillez utiliser le formulaire.",
+    "copyright": "© 2026 L'arte del dolce",
+    "platformTagline": "Plateforme de gestion intégrée"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "subtitle": "Vue d'ensemble de votre activité",
+    "recentOrders": "Commandes récentes",
+    "liveProduction": "Production en direct",
+    "topProducts": "Produits populaires",
+    "notifications": "Notifications",
+    "kpiOrders": "Commandes",
+    "kpiProduction": "Production",
+    "kpiRevenue": "Revenus",
+    "kpiCustomers": "Clients",
+    "exportPdfSoon": "L'export PDF est disponible via les boutons d'export",
+    "exportExcelSoon": "L'export Excel est disponible via les boutons d'export",
+    "deleteOrderConfirm": "Êtes-vous sûr de vouloir supprimer cette commande ?",
+    "orderDeleted": "Commande supprimée avec succès"
+  },
+  "orders": {
+    "title": "Commandes",
+    "subtitle": "Gérer les commandes clients",
+    "search": "Rechercher une commande...",
+    "addOrder": "Nouvelle commande",
+    "status": {
+      "draft": "Brouillon",
+      "pending": "En attente",
+      "validated": "Validée",
+      "in_production": "En production",
+      "ready": "Prête",
+      "in_delivery": "En livraison",
+      "delivered": "Livrée",
+      "cancelled": "Annulée",
+      "rejected": "Refusée",
+      "archived": "Archivée"
+    },
+    "priority": {
+      "high": "Haute",
+      "medium": "Moyenne",
+      "low": "Basse"
+    }
+  },
+  "customers": {
+    "title": "Clients",
+    "subtitle": "Gérer votre base clients",
+    "search": "Rechercher un client...",
+    "addCustomer": "Nouveau client"
+  },
+  "products": {
+    "title": "Produits",
+    "subtitle": "Gérer votre catalogue",
+    "search": "Rechercher un produit...",
+    "addProduct": "Nouveau produit"
+  },
+  "categories": {
+    "title": "Catégories",
+    "subtitle": "Organiser vos produits",
+    "search": "Rechercher une catégorie...",
+    "addCategory": "Nouvelle catégorie"
+  },
+  "deliveries": {
+    "title": "Livraisons",
+    "subtitle": "Suivre et gérer les livraisons",
+    "search": "Rechercher une livraison...",
+    "addDelivery": "Nouvelle livraison",
+    "status": {
+      "pending": "En attente",
+      "assigned": "Assignée",
+      "preparing": "Préparation",
+      "out_for_delivery": "En livraison",
+      "delivered": "Livrée",
+      "cancelled": "Annulée",
+      "failed": "Échouée"
+    }
+  },
+  "finance": {
+    "title": "Tableau de bord Finance",
+    "subtitle": "Vue globale de la santé financière",
+    "viewTransactions": "Voir les transactions",
+    "viewPayments": "Voir les paiements",
+    "viewSuppliers": "Voir les fournisseurs"
+  },
+  "inventory": {
+    "title": "Inventaire",
+    "subtitle": "Gestion des stocks",
+    "search": "Rechercher un produit..."
+  },
+  "warehouse": {
+    "title": "Entrepôt",
+    "subtitle": "Gestion des entrepôts",
+    "search": "Rechercher un entrepôt..."
+  },
+  "suppliers": {
+    "title": "Fournisseurs",
+    "subtitle": "Gérer les fournisseurs",
+    "search": "Rechercher un fournisseur..."
+  },
+  "invoices": {
+    "title": "Factures",
+    "subtitle": "Gestion des factures",
+    "search": "Rechercher une facture..."
+  },
+  "payments": {
+    "title": "Paiements",
+    "subtitle": "Suivi des paiements",
+    "search": "Rechercher un paiement..."
+  },
+  "expenses": {
+    "title": "Dépenses",
+    "subtitle": "Gestion des dépenses",
+    "search": "Rechercher une dépense..."
+  },
+  "production": {
+    "title": "Production",
+    "subtitle": "Suivi de production",
+    "search": "Rechercher une production..."
+  },
+  "reports": {
+    "title": "Rapports",
+    "subtitle": "Rapports d'activité",
+    "search": "Rechercher..."
+  },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "Analyse des données",
+    "search": "Rechercher..."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Centre de notifications",
+    "search": "Rechercher...",
+    "markAsRead": "Marquer comme lu",
+    "markAllRead": "Tout marquer comme lu",
+    "noNotifications": "Aucune notification"
+  },
+  "users": {
+    "title": "Utilisateurs",
+    "subtitle": "Gestion des utilisateurs",
+    "search": "Rechercher un utilisateur...",
+    "addUser": "Nouvel utilisateur"
+  },
+  "roles": {
+    "title": "Rôles & Permissions",
+    "subtitle": "Contrôle d'accès",
+    "search": "Rechercher un rôle..."
+  },
+  "activityLog": {
+    "title": "Journal d'activité",
+    "subtitle": "Historique des actions système",
+    "search": "Rechercher un utilisateur, une action, un module..."
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Configuration du système",
+    "search": "Rechercher un paramètre..."
+  },
+  "profile": {
+    "title": "Mon profil",
+    "subtitle": "Gérer vos informations personnelles"
+  },
+  "moduleFallback": {
+    "detailUnavailable": "La page de détail n'est pas encore disponible",
+    "reference": "Référence",
+    "redirecting": "Redirection vers la liste des {{module}}...",
+    "backToList": "Retour à la liste"
+  },
+  "search": {
+    "noResults": "Aucun résultat pour \"{{term}}\"",
+    "placeholder": "Rechercher modules, pages..."
+  },
+  "errors": {
+    "loadFailed": "Échec du chargement des données",
+    "saveFailed": "Échec de l'enregistrement",
+    "deleteFailed": "Échec de la suppression",
+    "networkError": "Erreur réseau. Vérifiez votre connexion.",
+    "unauthorized": "Session expirée. Veuillez vous reconnecter."
+  },
+  "success": {
+    "created": "Créé avec succès",
+    "updated": "Mis à jour avec succès",
+    "deleted": "Supprimé avec succès",
+    "saved": "Enregistré avec succès"
+  }
+}

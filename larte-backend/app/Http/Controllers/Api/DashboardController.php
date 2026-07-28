@@ -3,76 +3,60 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\DashboardService;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Gate;
 
 class DashboardController extends Controller
 {
+    public function __construct(private DashboardService $dashboardService)
+    {
+    }
+
+    private function authorizeDashboard(): void
+    {
+        abort_unless(Gate::allows('dashboard.view'), 403, 'Forbidden');
+    }
 
     public function stats(Request $request)
     {
-        return response()->json([
-            'kpi'=>[
-                'orders'=>[
-                    'value'=>0,
-                    'growth'=>'0%',
-                    'isPositive'=>true,
-                    'trend'=>[]
-                ],
-                'production'=>[
-                    'value'=>0,
-                    'growth'=>'0%',
-                    'isPositive'=>true,
-                    'trend'=>[]
-                ]
-            ],
+        $this->authorizeDashboard();
 
-            'distribution'=>[
-                'total'=>0,
-                'enAttente'=>0,
-                'enProduction'=>0,
-                'pretes'=>0,
-                'livrees'=>0
-            ]
-        ]);
+        return $this->success($this->dashboardService->stats());
     }
-
 
     public function analytics()
     {
-        return response()->json([
-            'chartData'=>[
-                'labels'=>[],
-                'revenue'=>[],
-                'orders'=>[],
-                'production'=>[],
-                'invoices'=>[]
-            ]
-        ]);
-    }
+        $this->authorizeDashboard();
 
+        return $this->success($this->dashboardService->analytics());
+    }
 
     public function orders()
     {
-        return response()->json([]);
-    }
+        $this->authorizeDashboard();
 
+        return $this->success($this->dashboardService->orders());
+    }
 
     public function notifications()
     {
-        return response()->json([]);
-    }
+        $this->authorizeDashboard();
 
+        return $this->success($this->dashboardService->notifications());
+    }
 
     public function production()
     {
-        return response()->json([]);
-    }
+        $this->authorizeDashboard();
 
+        return $this->success($this->dashboardService->production());
+    }
 
     public function topProducts()
     {
-        return response()->json([]);
-    }
+        $this->authorizeDashboard();
 
+        return $this->success($this->dashboardService->topProducts());
+    }
 }

@@ -12,15 +12,16 @@ import {
   HiOutlineLockClosed,
 } from "react-icons/hi";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
+import { Cookie } from 'lucide-react';
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
 import { login as loginService } from "../../services/authService";
-
-// Import des images
-import Logo from '../../assets/images/logo.png';
-import Dessert from '../../assets/images/dessert.png';
-import Coffee from '../../assets/images/coffee.png';
+import { extractUserFromResponse, extractTokenFromResponse, getApiErrorMessage } from "../../utils/apiHelpers";
 
 const Login = () => {
+  const { t } = useTranslation();
+  const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -53,29 +54,21 @@ const Login = () => {
         remember: formData.remember
       });
       
-      const userData = data.user || data.data?.user;
-      const token = data.token || data.data?.token;
+      const userData = extractUserFromResponse(data);
+      const token = extractTokenFromResponse(data);
       
       if (!userData || !token) {
-        throw new Error("Données de connexion invalides");
+        throw new Error(t('auth.invalidLoginData'));
       }
       
       login(userData, token);
+      showToast(t('auth.loginSuccess', { defaultValue: 'Connexion réussie' }), 'success');
       navigate('/dashboard');
     } catch (err) {
       console.error("Login error:", err);
-      
-      let errorMessage = "Erreur de connexion. Veuillez vérifier vos identifiants.";
-      
-      if (err.response) {
-        errorMessage = err.response.data?.message || 
-                       err.response.data?.errors?.email?.[0] || 
-                       "Email ou mot de passe incorrect";
-      } else if (err.request) {
-        errorMessage = "Impossible de contacter le serveur. Vérifiez votre connexion.";
-      }
-      
+      const errorMessage = getApiErrorMessage(err, t('auth.loginError'));
       setError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -92,18 +85,21 @@ const Login = () => {
         remember: false
       });
       
-      const userData = data.user || data.data?.user;
-      const token = data.token || data.data?.token;
+      const userData = extractUserFromResponse(data);
+      const token = extractTokenFromResponse(data);
       
       if (!userData || !token) {
-        throw new Error("Données de connexion invalides");
+        throw new Error(t('auth.invalidLoginData'));
       }
       
       login(userData, token);
+      showToast(t('auth.loginSuccess', { defaultValue: 'Connexion réussie' }), 'success');
       navigate('/dashboard');
     } catch (err) {
       console.error("Quick login error:", err);
-      setError("Erreur de connexion rapide. Veuillez utiliser le formulaire.");
+      const errorMessage = getApiErrorMessage(err, t('auth.quickLoginError'));
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -126,29 +122,16 @@ const Login = () => {
         <div className="hidden md:flex md:w-[50%] bg-gradient-to-br from-[#FAF7F2] to-[#F3EDE4] p-12 flex-col items-center justify-center relative overflow-hidden min-h-[600px]">
           <div className="relative z-10 h-full flex flex-col items-center justify-center gap-8 w-full">
             <div className="flex flex-col items-center gap-2">
-              <img 
-                src={Logo} 
-                alt="L'arte del dolce Logo"
-                className="w-28 h-28 object-contain"
-              />
-              <h1 className="text-3xl font-bold text-[#2D2D2D] leading-tight text-center">L'arte del dolce</h1>
-              <p className="text-[#777777] text-sm tracking-wider text-center">DESSERT & COFFEE SHOP</p>
+              <div className="w-28 h-28 rounded-full bg-[#B88646]/10 flex items-center justify-center border border-[#B88646]/20">
+                <Cookie className="w-14 h-14 text-[#B88646]" strokeWidth={1.5} />
+              </div>
+              <h1 className="text-3xl font-bold text-[#2D2D2D] leading-tight text-center">{t('common.appName')}</h1>
+              <p className="text-[#777777] text-sm tracking-wider text-center">{t('common.erp')}</p>
             </div>
 
             <div className="flex items-center justify-center relative w-full">
-              <div className="relative flex items-center justify-center">
-                <img 
-                  src={Dessert} 
-                  alt="Dessert"
-                  className="w-[380px] h-[380px] object-contain rounded-full shadow-2xl"
-                />
-                <div className="absolute -bottom-6 -left-6">
-                  <img 
-                    src={Coffee} 
-                    alt="Café"
-                    className="w-28 h-28 object-contain rounded-full shadow-xl bg-white p-3 border-2 border-[#B88646]/20"
-                  />
-                </div>
+              <div className="relative flex items-center justify-center w-[280px] h-[280px] rounded-full bg-gradient-to-br from-[#B88646]/20 to-[#E9DDCF]/40 shadow-2xl">
+                <Cookie className="w-32 h-32 text-[#B88646]/60" strokeWidth={1} />
               </div>
             </div>
           </div>
@@ -159,18 +142,15 @@ const Login = () => {
           <div className="max-w-sm mx-auto w-full">
             {/* Logo pour mobile */}
             <div className="md:hidden flex flex-col items-center gap-2 mb-8">
-              <img 
-                src={Logo} 
-                alt="L'arte del dolce Logo"
-                className="w-16 h-16 object-contain"
-              />
-              <h1 className="text-xl font-bold text-[#2D2D2D] leading-tight text-center">L'arte del dolce</h1>
+              <div className="w-16 h-16 rounded-full bg-[#B88646]/10 flex items-center justify-center">
+                <Cookie className="w-8 h-8 text-[#B88646]" />
+              </div>
+              <h1 className="text-xl font-bold text-[#2D2D2D] leading-tight text-center">{t('common.appName')}</h1>
             </div>
 
-            {/* En-tête */}
             <div className="mb-8 text-center">
-              <h2 className="text-3xl font-bold text-[#2D2D2D]">Bon retour !</h2>
-              <p className="text-[#777777] text-sm mt-2">Connectez-vous pour continuer</p>
+              <h2 className="text-3xl font-bold text-[#2D2D2D]">{t('auth.welcomeBack')}</h2>
+              <p className="text-[#777777] text-sm mt-2">{t('auth.loginSubtitle')}</p>
             </div>
 
             {/* Message d'erreur */}
@@ -195,10 +175,10 @@ const Login = () => {
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Connexion...
+                  {t('auth.signingIn')}
                 </span>
               ) : (
-                "⚡ Connexion rapide (Test)"
+                `⚡ ${t('auth.quickLogin')}`
               )}
             </motion.button>
 
@@ -207,20 +187,20 @@ const Login = () => {
                 <div className="w-full border-t border-[#E9DDCF]"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white/80 backdrop-blur-sm text-[#777777]">ou connectez-vous</span>
+                <span className="px-4 bg-white/80 backdrop-blur-sm text-[#777777]">{t('auth.orSignInWith')}</span>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-[#2D2D2D] mb-1.5 text-left">Adresse email</label>
+                <label className="block text-sm font-medium text-[#2D2D2D] mb-1.5 text-start">{t('auth.email')}</label>
                 <div className="relative">
                   <HiOutlineMail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#777777] text-lg" />
                   <input
                     type="email"
                     name="email"
-                    placeholder="exemple@email.com"
+                    placeholder={t('auth.emailPlaceholder')}
                     value={formData.email}
                     onChange={handleChange}
                     className="w-full h-[54px] pl-12 pr-4 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm focus:border-[#B88646] focus:ring-2 focus:ring-[#B88646]/20 focus:outline-none transition-all duration-300 text-[#2D2D2D] placeholder-[#B0A8A0] text-left"
@@ -232,13 +212,13 @@ const Login = () => {
 
               {/* Mot de passe */}
               <div>
-                <label className="block text-sm font-medium text-[#2D2D2D] mb-1.5 text-left">Mot de passe</label>
+                <label className="block text-sm font-medium text-[#2D2D2D] mb-1.5 text-start">{t('auth.password')}</label>
                 <div className="relative">
                   <HiOutlineLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-[#777777] text-lg" />
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
-                    placeholder="••••••••"
+                    placeholder={t('auth.passwordPlaceholder')}
                     value={formData.password}
                     onChange={handleChange}
                     className="w-full h-[54px] pl-12 pr-12 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm focus:border-[#B88646] focus:ring-2 focus:ring-[#B88646]/20 focus:outline-none transition-all duration-300 text-[#2D2D2D] placeholder-[#B0A8A0] text-left"
@@ -266,10 +246,10 @@ const Login = () => {
                     className="w-4 h-4 rounded border-[#E9DDCF] text-[#B88646] focus:ring-[#B88646]/20 focus:ring-offset-0 cursor-pointer"
                     disabled={isLoading}
                   />
-                  <span>Se souvenir de moi</span>
+                  <span>{t('auth.rememberMe')}</span>
                 </label>
                 <Link to="/forgot-password" className="text-sm text-[#B88646] hover:text-[#9E6C30] transition-colors duration-200">
-                  Mot de passe oublié ?
+                  {t('auth.forgotPassword')}
                 </Link>
               </div>
 
@@ -284,10 +264,10 @@ const Login = () => {
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Connexion...
+                    {t('auth.signingIn')}
                   </span>
                 ) : (
-                  "Se connecter"
+                  t('auth.signIn')
                 )}
               </motion.button>
 
@@ -297,7 +277,7 @@ const Login = () => {
                   <div className="w-full border-t border-[#E9DDCF]"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white/80 backdrop-blur-sm text-[#777777]">ou</span>
+                  <span className="px-4 bg-white/80 backdrop-blur-sm text-[#777777]">{t('auth.or')}</span>
                 </div>
               </div>
 
@@ -305,28 +285,30 @@ const Login = () => {
               <button
                 type="button"
                 disabled={isLoading}
+                onClick={() => showToast(t('auth.oauthNotConfigured'), 'info')}
                 className="w-full h-[54px] flex items-center justify-center gap-3 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm hover:bg-[#FAF7F2] hover:border-[#B88646] transition-all duration-300 text-[#2D2D2D] font-medium disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <FaGoogle className="text-[#EA4335] text-lg" />
-                <span>Se connecter avec Google</span>
+                <span>{t('auth.signInWithGoogle')}</span>
               </button>
 
               {/* Apple */}
               <button
                 type="button"
                 disabled={isLoading}
+                onClick={() => showToast(t('auth.oauthNotConfigured'), 'info')}
                 className="w-full h-[54px] flex items-center justify-center gap-3 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm hover:bg-[#FAF7F2] hover:border-[#B88646] transition-all duration-300 text-[#2D2D2D] font-medium disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <FaApple className="text-[#2D2D2D] text-xl" />
-                <span>Se connecter avec Apple</span>
+                <span>{t('auth.signInWithApple')}</span>
               </button>
             </form>
 
             <div className="mt-8 text-center">
               <p className="text-[#B0A8A0] text-xs">
-                © 2026 L'arte del dolce
+                {t('auth.copyright')}
                 <br />
-                Plateforme de gestion intégrée
+                {t('auth.platformTagline')}
               </p>
             </div>
           </div>

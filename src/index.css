@@ -38,3 +38,34 @@ input,
 button{
     font-family:inherit;
 }
+
+/* RTL support */
+[dir="rtl"] .text-left { text-align: right; }
+[dir="rtl"] .text-right { text-align: left; }
+[dir="rtl"] .ml-auto { margin-left: unset; margin-right: auto; }
+[dir="rtl"] .mr-auto { margin-right: unset; margin-left: auto; }
+[dir="rtl"] .pl-3 { padding-left: unset; padding-right: 0.75rem; }
+[dir="rtl"] .pr-3 { padding-right: unset; padding-left: 0.75rem; }
+[dir="rtl"] .left-0 { left: unset; right: 0; }
+[dir="rtl"] .right-0 { right: unset; left: 0; }
+[dir="rtl"] .border-r { border-right: unset; border-left: 1px solid; }
+[dir="rtl"] .border-l { border-left: unset; border-right: 1px solid; }
+[dir="rtl"] .origin-top-right { transform-origin: top left; }
+[dir="rtl"] .-translate-x-full { transform: translateX(100%); }
+[dir="rtl"] .translate-x-full { transform: translateX(-100%); }
+
+html[dir="rtl"] body {
+    font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+}
+
+/* Responsive table overflow */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+    .responsive-card-grid {
+        grid-template-columns: 1fr !important;
+    }
+}

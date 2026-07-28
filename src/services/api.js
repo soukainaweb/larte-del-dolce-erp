@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8000/api',
+    baseURL: 'http://127.0.0.1:8000/api',
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -10,7 +10,7 @@ const api = axios.create({
     timeout: 10000,
 });
 
-// Intercepteur pour ajouter le token
+// Attach Bearer token from localStorage
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -19,24 +19,24 @@ api.interceptors.request.use(
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error),
 );
 
-// Intercepteur pour gérer les erreurs
+// Handle 401 — clear session and redirect to login (avoid loop on /login)
 api.interceptors.response.use(
-    (response) => {
-        return response;
-    },
+    (response) => response,
     (error) => {
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            window.location.href = '/login';
+
+            const isLoginPage = window.location.pathname === '/login';
+            if (!isLoginPage) {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
-    }
+    },
 );
 
 export default api;

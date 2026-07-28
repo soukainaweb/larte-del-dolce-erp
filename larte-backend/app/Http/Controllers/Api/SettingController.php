@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Settings\StoreSettingRequest;
+use App\Http\Requests\Settings\UpdateSettingRequest;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 
@@ -10,6 +12,8 @@ class SettingController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Setting::class);
+
         $query = Setting::query();
 
         if ($request->group) {
@@ -20,117 +24,66 @@ class SettingController extends Controller
             $query->where('is_public', $request->is_public);
         }
 
-        $settings = $query->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $settings
-        ]);
+        return $this->success($query->get());
     }
 
-    public function store(Request $request)
+    public function store(StoreSettingRequest $request)
     {
-        $request->validate([
-            'group_name' => 'required|string|max:50',
-            'key_name' => 'required|string|max:100|unique:settings,key_name',
-            'value' => 'required|string',
-            'type' => 'nullable|string|max:20',
-            'description' => 'nullable|string',
-            'is_public' => 'nullable|boolean',
-        ]);
+        $this->authorize('create', Setting::class);
 
-        $setting = Setting::create($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Paramètre créé avec succès',
-            'data' => $setting
-        ], 201);
+        return $this->success(Setting::create($request->validated()), 'Paramètre créé avec succès', 201);
     }
 
     public function show(Setting $setting)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $setting
-        ]);
+        $this->authorize('view', $setting);
+
+        return $this->success($setting);
     }
 
-    public function update(Request $request, Setting $setting)
+    public function update(UpdateSettingRequest $request, Setting $setting)
     {
-        $request->validate([
-            'value' => 'sometimes|string',
-            'description' => 'nullable|string',
-            'is_public' => 'nullable|boolean',
-        ]);
+        $this->authorize('update', $setting);
 
-        $setting->update($request->all());
+        $setting->update($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Paramètre mis à jour avec succès',
-            'data' => $setting->fresh()
-        ]);
+        return $this->success($setting->fresh(), 'Paramètre mis à jour avec succès');
     }
 
     public function destroy(Setting $setting)
     {
+        $this->authorize('delete', $setting);
+
         $setting->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Paramètre supprimé avec succès'
-        ]);
+        return $this->success(null, 'Paramètre supprimé avec succès');
     }
 
     public function getByKey($key)
     {
-        $setting = Setting::where('key_name', $key)->first();
+        $this->authorize('viewAny', Setting::class);
 
-        if (!$setting) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Paramètre non trouvé'
-            ], 404);
-        }
+        $setting = Setting::where('key_name', $key)->firstOrFail();
 
-        return response()->json([
-            'success' => true,
-            'data' => $setting
-        ]);
+        return $this->success($setting);
     }
 
     public function getByGroup($group)
     {
-        $settings = Setting::where('group_name', $group)->get();
+        $this->authorize('viewAny', Setting::class);
 
-        return response()->json([
-            'success' => true,
-            'data' => $settings
-        ]);
+        return $this->success(Setting::where('group_name', $group)->get());
     }
 
     public function updateByKey(Request $request, $key)
     {
-        $request->validate([
-            'value' => 'required|string',
-        ]);
+        $this->authorize('update', Setting::class);
 
-        $setting = Setting::where('key_name', $key)->first();
+        $request->validate(['value' => 'required|string']);
 
-        if (!$setting) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Paramètre non trouvé'
-            ], 404);
-        }
-
+        $setting = Setting::where('key_name', $key)->firstOrFail();
         $setting->update(['value' => $request->value]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Paramètre mis à jour avec succès',
-            'data' => $setting->fresh()
-        ]);
+        return $this->success($setting->fresh(), 'Paramètre mis à jour avec succès');
     }
 }

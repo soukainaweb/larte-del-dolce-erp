@@ -23,6 +23,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getRoles,
@@ -142,6 +143,7 @@ const SkeletonLoader = ({ className = '' }) => (
 // ==========================================
 const RolesPermissionsPage = () => {
   const { user } = useAuth();
+  const { title, subtitle, searchPlaceholder, t } = usePageI18n('roles');
 
   // States
   const [isLoading, setIsLoading] = useState(false);
@@ -508,10 +510,10 @@ const RolesPermissionsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#2B2B2B]" style={{ fontFamily: FONT_HEADING }}>
-            Rôles & Permissions
+            {title}
           </h1>
           <p className="text-sm text-[#7A7A7A]">
-            Gérez les rôles, les permissions et les accès des utilisateurs
+            {subtitle}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -602,7 +604,7 @@ const RolesPermissionsPage = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7A7A7A]" size={18} />
             <input
               type="text"
-              placeholder="Rechercher un rôle..."
+              placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-[#EAE6DF] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C8A45D]/30 focus:border-[#C8A45D] transition-all"

@@ -44,8 +44,11 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
 import orderService from '../../services/orderService';
+import { getApiErrorMessage } from '../../utils/apiHelpers';
+import { useToast } from '../../contexts/ToastContext';
 import { exportPDF } from '../../services/export/pdfExport';
 import { exportExcel } from '../../services/export/excelExport';
 import { exportCSV } from '../../services/export/csvExport';
@@ -782,6 +785,8 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
 // ==========================================
 const OrdersPage = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
+  const { title, subtitle, searchPlaceholder, t } = usePageI18n('orders');
 
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -823,12 +828,12 @@ const OrdersPage = () => {
       }));
     } catch (error) {
       console.error('Error fetching orders:', error);
-      // Fallback: utiliser des données mock en cas d'erreur
+      showToast(getApiErrorMessage(error, 'Erreur lors du chargement des commandes'), 'error');
       setOrders([]);
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.currentPage, pagination.perPage, searchTerm, statusFilter]);
+  }, [pagination.currentPage, pagination.perPage, searchTerm, statusFilter, showToast]);
 
   // ==========================================
   // INITIAL LOAD
@@ -1081,9 +1086,9 @@ const OrdersPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Commandes
+            {title}
           </h1>
-          <p className="text-sm text-[#6D6D6D]">Gérez le cycle complet des commandes</p>
+          <p className="text-sm text-[#6D6D6D]">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
@@ -1135,7 +1140,7 @@ const OrdersPage = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" size={18} />
             <input
               type="text"
-              placeholder="Rechercher une commande..."
+              placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-[#F8F7F4] text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"

@@ -1,5 +1,5 @@
 // src/pages/RolesPermissions/components/ViewRoleModal.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -29,9 +29,36 @@ import {
   ClipboardList,
   Package
 } from 'lucide-react';
+import { getRoleUsers } from '../../../services/roleService';
 
 const ViewRoleModal = ({ isOpen, onClose, role, onEdit, onUsers, onPermissions }) => {
   const [activeTab, setActiveTab] = useState('informations');
+  const [roleUsers, setRoleUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || !role?.id) return;
+
+    let cancelled = false;
+    setUsersLoading(true);
+
+    getRoleUsers(role.id)
+      .then((res) => {
+        if (cancelled) return;
+        const data = res.data?.data?.data ?? res.data?.data ?? res.data ?? [];
+        setRoleUsers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setRoleUsers([]);
+      })
+      .finally(() => {
+        if (!cancelled) setUsersLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, role?.id]);
 
   if (!isOpen || !role) return null;
 
@@ -57,17 +84,8 @@ const ViewRoleModal = ({ isOpen, onClose, role, onEdit, onUsers, onPermissions }
     return <Icon size={24} style={{ color: role.color }} />;
   };
 
-  // Mock users pour le rôle
-  const roleUsers = [
-    { id: 1, name: 'Mohamed Amine', email: 'amine@lartedolce.com', department: 'Administration', position: 'Administrateur', status: 'active', lastLogin: '17/07/2026 08:45' }
-  ];
-
-  // Mock history
-  const history = [
-    { id: 1, user: 'Admin', action: 'a créé le rôle', date: '01/01/2025', time: '10:00' },
-    { id: 2, user: 'Admin', action: 'a modifié les permissions', date: '17/07/2026', time: '08:45' },
-    { id: 3, user: 'Admin', action: 'a ajouté un utilisateur', date: '15/07/2026', time: '14:20' }
-  ];
+  // Role history comes from activity logs when available
+  const history = role?.history ?? [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -182,7 +200,9 @@ const ViewRoleModal = ({ isOpen, onClose, role, onEdit, onUsers, onPermissions }
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-3"
               >
-                {roleUsers.length === 0 ? (
+                {usersLoading ? (
+                  <p className="text-sm text-[#7A7A7A] text-center py-4">...</p>
+                ) : roleUsers.length === 0 ? (
                   <p className="text-sm text-[#7A7A7A] text-center py-4">Aucun utilisateur associé</p>
                 ) : (
                   roleUsers.map((user) => (

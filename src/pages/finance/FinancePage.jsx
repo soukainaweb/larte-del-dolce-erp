@@ -1,5 +1,8 @@
 // src/pages/Finance/FinancePage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '../../contexts/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp,
@@ -372,6 +375,9 @@ const TopSupplierCard = ({ supplier }) => {
 // ==========================================
 const FinancePage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [dateRange, setDateRange] = useState('year');
   const [viewMode, setViewMode] = useState('table');
@@ -487,23 +493,31 @@ const FinancePage = () => {
 
   const handleRefresh = async () => {
     await loadFinanceData();
-    alert('Données actualisées avec succès');
+    showToast(t('common.dataRefreshed'), 'success');
   };
 
   const handleViewAllTransactions = () => {
-    alert('Redirection vers la page des transactions');
+    navigate('/dashboard/payments');
   };
 
   const handleViewAllPayments = () => {
-    alert('Redirection vers la page des paiements');
+    navigate('/dashboard/payments');
   };
 
   const handleViewAllSuppliers = () => {
-    alert('Redirection vers la page des fournisseurs');
+    navigate('/dashboard/suppliers');
   };
 
   const handleQuickAction = (action) => {
-    alert(`Action: ${action} - Redirection vers la page correspondante`);
+    const routes = {
+      create_invoice: '/dashboard/invoices',
+      receive_payment: '/dashboard/payments',
+      add_expense: '/dashboard/expenses',
+      purchase_order: '/dashboard/orders',
+      financial_reports: '/dashboard/reports',
+      accounting: '/dashboard/settings',
+    };
+    navigate(routes[action] || '/dashboard/finance');
   };
 
   return (
@@ -512,9 +526,9 @@ const FinancePage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Finance Dashboard
+            {t('finance.title')}
           </h1>
-          <p className="text-sm text-[#6D6D6D]">Vue globale de la santé financière</p>
+          <p className="text-sm text-[#6D6D6D]">{t('finance.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <select

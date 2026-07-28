@@ -107,4 +107,5 @@ class Vehicle extends Model
     {
         return "{$this->driver_name} - {$this->plate_number}";
     }
+    
 }

@@ -21,13 +21,20 @@ return new class extends Migration
             $table->enum('method', [
                 'cash',
                 'card',
-                'bank_transfer'
+                'bank_transfer',
+                'mada',
+                'stc_pay',
+                'apple_pay',
+                'transfer',
+                'online'
             ]);
 
             $table->enum('status', [
                 'pending',
+                'partial',
                 'completed',
-                'failed'
+                'failed',
+                'refunded'
             ])->default('pending');
 
             $table->date('payment_date');

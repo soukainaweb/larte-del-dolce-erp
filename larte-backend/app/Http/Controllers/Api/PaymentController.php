@@ -3,128 +3,101 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Payments\StorePaymentRequest;
+use App\Http\Requests\Payments\UpdatePaymentRequest;
 use App\Models\Payment;
-use App\Models\Invoice;
+use App\Services\PaymentService;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(private PaymentService $paymentService)
     {
-        $query = Payment::with('invoice');
-
-        if ($request->invoice_id) {
-            $query->where('invoice_id', $request->invoice_id);
-        }
-
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->date_from) {
-            $query->whereDate('payment_date', '>=', $request->date_from);
-        }
-
-        if ($request->date_to) {
-            $query->whereDate('payment_date', '<=', $request->date_to);
-        }
-
-        $payments = $query->orderBy('created_at', 'desc')
-            ->paginate($request->per_page ?? 10);
-
-        return response()->json([
-            'success' => true,
-            'data' => $payments
-        ]);
     }
 
-    public function store(Request $request)
+    public function index(Request $request)
     {
-        $request->validate([
-            'invoice_id' => 'required|exists:invoices,id',
-            'amount' => 'required|numeric|min:0.01',
-            'payment_method' => 'required|in:cash,card,transfer,mada,stc_pay,apple_pay',
-            'payment_date' => 'required|date',
-            'status' => 'nullable|in:pending,completed,failed,refunded',
-        ]);
+        $this->authorize('viewAny', Payment::class);
 
-        $payment = Payment::create($request->all());
+        return $this->success($this->paymentService->list($request->all()));
+    }
 
-        // Update invoice status if payment is completed
-        if ($payment->status === 'completed') {
-            $invoice = Invoice::find($request->invoice_id);
-            $totalPaid = Payment::where('invoice_id', $request->invoice_id)
-                ->where('status', 'completed')
-                ->sum('amount');
-            
-            if ($totalPaid >= $invoice->total_amount) {
-                $invoice->update(['status' => 'paid']);
-            }
-        }
+    public function store(StorePaymentRequest $request)
+    {
+        $this->authorize('create', Payment::class);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Paiement enregistré avec succès',
-            'data' => $payment->load('invoice')
-        ], 201);
+        return $this->success($this->paymentService->create($request->validated()), 'Paiement enregistré avec succès', 201);
     }
 
     public function show(Payment $payment)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $payment->load('invoice')
-        ]);
+        $this->authorize('view', $payment);
+
+        return $this->success($payment->load('invoice'));
     }
 
-    public function update(Request $request, Payment $payment)
+    public function update(UpdatePaymentRequest $request, Payment $payment)
     {
-        $request->validate([
-            'amount' => 'sometimes|numeric|min:0.01',
-            'payment_method' => 'sometimes|in:cash,card,transfer,mada,stc_pay,apple_pay',
-            'payment_date' => 'sometimes|date',
-            'status' => 'sometimes|in:pending,completed,failed,refunded',
-        ]);
+        $this->authorize('update', $payment);
 
-        $payment->update($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Paiement mis à jour avec succès',
-            'data' => $payment->fresh()->load('invoice')
-        ]);
+        return $this->success($this->paymentService->update($payment, $request->validated()), 'Paiement mis à jour avec succès');
     }
 
     public function destroy(Payment $payment)
     {
-        if ($payment->status === 'completed') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Impossible de supprimer un paiement complété'
-            ], 403);
+        $this->authorize('delete', $payment);
+
+        try {
+            $this->paymentService->delete($payment);
+
+            return $this->success(null, 'Paiement supprimé avec succès');
+        } catch (\RuntimeException $e) {
+            return $this->error($e->getMessage(), [], 403);
         }
+    }
 
-        $payment->delete();
+    public function showByReference(string $reference)
+    {
+        $this->authorize('viewAny', Payment::class);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Paiement supprimé avec succès'
-        ]);
+        return $this->success($this->paymentService->findByReference($reference));
     }
 
     public function statistics()
     {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'total' => Payment::count(),
-                'total_amount' => Payment::sum('amount'),
-                'completed' => Payment::where('status', 'completed')->sum('amount'),
-                'pending' => Payment::where('status', 'pending')->sum('amount'),
-                'by_method' => Payment::selectRaw('payment_method, sum(amount) as total')
-                    ->groupBy('payment_method')
-                    ->get(),
-            ]
-        ]);
+        $this->authorize('viewAny', Payment::class);
+
+        return $this->success($this->paymentService->statistics());
+    }
+
+    public function export(Request $request)
+    {
+        $this->authorize('viewAny', Payment::class);
+
+        return $this->success($this->paymentService->export());
+    }
+
+    public function methods()
+    {
+        return $this->success($this->paymentService->methods());
+    }
+
+    public function statuses()
+    {
+        return $this->success($this->paymentService->statuses());
+    }
+
+    public function receipt(Payment $payment)
+    {
+        $this->authorize('view', $payment);
+
+        return $this->success(null, 'Reçu envoyé');
+    }
+
+    public function print(Payment $payment, Request $request)
+    {
+        $this->authorize('view', $payment);
+
+        return $this->success($this->paymentService->receiptData($payment));
     }
 }
