@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
+import { unwrapPaginated, unwrapData } from '../../utils/apiHelpers';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getCategories,
@@ -898,9 +899,9 @@ const CategoriesPage = () => {
         sort_order: 'asc'
       };
       const response = await getCategories(params);
-      const data = response.data.data || [];
-      setCategories(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      const { items, meta } = unwrapPaginated(response);
+      setCategories(items);
+      setTotalCount(meta.total ?? meta.total_count ?? items.length);
     } catch (error) {
       console.error('Error fetching categories:', error);
     } finally {
@@ -924,7 +925,7 @@ const CategoriesPage = () => {
   const fetchStatistics = async () => {
     try {
       const response = await getCategoryStatistics();
-      const stats = response.data.data || {};
+      const stats = unwrapData(response) || {};
       setKpis({
         total: stats.total || 0,
         active: stats.active || 0,
@@ -945,7 +946,7 @@ const CategoriesPage = () => {
   const filteredCategories = useMemo(() => {
     // Since API already filters, we just return categories
     // But we keep the filter logic for compatibility
-    let filtered = categories;
+    let filtered = Array.isArray(categories) ? categories : [];
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(c =>
@@ -963,7 +964,7 @@ const CategoriesPage = () => {
 
   // Paginate (API already paginates, but we keep for consistency)
   const paginatedCategories = useMemo(() => {
-    return filteredCategories; // API already returns paginated data
+    return Array.isArray(filteredCategories) ? filteredCategories : [];
   }, [filteredCategories]);
 
   const totalPages = useMemo(() => {
