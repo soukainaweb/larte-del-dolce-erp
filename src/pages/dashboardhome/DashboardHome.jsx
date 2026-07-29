@@ -438,51 +438,78 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
   const fetchDashboardData = useCallback(async (period) => {
     setLoading(true);
     setError(null);
-    
-    try {
-      // Récupérer toutes les données en parallèle
-      const [statsData, analyticsData, ordersData, notificationsData, productionData, topProductsData] = await Promise.all([
-        dashboardService.getDashboardStats({ period }),
-        dashboardService.getDashboardAnalytics({ period }),
-        dashboardService.getRecentOrders({ limit: 5 }),
-        dashboardService.getNotifications({ limit: 5 }),
-        dashboardService.getProductionStatus({ limit: 4 }),
-        dashboardService.getTopProducts({ limit: 5, period })
-      ]);
 
-      const data = {
-        periods: {
-          [period]: {
-            kpi: statsData?.kpi || FALLBACK_DATA.periods[period]?.kpi,
-            chartData: analyticsData?.chartData || FALLBACK_DATA.periods[period]?.chartData,
-            distribution: statsData?.distribution || FALLBACK_DATA.periods[period]?.distribution,
-            recentOrders: ordersData || [],
-            liveProduction: productionData || [],
-            topProducts: topProductsData || []
-          }
-        }
-      };
+    const requests = [
+      { key: 'stats', label: 'statistiques', run: () => dashboardService.getDashboardStats({ period }) },
+      { key: 'analytics', label: 'analytiques', run: () => dashboardService.getDashboardAnalytics({ period }) },
+      { key: 'orders', label: 'commandes', run: () => dashboardService.getRecentOrders({ limit: 5 }) },
+      { key: 'notifications', label: 'notifications', run: () => dashboardService.getNotifications({ limit: 5 }) },
+      { key: 'production', label: 'production', run: () => dashboardService.getProductionStatus({ limit: 4 }) },
+      { key: 'topProducts', label: 'produits populaires', run: () => dashboardService.getTopProducts({ limit: 5, period }) },
+    ];
 
-      setDashboardData(data);
-      setRecentOrders(ordersData || []);
-      setLiveProduction(productionData || []);
-      setTopProducts(topProductsData || []);
-      setNotifications(notificationsData || []);
-      
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      const isForbidden = err?.response?.status === 403;
+    const results = await Promise.allSettled(requests.map((request) => request.run()));
+
+    const resolved = {};
+    const failures = [];
+
+    results.forEach((result, index) => {
+      const { key, label } = requests[index];
+      if (result.status === 'fulfilled') {
+        resolved[key] = result.value;
+        return;
+      }
+
+      console.warn(`Dashboard: ${label} failed`, result.reason);
+      failures.push({ key, label, reason: result.reason });
+    });
+
+    const statsData = resolved.stats ?? null;
+    const analyticsData = resolved.analytics ?? null;
+    const ordersData = resolved.orders ?? [];
+    const notificationsData = resolved.notifications ?? [];
+    const productionData = resolved.production ?? [];
+    const topProductsData = resolved.topProducts ?? [];
+
+    const data = {
+      periods: {
+        [period]: {
+          kpi: statsData?.kpi || FALLBACK_DATA.periods[period]?.kpi,
+          chartData: analyticsData?.chartData || FALLBACK_DATA.periods[period]?.chartData,
+          distribution: statsData?.distribution || FALLBACK_DATA.periods[period]?.distribution,
+          recentOrders: ordersData || [],
+          liveProduction: productionData || [],
+          topProducts: topProductsData || [],
+        },
+      },
+    };
+
+    setDashboardData(data);
+    setRecentOrders(ordersData || []);
+    setLiveProduction(productionData || []);
+    setTopProducts(topProductsData || []);
+    setNotifications(notificationsData || []);
+
+    if (failures.length === requests.length) {
+      const firstReason = failures[0]?.reason;
+      const isForbidden = firstReason?.response?.status === 403;
       const message = isForbidden
         ? 'Accès au tableau de bord refusé. Demandez à un administrateur la permission « dashboard.view ».'
-        : getApiErrorMessage(err, 'Erreur lors du chargement des données');
+        : getApiErrorMessage(firstReason, 'Impossible de joindre le serveur. Vérifiez que l\'API Laravel est démarrée.');
       setError(message);
       if (!isForbidden) {
         showToast(message, 'error');
       }
       setDashboardData(FALLBACK_DATA);
-    } finally {
-      setLoading(false);
+    } else if (failures.length > 0) {
+      const timedOut = failures.some((failure) => failure.reason?.code === 'ECONNABORTED');
+      const message = timedOut
+        ? 'Certaines sections du tableau de bord ont expiré. Les données disponibles sont affichées.'
+        : 'Certaines sections du tableau de bord n\'ont pas pu être chargées.';
+      showToast(message, 'info');
     }
+
+    setLoading(false);
   }, [showToast]);
 
   // ===== INITIAL LOAD =====
