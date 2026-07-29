@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 // Controllers
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\UserController;
@@ -58,6 +59,14 @@ Route::post('/password/email', [AuthController::class, 'forgotPassword'])
     ->middleware('throttle:password-reset');
 Route::post('/password/reset', [AuthController::class, 'resetPassword'])
     ->middleware('throttle:password-reset');
+
+Route::prefix('auth')->group(function () {
+    Route::get('/providers', [SocialAuthController::class, 'providers']);
+    Route::get('/{provider}/redirect', [SocialAuthController::class, 'redirect'])
+        ->where('provider', 'google|apple');
+    Route::get('/{provider}/callback', [SocialAuthController::class, 'callback'])
+        ->where('provider', 'google|apple');
+});
 
 
 Route::get('/test', function () {

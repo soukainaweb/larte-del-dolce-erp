@@ -88,6 +88,7 @@ export const AuthProvider = ({ children }) => {
         user,
         token,
         loading,
+        isLoading: loading,
         error,
         login,
         logout,

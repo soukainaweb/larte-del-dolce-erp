@@ -411,7 +411,7 @@ function useDismiss(ref, isOpen, onClose) {
 // ==================================================
 // LOGO MARK
 // ==================================================
-const DEFAULT_LOGO_SRC = '/src/assets/images/logo.png';
+const DEFAULT_LOGO_SRC = '/logo.svg';
 
 const LogoMark = memo(function LogoMark({ logo, size }) {
   const [failed, setFailed] = useState(false);

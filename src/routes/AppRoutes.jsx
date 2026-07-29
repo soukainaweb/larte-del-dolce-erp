@@ -9,6 +9,8 @@ import DashboardLayout from '../components/layout/DashboardLayout/DashboardLayou
 // Pages
 import Login from '../pages/auth/Login';
 import ForgotPassword from '../pages/auth/ForgotPassword';
+import ResetPassword from '../pages/auth/ResetPassword';
+import AuthCallback from '../pages/auth/AuthCallback';
 import ChangePassword from '../pages/auth/ChangePassword';
 import DashboardHome from '../pages/dashboardhome/DashboardHome';
 import MyProfile from '../pages/myprofile/MyProfilePage';
@@ -62,6 +64,8 @@ const AppRoutes = () => {
         isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
       } />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/change-password" element={<ChangePassword />} />
 
       {/* Protected Routes - DashboardLayout */}
