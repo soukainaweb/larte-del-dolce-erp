@@ -21,15 +21,11 @@ return new class extends Migration
             return;
         }
 
-        if (DB::getDriverName() === 'mysql') {
-            $this->upgradeMysqlStatusColumn();
-
-            return;
-        }
-
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('status', 50)->default('offline')->change();
-        });
+        match (DB::getDriverName()) {
+            'mysql' => $this->upgradeMysqlStatusColumn(),
+            'sqlite' => $this->upgradeSqliteStatusColumn(),
+            default => null,
+        };
     }
 
     public function down(): void
@@ -66,7 +62,55 @@ return new class extends Migration
             return;
         }
 
-        // Safe in STRICT mode: VARCHAR accepts all current ENUM/string values.
         DB::statement("ALTER TABLE users MODIFY status VARCHAR(50) NOT NULL DEFAULT 'offline'");
+    }
+
+    private function upgradeSqliteStatusColumn(): void
+    {
+        if (! $this->sqliteStatusNeedsWidening('users')) {
+            return;
+        }
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropIndex('users_status_index');
+        });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('status_new', 50)->default('offline');
+        });
+
+        DB::table('users')->update(['status_new' => DB::raw('status')]);
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('status');
+        });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->renameColumn('status_new', 'status');
+        });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->index('status');
+        });
+    }
+
+    private function sqliteStatusNeedsWidening(string $table): bool
+    {
+        if (in_array('status_new', Schema::getColumnListing($table), true)) {
+            return true;
+        }
+
+        if (! Schema::hasColumn($table, 'status')) {
+            return false;
+        }
+
+        $row = DB::selectOne(
+            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+            [$table]
+        );
+
+        $sql = (string) ($row->sql ?? '');
+
+        return ! preg_match('/"status"\s+varchar\s*\(\s*50\s*\)/i', $sql);
     }
 };
