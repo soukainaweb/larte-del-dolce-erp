@@ -10,18 +10,12 @@ return new class extends Migration
     private const TARGET_TYPE = 'varchar(50)';
 
     /**
-     * Widen users.status so login can store presence values (online/offline/away)
-     * and admin flows can store account values (active/inactive/suspended/locked).
-     *
-     * Idempotent: skips when column is already VARCHAR(50).
+     * Replace users.status ENUM with VARCHAR so the API can store presence
+     * (online/offline/away) and account (active/inactive/suspended/locked) values.
      */
     public function up(): void
     {
         if (! Schema::hasTable('users') || ! Schema::hasColumn('users', 'status')) {
-            return;
-        }
-
-        if ($this->usersStatusAlreadyWidened()) {
             return;
         }
 
@@ -51,39 +45,25 @@ return new class extends Migration
         DB::statement("ALTER TABLE users MODIFY status ENUM('online','offline','away') NOT NULL DEFAULT 'offline'");
     }
 
-    private function usersStatusAlreadyWidened(): bool
-    {
-        return match (DB::getDriverName()) {
-            'mysql' => $this->mysqlColumnType('users', 'status') === self::TARGET_TYPE,
-            'sqlite' => ! SqliteColumnMigrator::needsWidening('users', 'status', 50),
-            default => false,
-        };
-    }
-
     private function upgradeMysqlStatusColumn(): void
     {
-        if ($this->usersStatusAlreadyWidened()) {
+        $column = DB::selectOne("
+            SELECT COLUMN_TYPE
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'users'
+              AND COLUMN_NAME = 'status'
+            LIMIT 1
+        ");
+
+        if ($column === null) {
+            return;
+        }
+
+        if (strtolower((string) $column->COLUMN_TYPE) === self::TARGET_TYPE) {
             return;
         }
 
         DB::statement("ALTER TABLE users MODIFY status VARCHAR(50) NOT NULL DEFAULT 'offline'");
-    }
-
-    private function mysqlColumnType(string $table, string $column): ?string
-    {
-        $result = DB::selectOne("
-            SELECT COLUMN_TYPE
-            FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE TABLE_SCHEMA = DATABASE()
-              AND TABLE_NAME = ?
-              AND COLUMN_NAME = ?
-            LIMIT 1
-        ", [$table, $column]);
-
-        if ($result === null) {
-            return null;
-        }
-
-        return strtolower((string) $result->COLUMN_TYPE);
     }
 };

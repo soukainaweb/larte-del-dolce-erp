@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\SqliteColumnMigrator;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,7 @@ return new class extends Migration
 
         match (DB::getDriverName()) {
             'mysql' => $this->upgradeMysqlOrdersStatusColumn(),
-            'sqlite' => $this->upgradeSqliteOrdersStatusColumn(),
+            'sqlite' => SqliteColumnMigrator::replaceStringColumn('orders', 'status', 50, 'draft'),
             default => null,
         };
 
@@ -43,28 +44,11 @@ return new class extends Migration
 
     private function upgradeMysqlOrdersStatusColumn(): void
     {
-        DB::statement("ALTER TABLE orders MODIFY status VARCHAR(50) NOT NULL DEFAULT 'draft'");
-    }
-
-    private function upgradeSqliteOrdersStatusColumn(): void
-    {
-        if (! $this->sqliteStatusNeedsWidening('orders')) {
+        if ($this->mysqlColumnType('orders', 'status') === 'varchar(50)') {
             return;
         }
 
-        Schema::table('orders', function (Blueprint $table) {
-            $table->string('status_new', 50)->default('draft');
-        });
-
-        DB::table('orders')->update(['status_new' => DB::raw('status')]);
-
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn('status');
-        });
-
-        Schema::table('orders', function (Blueprint $table) {
-            $table->renameColumn('status_new', 'status');
-        });
+        DB::statement("ALTER TABLE orders MODIFY status VARCHAR(50) NOT NULL DEFAULT 'draft'");
     }
 
     private function downgradeSqliteOrdersStatusColumn(): void
@@ -104,23 +88,21 @@ return new class extends Migration
         DB::table('orders')->where('status', 'draft')->update(['status' => 'pending']);
     }
 
-    private function sqliteStatusNeedsWidening(string $table): bool
+    private function mysqlColumnType(string $table, string $column): ?string
     {
-        if (in_array('status_new', Schema::getColumnListing($table), true)) {
-            return true;
+        $result = DB::selectOne("
+            SELECT COLUMN_TYPE
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = ?
+              AND COLUMN_NAME = ?
+            LIMIT 1
+        ", [$table, $column]);
+
+        if ($result === null) {
+            return null;
         }
 
-        if (! Schema::hasColumn($table, 'status')) {
-            return false;
-        }
-
-        $row = DB::selectOne(
-            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
-            [$table]
-        );
-
-        $sql = (string) ($row->sql ?? '');
-
-        return ! preg_match('/"status"\s+varchar\s*\(\s*50\s*\)/i', $sql);
+        return strtolower((string) $result->COLUMN_TYPE);
     }
 };
