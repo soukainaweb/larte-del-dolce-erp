@@ -59,6 +59,11 @@ const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
 const FONT_NUMBER = "'Inter', sans-serif";
 
+const formatLocaleNumber = (value, fallback = 0) => {
+  const num = Number(value ?? fallback);
+  return (Number.isFinite(num) ? num : fallback).toLocaleString();
+};
+
 
 // ==========================================
 // FALLBACK DATA (Utilisé uniquement si l'API échoue)
@@ -499,10 +504,18 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
   const { kpi, chartData, distribution } = activeDataset;
 
   // Use real data or fallback
-  const displayOrders = recentOrders.length > 0 ? recentOrders : activeDataset.recentOrders || [];
-  const displayProduction = liveProduction.length > 0 ? liveProduction : activeDataset.liveProduction || [];
-  const displayTopProducts = topProducts.length > 0 ? topProducts : activeDataset.topProducts || [];
-  const displayNotifications = notifications.length > 0 ? notifications : FALLBACK_DATA.notifications;
+  const displayOrders = Array.isArray(recentOrders) && recentOrders.length > 0
+    ? recentOrders
+    : (Array.isArray(activeDataset.recentOrders) ? activeDataset.recentOrders : []);
+  const displayProduction = Array.isArray(liveProduction) && liveProduction.length > 0
+    ? liveProduction
+    : (Array.isArray(activeDataset.liveProduction) ? activeDataset.liveProduction : []);
+  const displayTopProducts = Array.isArray(topProducts) && topProducts.length > 0
+    ? topProducts
+    : (Array.isArray(activeDataset.topProducts) ? activeDataset.topProducts : []);
+  const displayNotifications = Array.isArray(notifications) && notifications.length > 0
+    ? notifications
+    : (Array.isArray(FALLBACK_DATA.notifications) ? FALLBACK_DATA.notifications : []);
 
   // ===== HANDLERS =====
   const handleQuickAction = (route, callback) => {
@@ -854,7 +867,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                           {order.status}
                         </span>
                       </td>
-                      <td className="p-3 text-right font-bold" style={{ fontFamily: FONT_NUMBER }}>SAR {order.amount.toLocaleString()}</td>
+                      <td className="p-3 text-right font-bold" style={{ fontFamily: FONT_NUMBER }}>SAR {formatLocaleNumber(order.amount)}</td>
                       <td className="p-3">
                         <div className="flex items-center justify-center gap-2">
                           <button className="p-1 hover:text-[#C6923B]" title="Voir"><Eye className="w-3.5 h-3.5" /></button>
@@ -891,7 +904,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                   <p className="text-sm font-semibold text-[#202020] mt-1.5">{order.customer}</p>
                   <p className="text-[11px] text-[#707070]">{order.rep} · {order.date}</p>
                   <div className="flex justify-between items-center mt-2 pt-2 border-t border-[#ECE8E1]">
-                    <span className="font-bold text-sm" style={{ fontFamily: FONT_NUMBER }}>SAR {order.amount.toLocaleString()}</span>
+                    <span className="font-bold text-sm" style={{ fontFamily: FONT_NUMBER }}>SAR {formatLocaleNumber(order.amount)}</span>
                     <div className="flex items-center gap-3">
                       <button className="p-1 hover:text-[#C6923B]" title="Voir"><Eye className="w-4 h-4" /></button>
                       <button className="p-1 hover:text-[#C6923B]" title="Modifier"><Edit2 className="w-4 h-4" /></button>
@@ -954,22 +967,28 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
           </div>
           <div className="space-y-4">
             {displayProduction.map((prod, idx) => (
-              <div key={idx} className="flex items-center gap-3 p-2 border border-[#ECE8E1] rounded-xl hover:border-[#C6923B]/50 transition-colors">
-                <img src={prod.img} alt={prod.name} className="w-10 h-10 object-cover rounded-lg border border-[#ECE8E1]" />
+              <div key={prod.id ?? idx} className="flex items-center gap-3 p-2 border border-[#ECE8E1] rounded-xl hover:border-[#C6923B]/50 transition-colors">
+                {prod.img ? (
+                  <img src={prod.img} alt={prod.name} className="w-10 h-10 object-cover rounded-lg border border-[#ECE8E1]" />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg border border-[#ECE8E1] bg-[#F8F7F4] flex items-center justify-center">
+                    <Package className="w-4 h-4 text-[#707070]" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-1">
-                    <span className="text-xs font-bold text-[#202020] block truncate">{prod.name}</span>
-                    <span className="text-xs font-bold text-[#C6923B]" style={{ fontFamily: FONT_NUMBER }}>{prod.progress}%</span>
+                    <span className="text-xs font-bold text-[#202020] block truncate">{prod.name ?? 'Production'}</span>
+                    <span className="text-xs font-bold text-[#C6923B]" style={{ fontFamily: FONT_NUMBER }}>{prod.progress ?? 0}%</span>
                   </div>
                   <div className="w-full bg-[#F8F7F4] h-1.5 rounded-full overflow-hidden border border-[#ECE8E1]/40">
                     <motion.div
                       className="bg-[#C6923B] h-full rounded-full"
                       initial={{ width: 0 }}
-                      animate={{ width: `${prod.progress}%` }}
+                      animate={{ width: `${prod.progress ?? 0}%` }}
                       transition={{ duration: 0.7, ease: 'easeOut' }}
                     />
                   </div>
-                  <span className="text-[10px] text-[#707070] block mt-1">{prod.workshop}</span>
+                  <span className="text-[10px] text-[#707070] block mt-1">{prod.workshop ?? '—'}</span>
                 </div>
               </div>
             ))}
@@ -984,22 +1003,22 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
           <div className="space-y-3">
             {displayTopProducts.map((item, idx) => (
               <div
-                key={idx}
+                key={item.id ?? idx}
                 className="space-y-1 relative"
                 onMouseEnter={() => setHoveredProduct(idx)}
                 onMouseLeave={() => setHoveredProduct(null)}
               >
                 <div className="flex justify-between text-xs">
-                  <span className="font-bold text-[#202020]">{idx + 1}. {item.name}</span>
+                  <span className="font-bold text-[#202020]">{idx + 1}. {item.name ?? 'Produit'}</span>
                   <span className="text-[#707070]" style={{ fontFamily: FONT_NUMBER }}>
-                    {item.units} u. <span className="font-bold text-[#202020]">({item.amount.toLocaleString()} SAR)</span>
+                    {item.units ?? 0} u. <span className="font-bold text-[#202020]">({formatLocaleNumber(item.amount)} SAR)</span>
                   </span>
                 </div>
                 <div className="w-full bg-[#F8F7F4] h-1.5 rounded-full overflow-hidden">
                   <motion.div
                     className="bg-amber-500 h-full rounded-full"
                     initial={{ width: 0 }}
-                    animate={{ width: `${item.progress}%` }}
+                    animate={{ width: `${item.progress ?? 0}%` }}
                     transition={{ duration: 0.7, ease: 'easeOut', delay: idx * 0.05 }}
                   />
                 </div>
@@ -1012,7 +1031,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                       transition={{ duration: 0.15 }}
                       className="absolute -top-9 left-0 z-10 bg-[#202020] text-white text-[11px] rounded-lg px-2.5 py-1.5 shadow-lg whitespace-nowrap"
                     >
-                      {item.progress}% du volume total · {item.units} unités
+                      {item.progress ?? 0}% du volume total · {item.units ?? 0} unités
                     </motion.div>
                   )}
                 </AnimatePresence>

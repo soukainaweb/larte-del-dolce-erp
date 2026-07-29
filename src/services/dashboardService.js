@@ -1,6 +1,64 @@
 // src/services/dashboardService.js
 import api from './api';
-import { unwrapData } from '../utils/apiHelpers';
+import { unwrapData, toArray } from '../utils/apiHelpers';
+
+const toNumber = (value, fallback = 0) => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+};
+
+export const normalizeTopProducts = (payload) => {
+  const list = toArray(payload);
+  if (!list.length) return [];
+
+  const normalized = list.map((item, index) => {
+    const units = toNumber(item.units ?? item.stock_quantity ?? item.quantity ?? item.sales);
+    const unitPrice = toNumber(item.price ?? item.unit_price);
+    const amount = toNumber(
+      item.amount ?? item.revenue ?? item.total ?? item.total_sales ?? item.total_amount ?? units * unitPrice
+    );
+
+    return {
+      id: item.id ?? index,
+      name: item.name ?? item.product_name ?? 'Produit',
+      units,
+      amount,
+      progress: toNumber(item.progress),
+    };
+  });
+
+  const maxUnits = Math.max(...normalized.map((product) => product.units), 1);
+
+  return normalized.map((product) => ({
+    ...product,
+    progress: product.progress > 0 ? product.progress : Math.round((product.units / maxUnits) * 100),
+  }));
+};
+
+export const normalizeDashboardOrders = (payload) => {
+  const list = toArray(payload);
+
+  return list.map((order, index) => ({
+    id: order.id ?? order.order_number ?? `#${index + 1}`,
+    customer: order.customer ?? order.customer_name ?? order.customer?.name ?? '—',
+    rep: order.rep ?? order.representative ?? order.assigned_to ?? '—',
+    status: order.status ?? 'pending',
+    statusColor: order.statusColor ?? order.status_color ?? 'info',
+    amount: toNumber(order.amount ?? order.total_amount ?? order.total),
+  }));
+};
+
+export const normalizeProductionItems = (payload) => {
+  const list = toArray(payload);
+
+  return list.map((item, index) => ({
+    id: item.id ?? index,
+    name: item.name ?? item.product_name ?? 'Production',
+    progress: toNumber(item.progress),
+    workshop: item.workshop ?? item.assigned_to ?? item.status ?? '—',
+    img: item.img ?? item.image ?? '',
+  }));
+};
 
 /**
  * Dashboard API service — routes verified against Laravel api.php:
@@ -48,8 +106,7 @@ const dashboardService = {
 
     const url = `/dashboard/orders${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await api.get(url);
-    const data = unwrapData(response);
-    return Array.isArray(data) ? data : data?.data || [];
+    return normalizeDashboardOrders(response);
   },
 
   getNotifications: async (params = {}) => {
@@ -71,8 +128,7 @@ const dashboardService = {
 
     const url = `/dashboard/production${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await api.get(url);
-    const data = unwrapData(response);
-    return Array.isArray(data) ? data : data?.data || [];
+    return normalizeProductionItems(response);
   },
 
   getTopProducts: async (params = {}) => {
@@ -83,8 +139,7 @@ const dashboardService = {
 
     const url = `/dashboard/top-products${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await api.get(url);
-    const data = unwrapData(response);
-    return Array.isArray(data) ? data : data?.data || [];
+    return normalizeTopProducts(response);
   },
 };
 
