@@ -33,12 +33,18 @@ class CustomerService
 
     public function create(array $data): Customer
     {
-        return Customer::create($data);
+        $customer = Customer::create($data);
+
+        ActivityLogger::logModelEvent($customer, 'created', sprintf('Client %s créé', $customer->name));
+
+        return $customer;
     }
 
     public function update(Customer $customer, array $data): Customer
     {
         $customer->update($data);
+
+        ActivityLogger::logModelEvent($customer, 'updated', sprintf('Client %s mis à jour', $customer->name));
 
         return $customer->fresh();
     }
@@ -49,7 +55,14 @@ class CustomerService
             throw new \RuntimeException('Impossible de supprimer un client qui a des commandes');
         }
 
+        $name = $customer->name;
         $customer->delete();
+
+        ActivityLogger::log(
+            module: 'customers',
+            action: 'deleted',
+            description: sprintf('Client %s supprimé', $name),
+        );
     }
 
     public function statistics(): array

@@ -15,6 +15,7 @@ use App\Models\OrderItem;
 use App\Services\OrderService;
 use App\Support\StatusMapper;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 class OrderController extends Controller
 {
@@ -36,13 +37,9 @@ class OrderController extends Controller
         try {
             $order = $this->orderService->create($request->validated(), auth()->id());
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Commande créée avec succès',
-                'data' => $order,
-            ], 201);
+            return $this->success($order, 'Commande créée avec succès', 201);
         } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            return $this->error($e->getMessage(), 422);
         }
     }
 
@@ -57,11 +54,10 @@ class OrderController extends Controller
     {
         $this->authorize('update', $order);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Commande mise à jour avec succès',
-            'data' => $this->orderService->update($order, $request->validated()),
-        ]);
+        return $this->success(
+            $this->orderService->update($order, $request->validated()),
+            'Commande mise à jour avec succès'
+        );
     }
 
     public function destroy(Order $order)
@@ -71,53 +67,57 @@ class OrderController extends Controller
         try {
             $this->orderService->delete($order);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Commande supprimée avec succès',
-            ]);
+            return $this->success(null, 'Commande supprimée avec succès');
         } catch (\RuntimeException $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
+            return $this->error($e->getMessage(), 403);
         }
     }
 
     public function updateStatus(UpdateOrderStatusRequest $request, Order $order)
     {
-        $this->authorize('update', $order);
+        $this->authorize('transition', [$order, $request->validated('status')]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Statut mis à jour avec succès',
-            'data' => $this->orderService->updateStatus($order, $request->validated('status')),
-        ]);
+        try {
+            return $this->success(
+                $this->orderService->updateStatus(
+                    $order,
+                    $request->validated('status'),
+                    $request->validated('comment')
+                ),
+                'Statut mis à jour avec succès'
+            );
+        } catch (InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), 422);
+        } catch (\RuntimeException $e) {
+            return $this->error($e->getMessage(), 403);
+        }
     }
 
     public function validateOrder(Order $order)
     {
-        $this->authorize('update', $order);
+        $this->authorize('transition', [$order, 'validated']);
 
         try {
-            return response()->json([
-                'success' => true,
-                'message' => 'Commande validée',
-                'data' => $this->orderService->validate($order),
-            ]);
-        } catch (\RuntimeException $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            return $this->success(
+                $this->orderService->validate($order),
+                'Commande validée'
+            );
+        } catch (InvalidArgumentException|\RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
         }
     }
 
     public function cancel(CancelOrderRequest $request, Order $order)
     {
-        $this->authorize('update', $order);
+        $this->authorize('transition', [$order, 'cancelled']);
 
         try {
-            return response()->json([
-                'success' => true,
-                'message' => 'Commande annulée',
-                'data' => $this->orderService->cancel($order, $request->validated('reason')),
-            ]);
-        } catch (\RuntimeException $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            return $this->success(
+                $this->orderService->cancel($order, $request->validated('reason')),
+                'Commande annulée'
+            );
+        } catch (InvalidArgumentException|\RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
         }
     }
 
@@ -125,36 +125,45 @@ class OrderController extends Controller
     {
         $this->authorize('update', $order);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Paiement mis à jour',
-            'data' => $this->orderService->updatePayment($order, $request->validated()),
-        ]);
+        return $this->success(
+            $this->orderService->updatePayment($order, $request->validated()),
+            'Paiement mis à jour'
+        );
     }
 
     public function startProduction(Request $request, Order $order)
     {
-        $this->authorize('update', $order);
+        $this->authorize('transition', [$order, 'in_production']);
 
         try {
-            return response()->json([
-                'success' => true,
-                'message' => 'Production démarrée',
-                'data' => $this->orderService->startProduction($order, $request->all()),
-            ]);
-        } catch (\RuntimeException $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            return $this->success(
+                $this->orderService->startProduction($order),
+                'Production démarrée'
+            );
+        } catch (InvalidArgumentException|\RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
         }
+    }
+
+    public function statusHistory(Order $order)
+    {
+        $this->authorize('view', $order);
+
+        return $this->success($this->orderService->statusHistory($order));
+    }
+
+    public function allowedTransitions(Order $order)
+    {
+        $this->authorize('view', $order);
+
+        return $this->success($this->orderService->allowedTransitions($order));
     }
 
     public function products(Order $order)
     {
         $this->authorize('view', $order);
 
-        return response()->json([
-            'success' => true,
-            'data' => $this->orderService->getProducts($order),
-        ]);
+        return $this->success($this->orderService->getProducts($order));
     }
 
     public function addProduct(StoreOrderProductRequest $request, Order $order)
@@ -163,22 +172,17 @@ class OrderController extends Controller
 
         $item = $this->orderService->addProduct($order, $request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Produit ajouté à la commande',
-            'data' => $item,
-        ], 201);
+        return $this->success($item, 'Produit ajouté à la commande', 201);
     }
 
     public function updateProduct(UpdateOrderProductRequest $request, Order $order, OrderItem $orderItem)
     {
         $this->authorize('update', $order);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Quantité mise à jour',
-            'data' => $this->orderService->updateProductQuantity($order, $orderItem, $request->validated('quantity')),
-        ]);
+        return $this->success(
+            $this->orderService->updateProductQuantity($order, $orderItem, $request->validated('quantity')),
+            'Quantité mise à jour'
+        );
     }
 
     public function removeProduct(Order $order, OrderItem $orderItem)
@@ -187,39 +191,27 @@ class OrderController extends Controller
 
         $this->orderService->removeProduct($order, $orderItem);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Produit retiré de la commande',
-        ]);
+        return $this->success(null, 'Produit retiré de la commande');
     }
 
     public function history(Request $request)
     {
         $this->authorize('viewAny', Order::class);
 
-        return response()->json([
-            'success' => true,
-            'data' => $this->orderService->history($request->all()),
-        ]);
+        return $this->success($this->orderService->history($request->all()));
     }
 
     public function statistics()
     {
         $this->authorize('viewAny', Order::class);
 
-        return response()->json([
-            'success' => true,
-            'data' => $this->orderService->statistics(),
-        ]);
+        return $this->success($this->orderService->statistics());
     }
 
     public function export(Request $request)
     {
         $this->authorize('viewAny', Order::class);
 
-        return response()->json([
-            'success' => true,
-            'data' => $this->orderService->export(),
-        ]);
+        return $this->success($this->orderService->export());
     }
 }

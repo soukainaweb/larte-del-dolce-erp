@@ -231,7 +231,7 @@ class ReportService
         return [
             'alerts' => [
                 ['type' => 'low_stock', 'count' => Product::where('stock_quantity', '<', 10)->count()],
-                ['type' => 'pending_orders', 'count' => Order::where('status', 'pending')->count()],
+                ['type' => 'pending_orders', 'count' => Order::where('status', 'submitted')->count()],
             ],
         ];
     }

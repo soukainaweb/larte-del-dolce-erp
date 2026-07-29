@@ -37,19 +37,32 @@ class ProductService
             $data['slug'] = Str::slug($data['name']) . '-' . Str::random(4);
         }
 
-        return Product::create($data)->load('category');
+        $product = Product::create($data)->load('category');
+
+        ActivityLogger::logModelEvent($product, 'created', sprintf('Produit %s créé', $product->name));
+
+        return $product;
     }
 
     public function update(Product $product, array $data): Product
     {
         $product->update($data);
 
+        ActivityLogger::logModelEvent($product, 'updated', sprintf('Produit %s mis à jour', $product->name));
+
         return $product->fresh()->load('category');
     }
 
     public function delete(Product $product): void
     {
+        $name = $product->name;
         $product->delete();
+
+        ActivityLogger::log(
+            module: 'products',
+            action: 'deleted',
+            description: sprintf('Produit %s supprimé', $name),
+        );
     }
 
     public function forceDelete(Product $product): void
@@ -73,12 +86,24 @@ class ProductService
             default => throw new \InvalidArgumentException('Invalid stock update type.'),
         };
 
+        ActivityLogger::log(
+            module: 'products',
+            action: 'stock_updated',
+            description: sprintf('Stock produit %s mis à jour (%s %d)', $product->name, $type, $quantity),
+        );
+
         return $product->fresh();
     }
 
     public function updateStatus(Product $product, string $status): Product
     {
         $product->update(['status' => $status]);
+
+        ActivityLogger::log(
+            module: 'products',
+            action: 'status_changed',
+            description: sprintf('Statut produit %s changé en %s', $product->name, $status),
+        );
 
         return $product->fresh();
     }

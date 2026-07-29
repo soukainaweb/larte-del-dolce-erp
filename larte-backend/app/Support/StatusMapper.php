@@ -4,26 +4,6 @@ namespace App\Support;
 
 class StatusMapper
 {
-    private const ORDER_TO_DB = [
-        'pending' => 'pending',
-        'approved' => 'confirmed',
-        'confirmed' => 'confirmed',
-        'production' => 'processing',
-        'processing' => 'processing',
-        'ready' => 'processing',
-        'delivered' => 'completed',
-        'completed' => 'completed',
-        'cancelled' => 'cancelled',
-    ];
-
-    private const ORDER_FROM_DB = [
-        'pending' => 'pending',
-        'confirmed' => 'approved',
-        'processing' => 'production',
-        'completed' => 'delivered',
-        'cancelled' => 'cancelled',
-    ];
-
     private const PAYMENT_TO_DB = [
         'pending' => 'unpaid',
         'unpaid' => 'unpaid',
@@ -63,7 +43,7 @@ class StatusMapper
             return null;
         }
 
-        return self::ORDER_TO_DB[$status] ?? $status;
+        return OrderWorkflow::canonical($status);
     }
 
     public static function orderFromDb(?string $status): ?string
@@ -72,7 +52,7 @@ class StatusMapper
             return null;
         }
 
-        return self::ORDER_FROM_DB[$status] ?? $status;
+        return OrderWorkflow::toFrontend($status);
     }
 
     public static function paymentToDb(?string $status): ?string
@@ -163,7 +143,7 @@ class StatusMapper
 
     public static function orderStatuses(): array
     {
-        return ['pending', 'approved', 'production', 'ready', 'delivered', 'cancelled'];
+        return OrderWorkflow::frontendStatuses();
     }
 
     public static function paymentStatuses(): array

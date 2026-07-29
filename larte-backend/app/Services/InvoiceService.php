@@ -42,7 +42,7 @@ class InvoiceService
 
         $invoiceNumber = 'FAC-' . date('Ymd') . '-' . str_pad(Invoice::count() + 1, 4, '0', STR_PAD_LEFT);
 
-        return Invoice::create([
+        $invoice = Invoice::create([
             'invoice_number' => $invoiceNumber,
             'order_id' => $order->id,
             'customer_id' => $order->customer_id,
@@ -50,11 +50,25 @@ class InvoiceService
             'invoice_date' => $data['invoice_date'],
             'status' => $data['status'] ?? 'draft',
         ])->load(['order', 'customer']);
+
+        ActivityLogger::log(
+            module: 'invoices',
+            action: 'created',
+            description: sprintf('Facture %s créée', $invoiceNumber),
+        );
+
+        return $invoice;
     }
 
     public function update(Invoice $invoice, array $data): Invoice
     {
         $invoice->update($data);
+
+        ActivityLogger::log(
+            module: 'invoices',
+            action: 'updated',
+            description: sprintf('Facture %s mise à jour', $invoice->invoice_number),
+        );
 
         return $invoice->fresh()->load(['order', 'customer']);
     }
@@ -65,7 +79,14 @@ class InvoiceService
             throw new \RuntimeException('Cannot delete a paid invoice.');
         }
 
+        $invoiceNumber = $invoice->invoice_number;
         $invoice->delete();
+
+        ActivityLogger::log(
+            module: 'invoices',
+            action: 'deleted',
+            description: sprintf('Facture %s supprimée', $invoiceNumber),
+        );
     }
 
     public function restore(Invoice $invoice): Invoice
@@ -78,6 +99,12 @@ class InvoiceService
     public function send(Invoice $invoice, array $data = []): Invoice
     {
         $invoice->update(['status' => 'sent']);
+
+        ActivityLogger::log(
+            module: 'invoices',
+            action: 'sent',
+            description: sprintf('Facture %s envoyée', $invoice->invoice_number),
+        );
 
         return $invoice->fresh()->load(['order', 'customer']);
     }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\StoreSettingRequest;
 use App\Http\Requests\Settings\UpdateSettingRequest;
 use App\Models\Setting;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 
 class SettingController extends Controller
@@ -31,7 +32,15 @@ class SettingController extends Controller
     {
         $this->authorize('create', Setting::class);
 
-        return $this->success(Setting::create($request->validated()), 'Paramètre créé avec succès', 201);
+        $setting = Setting::create($request->validated());
+
+        ActivityLogger::log(
+            module: 'settings',
+            action: 'created',
+            description: sprintf('Paramètre %s créé', $setting->key_name),
+        );
+
+        return $this->success($setting, 'Paramètre créé avec succès', 201);
     }
 
     public function show(Setting $setting)
@@ -47,6 +56,12 @@ class SettingController extends Controller
 
         $setting->update($request->validated());
 
+        ActivityLogger::log(
+            module: 'settings',
+            action: 'updated',
+            description: sprintf('Paramètre %s mis à jour', $setting->key_name),
+        );
+
         return $this->success($setting->fresh(), 'Paramètre mis à jour avec succès');
     }
 
@@ -54,7 +69,14 @@ class SettingController extends Controller
     {
         $this->authorize('delete', $setting);
 
+        $key = $setting->key_name;
         $setting->delete();
+
+        ActivityLogger::log(
+            module: 'settings',
+            action: 'deleted',
+            description: sprintf('Paramètre %s supprimé', $key),
+        );
 
         return $this->success(null, 'Paramètre supprimé avec succès');
     }
@@ -83,6 +105,12 @@ class SettingController extends Controller
 
         $setting = Setting::where('key_name', $key)->firstOrFail();
         $setting->update(['value' => $request->value]);
+
+        ActivityLogger::log(
+            module: 'settings',
+            action: 'updated',
+            description: sprintf('Paramètre %s mis à jour par clé', $key),
+        );
 
         return $this->success($setting->fresh(), 'Paramètre mis à jour avec succès');
     }

@@ -5,12 +5,18 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\User;
+use App\Support\OrderWorkflow;
 use App\Support\StatusMapper;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
+    public function __construct(private OrderWorkflowService $workflowService)
+    {
+    }
+
     public function list(array $filters = []): LengthAwarePaginator
     {
         $query = Order::with(['customer', 'user', 'items.product']);
@@ -44,94 +50,128 @@ class OrderService
         );
     }
 
-    public function create(array $data, int $userId): Order
+    public function create(array $data, int $userId): array
     {
         return DB::transaction(function () use ($data, $userId) {
             $orderNumber = 'ORD-' . date('Ymd') . '-' . str_pad(Order::count() + 1, 4, '0', STR_PAD_LEFT);
+            $initialStatus = OrderWorkflow::canonical($data['status'] ?? OrderWorkflow::SUBMITTED);
 
             $order = Order::create([
                 'order_number' => $orderNumber,
                 'customer_id' => $data['customer_id'],
                 'user_id' => $userId,
-                'status' => 'pending',
+                'status' => $initialStatus,
                 'payment_status' => 'unpaid',
                 'notes' => $data['notes'] ?? null,
             ]);
 
             $subtotal = $this->syncItems($order, $data['items']);
-
             $order->update(['total_amount' => $subtotal]);
 
-            return StatusMapper::transformOrder($order->load(['customer', 'items.product']));
+            $this->workflowService->recordInitialStatus(
+                $order->fresh(),
+                User::find($userId),
+                'Commande créée'
+            );
+
+            ActivityLogger::log(
+                module: 'orders',
+                action: 'created',
+                description: sprintf('Commande %s créée', $order->order_number),
+                userId: $userId,
+            );
+
+            return StatusMapper::transformOrder($order->fresh()->load(['customer', 'items.product']));
         });
     }
 
-    public function update(Order $order, array $data): Order
+    public function update(Order $order, array $data): array
     {
         $order->update($data);
 
-        return StatusMapper::transformOrder($order->fresh()->load(['customer', 'items.product']));
-    }
-
-    public function validate(Order $order): Order
-    {
-        if ($order->status !== 'pending') {
-            throw new \RuntimeException('Only pending orders can be validated.');
-        }
-
-        $order->update(['status' => 'confirmed']);
+        ActivityLogger::log(
+            module: 'orders',
+            action: 'updated',
+            description: sprintf('Commande %s mise à jour', $order->order_number),
+        );
 
         return StatusMapper::transformOrder($order->fresh()->load(['customer', 'items.product']));
     }
 
-    public function cancel(Order $order, ?string $reason = null): Order
+    public function validate(Order $order, ?User $user = null): array
     {
-        if (in_array($order->status, ['completed', 'cancelled'], true)) {
+        return $this->workflowService->transition(
+            $order,
+            OrderWorkflow::APPROVED,
+            'Commande validée',
+            $user
+        );
+    }
+
+    public function cancel(Order $order, ?string $reason = null, ?User $user = null): array
+    {
+        if (in_array($order->status, [OrderWorkflow::DELIVERED, OrderWorkflow::CANCELLED, OrderWorkflow::ARCHIVED], true)) {
             throw new \RuntimeException('This order cannot be cancelled.');
         }
 
-        $order->update([
-            'status' => 'cancelled',
-            'notes' => trim(($order->notes ?? '') . ($reason ? "\nCancel reason: {$reason}" : '')),
-        ]);
+        if ($reason) {
+            $order->update([
+                'notes' => trim(($order->notes ?? '') . "\nCancel reason: {$reason}"),
+            ]);
+        }
 
-        return $order->fresh();
+        return $this->workflowService->transition(
+            $order->fresh(),
+            OrderWorkflow::CANCELLED,
+            $reason ?? 'Commande annulée',
+            $user
+        );
     }
 
-    public function updateStatus(Order $order, string $status): Order
+    public function updateStatus(Order $order, string $status, ?string $comment = null, ?User $user = null): array
     {
-        $order->update(['status' => StatusMapper::orderToDb($status)]);
-
-        return StatusMapper::transformOrder($order->fresh());
+        return $this->workflowService->transition($order, $status, $comment, $user);
     }
 
-    public function updatePayment(Order $order, array $data): Order
+    public function updatePayment(Order $order, array $data): array
     {
         $order->update([
             'payment_status' => StatusMapper::paymentToDb($data['payment_status'] ?? $order->payment_status),
         ]);
 
+        ActivityLogger::log(
+            module: 'orders',
+            action: 'payment_updated',
+            description: sprintf('Paiement commande %s mis à jour', $order->order_number),
+        );
+
         return StatusMapper::transformOrder($order->fresh());
     }
 
-    public function startProduction(Order $order, array $data = []): Order
+    public function startProduction(Order $order, ?User $user = null): array
     {
-        if (!in_array($order->status, ['confirmed', 'pending'], true)) {
-            throw new \RuntimeException('Order must be confirmed before production.');
-        }
-
-        $order->update(['status' => 'processing']);
-
-        return StatusMapper::transformOrder($order->fresh()->load(['customer', 'items.product']));
+        return $this->workflowService->transition(
+            $order,
+            OrderWorkflow::PREPARING,
+            'Production démarrée',
+            $user
+        );
     }
 
     public function delete(Order $order): void
     {
-        if ($order->status === 'completed') {
-            throw new \RuntimeException('Cannot delete a completed order.');
+        if ($order->status === OrderWorkflow::DELIVERED) {
+            throw new \RuntimeException('Cannot delete a delivered order.');
         }
 
+        $orderNumber = $order->order_number;
         $order->delete();
+
+        ActivityLogger::log(
+            module: 'orders',
+            action: 'deleted',
+            description: sprintf('Commande %s supprimée', $orderNumber),
+        );
     }
 
     public function getProducts(Order $order)
@@ -154,6 +194,12 @@ class OrderService
         ]);
 
         $this->recalculateTotal($order);
+
+        ActivityLogger::log(
+            module: 'orders',
+            action: 'product_added',
+            description: sprintf('Produit ajouté à la commande %s', $order->order_number),
+        );
 
         return $orderItem->load('product');
     }
@@ -188,11 +234,14 @@ class OrderService
     {
         return [
             'total' => Order::count(),
-            'pending' => Order::where('status', 'pending')->count(),
-            'confirmed' => Order::where('status', 'confirmed')->count(),
-            'processing' => Order::where('status', 'processing')->count(),
-            'completed' => Order::where('status', 'completed')->count(),
-            'cancelled' => Order::where('status', 'cancelled')->count(),
+            'draft' => Order::where('status', OrderWorkflow::DRAFT)->count(),
+            'pending' => Order::where('status', OrderWorkflow::SUBMITTED)->count(),
+            'validated' => Order::where('status', OrderWorkflow::APPROVED)->count(),
+            'in_production' => Order::where('status', OrderWorkflow::PREPARING)->count(),
+            'ready' => Order::where('status', OrderWorkflow::READY)->count(),
+            'in_delivery' => Order::where('status', OrderWorkflow::ASSIGNED)->count(),
+            'delivered' => Order::where('status', OrderWorkflow::DELIVERED)->count(),
+            'cancelled' => Order::where('status', OrderWorkflow::CANCELLED)->count(),
             'total_revenue' => Order::where('payment_status', 'paid')->sum('total_amount'),
         ];
     }
@@ -203,7 +252,7 @@ class OrderService
             'N° Commande' => $order->order_number,
             'Client' => $order->customer->name ?? '—',
             'Total' => $order->total_amount,
-            'Statut' => $order->status,
+            'Statut' => StatusMapper::orderFromDb($order->status),
             'Paiement' => $order->payment_status,
             'Date' => $order->created_at->format('Y-m-d H:i'),
         ]);
@@ -217,7 +266,19 @@ class OrderService
             $query->where('customer_id', $filters['customer_id']);
         }
 
-        return $query->paginate($filters['per_page'] ?? 20);
+        return StatusMapper::transformOrderCollection(
+            $query->paginate($filters['per_page'] ?? 20)
+        );
+    }
+
+    public function statusHistory(Order $order)
+    {
+        return $this->workflowService->statusHistory($order);
+    }
+
+    public function allowedTransitions(Order $order): array
+    {
+        return $this->workflowService->allowedTransitions($order);
     }
 
     private function syncItems(Order $order, array $items): float

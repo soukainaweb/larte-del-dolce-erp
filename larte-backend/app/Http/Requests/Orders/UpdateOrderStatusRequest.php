@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Orders;
 
+use App\Support\OrderWorkflow;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateOrderStatusRequest extends FormRequest
 {
@@ -13,8 +15,14 @@ class UpdateOrderStatusRequest extends FormRequest
 
     public function rules(): array
     {
+        $allowed = array_merge(
+            OrderWorkflow::frontendStatuses(),
+            OrderWorkflow::statuses(),
+        );
+
         return [
-            'status' => 'required|in:pending,approved,production,ready,delivered,cancelled,confirmed,processing,completed',
+            'status' => ['required', Rule::in(array_unique($allowed))],
+            'comment' => 'nullable|string|max:1000',
         ];
     }
 }

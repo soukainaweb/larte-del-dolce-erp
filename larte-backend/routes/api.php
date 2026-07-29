@@ -538,6 +538,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('/', [OrderController::class, 'index']);
         Route::post('/', [OrderController::class, 'store'])->middleware('permission:orders.create');
         Route::get('/{order}', [OrderController::class, 'show']);
+        Route::get('/{order}/status-history', [OrderController::class, 'statusHistory']);
+        Route::get('/{order}/allowed-transitions', [OrderController::class, 'allowedTransitions']);
         Route::put('/{order}', [OrderController::class, 'update'])->middleware('permission:orders.update');
         Route::patch('/{order}/status', [OrderController::class, 'updateStatus'])->middleware('permission:orders.update');
         Route::patch('/{order}/payment', [OrderController::class, 'updatePayment'])->middleware('permission:orders.update');

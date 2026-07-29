@@ -129,12 +129,44 @@ const orderService = {
    * @param {string} status - Nouveau statut
    * @returns {Promise} Promise avec la réponse de l'API
    */
-  updateOrderStatus: async (id, status) => {
+  updateOrderStatus: async (id, status, comment = null) => {
     try {
-      const response = await api.patch(`/orders/${id}/status`, { status });
+      const payload = { status };
+      if (comment) payload.comment = comment;
+      const response = await api.patch(`/orders/${id}/status`, payload);
       return response.data;
     } catch (error) {
       console.error(`Error updating order ${id} status:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Récupérer l'historique des statuts d'une commande
+   * @param {number|string} id - ID de la commande
+   * @returns {Promise} Promise avec l'historique des transitions
+   */
+  getOrderStatusHistory: async (id) => {
+    try {
+      const response = await api.get(`/orders/${id}/status-history`);
+      return unwrapData(response);
+    } catch (error) {
+      console.error(`Error fetching order ${id} status history:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Récupérer les transitions de statut autorisées pour une commande
+   * @param {number|string} id - ID de la commande
+   * @returns {Promise} Promise avec la liste des statuts cibles autorisés
+   */
+  getAllowedTransitions: async (id) => {
+    try {
+      const response = await api.get(`/orders/${id}/allowed-transitions`);
+      return unwrapData(response);
+    } catch (error) {
+      console.error(`Error fetching allowed transitions for order ${id}:`, error);
       throw error;
     }
   },

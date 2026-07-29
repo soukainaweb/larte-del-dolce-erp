@@ -29,12 +29,18 @@ class RoleService
 
     public function create(array $data): Role
     {
-        return Role::create($data);
+        $role = Role::create($data);
+
+        ActivityLogger::logModelEvent($role, 'created', sprintf('Rôle %s créé', $role->display_name ?? $role->name));
+
+        return $role;
     }
 
     public function update(Role $role, array $data): Role
     {
         $role->update($data);
+
+        ActivityLogger::logModelEvent($role, 'updated', sprintf('Rôle %s mis à jour', $role->display_name ?? $role->name));
 
         return $role->fresh();
     }
@@ -45,12 +51,25 @@ class RoleService
             throw new \RuntimeException('Impossible de supprimer un rôle assigné à des utilisateurs');
         }
 
+        $name = $role->display_name ?? $role->name;
         $role->delete();
+
+        ActivityLogger::log(
+            module: 'roles',
+            action: 'deleted',
+            description: sprintf('Rôle %s supprimé', $name),
+        );
     }
 
     public function toggleStatus(Role $role, string $status): Role
     {
         $role->update(['status' => $status]);
+
+        ActivityLogger::log(
+            module: 'roles',
+            action: 'status_changed',
+            description: sprintf('Statut rôle %s changé en %s', $role->display_name ?? $role->name, $status),
+        );
 
         return $role->fresh();
     }
@@ -62,6 +81,12 @@ class RoleService
         $newRole->display_name = $role->display_name . ' (copie)';
         $newRole->save();
         $newRole->permissions()->sync($role->permissions()->pluck('id'));
+
+        ActivityLogger::log(
+            module: 'roles',
+            action: 'duplicated',
+            description: sprintf('Rôle %s dupliqué', $role->display_name ?? $role->name),
+        );
 
         return $newRole->load('permissions');
     }
@@ -94,6 +119,12 @@ class RoleService
     {
         $role->permissions()->sync($permissionIds);
         $role->update(['permissions_count' => count($permissionIds)]);
+
+        ActivityLogger::log(
+            module: 'roles',
+            action: 'permissions_updated',
+            description: sprintf('Permissions du rôle %s mises à jour', $role->display_name ?? $role->name),
+        );
 
         return $role->fresh()->load('permissions');
     }

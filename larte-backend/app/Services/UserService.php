@@ -40,13 +40,17 @@ class UserService
     {
         $names = $this->userPayload($data);
 
-        return User::create(array_merge($names, [
+        $user = User::create(array_merge($names, [
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role_id' => $data['role_id'],
             'phone' => $data['phone'] ?? null,
             'status' => UserStatus::normalize($data['status'] ?? null, UserStatus::OFFLINE),
         ]))->load('role');
+
+        ActivityLogger::logModelEvent($user, 'created', sprintf('Utilisateur %s créé', $user->email));
+
+        return $user;
     }
 
     public function update(User $user, array $data): User
@@ -69,12 +73,20 @@ class UserService
 
         $user->update($payload);
 
+        ActivityLogger::logModelEvent($user, 'updated', sprintf('Utilisateur %s mis à jour', $user->email));
+
         return $user->fresh()->load('role');
     }
 
     public function updateStatus(User $user, string $status): User
     {
         $user->update(['status' => UserStatus::normalize($status)]);
+
+        ActivityLogger::log(
+            module: 'users',
+            action: 'status_changed',
+            description: sprintf('Statut utilisateur %s changé en %s', $user->email, $status),
+        );
 
         return $user->fresh()->load('role');
     }
@@ -83,12 +95,25 @@ class UserService
     {
         $user->update(['role_id' => $roleId]);
 
+        ActivityLogger::log(
+            module: 'users',
+            action: 'role_changed',
+            description: sprintf('Rôle utilisateur %s mis à jour', $user->email),
+        );
+
         return $user->fresh()->load('role');
     }
 
     public function delete(User $user): void
     {
+        $email = $user->email;
         $user->delete();
+
+        ActivityLogger::log(
+            module: 'users',
+            action: 'deleted',
+            description: sprintf('Utilisateur %s supprimé', $email),
+        );
     }
 
     public function statistics(): array

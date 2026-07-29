@@ -50,14 +50,19 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    public function statusHistories()
+    {
+        return $this->hasMany(OrderStatusHistory::class);
+    }
+
     public function invoice()
-{
-    return $this->hasOne(Invoice::class);
-}
+    {
+        return $this->hasOne(Invoice::class);
+    }
 
-public function delivery()
-{
-    return $this->hasOne(Delivery::class);
-}
-
+    public function delivery()
+    {
+        return $this->hasOne(Delivery::class);
+    }
 }

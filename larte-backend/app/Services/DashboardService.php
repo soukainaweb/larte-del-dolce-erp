@@ -35,10 +35,10 @@ class DashboardService
 
         $distribution = [
             'total' => $totalOrders,
-            'enAttente' => Order::where('status', 'pending')->count(),
-            'enProduction' => Order::where('status', 'processing')->count(),
-            'pretes' => Order::where('status', 'confirmed')->count(),
-            'livrees' => Order::where('status', 'completed')->count(),
+            'enAttente' => Order::where('status', 'submitted')->count(),
+            'enProduction' => Order::where('status', 'preparing')->count(),
+            'pretes' => Order::where('status', 'ready')->count(),
+            'livrees' => Order::where('status', 'delivered')->count(),
         ];
 
         return [
@@ -264,11 +264,13 @@ class DashboardService
 
     private function statusColor(?string $status): string
     {
-        return match ($status) {
-            'pending' => 'warning',
-            'confirmed', 'processing' => 'info',
-            'completed' => 'success',
-            'cancelled' => 'danger',
+        $canonical = \App\Support\OrderWorkflow::canonical($status);
+
+        return match ($canonical) {
+            'draft', 'submitted' => 'warning',
+            'approved', 'preparing', 'ready', 'assigned' => 'info',
+            'delivered' => 'success',
+            'cancelled', 'rejected' => 'danger',
             default => 'info',
         };
     }
