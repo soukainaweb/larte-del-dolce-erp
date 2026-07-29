@@ -131,6 +131,39 @@ export const normalizeUserList = (payload) => {
 };
 
 /**
+ * Normalize a customer record for list/table UI.
+ */
+export const normalizeCustomerRecord = (rawCustomer) => {
+  if (!rawCustomer) return null;
+
+  return {
+    ...rawCustomer,
+    name: rawCustomer.name || rawCustomer.company_name || '—',
+    email: rawCustomer.email || '',
+    phone: rawCustomer.phone || '',
+    type: rawCustomer.type || rawCustomer.customer_type || 'individual',
+    status: rawCustomer.status || 'inactive',
+    city: rawCustomer.city || '',
+    country: rawCustomer.country || '',
+    address: rawCustomer.address || '',
+    createdAt: rawCustomer.created_at || rawCustomer.createdAt || null,
+  };
+};
+
+/**
+ * Unwrap and normalize a paginated customers API response.
+ */
+export const normalizeCustomerList = (payload) => {
+  const { items, meta } = unwrapPaginated(payload);
+  const list = Array.isArray(items) ? items : [];
+
+  return {
+    items: list.map(normalizeCustomerRecord).filter(Boolean),
+    meta,
+  };
+};
+
+/**
  * Build a user-facing error message from an axios/Laravel error.
  */
 export const getApiErrorMessage = (error, fallback = 'Une erreur est survenue') => {

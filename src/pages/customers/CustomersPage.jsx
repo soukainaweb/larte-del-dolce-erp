@@ -37,6 +37,7 @@ import {
   getCustomerStatuses,
   getCustomerOrders
 } from '../../services/customerService';
+import { unwrapData, normalizeCustomerList, normalizeCustomerRecord } from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -54,7 +55,8 @@ const StatusBadge = ({ status }) => {
     suspended: { label: 'Suspendu', class: 'bg-amber-50 text-amber-700 border-amber-200' }
   };
 
-  const config = statusConfig[status] || statusConfig.inactive;
+  const key = String(status ?? 'inactive').toLowerCase();
+  const config = statusConfig[key] || { label: String(status ?? '—'), class: 'bg-gray-50 text-gray-600 border-gray-200' };
 
   return (
     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${config.class}`}>
@@ -116,7 +118,7 @@ const ClientCard = ({ client, onEdit, onDelete, onView }) => {
         <div className="text-xs text-[#6D6D6D]">
           <span className="flex items-center gap-1">
             <Calendar size={12} />
-            {new Date(client.createdAt).toLocaleDateString('fr-FR')}
+            {client.createdAt ? new Date(client.createdAt).toLocaleDateString('fr-FR') : '—'}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -165,7 +167,7 @@ const ClientTableRow = ({ client, onEdit, onDelete, onView, index }) => {
         <StatusBadge status={client.status} />
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {new Date(client.createdAt).toLocaleDateString('fr-FR')}
+        {client.createdAt ? new Date(client.createdAt).toLocaleDateString('fr-FR') : '—'}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1">
@@ -570,7 +572,7 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
             )}
             <div className="flex items-center gap-3 text-sm">
               <Calendar size={18} className="text-[#6D6D6D]" />
-              <span className="text-[#3D2F24]">Créé le {new Date(client.createdAt).toLocaleDateString('fr-FR')}</span>
+              <span className="text-[#3D2F24]">Créé le {client.createdAt ? new Date(client.createdAt).toLocaleDateString('fr-FR') : '—'}</span>
             </div>
             {client.notes && (
               <div className="flex items-start gap-3 text-sm">
@@ -631,11 +633,13 @@ const CustomersPage = () => {
         sort_order: 'desc'
       };
       const response = await getCustomers(params);
-      const data = response.data.data || [];
-      setClients(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      const { items, meta } = normalizeCustomerList(response);
+      setClients(items);
+      setTotalCount(meta.total ?? meta.total_count ?? items.length);
     } catch (error) {
       console.error('Error fetching customers:', error);
+      setClients([]);
+      setTotalCount(0);
     } finally {
       setIsLoading(false);
     }
@@ -658,7 +662,7 @@ const CustomersPage = () => {
   const fetchStatistics = async () => {
     try {
       const response = await getCustomerStatistics();
-      const data = response.data.data || {};
+      const data = unwrapData(response) || {};
       setKpis({
         total: data.total || 0,
         active: data.active || 0,
@@ -677,14 +681,10 @@ const CustomersPage = () => {
   }, []);
 
   // Filter customers (API already handles filters)
-  const filteredClients = useMemo(() => {
-    return clients;
-  }, [clients]);
+  const filteredClients = useMemo(() => (Array.isArray(clients) ? clients : []), [clients]);
 
   // Paginate
-  const paginatedClients = useMemo(() => {
-    return filteredClients;
-  }, [filteredClients]);
+  const paginatedClients = useMemo(() => filteredClients, [filteredClients]);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
@@ -710,7 +710,7 @@ const CustomersPage = () => {
     status: item.status === 'active' ? 'Actif' : item.status === 'inactive' ? 'Inactif' : 'Suspendu',
     city: item.city || '—',
     country: item.country || '—',
-    createdAt: new Date(item.createdAt).toLocaleDateString('fr-FR')
+    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString('fr-FR') : '—'
   });
 
   // Calculate summary
@@ -740,8 +740,13 @@ const CustomersPage = () => {
     setIsSaving(true);
     try {
       const response = await createCustomer(formData);
-      const newClient = response.data.data;
-      setClients(prev => [newClient, ...prev]);
+      const newClient = normalizeCustomerRecord(unwrapData(response));
+      if (newClient) {
+        setClients((prev) => {
+          const list = Array.isArray(prev) ? prev : [];
+          return [newClient, ...list];
+        });
+      }
       setIsCreateModalOpen(false);
       await fetchStatistics();
     } catch (error) {
@@ -755,10 +760,13 @@ const CustomersPage = () => {
     setIsSaving(true);
     try {
       const response = await updateCustomer(selectedClient.id, formData);
-      const updatedClient = response.data.data;
-      setClients(prev => prev.map(c =>
-        c.id === selectedClient.id ? updatedClient : c
-      ));
+      const updatedClient = normalizeCustomerRecord(unwrapData(response));
+      if (updatedClient) {
+        setClients((prev) => {
+          const list = Array.isArray(prev) ? prev : [];
+          return list.map((c) => (c.id === selectedClient.id ? updatedClient : c));
+        });
+      }
       setIsEditModalOpen(false);
       setSelectedClient(null);
       await fetchStatistics();
@@ -773,7 +781,10 @@ const CustomersPage = () => {
     setIsSaving(true);
     try {
       await deleteCustomer(selectedClient.id);
-      setClients(prev => prev.filter(c => c.id !== selectedClient.id));
+      setClients((prev) => {
+        const list = Array.isArray(prev) ? prev : [];
+        return list.filter((c) => c.id !== selectedClient.id);
+      });
       setIsDeleteModalOpen(false);
       setSelectedClient(null);
       await fetchStatistics();
@@ -794,7 +805,8 @@ const CustomersPage = () => {
   }, [searchTerm, typeFilter, statusFilter]);
 
   const uniqueTypes = useMemo(() => {
-    const types = new Set(clients.map(c => c.type));
+    const list = Array.isArray(clients) ? clients : [];
+    const types = new Set(list.map((c) => c?.type).filter(Boolean));
     return Array.from(types);
   }, [clients]);
 
