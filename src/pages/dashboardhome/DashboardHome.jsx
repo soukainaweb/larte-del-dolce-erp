@@ -471,10 +471,14 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
       
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
-      const message = getApiErrorMessage(err, 'Erreur lors du chargement des données');
+      const isForbidden = err?.response?.status === 403;
+      const message = isForbidden
+        ? 'Accès au tableau de bord refusé. Demandez à un administrateur la permission « dashboard.view ».'
+        : getApiErrorMessage(err, 'Erreur lors du chargement des données');
       setError(message);
-      showToast(message, 'error');
-      // Utiliser les données de fallback
+      if (!isForbidden) {
+        showToast(message, 'error');
+      }
       setDashboardData(FALLBACK_DATA);
     } finally {
       setLoading(false);

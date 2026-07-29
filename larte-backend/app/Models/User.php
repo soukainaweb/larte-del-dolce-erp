@@ -137,7 +137,7 @@ class User extends Authenticatable implements CanResetPasswordContract
             $this->role->load('permissions');
         }
 
-        if ($this->role?->name === 'admin') {
+        if (strtolower((string) ($this->role?->name ?? '')) === 'admin') {
             return true;
         }
 

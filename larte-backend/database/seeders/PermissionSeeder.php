@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Support\DefaultRolePermissions;
 use Illuminate\Database\Seeder;
 
 class PermissionSeeder extends Seeder
@@ -32,7 +33,7 @@ class PermissionSeeder extends Seeder
             'settings' => ['view', 'update'],
         ];
 
-        $permissionIds = [];
+        $permissionIdsByName = [];
 
         foreach ($modules as $module => $actions) {
             foreach ($actions as $action) {
@@ -45,14 +46,12 @@ class PermissionSeeder extends Seeder
                         'status' => 'active',
                     ]
                 );
-                $permissionIds[] = $permission->id;
+                $permissionIdsByName[$name] = $permission->id;
             }
         }
 
-        $adminRole = Role::where('name', 'admin')->first();
-        if ($adminRole) {
-            $adminRole->permissions()->sync($permissionIds);
-            $adminRole->update(['permissions_count' => count($permissionIds)]);
-        }
+        Role::query()->each(function (Role $role) use ($permissionIdsByName) {
+            DefaultRolePermissions::syncRole($role, $permissionIdsByName);
+        });
     }
 }
