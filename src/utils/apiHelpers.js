@@ -150,3 +150,138 @@ export const showApiError = (showToast, error, fallback) => {
     showToast(getApiErrorMessage(error, fallback), 'error');
   }
 };
+
+/**
+ * Normalize any API payload into a plain array.
+ * Handles Laravel envelopes, paginated payloads, and common list keys.
+ */
+export const toArray = (payload, extraKeys = []) => {
+  const { items } = unwrapPaginated(payload);
+  if (Array.isArray(items) && items.length > 0) {
+    return items;
+  }
+
+  const data = unwrapData(payload);
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (data && typeof data === 'object') {
+    const keys = [...extraKeys, 'data', 'items', 'permissions', 'sessions', 'documents', 'activities', 'activity'];
+    for (const key of keys) {
+      if (Array.isArray(data[key])) {
+        return data[key];
+      }
+    }
+  }
+
+  return [];
+};
+
+const PERMISSION_ACTION_MAP = {
+  view: 'view',
+  create: 'create',
+  update: 'edit',
+  edit: 'edit',
+  delete: 'delete',
+};
+
+/**
+ * Normalize profile permissions API payload into table rows:
+ * [{ module, view, create, edit, delete }, ...]
+ */
+export const normalizeProfilePermissions = (payload) => {
+  const data = unwrapData(payload);
+  if (!data) return [];
+
+  if (Array.isArray(data)) {
+    return data.map((row) => ({
+      module: row?.module ?? row?.name ?? '—',
+      view: Boolean(row?.view ?? row?.read),
+      create: Boolean(row?.create),
+      edit: Boolean(row?.edit ?? row?.update),
+      delete: Boolean(row?.delete),
+    }));
+  }
+
+  if (typeof data !== 'object') {
+    return [];
+  }
+
+  const permissionNames = new Set();
+
+  if (data.permissions && typeof data.permissions === 'object' && !Array.isArray(data.permissions)) {
+    Object.entries(data.permissions).forEach(([name, enabled]) => {
+      if (enabled) permissionNames.add(name);
+    });
+  } else if (Array.isArray(data.permissions)) {
+    data.permissions.forEach((entry) => {
+      if (typeof entry === 'string') {
+        permissionNames.add(entry);
+      } else if (entry?.name) {
+        permissionNames.add(entry.name);
+      }
+    });
+  }
+
+  if (Array.isArray(data.role?.permissions)) {
+    data.role.permissions.forEach((entry) => {
+      const name = typeof entry === 'string' ? entry : entry?.name;
+      if (name) permissionNames.add(name);
+    });
+  }
+
+  const modules = {};
+
+  permissionNames.forEach((name) => {
+    const [module, action] = String(name).split('.');
+    if (!module || !action) return;
+
+    if (!modules[module]) {
+      modules[module] = { module, view: false, create: false, edit: false, delete: false };
+    }
+
+    const mappedAction = PERMISSION_ACTION_MAP[action.toLowerCase()];
+    if (mappedAction) {
+      modules[module][mappedAction] = true;
+    }
+  });
+
+  return Object.values(modules).sort((a, b) => a.module.localeCompare(b.module));
+};
+
+const USER_STATUS_LABELS = {
+  online: 'En ligne',
+  offline: 'Hors ligne',
+  away: 'Absent',
+  active: 'Actif',
+  inactive: 'Inactif',
+  suspended: 'Suspendu',
+  locked: 'Verrouillé',
+};
+
+/**
+ * Format a user status string for display with safe fallback.
+ */
+export const formatUserStatus = (status) => {
+  if (status == null || status === '') {
+    return { label: '—', tone: 'neutral' };
+  }
+
+  const key = String(status).trim().toLowerCase();
+  const label = USER_STATUS_LABELS[key] || String(status);
+
+  if (['online', 'active'].includes(key)) {
+    return { label, tone: 'positive' };
+  }
+
+  if (key === 'away') {
+    return { label, tone: 'warning' };
+  }
+
+  if (['offline', 'inactive', 'suspended', 'locked'].includes(key)) {
+    return { label, tone: 'negative' };
+  }
+
+  return { label, tone: 'neutral' };
+};

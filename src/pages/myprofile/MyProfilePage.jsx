@@ -32,6 +32,12 @@ import {
   getUserStats,
   updateTwoFactorAuth,
 } from '../../services/userService';
+import {
+  unwrapData,
+  toArray,
+  normalizeProfilePermissions,
+  formatUserStatus,
+} from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -483,7 +489,8 @@ const MyProfilePage = () => {
   const navigate = useNavigate(); // ✅ Ajout
 
   // États
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -608,13 +615,14 @@ const MyProfilePage = () => {
     setIsLoading(true);
     try {
       const profileRes = await getProfile();
-      const userData = profileRes.data.data || profileRes.data;
+      const profilePayload = unwrapData(profileRes) || {};
+      const userData = profilePayload.user || profilePayload || user || {};
       
       setProfileData({
-        firstName: userData.first_name || userData.firstName || '',
-        lastName: userData.last_name || userData.lastName || '',
-        email: userData.email || '',
-        phone: userData.phone || '',
+        firstName: userData.first_name || userData.firstName || user?.firstName || '',
+        lastName: userData.last_name || userData.lastName || user?.lastName || '',
+        email: userData.email || user?.email || '',
+        phone: userData.phone || user?.phone || '',
         birthDate: userData.birth_date || userData.birthDate || '',
         gender: userData.gender || '',
         nationality: userData.nationality || '',
@@ -629,20 +637,20 @@ const MyProfilePage = () => {
       setProfessionalData({
         employeeId: userData.employee_id || userData.employeeId || '—',
         department: userData.department || '—',
-        position: userData.position || '—',
+        position: userData.position || user?.role?.display_name || '—',
         manager: userData.manager || '—',
         hiringDate: userData.hiring_date || userData.hiringDate || '—',
         company: userData.company || "L'arte del dolce",
         office: userData.office || '—',
-        role: userData.role || '—',
-        status: userData.status || 'En ligne',
+        role: userData.role?.display_name || userData.role?.name || userData.role || '—',
+        status: userData.status || user?.status || 'offline',
         lastLogin: userData.last_login_at 
           ? new Date(userData.last_login_at).toLocaleString('fr-FR') 
           : '—'
       });
 
-      setAvatar(userData.avatar || null);
-      setTwoFactorEnabled(userData.two_factor_enabled || false);
+      setAvatar(userData.avatar || user?.avatar || null);
+      setTwoFactorEnabled(Boolean(userData.two_factor_enabled));
 
       // Préférences
       if (userData.preferences) {
@@ -659,48 +667,52 @@ const MyProfilePage = () => {
       // Activités
       try {
         const activityRes = await getActivityLog({ per_page: 8 });
-        setActivityLog(activityRes.data.data || []);
+        setActivityLog(toArray(activityRes));
       } catch (e) {
         console.warn('Could not load activities:', e);
+        setActivityLog([]);
       }
 
       // Sessions
       try {
         const sessionsRes = await getSessions();
-        setSessions(sessionsRes.data.data || []);
+        setSessions(toArray(sessionsRes));
       } catch (e) {
         console.warn('Could not load sessions:', e);
+        setSessions([]);
       }
 
       // Documents
       try {
         const docsRes = await getDocuments();
-        setDocuments(docsRes.data.data || []);
+        setDocuments(toArray(docsRes));
       } catch (e) {
         console.warn('Could not load documents:', e);
+        setDocuments([]);
       }
 
       // Permissions
       try {
         const permsRes = await getPermissions();
-        setPermissionsData(permsRes.data.data || []);
+        setPermissionsData(normalizeProfilePermissions(permsRes));
       } catch (e) {
         console.warn('Could not load permissions:', e);
+        setPermissionsData([]);
       }
 
       // Statistiques
       try {
         const statsRes = await getUserStats();
-        const statsData = statsRes.data.data || statsRes.data;
+        const statsData = unwrapData(statsRes) || {};
         setStats({
-          orders: statsData.orders || 0,
-          clients: statsData.clients || 0,
-          products: statsData.products || 0,
-          lastLogin: statsData.last_login || '',
+          orders: statsData.orders ?? statsData.activity_count ?? 0,
+          clients: statsData.clients ?? 0,
+          products: statsData.products ?? 0,
+          lastLogin: statsData.last_login || statsData.last_login_at || '',
           avgTime: statsData.avg_time || statsData.avgTime || '0h',
           validatedOrders: statsData.validated_orders || statsData.validatedOrders || 0,
-          notifications: statsData.notifications || 0,
-          documents: statsData.documents || 0
+          notifications: statsData.notifications ?? statsData.session_count ?? 0,
+          documents: statsData.documents ?? 0
         });
       } catch (e) {
         console.warn('Could not load stats:', e);
@@ -739,7 +751,7 @@ const MyProfilePage = () => {
   };
 
   const handleSave = async () => {
-    setIsLoading(true);
+    setIsSaving(true);
     try {
       const data = {
         first_name: profileData.firstName,
@@ -758,8 +770,11 @@ const MyProfilePage = () => {
       };
       
       const profileRes = await updateProfile(data);
-      const updatedUser = profileRes.data.data || profileRes.data;
-      updateUser(updatedUser);
+      const updatedPayload = unwrapData(profileRes) || {};
+      const updatedUser = updatedPayload.user || updatedPayload;
+      if (updatedUser && typeof updatedUser === 'object') {
+        updateUser(updatedUser);
+      }
       
       // Enregistrer les préférences
       await updatePreferences({
@@ -778,7 +793,7 @@ const MyProfilePage = () => {
     } catch (error) {
       handleApiError(error, 'Erreur lors de l\'enregistrement du profil');
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -828,7 +843,7 @@ const MyProfilePage = () => {
     try {
       await revokeSession(sessionId);
       const sessionsRes = await getSessions();
-      setSessions(sessionsRes.data.data || []);
+      setSessions(toArray(sessionsRes));
       showToast('🔒 Session déconnectée avec succès', 'success');
     } catch (error) {
       handleApiError(error, 'Erreur lors de la déconnexion de la session');
@@ -842,7 +857,7 @@ const MyProfilePage = () => {
       revokeAllSessions()
         .then(async () => {
           const sessionsRes = await getSessions();
-          setSessions(sessionsRes.data.data || []);
+          setSessions(toArray(sessionsRes));
           showToast('🔒 Toutes les sessions ont été déconnectées', 'success');
         })
         .catch((error) => {
@@ -863,7 +878,7 @@ const MyProfilePage = () => {
     try {
       await deleteDocument(docId);
       const docsRes = await getDocuments();
-      setDocuments(docsRes.data.data || []);
+      setDocuments(toArray(docsRes));
       showToast('🗑️ Document supprimé avec succès', 'success');
     } catch (error) {
       handleApiError(error, 'Erreur lors de la suppression du document');
@@ -896,7 +911,7 @@ const MyProfilePage = () => {
         try {
           await uploadDocument(file, file.name, file.type);
           const docsRes = await getDocuments();
-          setDocuments(docsRes.data.data || []);
+          setDocuments(toArray(docsRes));
           showToast('📄 Document ajouté avec succès', 'success');
         } catch (error) {
           handleApiError(error, 'Erreur lors de l\'ajout du document');
@@ -966,7 +981,38 @@ const MyProfilePage = () => {
     showToast('Erreur lors de l\'export', 'error');
   };
 
-  const activeSessionsCount = sessions.filter(s => s.status === 'active' || s.current).length;
+  const activeSessionsCount = (Array.isArray(sessions) ? sessions : []).filter(
+    (s) => s?.status === 'active' || s?.current
+  ).length;
+
+  const userStatus = formatUserStatus(professionalData.status);
+  const statusToneClasses = {
+    positive: 'text-emerald-600',
+    warning: 'text-amber-600',
+    negative: 'text-rose-600',
+    neutral: 'text-[#6D6D6D]',
+  };
+  const statusDotClasses = {
+    positive: 'bg-emerald-500',
+    warning: 'bg-amber-500',
+    negative: 'bg-rose-500',
+    neutral: 'bg-gray-400',
+  };
+  const safeActivityLog = Array.isArray(activityLog) ? activityLog : [];
+  const safeSessions = Array.isArray(sessions) ? sessions : [];
+  const safeDocuments = Array.isArray(documents) ? documents : [];
+  const safePermissionsData = Array.isArray(permissionsData) ? permissionsData : [];
+
+  if (isLoading) {
+    return (
+      <div className="w-full min-h-screen bg-[#F8F7F4] p-3 md:p-6 flex items-center justify-center" style={{ fontFamily: FONT_BODY }}>
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-[#B8863B] border-t-transparent mb-3" />
+          <p className="text-sm text-[#6D6D6D]">Chargement du profil...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-[#F8F7F4] p-3 md:p-6" style={{ fontFamily: FONT_BODY }}>
@@ -993,10 +1039,10 @@ const MyProfilePage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <ExportButtons
-            data={activityLog}
+            data={safeActivityLog}
             columns={activityColumns}
             title="Activités récentes"
-            subtitle={`${activityLog.length} activités - ${profileData.firstName} ${profileData.lastName}`}
+            subtitle={`${safeActivityLog.length} activités - ${profileData.firstName} ${profileData.lastName}`}
             filename={`activites_${new Date().toISOString().split('T')[0]}`}
             summary={profileSummary}
             rowFormatter={activityRowFormatter}
@@ -1023,11 +1069,11 @@ const MyProfilePage = () => {
               </button>
               <button
                 onClick={handleSave}
-                disabled={isLoading}
+                disabled={isSaving}
                 className="flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all disabled:opacity-50 text-xs md:text-sm"
               >
                 <Save size={16} className="md:w-[18px] md:h-[18px]" />
-                {isLoading ? 'Enregistrement...' : 'Enregistrer'}
+                {isSaving ? 'Enregistrement...' : 'Enregistrer'}
               </button>
             </>
           )}
@@ -1057,9 +1103,9 @@ const MyProfilePage = () => {
                 <User size={12} className="md:w-[14px] md:h-[14px]" />
                 {professionalData.employeeId || '—'}
               </span>
-              <span className="flex items-center gap-1 text-emerald-600">
-                <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-emerald-500 inline-block" />
-                {professionalData.status || 'En ligne'}
+              <span className={`flex items-center gap-1 ${statusToneClasses[userStatus.tone]}`}>
+                <span className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full inline-block ${statusDotClasses[userStatus.tone]}`} />
+                {userStatus.label}
               </span>
             </div>
           </div>
@@ -1557,12 +1603,12 @@ const MyProfilePage = () => {
           </button>
         </div>
         <div className="space-y-1 max-h-48 md:max-h-64 overflow-y-auto">
-          {activityLog.length === 0 ? (
+          {safeActivityLog.length === 0 ? (
             <div className="text-center py-4 text-[#6D6D6D] text-sm">
               Aucune activité récente
             </div>
           ) : (
-            activityLog.slice(0, 8).map((activity) => (
+            safeActivityLog.slice(0, 8).map((activity) => (
               <ActivityItem key={activity.id || activity.created_at} activity={activity} />
             ))
           )}
@@ -1584,12 +1630,12 @@ const MyProfilePage = () => {
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-          {sessions.length === 0 ? (
+          {safeSessions.length === 0 ? (
             <div className="col-span-2 text-center py-4 text-[#6D6D6D] text-sm">
               Aucune session active
             </div>
           ) : (
-            sessions.map((session) => (
+            safeSessions.map((session) => (
               <SessionCard
                 key={session.id}
                 session={session}
@@ -1615,12 +1661,12 @@ const MyProfilePage = () => {
           </button>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-          {documents.length === 0 ? (
+          {safeDocuments.length === 0 ? (
             <div className="col-span-4 text-center py-4 text-[#6D6D6D] text-sm">
               Aucun document
             </div>
           ) : (
-            documents.map((doc) => (
+            safeDocuments.map((doc) => (
               <div key={doc.id} className="bg-[#F8F7F4] rounded-xl p-3 md:p-4 text-center hover:shadow-md transition-all">
                 <div className="flex justify-center mb-1 md:mb-2">
                   <FileTextIcon size={24} className="md:w-8 md:h-8 text-[#6D6D6D]" />
@@ -1666,14 +1712,14 @@ const MyProfilePage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#ECE8E1]">
-              {permissionsData.length === 0 ? (
+              {safePermissionsData.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-4 text-[#6D6D6D]">Aucune permission</td>
                 </tr>
               ) : (
-                permissionsData.map((perm, idx) => (
-                  <tr key={idx} className="hover:bg-[#F8F7F4] transition-colors">
-                    <td className="px-2 md:px-4 py-2 text-[10px] md:text-sm font-medium text-[#3D2F24]">{perm.module}</td>
+                safePermissionsData.map((perm, idx) => (
+                  <tr key={perm.module || idx} className="hover:bg-[#F8F7F4] transition-colors">
+                    <td className="px-2 md:px-4 py-2 text-[10px] md:text-sm font-medium text-[#3D2F24]">{perm?.module ?? '—'}</td>
                     <td className="px-2 md:px-4 py-2 text-center">
                       {perm.view ? <CheckCircle size={12} className="md:w-4 md:h-4 text-emerald-500 mx-auto" /> : <XCircle size={12} className="md:w-4 md:h-4 text-rose-500 mx-auto" />}
                     </td>
