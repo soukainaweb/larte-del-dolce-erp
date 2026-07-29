@@ -93,6 +93,44 @@ export const normalizeUser = (rawUser) => {
 };
 
 /**
+ * Normalize a user record for list/table UI (camelCase + role label).
+ */
+export const normalizeUserRecord = (rawUser) => {
+  if (!rawUser) return null;
+
+  const base = normalizeUser(rawUser);
+  const roleLabel =
+    typeof rawUser.role === 'object' && rawUser.role
+      ? rawUser.role.display_name || rawUser.role.name || base.role
+      : base.role || rawUser.role || '—';
+
+  return {
+    ...rawUser,
+    ...base,
+    firstName: base.firstName,
+    lastName: base.lastName,
+    fullName: base.fullName,
+    role: roleLabel,
+    status: rawUser.status || base.status || 'offline',
+    createdAt: rawUser.created_at || rawUser.createdAt || null,
+    phone: rawUser.phone || base.phone || '',
+  };
+};
+
+/**
+ * Unwrap and normalize a paginated users API response.
+ */
+export const normalizeUserList = (payload) => {
+  const { items, meta } = unwrapPaginated(payload);
+  const list = Array.isArray(items) ? items : [];
+
+  return {
+    items: list.map(normalizeUserRecord).filter(Boolean),
+    meta,
+  };
+};
+
+/**
  * Build a user-facing error message from an axios/Laravel error.
  */
 export const getApiErrorMessage = (error, fallback = 'Une erreur est survenue') => {

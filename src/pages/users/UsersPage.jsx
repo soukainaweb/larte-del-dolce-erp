@@ -38,6 +38,7 @@ import {
   sendPasswordReset,
   resendInvitation
 } from '../../services/userServicePage';  // ← Changé de 'userServicePage' à 'userService'
+import { unwrapData, normalizeUserList, normalizeUserRecord } from '../../utils/apiHelpers';
 
 // ===> Supprimer 'userServicePage' et utiliser 'userService' à la place
 
@@ -53,12 +54,15 @@ const FONT_BODY = "'Inter', sans-serif";
 const StatusBadge = ({ status }) => {
   const statusConfig = {
     active: { label: 'Actif', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    online: { label: 'En ligne', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
     inactive: { label: 'Inactif', class: 'bg-gray-50 text-gray-600 border-gray-200' },
+    offline: { label: 'Hors ligne', class: 'bg-gray-50 text-gray-600 border-gray-200' },
     suspended: { label: 'Suspendu', class: 'bg-amber-50 text-amber-700 border-amber-200' },
     locked: { label: 'Verrouillé', class: 'bg-rose-50 text-rose-700 border-rose-200' }
   };
 
-  const config = statusConfig[status] || statusConfig.inactive;
+  const key = String(status ?? 'inactive').toLowerCase();
+  const config = statusConfig[key] || { label: String(status ?? '—'), class: 'bg-gray-50 text-gray-600 border-gray-200' };
 
   return (
     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${config.class}`}>
@@ -118,7 +122,7 @@ const UserCardComponent = ({ user, onEdit, onDelete, onView }) => {
         <div className="text-xs text-[#6D6D6D]">
           <span className="flex items-center gap-1">
             <Calendar size={12} />
-            {new Date(user.createdAt).toLocaleDateString('fr-FR')}
+            {user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : '—'}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -166,7 +170,7 @@ const UserTableRow = ({ user, onEdit, onDelete, onView, index }) => {
         <StatusBadge status={user.status} />
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {new Date(user.createdAt).toLocaleDateString('fr-FR')}
+        {user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : '—'}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1">
@@ -501,7 +505,7 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
             </div>
             <div className="flex items-center gap-3 text-sm">
               <Calendar size={18} className="text-[#6D6D6D]" />
-              <span className="text-[#3D2F24]">Créé le {new Date(user.createdAt).toLocaleDateString('fr-FR')}</span>
+              <span className="text-[#3D2F24]">Créé le {user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : '—'}</span>
             </div>
           </div>
 
@@ -559,11 +563,13 @@ const UsersPage = () => {
         sort_order: 'desc'
       };
       const response = await getUsers(params);
-      const data = response.data.data || [];
-      setUsers(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      const { items, meta } = normalizeUserList(response);
+      setUsers(items);
+      setTotalCount(meta.total ?? meta.total_count ?? items.length);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]);
+      setTotalCount(0);
     } finally {
       setIsLoading(false);
     }
@@ -585,7 +591,7 @@ const UsersPage = () => {
   const fetchStatistics = async () => {
     try {
       const response = await getUserStatistics();
-      const data = response.data.data || {};
+      const data = unwrapData(response) || {};
       setKpis({
         total: data.total || 0,
         active: data.active || 0,
@@ -603,14 +609,10 @@ const UsersPage = () => {
   }, []);
 
   // Filter users (client-side for demo, API already handles filters)
-  const filteredUsers = useMemo(() => {
-    return users;
-  }, [users]);
+  const filteredUsers = useMemo(() => (Array.isArray(users) ? users : []), [users]);
 
   // Paginate
-  const paginatedUsers = useMemo(() => {
-    return filteredUsers;
-  }, [filteredUsers]);
+  const paginatedUsers = useMemo(() => filteredUsers, [filteredUsers]);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
@@ -631,10 +633,11 @@ const UsersPage = () => {
     email: item.email,
     phone: item.phone || '—',
     role: item.role,
-    status: item.status === 'active' ? 'Actif' :
-            item.status === 'inactive' ? 'Inactif' :
-            item.status === 'suspended' ? 'Suspendu' : 'Verrouillé',
-    createdAt: new Date(item.createdAt).toLocaleDateString('fr-FR')
+    status: ['active', 'online'].includes(String(item.status ?? '').toLowerCase()) ? 'Actif' :
+            ['inactive', 'offline'].includes(String(item.status ?? '').toLowerCase()) ? 'Inactif' :
+            item.status === 'suspended' ? 'Suspendu' :
+            item.status === 'locked' ? 'Verrouillé' : (item.status || '—'),
+    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString('fr-FR') : '—'
   });
 
   const summary = [
@@ -661,8 +664,13 @@ const UsersPage = () => {
     setIsSaving(true);
     try {
       const response = await createUser(formData);
-      const newUser = response.data.data;
-      setUsers(prev => [newUser, ...prev]);
+      const newUser = normalizeUserRecord(unwrapData(response));
+      if (newUser) {
+        setUsers((prev) => {
+          const list = Array.isArray(prev) ? prev : [];
+          return [newUser, ...list];
+        });
+      }
       setIsCreateModalOpen(false);
       await fetchStatistics();
     } catch (error) {
@@ -676,10 +684,13 @@ const UsersPage = () => {
     setIsSaving(true);
     try {
       const response = await updateUser(selectedUser.id, formData);
-      const updatedUser = response.data.data;
-      setUsers(prev => prev.map(u =>
-        u.id === selectedUser.id ? updatedUser : u
-      ));
+      const updatedUser = normalizeUserRecord(unwrapData(response));
+      if (updatedUser) {
+        setUsers((prev) => {
+          const list = Array.isArray(prev) ? prev : [];
+          return list.map((u) => (u.id === selectedUser.id ? updatedUser : u));
+        });
+      }
       setIsEditModalOpen(false);
       setSelectedUser(null);
       await fetchStatistics();
@@ -694,7 +705,10 @@ const UsersPage = () => {
     setIsSaving(true);
     try {
       await deleteUser(selectedUser.id);
-      setUsers(prev => prev.filter(u => u.id !== selectedUser.id));
+      setUsers((prev) => {
+        const list = Array.isArray(prev) ? prev : [];
+        return list.filter((u) => u.id !== selectedUser.id);
+      });
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
       await fetchStatistics();
@@ -715,7 +729,8 @@ const UsersPage = () => {
   }, [searchTerm, roleFilter, statusFilter]);
 
   const uniqueRoles = useMemo(() => {
-    const roles = new Set(users.map(u => u.role));
+    const list = Array.isArray(users) ? users : [];
+    const roles = new Set(list.map((u) => u?.role).filter(Boolean));
     return Array.from(roles);
   }, [users]);
 
