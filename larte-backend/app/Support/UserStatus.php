@@ -92,4 +92,17 @@ final class UserStatus
 
         return self::isValid($key) ? $key : $default;
     }
+
+    /** Account statuses that must not authenticate. */
+    public static function blockedForLogin(): array
+    {
+        return [self::INACTIVE, self::SUSPENDED, self::LOCKED];
+    }
+
+    public static function canAuthenticate(?string $status): bool
+    {
+        $normalized = self::normalize($status, self::ACTIVE);
+
+        return !in_array($normalized, self::blockedForLogin(), true);
+    }
 }

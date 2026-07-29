@@ -52,10 +52,12 @@ Route::options('/{any}', function () {
 Route::post('/login', [
     AuthController::class,
     'login'
-]);
+])->middleware('throttle:login');
 
-Route::post('/password/email', [AuthController::class, 'forgotPassword']);
-Route::post('/password/reset', [AuthController::class, 'resetPassword']);
+Route::post('/password/email', [AuthController::class, 'forgotPassword'])
+    ->middleware('throttle:password-reset');
+Route::post('/password/reset', [AuthController::class, 'resetPassword'])
+    ->middleware('throttle:password-reset');
 
 
 Route::get('/test', function () {
@@ -74,7 +76,7 @@ Route::get('/test', function () {
 // AUTHENTICATED ROUTES
 // ==================================================
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
 
 
