@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\DefaultRolePermissions;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,6 +18,10 @@ class CheckPermission
                 'success' => false,
                 'message' => 'Unauthenticated.',
             ], 401);
+        }
+
+        if (DefaultRolePermissions::isBaselinePermission($permission)) {
+            return $next($request);
         }
 
         if (!$user->hasPermission($permission)) {

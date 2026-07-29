@@ -14,6 +14,36 @@ class DefaultRolePermissions
     ];
 
     /**
+     * Canonical permission modules/actions for the ERP.
+     *
+     * @return array<string, list<string>>
+     */
+    public static function moduleDefinitions(): array
+    {
+        return [
+            'dashboard' => ['view'],
+            'orders' => ['view', 'create', 'update', 'delete'],
+            'customers' => ['view', 'create', 'update', 'delete'],
+            'products' => ['view', 'create', 'update', 'delete'],
+            'categories' => ['view', 'create', 'update', 'delete'],
+            'inventory' => ['view', 'create', 'update', 'delete'],
+            'finance' => ['view', 'create', 'update', 'delete'],
+            'payments' => ['view', 'create', 'update', 'delete'],
+            'expenses' => ['view', 'create', 'update', 'delete'],
+            'suppliers' => ['view', 'create', 'update', 'delete'],
+            'warehouses' => ['view', 'create', 'update', 'delete'],
+            'deliveries' => ['view', 'create', 'update', 'delete'],
+            'productions' => ['view', 'create', 'update', 'delete'],
+            'notifications' => ['view', 'create', 'update', 'delete'],
+            'reports' => ['view'],
+            'users' => ['view', 'create', 'update', 'delete'],
+            'roles' => ['view', 'create', 'update', 'delete'],
+            'permissions' => ['view', 'create', 'update', 'delete'],
+            'settings' => ['view', 'update'],
+        ];
+    }
+
+    /**
      * Default permission names per built-in role slug.
      * Admin uses '*' (all permissions).
      */
@@ -65,12 +95,50 @@ class DefaultRolePermissions
         ];
     }
 
+    public static function isBaselinePermission(string $permission): bool
+    {
+        return in_array($permission, self::BASELINE, true);
+    }
+
     public static function namesForRole(string $roleName): array
     {
         $slug = strtolower(trim($roleName));
         $map = self::map();
 
         return $map[$slug] ?? self::BASELINE;
+    }
+
+    /**
+     * Create any missing permissions and return the full name => id map.
+     *
+     * @return array<string, int>
+     */
+    public static function ensurePermissionsExist(): array
+    {
+        $permissionIdsByName = Permission::pluck('id', 'name')->all();
+
+        foreach (self::moduleDefinitions() as $module => $actions) {
+            foreach ($actions as $action) {
+                $name = "{$module}.{$action}";
+
+                if (isset($permissionIdsByName[$name])) {
+                    continue;
+                }
+
+                $permission = Permission::updateOrCreate(
+                    ['name' => $name],
+                    [
+                        'display_name' => ucfirst($action) . ' ' . ucfirst($module),
+                        'module' => $module,
+                        'status' => 'active',
+                    ]
+                );
+
+                $permissionIdsByName[$name] = $permission->id;
+            }
+        }
+
+        return $permissionIdsByName;
     }
 
     /**
@@ -106,11 +174,11 @@ class DefaultRolePermissions
 
     public static function assignAllRoles(): void
     {
-        $permissionIdsByName = Permission::pluck('id', 'name')->all();
-
-        if ($permissionIdsByName === []) {
+        if (!Schema::hasTable('permissions') || !Schema::hasTable('permission_role') || !Schema::hasTable('roles')) {
             return;
         }
+
+        $permissionIdsByName = self::ensurePermissionsExist();
 
         Role::query()->each(function (Role $role) use ($permissionIdsByName) {
             self::syncRole($role, $permissionIdsByName);
