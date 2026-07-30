@@ -1,5 +1,6 @@
 // src/pages/Orders/OrdersPage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag,
@@ -805,6 +806,8 @@ const OrdersPage = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('orders');
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -859,6 +862,42 @@ const OrdersPage = () => {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  useEffect(() => {
+    if (!location.state?.openAddModal) return;
+    setIsCreateModalOpen(true);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state?.openAddModal, navigate, location.pathname]);
+
+  useEffect(() => {
+    const viewOrderId = location.state?.viewOrderId;
+    const editOrderId = location.state?.editOrderId;
+    const targetId = viewOrderId || editOrderId;
+    if (!targetId) return;
+
+    const openOrderFromNavigation = async () => {
+      let order = orders.find((o) => o.id === targetId || o.orderNumber === targetId);
+      if (!order) {
+        try {
+          const response = await orderService.getOrderById(targetId);
+          order = response.data;
+        } catch (error) {
+          console.error('Error loading order from navigation:', error);
+        }
+      }
+      if (order) {
+        setSelectedOrder(order);
+        if (editOrderId) {
+          setIsEditModalOpen(true);
+        } else {
+          setIsDetailsModalOpen(true);
+        }
+      }
+      navigate(location.pathname, { replace: true, state: {} });
+    };
+
+    openOrderFromNavigation();
+  }, [location.state?.viewOrderId, location.state?.editOrderId, orders]);
 
   // ==========================================
   // CALCULATE KPIS

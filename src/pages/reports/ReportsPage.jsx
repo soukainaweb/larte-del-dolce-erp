@@ -1,5 +1,6 @@
 // src/pages/Reports/ReportsPage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart3,
@@ -119,6 +120,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
+import { useExport } from '../../hooks/useExport';
 import {
   getSalesOverview,
   getOrdersReport,
@@ -1523,13 +1525,15 @@ const YearlyComparisonChart = ({ data }) => {
 const ReportsPage = () => {
   const { user } = useAuth();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('reports');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { exportPDF, exportExcel } = useExport({ userName: user?.firstName || 'Utilisateur' });
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState('month');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({});
-  const [isExporting, setIsExporting] = useState(false);
   
   // États pour les données dynamiques
   const [ordersData, setOrdersData] = useState([]);
@@ -1681,6 +1685,12 @@ const ReportsPage = () => {
     loadAllData();
   }, [dateRange, searchTerm]);
 
+  useEffect(() => {
+    if (!location.state?.openReportsTab && !location.state?.openAddModal) return;
+    setActiveTab('reports');
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state?.openReportsTab, location.state?.openAddModal, navigate, location.pathname]);
+
   // ==========================================
   // KPI CALCULATIONS
   // ==========================================
@@ -1761,11 +1771,27 @@ const ReportsPage = () => {
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    showToast(tc('exportSuccess', { type: 'PDF', count: 0 }), 'success');
+    showToast(tc('exportSuccess', { type: t('common.pdf'), count: 0 }), 'success');
   };
 
   const handleExportError = () => {
-    showToast('Erreur lors de l\'export', 'error');
+    showToast(t('common.exportError'), 'error');
+  };
+
+  const exportSingleRow = async (item, exportTitle, filename) => {
+    try {
+      await exportPDF({
+        title: exportTitle,
+        subtitle: item.id,
+        columns: exportColumns,
+        data: [item],
+        filename: `${filename}.pdf`,
+        rowFormatter: exportRowFormatter,
+      });
+      showToast(t('common.exportSuccess', { type: t('common.pdf'), count: 1 }), 'success');
+    } catch {
+      showToast(t('common.exportError'), 'error');
+    }
   };
 
   // ==========================================
@@ -1797,17 +1823,41 @@ const ReportsPage = () => {
   // ==========================================
   // HANDLERS - ACTIONS GÉNÉRALES
   // ==========================================
-  const handleExportPDF = () => {
-    showToast('📄 Rapport exporté en PDF avec succès', 'success');
+  const handleExportPDF = async () => {
+    try {
+      await exportPDF({
+        title: t('reports.title'),
+        columns: exportColumns,
+        data: ordersData,
+        filename: `reports_${new Date().toISOString().split('T')[0]}.pdf`,
+        rowFormatter: exportRowFormatter,
+        summary: exportSummary,
+      });
+      showToast(t('reports.export.pdfSuccess'), 'success');
+    } catch {
+      showToast(t('common.exportError'), 'error');
+    }
   };
 
-  const handleExportExcel = () => {
-    showToast('📊 Rapport exporté en Excel avec succès', 'success');
+  const handleExportExcel = async () => {
+    try {
+      await exportExcel({
+        title: t('reports.title'),
+        columns: exportColumns,
+        data: ordersData,
+        filename: `reports_${new Date().toISOString().split('T')[0]}.xlsx`,
+        rowFormatter: exportRowFormatter,
+        summary: exportSummary,
+      });
+      showToast(t('reports.export.excelSuccess'), 'success');
+    } catch {
+      showToast(t('common.exportError'), 'error');
+    }
   };
 
   const handlePrint = () => {
     window.print();
-    showToast('🖨️ Impression en cours...', 'info');
+    showToast(t('reports.export.printStarted'), 'info');
   };
 
   const handleRefresh = async () => {
@@ -1820,17 +1870,38 @@ const ReportsPage = () => {
         loadDeliveriesData(),
         loadReportsData()
       ]);
-      showToast('🔄 Données actualisées avec succès', 'success');
+      showToast(t('reports.messages.refreshed'), 'success');
     } catch (error) {
       console.error('Error refreshing data:', error);
-      showToast('Erreur lors de l\'actualisation', 'error');
+      showToast(t('reports.messages.refreshError'), 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const copyPageLink = async (label) => {
+    try {
+      const url = window.location.href;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      showToast(label || t('common.linkCopied'), 'success');
+    } catch {
+      showToast(t('common.copyFailed'), 'error');
+    }
+  };
+
   const handleShare = () => {
-    showToast('🔗 Lien de partage copié dans le presse-papier', 'success');
+    copyPageLink(t('common.linkCopied'));
   };
 
   // ==========================================
@@ -1839,13 +1910,11 @@ const ReportsPage = () => {
   
   const handleDeleteOrder = (order) => {
     showConfirm(
-      'Supprimer la commande',
-      `Êtes-vous sûr de vouloir supprimer la commande ${order.id} ? Cette action est irréversible.`,
+      t('reports.confirm.deleteOrder'),
+      t('reports.confirm.deleteOrderMessage', { id: order.id }),
       () => {
-        // Dans un vrai back-end, vous appelleriez une API
-        // await deleteOrder(order.id);
         setOrdersData(prev => prev.filter(item => item.id !== order.id));
-        showToast(`🗑️ Commande ${order.id} supprimée avec succès`, 'success');
+        showToast(t('reports.messages.orderDeleted', { id: order.id }), 'success');
         hideConfirm();
       }
     );
@@ -1853,11 +1922,11 @@ const ReportsPage = () => {
 
   const handleDeleteInvoice = (invoice) => {
     showConfirm(
-      'Supprimer la facture',
-      `Êtes-vous sûr de vouloir supprimer la facture ${invoice.id} ? Cette action est irréversible.`,
+      t('reports.confirm.deleteInvoice'),
+      t('reports.confirm.deleteInvoiceMessage', { id: invoice.id }),
       () => {
         setInvoicesList(prev => prev.filter(item => item.id !== invoice.id));
-        showToast(`🗑️ Facture ${invoice.id} supprimée avec succès`, 'success');
+        showToast(t('reports.messages.invoiceDeleted', { id: invoice.id }), 'success');
         hideConfirm();
       }
     );
@@ -1865,11 +1934,11 @@ const ReportsPage = () => {
 
   const handleDeleteDelivery = (delivery) => {
     showConfirm(
-      'Supprimer la livraison',
-      `Êtes-vous sûr de vouloir supprimer la livraison ${delivery.id} ? Cette action est irréversible.`,
+      t('reports.confirm.deleteDelivery'),
+      t('reports.confirm.deleteDeliveryMessage', { id: delivery.id }),
       () => {
         setDeliveriesList(prev => prev.filter(item => item.id !== delivery.id));
-        showToast(`🗑️ Livraison ${delivery.id} supprimée avec succès`, 'success');
+        showToast(t('reports.messages.deliveryDeleted', { id: delivery.id }), 'success');
         hideConfirm();
       }
     );
@@ -1877,17 +1946,17 @@ const ReportsPage = () => {
 
   const handleDeleteReport = async (report) => {
     showConfirm(
-      'Supprimer le rapport',
-      `Êtes-vous sûr de vouloir supprimer le rapport "${report.name}" ? Cette action est irréversible.`,
+      t('reports.confirm.deleteReport'),
+      t('reports.confirm.deleteReportMessage', { name: report.name }),
       async () => {
         try {
           await deleteGeneratedReport(report.id);
           const res = await getGeneratedReports();
           setGeneratedReports(res.data.data || []);
-          showToast(`🗑️ Rapport "${report.name}" supprimé avec succès`, 'success');
+          showToast(t('reports.messages.reportDeleted', { name: report.name }), 'success');
         } catch (error) {
           console.error('Error deleting report:', error);
-          showToast('Erreur lors de la suppression', 'error');
+          showToast(t('reports.messages.deleteError'), 'error');
         }
         hideConfirm();
       }
@@ -1915,7 +1984,7 @@ const ReportsPage = () => {
 
   const handleViewReport = (report) => {
     setSelectedReport(report);
-    showToast(`👁️ Consultation du rapport "${report.name}"`, 'info');
+    setIsReportModalOpen(true);
   };
 
   // ==========================================
@@ -1923,15 +1992,15 @@ const ReportsPage = () => {
   // ==========================================
   
   const handleExportOrder = (order) => {
-    showToast(`📄 Commande ${order.id} exportée avec succès`, 'success');
+    exportSingleRow(order, t('reports.export.orderTitle'), `order_${order.id}`);
   };
 
   const handleExportInvoice = (invoice) => {
-    showToast(`📄 Facture ${invoice.id} exportée avec succès`, 'success');
+    exportSingleRow(invoice, t('reports.export.invoiceTitle'), `invoice_${invoice.id}`);
   };
 
   const handleExportDelivery = (delivery) => {
-    showToast(`📄 Livraison ${delivery.id} exportée avec succès`, 'success');
+    exportSingleRow(delivery, t('reports.export.deliveryTitle'), `delivery_${delivery.id}`);
   };
 
   const handleDownloadReport = async (report) => {
@@ -1944,10 +2013,10 @@ const ReportsPage = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      showToast(`📥 Rapport "${report.name}" téléchargé avec succès`, 'success');
+      showToast(t('reports.export.reportDownloaded', { name: report.name }), 'success');
     } catch (error) {
       console.error('Error downloading report:', error);
-      showToast('Erreur lors du téléchargement', 'error');
+      showToast(t('reports.export.downloadError'), 'error');
     }
   };
 
@@ -1960,23 +2029,24 @@ const ReportsPage = () => {
   };
 
   const handleShareReport = (report) => {
-    showToast(`🔗 Rapport "${report.name}" partagé avec succès`, 'success');
+    copyPageLink(t('common.linkCopied'));
   };
 
   const handleDismissAlert = (alertId) => {
-    showToast(`🔔 Alerte ${alertId} marquée comme lue`, 'info');
+    setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
+    showToast(t('common.alertDismissed'), 'info');
   };
 
   const handleResetFilters = () => {
     setSearchTerm('');
     setDateRange('month');
     setFilters({});
-    showToast('🔄 Filtres réinitialisés avec succès', 'success');
+    showToast(t('reports.messages.filtersReset'), 'success');
   };
 
   const handleDateRangeChange = (e) => {
     setDateRange(e.target.value);
-    showToast(`📅 Période changée : ${e.target.options[e.target.selectedIndex].text}`, 'info');
+    showToast(t('reports.messages.dateRangeChanged', { range: e.target.options[e.target.selectedIndex].text }), 'info');
   };
 
   // ==========================================
@@ -2588,6 +2658,41 @@ const ReportsPage = () => {
         }}
         invoice={selectedInvoice}
       />
+
+      {/* Report Detail Modal */}
+      {isReportModalOpen && selectedReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full"
+          >
+            <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
+                {t('common.details')}
+              </h3>
+              <button type="button" onClick={() => { setIsReportModalOpen(false); setSelectedReport(null); }} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg">
+                <X size={20} className="text-[#6D6D6D]" />
+              </button>
+            </div>
+            <div className="p-6 space-y-3 text-sm">
+              <p className="font-semibold text-[#3D2F24]">{selectedReport.name}</p>
+              {selectedReport.type && <p className="text-[#6D6D6D]">{selectedReport.type}</p>}
+              {selectedReport.date && <p className="text-[#6D6D6D]">{selectedReport.date}</p>}
+              {selectedReport.description && <p className="text-[#3D2F24]">{selectedReport.description}</p>}
+            </div>
+            <div className="p-6 pt-0 flex gap-3">
+              <button type="button" onClick={() => handleDownloadReport(selectedReport)} className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg">
+                {t('common.download')}
+              </button>
+              <button type="button" onClick={() => { setIsReportModalOpen(false); setSelectedReport(null); }} className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg">
+                {t('common.close')}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* ===== HEADER ===== */}
       <div className="mb-6">

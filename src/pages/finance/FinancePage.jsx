@@ -256,9 +256,57 @@ const ExpensePieChart = ({ data, t }) => {
 };
 
 // ==========================================
+// TRANSACTION DETAILS MODAL
+// ==========================================
+const TransactionDetailsModal = ({ isOpen, onClose, transaction, t }) => {
+  if (!isOpen || !transaction) return null;
+
+  const isPositive = transaction.amount > 0;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
+      >
+        <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
+          <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
+            {t('common.details')}
+          </h3>
+          <button type="button" onClick={onClose} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
+            <X size={20} className="text-[#6D6D6D]" />
+          </button>
+        </div>
+        <div className="p-6 space-y-3 text-sm">
+          <div className="flex justify-between"><span className="text-[#6D6D6D]">{t('finance.table.id')}</span><span className="font-medium text-[#3D2F24]">{transaction.id}</span></div>
+          <div className="flex justify-between"><span className="text-[#6D6D6D]">{t('common.date')}</span><span className="text-[#3D2F24]">{transaction.date}</span></div>
+          <div className="flex justify-between"><span className="text-[#6D6D6D]">{t('finance.table.type')}</span><span className="text-[#3D2F24]">{transaction.type}</span></div>
+          <div className="flex justify-between"><span className="text-[#6D6D6D]">{t('finance.table.customerSupplier')}</span><span className="text-[#3D2F24]">{transaction.customer}</span></div>
+          <div className="flex justify-between"><span className="text-[#6D6D6D]">{t('finance.table.method')}</span><span className="text-[#3D2F24]">{transaction.method}</span></div>
+          <div className="flex justify-between"><span className="text-[#6D6D6D]">{t('finance.table.status')}</span><span className="text-[#3D2F24]">{getFinanceStatusLabel(transaction.status, t)}</span></div>
+          <div className="flex justify-between pt-2 border-t border-[#ECE8E1]">
+            <span className="text-[#6D6D6D]">{t('finance.table.amount')}</span>
+            <span className={`font-bold ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {isPositive ? '+' : ''}{formatNumber(transaction.amount)} {CURRENCY}
+            </span>
+          </div>
+        </div>
+        <div className="p-6 pt-0">
+          <button type="button" onClick={onClose} className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg">
+            {t('common.close')}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// ==========================================
 // TRANSACTION CARD (Mobile)
 // ==========================================
-const TransactionCard = ({ transaction, t }) => {
+const TransactionCard = ({ transaction, t, onView }) => {
   const isPositive = transaction.amount > 0;
 
   return (
@@ -280,9 +328,16 @@ const TransactionCard = ({ transaction, t }) => {
       <p className="text-sm font-medium text-[#3D2F24] mt-1">{transaction.customer}</p>
       <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#ECE8E1]">
         <span className="text-xs text-[#6D6D6D]">{transaction.method}</span>
-        <span className={`text-sm font-bold ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
-          {isPositive ? '+' : ''}{formatNumber(transaction.amount)} {CURRENCY}
-        </span>
+        <div className="flex items-center gap-2">
+          {onView && (
+            <button type="button" onClick={() => onView(transaction)} className="p-1 hover:bg-white rounded-lg" title={t('common.view')}>
+              <Eye size={14} className="text-[#6D6D6D]" />
+            </button>
+          )}
+          <span className={`text-sm font-bold ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {isPositive ? '+' : ''}{formatNumber(transaction.amount)} {CURRENCY}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -415,6 +470,8 @@ const FinancePage = () => {
   const [topCustomers, setTopCustomers] = useState([]);
   const [topSuppliers, setTopSuppliers] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 
   // Load all finance data
   const loadFinanceData = async () => {
@@ -547,6 +604,11 @@ const FinancePage = () => {
       accounting: '/dashboard/settings',
     };
     navigate(routes[action] || '/dashboard/finance');
+  };
+
+  const handleViewTransaction = (transaction) => {
+    setSelectedTransaction(transaction);
+    setIsTransactionModalOpen(true);
   };
 
   return (
@@ -695,7 +757,7 @@ const FinancePage = () => {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors" title={t('common.view')}>
+                    <button type="button" onClick={() => handleViewTransaction(transaction)} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors" title={t('common.view')}>
                       <Eye size={16} className="text-[#6D6D6D]" />
                     </button>
                   </td>
@@ -707,7 +769,7 @@ const FinancePage = () => {
 
         <div className="md:hidden p-4 space-y-3">
           {transactions.map((transaction) => (
-            <TransactionCard key={transaction.id} transaction={transaction} t={t} />
+            <TransactionCard key={transaction.id} transaction={transaction} t={t} onView={handleViewTransaction} />
           ))}
         </div>
       </div>
@@ -831,6 +893,20 @@ const FinancePage = () => {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {isTransactionModalOpen && selectedTransaction && (
+          <TransactionDetailsModal
+            isOpen={isTransactionModalOpen}
+            transaction={selectedTransaction}
+            t={t}
+            onClose={() => {
+              setIsTransactionModalOpen(false);
+              setSelectedTransaction(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

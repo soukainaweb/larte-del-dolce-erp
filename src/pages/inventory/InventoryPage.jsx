@@ -1,5 +1,6 @@
 // src/pages/Inventory/InventoryPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package,
@@ -44,6 +45,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
+import { useToast } from '../../contexts/ToastContext';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getInventory,
@@ -609,11 +611,58 @@ const ViewInventoryModal = ({ isOpen, onClose, item }) => {
 };
 
 // ==========================================
+// DELETE MODAL
+// ==========================================
+const DeleteModal = ({ isOpen, onClose, onConfirm, item, isLoading }) => {
+  const { t, tc } = usePageI18n('inventory');
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6"
+      >
+        <div className="flex items-center justify-center w-14 h-14 mx-auto bg-rose-50 rounded-full mb-4">
+          <Trash2 size={28} className="text-rose-500" />
+        </div>
+        <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
+          {t('inventory.modals.deleteTitle')}
+        </h3>
+        <p className="text-sm text-[#6D6D6D] text-center mt-2">
+          {t('inventory.modals.deleteMessage', { name: item?.name })}{' '}
+          {tc('irreversibleAction')}
+        </p>
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
+          >
+            {tc('cancel')}
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
+          >
+            {isLoading ? tc('deleting') : tc('delete')}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// ==========================================
 // MAIN INVENTORY PAGE
 // ==========================================
 const InventoryPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('inventory');
+  const { showToast } = useToast();
 
   const [inventory, setInventory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -625,8 +674,11 @@ const InventoryPage = () => {
 
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -784,15 +836,26 @@ const InventoryPage = () => {
     handleViewItem(item);
   };
 
-  const handleDeleteItem = async (item) => {
-    if (window.confirm(`Supprimer l'article "${item.name}" ? Cette action est irréversible.`)) {
-      try {
-        await deleteInventoryItem(item.id);
-        await fetchInventory();
-        await fetchStatistics();
-      } catch (error) {
-        console.error('Error deleting item:', error);
-      }
+  const handleDeleteItem = (item) => {
+    setItemToDelete(item);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteInventoryItem(itemToDelete.id);
+      await fetchInventory();
+      await fetchStatistics();
+      showToast(t('inventory.messages.deleted'), 'success');
+      setIsDeleteModalOpen(false);
+      setItemToDelete(null);
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      showToast(t('inventory.messages.deleteError'), 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -954,6 +1017,8 @@ const InventoryPage = () => {
                         <Package size={40} className="text-[#ECE8E1]" />
                         <p className="text-sm text-[#6D6D6D]">Aucun produit trouvé</p>
                         <button
+                          type="button"
+                          onClick={() => navigate('/dashboard/products')}
                           className="text-sm text-[#B8863B] font-medium hover:underline"
                         >
                           Ajouter un produit
@@ -1094,6 +1159,20 @@ const InventoryPage = () => {
               setSelectedItem(null);
             }}
             item={selectedItem}
+          />
+        )}
+
+        {isDeleteModalOpen && itemToDelete && (
+          <DeleteModal
+            key="delete-modal"
+            isOpen={isDeleteModalOpen}
+            onClose={() => {
+              setIsDeleteModalOpen(false);
+              setItemToDelete(null);
+            }}
+            onConfirm={confirmDeleteItem}
+            item={itemToDelete}
+            isLoading={isDeleting}
           />
         )}
       </AnimatePresence>

@@ -1,5 +1,6 @@
 // src/pages/Invoices/InvoicesPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText,
@@ -924,6 +925,8 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
 const InvoicesPage = () => {
   const { user } = useAuth();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('invoices');
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [invoices, setInvoices] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -971,6 +974,12 @@ const InvoicesPage = () => {
   useEffect(() => {
     fetchInvoices();
   }, [currentPage, itemsPerPage, searchTerm, paymentStatusFilter, statusFilter]);
+
+  useEffect(() => {
+    if (!location.state?.openAddModal) return;
+    setIsCreateModalOpen(true);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state?.openAddModal, navigate, location.pathname]);
 
   // Fetch KPIs from statistics API
   const [kpis, setKpis] = useState({

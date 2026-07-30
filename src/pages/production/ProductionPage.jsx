@@ -1,5 +1,6 @@
 // src/pages/Production/ProductionPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Factory,
@@ -666,6 +667,8 @@ const ProductionDetailsModal = ({ isOpen, onClose, production }) => {
 const ProductionPage = () => {
   const { user } = useAuth();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('production');
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [productions, setProductions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -709,6 +712,12 @@ const ProductionPage = () => {
   useEffect(() => {
     fetchProductions();
   }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  useEffect(() => {
+    if (!location.state?.openAddModal) return;
+    setIsCreateModalOpen(true);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state?.openAddModal, navigate, location.pathname]);
 
   // Calculate KPIs from API statistics
   const [kpis, setKpis] = useState({

@@ -1,5 +1,6 @@
 // src/pages/RolesPermissions/RolesPermissionsPage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield,
@@ -142,6 +143,7 @@ const SkeletonLoader = ({ className = '' }) => (
 // PAGE PRINCIPALE
 // ==========================================
 const RolesPermissionsPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { title, subtitle, searchPlaceholder, t, tc } = usePageI18n('roles');
 
@@ -431,7 +433,7 @@ const RolesPermissionsPage = () => {
   };
 
   const handleEditUser = (user) => {
-    showToast(t('roles.usersManagement.editUser'), 'info');
+    navigate('/dashboard/users', { state: { editUserId: user.id, userName: user.name } });
   };
 
   // Permissions Management
@@ -475,11 +477,11 @@ const RolesPermissionsPage = () => {
   };
 
   const handleHistory = () => {
-    showToast(t('activityLog.title'), 'info');
+    navigate('/dashboard/activity-logs');
   };
 
   const handleSettings = () => {
-    showToast(t('settings.title'), 'info');
+    navigate('/dashboard/settings');
   };
 
   const handleResetFilters = () => {
