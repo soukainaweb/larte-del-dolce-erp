@@ -47,9 +47,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
-use SocialiteProviders\Apple\AppleExtendSocialite;
-use SocialiteProviders\Manager\SocialiteWasCalled;
-use Illuminate\Support\Facades\Event;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -81,8 +78,6 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Event::listen(SocialiteWasCalled::class, AppleExtendSocialite::class . '@handle');
-
         RateLimiter::for('login', function (Request $request) {
             $email = strtolower((string) $request->input('email', ''));
 

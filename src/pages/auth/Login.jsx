@@ -1,13 +1,13 @@
 // src/pages/auth/Login.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaGoogle, FaApple, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { HiOutlineMail, HiOutlineLockClosed } from 'react-icons/hi';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { login as loginService, getOAuthProviders, initiateOAuth } from '../../services/authService';
+import { login as loginService } from '../../services/authService';
 import { extractUserFromResponse, extractTokenFromResponse, getApiErrorMessage } from '../../utils/apiHelpers';
 import AuthBrandPanel from '../../components/auth/AuthBrandPanel';
 import brandLogo from '../../constants/brandAssets';
@@ -19,23 +19,9 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '', remember: false });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [oauthProviders, setOauthProviders] = useState({ google: false, apple: false });
-  const [oauthProvidersStatus, setOauthProvidersStatus] = useState('loading');
 
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    getOAuthProviders()
-      .then(({ providers, status }) => {
-        setOauthProviders(providers);
-        setOauthProvidersStatus(status);
-      })
-      .catch(() => {
-        setOauthProviders({ google: false, apple: false });
-        setOauthProvidersStatus('error');
-      });
-  }, []);
 
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
@@ -74,14 +60,6 @@ const Login = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleOAuth = (provider) => {
-    if (oauthProvidersStatus === 'ready' && !oauthProviders[provider]) {
-      showToast(t('auth.oauthNotConfigured'), 'info');
-      return;
-    }
-    initiateOAuth(provider);
   };
 
   const inputClass =
@@ -212,37 +190,6 @@ const Login = () => {
                   t('auth.signIn')
                 )}
               </motion.button>
-
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[#E8DDD1]" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-[#6B5E54] font-inter">{t('auth.or')}</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  disabled={isLoading}
-                  onClick={() => handleOAuth('google')}
-                  className="h-[52px] flex items-center justify-center gap-2 rounded-[18px] border border-[#E8DDD1] bg-white hover:bg-[#FAF7F2] hover:border-[#B8863B]/40 transition-all text-[#3D2F24] font-medium font-inter disabled:opacity-60"
-                >
-                  <FaGoogle className="text-[#EA4335] text-lg shrink-0" />
-                  <span className="text-sm">{t('auth.signInWithGoogle')}</span>
-                </button>
-
-                <button
-                  type="button"
-                  disabled={isLoading}
-                  onClick={() => handleOAuth('apple')}
-                  className="h-[52px] flex items-center justify-center gap-2 rounded-[18px] border border-[#E8DDD1] bg-white hover:bg-[#FAF7F2] hover:border-[#B8863B]/40 transition-all text-[#3D2F24] font-medium font-inter disabled:opacity-60"
-                >
-                  <FaApple className="text-[#1D1D1F] text-xl shrink-0" />
-                  <span className="text-sm">{t('auth.signInWithApple')}</span>
-                </button>
-              </div>
             </form>
 
             <p className="mt-10 text-center text-[#B0A8A0] text-xs font-inter leading-relaxed">
