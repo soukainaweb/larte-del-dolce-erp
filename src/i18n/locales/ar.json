@@ -741,6 +741,14 @@
     "title": "المخزون",
     "subtitle": "إدارة المخزون",
     "search": "البحث عن منتج...",
+    "modals": {
+      "deleteTitle": "حذف الصنف؟",
+      "deleteMessage": "أنت على وشك حذف \"{{name}}\"."
+    },
+    "messages": {
+      "deleted": "تم حذف الصنف بنجاح",
+      "deleteError": "خطأ أثناء حذف الصنف"
+    },
     "kpi": {
       "totalItems": "إجمالي الأصناف",
       "inStock": "متوفر",
@@ -979,6 +987,37 @@
     "title": "التقارير",
     "subtitle": "تقارير النشاط",
     "search": "بحث...",
+    "export": {
+      "orderTitle": "تفاصيل الطلب",
+      "invoiceTitle": "تفاصيل الفاتورة",
+      "deliveryTitle": "تفاصيل التسليم",
+      "pdfSuccess": "تم تصدير التقرير بصيغة PDF بنجاح",
+      "excelSuccess": "تم تصدير التقرير بصيغة Excel بنجاح",
+      "printStarted": "جاري الطباعة...",
+      "downloadError": "خطأ أثناء التنزيل",
+      "reportDownloaded": "تم تنزيل التقرير \"{{name}}\" بنجاح"
+    },
+    "messages": {
+      "refreshed": "تم تحديث البيانات بنجاح",
+      "refreshError": "خطأ أثناء التحديث",
+      "deleteError": "خطأ أثناء الحذف",
+      "filtersReset": "تم إعادة تعيين الفلاتر بنجاح",
+      "orderDeleted": "تم حذف الطلب {{id}} بنجاح",
+      "invoiceDeleted": "تم حذف الفاتورة {{id}} بنجاح",
+      "deliveryDeleted": "تم حذف التسليم {{id}} بنجاح",
+      "reportDeleted": "تم حذف التقرير \"{{name}}\" بنجاح",
+      "dateRangeChanged": "تم تغيير الفترة إلى {{range}}"
+    },
+    "confirm": {
+      "deleteOrder": "حذف الطلب",
+      "deleteOrderMessage": "هل أنت متأكد من حذف الطلب {{id}}؟",
+      "deleteInvoice": "حذف الفاتورة",
+      "deleteInvoiceMessage": "هل أنت متأكد من حذف الفاتورة {{id}}؟",
+      "deleteDelivery": "حذف التسليم",
+      "deleteDeliveryMessage": "هل أنت متأكد من حذف التسليم {{id}}؟",
+      "deleteReport": "حذف التقرير",
+      "deleteReportMessage": "هل أنت متأكد من حذف التقرير \"{{name}}\"؟"
+    },
     "kpi": {
       "totalReports": "إجمالي التقارير",
       "generated": "تم إنشاؤها",
@@ -1157,7 +1196,29 @@
     "newValue": "القيمة الجديدة",
     "activeUsers": "المستخدمون النشطون",
     "modals": {
-      "detailsTitle": "تفاصيل النشاط"
+      "detailsTitle": "تفاصيل النشاط",
+      "activityId": "معرف النشاط",
+      "action": "الإجراء",
+      "time": "الوقت",
+      "browser": "المتصفح",
+      "device": "الجهاز",
+      "oldValue": "القيمة السابقة",
+      "description": "الوصف",
+      "exportPdf": "تصدير PDF",
+      "print": "طباعة",
+      "copy": "نسخ",
+      "copied": "تم نسخ المعلومات"
+    },
+    "levels": {
+      "info": "معلومات",
+      "success": "نجاح",
+      "warning": "تحذير",
+      "error": "خطأ"
+    },
+    "messages": {
+      "refreshed": "تم تحديث البيانات",
+      "filtersReset": "تم إعادة تعيين الفلاتر",
+      "copied": "تم نسخ المعلومات"
     },
     "errors": {
       "load": "خطأ في تحميل سجل النشاط"
@@ -1202,7 +1263,23 @@
       "billing": "الفوترة"
     },
     "companyDescription": "إدارة معلومات شركتك",
-    "noForm": "لا يوجد نموذج متاح لهذا القسم"
+    "noForm": "لا يوجد نموذج متاح لهذا القسم",
+    "notifications": {
+      "testSuccess": "تم إرسال إشعار الاختبار بنجاح",
+      "saved": "تم حفظ تفضيلات الإشعارات"
+    },
+    "backup": {
+      "creating": "جاري إنشاء النسخة الاحتياطية...",
+      "created": "تم إنشاء النسخة الاحتياطية بنجاح - {{size}}",
+      "downloading": "جاري تنزيل النسخة الاحتياطية...",
+      "downloaded": "تم تنزيل النسخة الاحتياطية بنجاح",
+      "restoreTitle": "استعادة النسخة الاحتياطية",
+      "restoreMessage": "سيتم استعادة جميع البيانات من النسخة الاحتياطية المحددة. هل أنت متأكد؟",
+      "restored": "تم استعادة النسخة الاحتياطية بنجاح",
+      "deleteTitle": "حذف النسخة الاحتياطية",
+      "deleteMessage": "هل أنت متأكد من حذف هذه النسخة الاحتياطية؟",
+      "deleted": "تم حذف النسخة الاحتياطية بنجاح"
+    }
   },
   "profile": {
     "title": "ملفي الشخصي",

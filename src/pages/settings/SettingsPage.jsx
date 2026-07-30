@@ -84,6 +84,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
+import { useInteractionFeedback } from '../../hooks/useInteractionFeedback';
 import { exportPDF } from '../../services/export/pdfExport';
 import { exportExcel } from '../../services/export/excelExport';
 import { exportCSV } from '../../services/export/csvExport';
@@ -449,6 +450,7 @@ const InvoicePreviewModal = ({ isOpen, onClose, data, invoiceConfig, onExportPDF
 const SettingsPage = () => {
   const { user } = useAuth();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('settings');
+  const { showToast: notify } = useInteractionFeedback();
 
   // ===== STATE =====
   const [isLoading, setIsLoading] = useState(false);
@@ -1462,11 +1464,11 @@ const SettingsPage = () => {
   };
 
   const handleTestNotification = () => {
-    showToast('🔔 Notification test envoyée avec succès', 'success');
+    notify(t('settings.notifications.testSuccess'), 'success');
   };
 
   const handleSaveNotifications = () => {
-    showToast('✅ Préférences de notifications sauvegardées', 'success');
+    notify(t('settings.notifications.saved'), 'success');
   };
 
   const handleToggle2FA = () => {
@@ -1494,29 +1496,29 @@ const SettingsPage = () => {
   };
 
   const handleCreateBackup = () => {
-    showToast('⏳ Création de la sauvegarde en cours...', 'info');
+    notify(t('settings.backup.creating'), 'info');
     setTimeout(() => {
-      showToast('✅ Sauvegarde créée avec succès - 258.4 MB', 'success');
+      notify(t('settings.backup.created', { size: '258.4 MB' }), 'success');
     }, 2000);
   };
 
   const handleDownloadBackup = () => {
-    showToast('📥 Téléchargement de la sauvegarde en cours...', 'info');
+    notify(t('settings.backup.downloading'), 'info');
     setTimeout(() => {
-      showToast('✅ Sauvegarde téléchargée avec succès', 'success');
+      notify(t('settings.backup.downloaded'), 'success');
     }, 1500);
   };
 
   const handleRestoreBackup = () => {
     showConfirm(
-      'Restaurer la sauvegarde',
-      'Cette action restaurera toutes les données à partir de la sauvegarde sélectionnée. Êtes-vous sûr ?',
+      t('settings.backup.restoreTitle'),
+      t('settings.backup.restoreMessage'),
       () => {
         setIsLoading(true);
         setTimeout(() => {
           setIsLoading(false);
           hideConfirm();
-          showToast('✅ Sauvegarde restaurée avec succès', 'success');
+          notify(t('settings.backup.restored'), 'success');
         }, 2000);
       }
     );
@@ -1524,14 +1526,14 @@ const SettingsPage = () => {
 
   const handleDeleteBackup = () => {
     showConfirm(
-      'Supprimer la sauvegarde',
-      'Êtes-vous sûr de vouloir supprimer cette sauvegarde ? Cette action est irréversible.',
+      t('settings.backup.deleteTitle'),
+      t('settings.backup.deleteMessage'),
       () => {
         setIsLoading(true);
         setTimeout(() => {
           setIsLoading(false);
           hideConfirm();
-          showToast('🗑️ Sauvegarde supprimée avec succès', 'success');
+          notify(t('settings.backup.deleted'), 'success');
         }, 800);
       }
     );

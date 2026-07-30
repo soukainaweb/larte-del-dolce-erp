@@ -163,6 +163,8 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import ExportButtons from '../../components/ExportButtons';
+import { useExport } from '../../hooks/useExport';
+import { useToast } from '../../contexts/ToastContext';
 import {
   getActivityLogs,
   getActivityLogStatistics,
@@ -271,7 +273,7 @@ const KPICard = ({ icon: Icon, title, value, color, subtitle, onClick }) => {
 };
 
 // ViewActivityModal
-const ViewActivityModal = ({ isOpen, onClose, activity }) => {
+const ViewActivityModal = ({ isOpen, onClose, activity, onExportPDF, onPrint, onCopy, isExporting }) => {
   const { t, tc, statusLabel, commonStatus } = usePageI18n('activityLog');
   if (!isOpen || !activity) return null;
 
@@ -284,16 +286,11 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
   };
 
   const levelLabels = {
-    info: 'Information',
-    success: 'Succès',
-    warning: 'Avertissement',
-    error: 'Erreur',
+    info: t('activityLog.levels.info'),
+    success: t('activityLog.levels.success'),
+    warning: t('activityLog.levels.warning'),
+    error: t('activityLog.levels.error'),
     critical: t('notifications.kpi.critical')
-  };
-
-  const showToast = (message, type = 'success') => {
-  const { t, tc, statusLabel, commonStatus } = usePageI18n('activityLog');
-    window.dispatchEvent(new CustomEvent('showToast', { detail: { message, type } }));
   };
 
   return (
@@ -306,7 +303,7 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails de l'activité
+            {t('activityLog.modals.detailsTitle')}
           </h3>
           <button onClick={onClose} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <X size={20} className="text-[#6D6D6D]" />
@@ -336,11 +333,11 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#F8F7F4] rounded-xl p-3">
-              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">ID Activité</p>
+              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">{t('activityLog.modals.activityId')}</p>
               <p className="text-sm font-medium text-[#3D2F24]">#{activity.id}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-3">
-              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">Action</p>
+              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">{t('activityLog.modals.action')}</p>
               <p className="text-sm font-medium text-[#3D2F24]">{activity.action}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-3">
@@ -348,19 +345,19 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
               <p className="text-sm font-medium text-[#3D2F24]">{activity.date}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-3">
-              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">Heure</p>
+              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">{t('activityLog.modals.time')}</p>
               <p className="text-sm font-medium text-[#3D2F24]">{activity.time}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-3">
-              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">Adresse IP</p>
+              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">{t('activityLog.table.ipAddress')}</p>
               <p className="text-sm font-medium text-[#3D2F24]">{activity.ip || '—'}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-3">
-              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">Navigateur</p>
+              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">{t('activityLog.modals.browser')}</p>
               <p className="text-sm font-medium text-[#3D2F24]">{activity.browser || '—'}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-3">
-              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">Appareil</p>
+              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">{t('activityLog.modals.device')}</p>
               <p className="text-sm font-medium text-[#3D2F24]">{activity.device || '—'}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-3">
@@ -376,7 +373,7 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
 
           {activity.description && (
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide mb-1">Description</p>
+              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide mb-1">{t('activityLog.modals.description')}</p>
               <p className="text-sm text-[#3D2F24]">{activity.description}</p>
             </div>
           )}
@@ -384,11 +381,11 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
           {activity.old_value && activity.new_value && (
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-rose-50 border border-rose-200 rounded-xl p-3">
-                <p className="text-[10px] text-rose-600 uppercase tracking-wide">Ancienne valeur</p>
+                <p className="text-[10px] text-rose-600 uppercase tracking-wide">{t('activityLog.modals.oldValue')}</p>
                 <p className="text-sm font-medium text-rose-700">{activity.old_value}</p>
               </div>
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
-                <p className="text-[10px] text-emerald-600 uppercase tracking-wide">Nouvelle valeur</p>
+                <p className="text-[10px] text-emerald-600 uppercase tracking-wide">{t('activityLog.newValue')}</p>
                 <p className="text-sm font-medium text-emerald-700">{activity.new_value}</p>
               </div>
             </div>
@@ -396,41 +393,33 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
 
           <div className="flex flex-wrap gap-3 pt-4 border-t border-[#ECE8E1]">
             <button
-              onClick={() => {
-                onClose();
-                setTimeout(() => {
-                  showToast('✅ Activité exportée en PDF', 'success');
-                }, 300);
-              }}
-              className="flex-1 min-w-[120px] py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
+              onClick={() => onExportPDF && onExportPDF(activity)}
+              disabled={isExporting}
+              className="flex-1 min-w-[120px] py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Download size={16} />
-              Exporter PDF
+              {t('activityLog.modals.exportPdf')}
             </button>
             <button
-              onClick={() => {
-                window.print();
-              }}
-              className="flex-1 min-w-[120px] py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-xl hover:bg-[#F8F7F4] transition-colors flex items-center justify-center gap-2"
+              onClick={() => onPrint && onPrint(activity)}
+              disabled={isExporting}
+              className="flex-1 min-w-[120px] py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-xl hover:bg-[#F8F7F4] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Printer size={16} />
-              Imprimer
+              {t('activityLog.modals.print')}
             </button>
             <button
-              onClick={() => {
-                navigator.clipboard.writeText(JSON.stringify(activity, null, 2));
-                showToast('📋 Informations copiées', 'success');
-              }}
+              onClick={() => onCopy && onCopy(activity)}
               className="flex-1 min-w-[120px] py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-xl hover:bg-[#F8F7F4] transition-colors flex items-center justify-center gap-2"
             >
               <Copy size={16} />
-              Copier
+              {t('activityLog.modals.copy')}
             </button>
             <button
               onClick={onClose}
               className="flex-1 min-w-[120px] py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-xl hover:bg-[#F8F7F4] transition-colors"
             >
-              Fermer
+              {tc('close')}
             </button>
           </div>
         </div>
@@ -445,6 +434,8 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
 const ActivityLogPage = () => {
   const { user: currentUser } = useAuth();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('activityLog');
+  const { showToast: globalShowToast } = useToast();
+  const { exportPDF, print, isExporting } = useExport({ userName: currentUser?.firstName || 'Utilisateur' });
 
   // States
   const [isLoading, setIsLoading] = useState(false);
@@ -738,13 +729,13 @@ const ActivityLogPage = () => {
       fetchCriticalActivities(),
       fetchTimeline()
     ]);
-    showToast('🔄 Données actualisées', 'success');
+    showToast(t('activityLog.messages.refreshed'), 'success');
   };
 
   const handleCopy = (activity) => {
     const text = `${activity.user?.name || '—'} - ${activity.action} - ${activity.module} - ${activity.date} ${activity.time}`;
     navigator.clipboard.writeText(text);
-    showToast('📋 Informations copiées', 'success');
+    showToast(t('activityLog.messages.copied'), 'success');
   };
 
   const handleResetFilters = () => {
@@ -755,15 +746,55 @@ const ActivityLogPage = () => {
     setActionFilter('all');
     setLevelFilter('all');
     setCurrentPage(1);
-    showToast('🔄 Filtres réinitialisés', 'info');
+    showToast(t('activityLog.messages.filtersReset'), 'info');
   };
 
   const handleExportSuccess = (result) => {
-    showToast(`✅ ${result.filename} exporté avec succès (${result.rowCount || filteredActivities.length} lignes)`, 'success');
+    showToast(
+      t('common.exportSuccess', {
+        type: result?.filename?.endsWith('.pdf') ? t('common.pdf') : t('common.excel'),
+        count: result?.rowCount || filteredActivities.length
+      }),
+      'success'
+    );
   };
 
-  const handleExportError = (error) => {
-    showToast(`❌ Erreur lors de l'export : ${error.message || 'Erreur inconnue'}`, 'error');
+  const handleExportError = () => {
+    showToast(t('common.exportError'), 'error');
+  };
+
+  const handleExportActivityPDF = async (activity) => {
+    try {
+      await exportPDF({
+        title: t('activityLog.modals.detailsTitle'),
+        subtitle: `#${activity.id}`,
+        columns: exportColumns,
+        data: [activity],
+        filename: `activity_${activity.id}.pdf`,
+        rowFormatter,
+      });
+      globalShowToast(t('common.exportSuccess', { type: t('common.pdf'), count: 1 }), 'success');
+    } catch {
+      globalShowToast(t('common.exportError'), 'error');
+    }
+  };
+
+  const handlePrintActivity = async (activity) => {
+    try {
+      await print({
+        title: t('activityLog.modals.detailsTitle'),
+        columns: exportColumns,
+        data: [activity],
+        rowFormatter,
+      });
+    } catch {
+      globalShowToast(t('common.exportError'), 'error');
+    }
+  };
+
+  const handleCopyActivity = (activity) => {
+    navigator.clipboard.writeText(JSON.stringify(activity, null, 2));
+    globalShowToast(t('activityLog.modals.copied'), 'success');
   };
 
   // ==========================================
@@ -792,6 +823,10 @@ const ActivityLogPage = () => {
             setSelectedActivity(null);
           }}
           activity={selectedActivity}
+          onExportPDF={handleExportActivityPDF}
+          onPrint={handlePrintActivity}
+          onCopy={handleCopyActivity}
+          isExporting={isExporting}
         />
       </AnimatePresence>
 
