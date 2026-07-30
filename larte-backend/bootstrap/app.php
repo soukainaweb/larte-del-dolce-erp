@@ -25,11 +25,26 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (\Illuminate\Validation\ValidationException $e, $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
+                $errors = $e->errors();
+                $firstMessage = collect($errors)->flatten()->first() ?? 'Validation failed';
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $e->errors(),
+                    'message' => $firstMessage,
+                    'errors' => $errors,
                 ], 422);
+            }
+        });
+
+        $exceptions->render(function (\Illuminate\Database\QueryException $e, $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                report($e);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'حدث خطأ في الخادم. يرجى المحاولة لاحقاً.',
+                    'errors' => new \stdClass(),
+                ], 500);
             }
         });
 
