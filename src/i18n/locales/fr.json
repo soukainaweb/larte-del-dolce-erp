@@ -183,12 +183,8 @@
     "passwordMismatch": "Les mots de passe ne correspondent pas",
     "emailPlaceholder": "exemple@email.com",
     "passwordPlaceholder": "••••••••",
-    "quickLogin": "Connexion rapide (Test)",
-    "orSignInWith": "ou connectez-vous",
     "resetInvalidLink": "Lien de réinitialisation invalide ou expiré.",
-    "serverUnreachable": "Impossible de contacter le serveur. Vérifiez votre connexion.",
     "invalidLoginData": "Données de connexion invalides.",
-    "quickLoginError": "Erreur de connexion rapide. Veuillez utiliser le formulaire.",
     "copyright": "© 2026 L'arte del dolce",
     "platformTagline": "Plateforme de gestion intégrée"
   },

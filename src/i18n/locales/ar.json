@@ -183,12 +183,8 @@
     "passwordMismatch": "كلمات المرور غير متطابقة",
     "emailPlaceholder": "example@email.com",
     "passwordPlaceholder": "••••••••",
-    "quickLogin": "تسجيل دخول سريع (اختبار)",
-    "orSignInWith": "أو سجّل الدخول",
     "resetInvalidLink": "رابط إعادة التعيين غير صالح أو منتهي الصلاحية.",
-    "serverUnreachable": "تعذّر الاتصال بالخادم. تحقق من اتصالك.",
     "invalidLoginData": "استجابة تسجيل دخول غير صالحة من الخادم.",
-    "quickLoginError": "فشل تسجيل الدخول السريع. يرجى استخدام النموذج.",
     "copyright": "© 2026 L'arte del dolce",
     "platformTagline": "منصة إدارة متكاملة"
   },
