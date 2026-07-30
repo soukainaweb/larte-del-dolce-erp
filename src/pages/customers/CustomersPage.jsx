@@ -45,6 +45,7 @@ import { unwrapData, normalizeCustomerList, normalizeCustomerRecord } from '../.
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // STATUS BADGE
@@ -71,9 +72,10 @@ const StatusBadge = ({ status }) => {
 // TYPE BADGE
 // ==========================================
 const TypeBadge = ({ type }) => {
+  const { t } = useTranslation();
   const typeConfig = {
-    enterprise: { label: 'Entreprise', class: 'bg-blue-50 text-blue-700 border-blue-200' },
-    individual: { label: 'Particulier', class: 'bg-purple-50 text-purple-700 border-purple-200' }
+    enterprise: { label: t('customers.types.enterprise'), class: 'bg-blue-50 text-blue-700 border-blue-200' },
+    individual: { label: t('customers.types.individual'), class: 'bg-purple-50 text-purple-700 border-purple-200' }
   };
 
   const config = typeConfig[type] || typeConfig.individual;
@@ -143,6 +145,7 @@ const ClientCard = ({ client, onEdit, onDelete, onView }) => {
 // CLIENT TABLE ROW (Desktop)
 // ==========================================
 const ClientTableRow = ({ client, onEdit, onDelete, onView, index }) => {
+  const { t } = useTranslation();
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -169,28 +172,28 @@ const ClientTableRow = ({ client, onEdit, onDelete, onView, index }) => {
         <StatusBadge status={client.status} />
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {client.createdAt ? new Date(client.createdAt).toLocaleDateString('fr-FR') : '—'}
+        {client.createdAt ? new Date(client.createdAt).toLocaleDateString(DATE_LOCALE) : '—'}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1">
           <button
             onClick={() => onView(client)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={t('common.view')}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(client)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={t('common.edit')}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onDelete(client)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={t('common.delete')}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -204,6 +207,7 @@ const ClientTableRow = ({ client, onEdit, onDelete, onView, index }) => {
 // CLIENT MODAL
 // ==========================================
 const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -263,9 +267,9 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.name) newErrors.name = 'Le nom est requis';
-    if (!formData.email) newErrors.email = 'L\'email est requis';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email invalide';
+    if (!formData.name) newErrors.name = t('customers.validation.nameRequired');
+    if (!formData.email) newErrors.email = t('customers.validation.emailRequired');
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = t('common.emailInvalid');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -287,7 +291,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            {client ? 'Modifier le client' : 'Ajouter un client'}
+            {client ? t('customers.modals.editTitle') : t('customers.modals.addTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -300,7 +304,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Nom *</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.name')} *</label>
               <input
                 type="text"
                 name="name"
@@ -313,7 +317,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
               {errors.name && <p className="text-xs text-rose-500 mt-1">{errors.name}</p>}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Email *</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.email')} *</label>
               <input
                 type="email"
                 name="email"
@@ -329,7 +333,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Téléphone</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.phone')}</label>
               <input
                 type="tel"
                 name="phone"
@@ -339,21 +343,21 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Type</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.type')}</label>
               <select
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="individual">Particulier</option>
-                <option value="enterprise">Entreprise</option>
+                <option value="individual">{t('customers.types.individual')}</option>
+                <option value="enterprise">{t('customers.types.enterprise')}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Adresse</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.address')}</label>
             <input
               type="text"
               name="address"
@@ -365,7 +369,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Ville</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.city')}</label>
               <input
                 type="text"
                 name="city"
@@ -375,7 +379,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Pays</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.country')}</label>
               <input
                 type="text"
                 name="country"
@@ -388,7 +392,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">N° TVA</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.taxId')}</label>
               <input
                 type="text"
                 name="taxId"
@@ -398,7 +402,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Site web</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.website')}</label>
               <input
                 type="text"
                 name="website"
@@ -410,7 +414,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Notes</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
@@ -421,16 +425,16 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Statut</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.status')}</label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="suspended">Suspendu</option>
+              <option value="active">{t('common.active')}</option>
+              <option value="inactive">{t('common.inactive')}</option>
+              <option value="suspended">{t('common.statuses.suspended')}</option>
             </select>
           </div>
 
@@ -440,14 +444,14 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : client ? 'Mettre à jour' : 'Ajouter'}
+              {isLoading ? t('common.saving') : client ? t('common.update') : t('common.add')}
             </button>
           </div>
         </form>
@@ -460,6 +464,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, client, isLoading }) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
@@ -474,28 +479,25 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, client, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer le client ?
+          {t('customers.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
-          Vous êtes sur le point de supprimer le client{' '}
-          <span className="font-semibold text-[#3D2F24]">
-            {client?.name}
-          </span>.
-          Cette action est irréversible.
+          {t('customers.modals.deleteMessage', { name: client?.name })}{' '}
+          {t('common.irreversibleAction')}
         </p>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
           >
-            {isLoading ? 'Suppression...' : 'Supprimer'}
+            {isLoading ? t('common.deleting') : t('common.delete')}
           </button>
         </div>
       </motion.div>
@@ -507,6 +509,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, client, isLoading }) => {
 // CLIENT DETAILS MODAL
 // ==========================================
 const ClientDetailsModal = ({ isOpen, onClose, client }) => {
+  const { t } = useTranslation();
   if (!isOpen || !client) return null;
 
   return (
@@ -519,7 +522,7 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails du client
+            {t('customers.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -563,7 +566,7 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
             {client.taxId && (
               <div className="flex items-center gap-3 text-sm">
                 <Building size={18} className="text-[#6D6D6D]" />
-                <span className="text-[#3D2F24]">N° TVA: {client.taxId}</span>
+                <span className="text-[#3D2F24]">{t('common.taxId')}: {client.taxId}</span>
               </div>
             )}
             {client.website && (
@@ -574,7 +577,7 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
             )}
             <div className="flex items-center gap-3 text-sm">
               <Calendar size={18} className="text-[#6D6D6D]" />
-              <span className="text-[#3D2F24]">Créé le {client.createdAt ? new Date(client.createdAt).toLocaleDateString('fr-FR') : '—'}</span>
+              <span className="text-[#3D2F24]">{t('common.createdOn', { date: client.createdAt ? new Date(client.createdAt).toLocaleDateString(DATE_LOCALE) : '—' })}</span>
             </div>
             {client.notes && (
               <div className="flex items-start gap-3 text-sm">
@@ -588,7 +591,7 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {t('common.close')}
           </button>
         </div>
       </motion.div>

@@ -51,6 +51,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
+import { useTranslation } from 'react-i18next';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getPayments,
@@ -62,8 +63,6 @@ import {
   getPaymentStatistics,
   exportPayments,
   getInvoiceDetails,
-  getPaymentMethods,
-  getPaymentStatuses,
   sendPaymentReceipt,
   printPaymentReceipt
 } from '../../services/paymentService';
@@ -80,18 +79,18 @@ const DATE_LOCALE = 'ar-SA';
 // ==========================================
 const CURRENCY = 'SAR (ر.س)';
 
-const PAYMENT_METHODS = [
+const buildPaymentMethodOptions = (t) => [
   { value: 'cash', label: t('common.paymentMethods.cash'), icon: Banknote },
   { value: 'card', label: t('common.paymentMethods.card'), icon: CardIcon },
-  { value: 'mada', label: 'Mada', icon: CreditCard },
-  { value: 'stc_pay', label: 'STC Pay', icon: Smartphone },
-  { value: 'apple_pay', label: 'Apple Pay', icon: Apple },
+  { value: 'mada', label: t('common.paymentMethods.mada'), icon: CreditCard },
+  { value: 'stc_pay', label: t('common.paymentMethods.stc_pay'), icon: Smartphone },
+  { value: 'apple_pay', label: t('common.paymentMethods.apple_pay'), icon: Apple },
   { value: 'bank_transfer', label: t('common.paymentMethods.bank_transfer'), icon: Landmark },
-  { value: 'online', label: 'Paiement en ligne', icon: Sparkles }
+  { value: 'online', label: t('common.paymentMethods.online'), icon: Sparkles }
 ];
 
-const PAYMENT_STATUSES = [
-  { value: 'paid', label: t('common.labels.paidAmount'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+const buildPaymentStatusOptions = (t) => [
+  { value: 'paid', label: t('common.paymentStatus.paid'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   { value: 'pending', label: t('common.pending'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
   { value: 'partial', label: t('common.paymentStatus.partial'), class: 'bg-blue-50 text-blue-700 border-blue-200' },
   { value: 'overdue', label: t('common.statuses.overdue'), class: 'bg-rose-50 text-rose-700 border-rose-200' }
@@ -101,7 +100,9 @@ const PAYMENT_STATUSES = [
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
-  const config = PAYMENT_STATUSES.find(s => s.value === status) || PAYMENT_STATUSES[0];
+  const { t } = useTranslation();
+  const paymentStatuses = buildPaymentStatusOptions(t);
+  const config = paymentStatuses.find(s => s.value === status) || paymentStatuses[0];
   return (
     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${config.class}`}>
       {config.label}
@@ -113,7 +114,8 @@ const StatusBadge = ({ status }) => {
 // PAYMENT METHOD BADGE
 // ==========================================
 const PaymentMethodBadge = ({ method }) => {
-  const config = PAYMENT_METHODS.find(m => m.value === method);
+  const { t } = useTranslation();
+  const config = buildPaymentMethodOptions(t).find(m => m.value === method);
   if (!config) return <span className="text-[10px] text-[#6D6D6D]">—</span>;
   const Icon = config.icon;
   return (
@@ -282,6 +284,7 @@ const PaymentTableRow = ({ payment, onView, onEdit, onDelete, index }) => {
 // ==========================================
 const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
   const { t, tc } = usePageI18n('payments');
+  const paymentMethods = buildPaymentMethodOptions(t);
   const [formData, setFormData] = useState({
     customer: '',
     invoiceNumber: '',
@@ -343,8 +346,8 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
     e.preventDefault();
     const newErrors = {};
     if (!formData.customer) newErrors.customer = t('orders.validation.customerRequired');
-    if (!formData.invoiceNumber) newErrors.invoiceNumber = 'La facture est requise';
-    if (formData.amountReceived <= 0) newErrors.amountReceived = 'Le montant est requis';
+    if (!formData.invoiceNumber) newErrors.invoiceNumber = t('payments.validation.invoiceRequired');
+    if (formData.amountReceived <= 0) newErrors.amountReceived = t('payments.validation.amountRequired');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -379,9 +382,9 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
             </div>
             <div>
               <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-                {payment ? 'Modifier le paiement' : 'Nouveau paiement'}
+                {payment ? t('payments.modals.editTitle') : t('payments.modals.addTitle')}
               </h3>
-              <p className="text-xs text-[#6D6D6D]">Enregistrer un paiement client</p>
+              <p className="text-xs text-[#6D6D6D]">{t('payments.modals.addSubtitle')}</p>
             </div>
           </div>
           <button
@@ -395,7 +398,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Client *</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('customer')} *</label>
               <div className={`flex items-center gap-2 px-3 py-2 bg-white border rounded-lg ${
                 errors.customer ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}>
@@ -406,13 +409,13 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
                   value={formData.customer}
                   onChange={handleChange}
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
-                  placeholder="Nom du client"
+                  placeholder={tc('placeholders.customerName')}
                 />
               </div>
               {errors.customer && <p className="text-[10px] text-rose-500 mt-1">{errors.customer}</p>}
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Facture *</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('invoice')} *</label>
               <div className={`flex items-center gap-2 px-3 py-2 bg-white border rounded-lg ${
                 errors.invoiceNumber ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}>
@@ -423,7 +426,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
                   onChange={handleChange}
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
                 >
-                  <option value="">Sélectionner une facture</option>
+                  <option value="">{t('payments.fields.selectInvoice')}</option>
                   {/* Options will be loaded from API in a real implementation */}
                   <option value="INV-0125">INV-0125</option>
                   <option value="INV-0124">INV-0124</option>
@@ -437,7 +440,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Date de paiement</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('payments.fields.paymentDate')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <Calendar size={14} className="text-[#6D6D6D]" />
                 <input
@@ -450,7 +453,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Méthode de paiement</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('method')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <CreditCard size={14} className="text-[#6D6D6D]" />
                 <select
@@ -459,7 +462,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
                   onChange={handleChange}
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
                 >
-                  {PAYMENT_METHODS.map(m => (
+                  {paymentMethods.map(m => (
                     <option key={m.value} value={m.value}>{m.label}</option>
                   ))}
                 </select>
@@ -470,22 +473,22 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
           {/* Invoice Summary */}
           {invoiceData && (
             <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1]">
-              <h4 className="text-sm font-bold text-[#3D2F24] mb-3">Résumé de la facture</h4>
+              <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{t('payments.modals.invoiceSummary')}</h4>
               <div className="grid grid-cols-4 gap-3">
                 <div className="bg-white rounded-lg p-2 text-center border border-[#ECE8E1]">
-                  <p className="text-[9px] text-[#6D6D6D] font-semibold uppercase tracking-wider">Total facture</p>
+                  <p className="text-[9px] text-[#6D6D6D] font-semibold uppercase tracking-wider">{t('payments.fields.totalInvoice')}</p>
                   <p className="text-sm font-bold text-[#3D2F24]">{invoiceData.totalAmount.toLocaleString()} {CURRENCY}</p>
                 </div>
                 <div className="bg-white rounded-lg p-2 text-center border border-[#ECE8E1]">
-                  <p className="text-[9px] text-[#6D6D6D] font-semibold uppercase tracking-wider">Déjà payé</p>
+                  <p className="text-[9px] text-[#6D6D6D] font-semibold uppercase tracking-wider">{t('payments.fields.alreadyPaid')}</p>
                   <p className="text-sm font-bold text-emerald-600">{invoiceData.paidAmount.toLocaleString()} {CURRENCY}</p>
                 </div>
                 <div className="bg-white rounded-lg p-2 text-center border border-[#ECE8E1]">
-                  <p className="text-[9px] text-[#6D6D6D] font-semibold uppercase tracking-wider">Reste à payer</p>
+                  <p className="text-[9px] text-[#6D6D6D] font-semibold uppercase tracking-wider">{t('payments.fields.remainingToPay')}</p>
                   <p className="text-sm font-bold text-amber-600">{invoiceData.remainingAmount.toLocaleString()} {CURRENCY}</p>
                 </div>
                 <div className="bg-white rounded-lg p-2 text-center border border-[#ECE8E1]">
-                  <p className="text-[9px] text-[#6D6D6D] font-semibold uppercase tracking-wider">Montant saisi</p>
+                  <p className="text-[9px] text-[#6D6D6D] font-semibold uppercase tracking-wider">{t('payments.fields.enteredAmount')}</p>
                   <p className="text-sm font-bold text-[#B8863B]">{formData.amountReceived.toLocaleString()} {CURRENCY}</p>
                 </div>
               </div>
@@ -494,7 +497,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Montant reçu *</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('payments.fields.amountReceived')} *</label>
               <div className={`flex items-center gap-2 px-3 py-2 bg-white border rounded-lg ${
                 errors.amountReceived ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}>
@@ -514,7 +517,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
               {errors.amountReceived && <p className="text-[10px] text-rose-500 mt-1">{errors.amountReceived}</p>}
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Référence</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('reference')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <Tag size={14} className="text-[#6D6D6D]" />
                 <input
@@ -523,7 +526,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
                   value={formData.reference}
                   onChange={handleChange}
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
-                  placeholder="ID de transaction..."
+                  placeholder={tc('placeholders.transactionId')}
                 />
               </div>
             </div>
@@ -537,7 +540,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
               onChange={handleChange}
               rows={3}
               className="w-full px-4 py-3 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all resize-none"
-              placeholder="Informations supplémentaires..."
+              placeholder={tc('placeholders.additionalInfo')}
             />
           </div>
 
@@ -547,7 +550,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
@@ -557,7 +560,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Enregistrement...
+                  {tc('saving')}
                 </>
               ) : (
                 <>
@@ -592,21 +595,18 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, payment, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer le paiement ?
+          {t('payments.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
-          Vous êtes sur le point de supprimer le paiement{' '}
-          <span className="font-semibold text-[#3D2F24]">
-            {payment?.paymentId}
-          </span>.
-          Cette action est irréversible.
+          {t('payments.modals.deleteMessage', { id: payment?.paymentId })}{' '}
+          {tc('irreversibleAction')}
         </p>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -638,7 +638,7 @@ const ViewPaymentModal = ({ isOpen, onClose, payment }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails du paiement
+            {t('payments.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -652,7 +652,7 @@ const ViewPaymentModal = ({ isOpen, onClose, payment }) => {
           <div className="flex items-center justify-between pb-4 border-b border-[#ECE8E1]">
             <div>
               <p className="text-xl font-bold text-[#3D2F24]">{payment.paymentId}</p>
-              <p className="text-sm text-[#6D6D6D]">Facture: {payment.invoiceNumber}</p>
+              <p className="text-sm text-[#6D6D6D]">{t('payments.modals.invoiceLabel')} {payment.invoiceNumber}</p>
             </div>
             <StatusBadge status={payment.status} />
           </div>
@@ -680,19 +680,19 @@ const ViewPaymentModal = ({ isOpen, onClose, payment }) => {
               <p className="text-sm font-bold text-[#3D2F24]">{payment.amount.toLocaleString()} {CURRENCY}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Reste</p>
+              <p className="text-xs text-[#6D6D6D]">{t('payments.fields.remaining')}</p>
               <p className="text-sm font-bold text-amber-600">{payment.remainingAmount.toLocaleString()} {CURRENCY}</p>
             </div>
           </div>
 
           <div className="bg-[#F8F7F4] rounded-lg p-3">
-            <p className="text-xs text-[#6D6D6D]">Employé</p>
+            <p className="text-xs text-[#6D6D6D]">{t('payments.fields.collectedBy')}</p>
             <p className="text-sm text-[#3D2F24]">{payment.collectedBy || '—'}</p>
           </div>
 
           {payment.reference && (
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Référence</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('reference')}</p>
               <p className="text-sm text-[#3D2F24]">{payment.reference}</p>
             </div>
           )}
@@ -708,7 +708,7 @@ const ViewPaymentModal = ({ isOpen, onClose, payment }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>
@@ -722,6 +722,7 @@ const ViewPaymentModal = ({ isOpen, onClose, payment }) => {
 const PaymentsPage = () => {
   const { user } = useAuth();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('payments');
+  const paymentMethodOptions = useMemo(() => buildPaymentMethodOptions(t), [t]);
 
   const [payments, setPayments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -831,7 +832,7 @@ const PaymentsPage = () => {
     invoiceNumber: item.invoiceNumber,
     customer: item.customer,
     date: new Date(item.date).toLocaleDateString(DATE_LOCALE),
-    method: PAYMENT_METHODS.find(m => m.value === item.method)?.label || '—',
+    method: paymentMethodOptions.find(m => m.value === item.method)?.label || '—',
     amount: `${item.amount.toLocaleString()} ${CURRENCY}`,
     remainingAmount: `${item.remainingAmount.toLocaleString()} ${CURRENCY}`,
     status: item.status === 'paid' ? t('common.labels.paidAmount') :

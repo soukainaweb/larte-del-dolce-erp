@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
+import { useTranslation } from 'react-i18next';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getExpenses,
@@ -65,10 +66,6 @@ import {
   updateExpensePaymentStatus,
   getExpenseStatistics,
   exportExpenses,
-  getExpenseCategories,
-  getPaymentMethods,
-  getPaymentStatuses,
-  downloadExpenseAttachment
 } from '../../services/expenseService';
 
 // ==========================================
@@ -83,33 +80,33 @@ const DATE_LOCALE = 'ar-SA';
 // ==========================================
 const CURRENCY = 'SAR (ر.س)';
 
-const EXPENSE_CATEGORIES = [
+const buildExpenseCategoryOptions = (t) => [
   { value: 'raw_materials', label: t('suppliers.types.raw'), icon: Package, color: 'bg-purple-50 text-purple-700 border-purple-200' },
   { value: 'packaging', label: t('suppliers.types.packaging'), icon: Box, color: 'bg-teal-50 text-teal-700 border-teal-200' },
   { value: 'equipment', label: t('suppliers.types.equipment'), icon: Settings, color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { value: 'maintenance', label: 'Maintenance', icon: Wrench, color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { value: 'utilities', label: 'Services publics', icon: Zap, color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-  { value: 'rent', label: 'Loyer', icon: Building, color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  { value: 'salaries', label: 'Salaires', icon: Users, color: 'bg-rose-50 text-rose-700 border-rose-200' },
-  { value: 'transportation', label: 'Transport', icon: Truck, color: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
-  { value: 'marketing', label: 'Marketing', icon: Megaphone, color: 'bg-pink-50 text-pink-700 border-pink-200' },
-  { value: 'office_supplies', label: 'Fournitures bureau', icon: ClipboardList, color: 'bg-gray-50 text-gray-700 border-gray-200' },
+  { value: 'maintenance', label: t('expenses.categories.maintenance'), icon: Wrench, color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { value: 'utilities', label: t('expenses.categories.utilities'), icon: Zap, color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+  { value: 'rent', label: t('expenses.categories.rent'), icon: Building, color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  { value: 'salaries', label: t('expenses.categories.salaries'), icon: Users, color: 'bg-rose-50 text-rose-700 border-rose-200' },
+  { value: 'transportation', label: t('expenses.categories.transportation'), icon: Truck, color: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
+  { value: 'marketing', label: t('expenses.categories.marketing'), icon: Megaphone, color: 'bg-pink-50 text-pink-700 border-pink-200' },
+  { value: 'office_supplies', label: t('expenses.categories.office_supplies'), icon: ClipboardList, color: 'bg-gray-50 text-gray-700 border-gray-200' },
   { value: 'services', label: t('suppliers.types.services'), icon: Handshake, color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { value: 'taxes', label: 'Taxes', icon: FileText, color: 'bg-red-50 text-red-700 border-red-200' },
+  { value: 'taxes', label: t('expenses.categories.taxes'), icon: FileText, color: 'bg-red-50 text-red-700 border-red-200' },
   { value: 'other', label: t('suppliers.types.other'), icon: MoreHorizontal, color: 'bg-gray-50 text-gray-600 border-gray-200' }
 ];
 
-const PAYMENT_METHODS = [
+const buildPaymentMethodOptions = (t) => [
   { value: 'cash', label: t('common.paymentMethods.cash'), icon: Banknote },
   { value: 'card', label: t('common.paymentMethods.card'), icon: CreditCard },
-  { value: 'mada', label: 'Mada', icon: CreditCard },
-  { value: 'stc_pay', label: 'STC Pay', icon: Smartphone },
-  { value: 'apple_pay', label: 'Apple Pay', icon: Apple },
+  { value: 'mada', label: t('common.paymentMethods.mada'), icon: CreditCard },
+  { value: 'stc_pay', label: t('common.paymentMethods.stc_pay'), icon: Smartphone },
+  { value: 'apple_pay', label: t('common.paymentMethods.apple_pay'), icon: Apple },
   { value: 'bank_transfer', label: t('common.paymentMethods.bank_transfer'), icon: Landmark },
-  { value: 'cheque', label: 'Chèque', icon: FileText }
+  { value: 'cheque', label: t('common.paymentMethods.cheque'), icon: FileText }
 ];
 
-const PAYMENT_STATUSES = [
+const buildPaymentStatusOptions = (t) => [
   { value: 'paid', label: t('common.paymentStatus.paid'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   { value: 'pending', label: t('common.pending'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
   { value: 'partial', label: t('common.paymentStatus.partial'), class: 'bg-blue-50 text-blue-700 border-blue-200' }
@@ -119,7 +116,9 @@ const PAYMENT_STATUSES = [
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
-  const config = PAYMENT_STATUSES.find(s => s.value === status) || PAYMENT_STATUSES[0];
+  const { t } = useTranslation();
+  const paymentStatuses = buildPaymentStatusOptions(t);
+  const config = paymentStatuses.find(s => s.value === status) || paymentStatuses[0];
   return (
     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${config.class}`}>
       {config.label}
@@ -131,7 +130,8 @@ const StatusBadge = ({ status }) => {
 // CATEGORY BADGE
 // ==========================================
 const CategoryBadge = ({ category }) => {
-  const config = EXPENSE_CATEGORIES.find(c => c.value === category);
+  const { t } = useTranslation();
+  const config = buildExpenseCategoryOptions(t).find(c => c.value === category);
   if (!config) return <span className="text-[10px] text-[#6D6D6D]">—</span>;
   return (
     <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${config.color}`}>
@@ -144,7 +144,8 @@ const CategoryBadge = ({ category }) => {
 // PAYMENT METHOD BADGE
 // ==========================================
 const PaymentMethodBadge = ({ method }) => {
-  const config = PAYMENT_METHODS.find(m => m.value === method);
+  const { t } = useTranslation();
+  const config = buildPaymentMethodOptions(t).find(m => m.value === method);
   if (!config) return <span className="text-[10px] text-[#6D6D6D]">—</span>;
   const Icon = config.icon;
   return (
@@ -296,7 +297,10 @@ const ExpenseTableRow = ({ expense, onView, onEdit, onDelete, index }) => {
 // EXPENSE MODAL (Add/Edit)
 // ==========================================
 const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
-  const { t, tc, statusLabel, commonStatus } = usePageI18n('expenses');
+  const { t, tc } = usePageI18n('expenses');
+  const expenseCategories = buildExpenseCategoryOptions(t);
+  const paymentMethods = buildPaymentMethodOptions(t);
+  const paymentStatuses = buildPaymentStatusOptions(t);
   const [formData, setFormData] = useState({
     expenseNumber: `EXP-${String(Math.floor(Math.random() * 9000) + 1000).padStart(4, '0')}`,
     date: new Date().toISOString().split('T')[0],
@@ -375,9 +379,9 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.category) newErrors.category = 'La catégorie est requise';
-    if (!formData.description) newErrors.description = 'La description est requise';
-    if (formData.amount <= 0) newErrors.amount = 'Le montant est requis';
+    if (!formData.category) newErrors.category = t('expenses.validation.categoryRequired');
+    if (!formData.description) newErrors.description = t('expenses.validation.descriptionRequired');
+    if (formData.amount <= 0) newErrors.amount = t('expenses.validation.amountRequired');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -404,9 +408,9 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
             </div>
             <div>
               <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-                {expense ? 'Modifier la dépense' : 'Nouvelle dépense'}
+                {expense ? t('expenses.modals.editTitle') : t('expenses.modals.addTitle')}
               </h3>
-              <p className="text-xs text-[#6D6D6D]">Enregistrer une nouvelle dépense</p>
+              <p className="text-xs text-[#6D6D6D]">{t('expenses.modals.addSubtitle')}</p>
             </div>
           </div>
           <button
@@ -420,7 +424,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">N° Dépense</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('expenses.fields.expenseNumber')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <FileText size={14} className="text-[#6D6D6D]" />
                 <input
@@ -450,7 +454,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Catégorie *</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('category')} *</label>
               <div className={`flex items-center gap-2 px-3 py-2 bg-white border rounded-lg ${
                 errors.category ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}>
@@ -461,8 +465,8 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                   onChange={handleChange}
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
                 >
-                  <option value="">Sélectionner une catégorie</option>
-                  {EXPENSE_CATEGORIES.map(c => (
+                  <option value="">{t('expenses.fields.selectCategory')}</option>
+                  {expenseCategories.map(c => (
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
                 </select>
@@ -470,7 +474,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
               {errors.category && <p className="text-[10px] text-rose-500 mt-1">{errors.category}</p>}
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Fournisseur</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('expenses.fields.supplier')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <Building size={14} className="text-[#6D6D6D]" />
                 <select
@@ -479,7 +483,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                   onChange={handleChange}
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
                 >
-                  <option value="">Sélectionner un fournisseur</option>
+                  <option value="">{t('expenses.fields.selectSupplier')}</option>
                   <option value="Farine du Maroc">Farine du Maroc</option>
                   <option value="ABC Packaging">ABC Packaging</option>
                   <option value="Choco Deluxe">Choco Deluxe</option>
@@ -490,7 +494,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Description *</label>
+            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('description')} *</label>
             <div className={`flex items-center gap-2 px-3 py-2 bg-white border rounded-lg ${
               errors.description ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}>
@@ -501,7 +505,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                 value={formData.description}
                 onChange={handleChange}
                 className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
-                placeholder="Description de la dépense..."
+                placeholder={tc('placeholders.expenseDescription')}
               />
             </div>
             {errors.description && <p className="text-[10px] text-rose-500 mt-1">{errors.description}</p>}
@@ -509,7 +513,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Montant *</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('amount')} *</label>
               <div className={`flex items-center gap-2 px-3 py-2 bg-white border rounded-lg ${
                 errors.amount ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}>
@@ -528,7 +532,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
               {errors.amount && <p className="text-[10px] text-rose-500 mt-1">{errors.amount}</p>}
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">TVA %</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('vatPercent')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <Percent size={14} className="text-[#6D6D6D]" />
                 <input
@@ -544,7 +548,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Total TTC</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('expenses.fields.totalInclTax')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-[#F8F7F4] border border-[#ECE8E1] rounded-lg">
                 <DollarSign size={14} className="text-[#6D6D6D]" />
                 <input
@@ -559,7 +563,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Méthode de paiement</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('method')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <CreditCard size={14} className="text-[#6D6D6D]" />
                 <select
@@ -568,14 +572,14 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                   onChange={handleChange}
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
                 >
-                  {PAYMENT_METHODS.map(m => (
+                  {paymentMethods.map(m => (
                     <option key={m.value} value={m.value}>{m.label}</option>
                   ))}
                 </select>
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Statut paiement</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('expenses.fields.paymentStatus')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <CheckCircle size={14} className="text-[#6D6D6D]" />
                 <select
@@ -584,7 +588,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                   onChange={handleChange}
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
                 >
-                  {PAYMENT_STATUSES.map(s => (
+                  {paymentStatuses.map(s => (
                     <option key={s.value} value={s.value}>{s.label}</option>
                   ))}
                 </select>
@@ -593,7 +597,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">N° Référence</label>
+            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('expenses.fields.referenceNumber')}</label>
             <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
               <Tag size={14} className="text-[#6D6D6D]" />
               <input
@@ -602,13 +606,13 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                 value={formData.referenceNumber}
                 onChange={handleChange}
                 className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
-                placeholder="N° facture / reçu / transfert..."
+                placeholder={tc('placeholders.referenceNumber')}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Pièce jointe</label>
+            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('expenses.fields.attachment')}</label>
             <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg cursor-pointer hover:border-[#B8863B] transition-colors">
               <Upload size={14} className="text-[#6D6D6D]" />
               <input
@@ -621,7 +625,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
             {formData.attachment && (
               <div className="mt-2 flex items-center gap-2 p-2 bg-[#F8F7F4] rounded-lg border border-[#ECE8E1]">
                 <FileText size={14} className="text-emerald-500" />
-                <span className="text-xs text-[#3D2F24]">Fichier joint</span>
+                <span className="text-xs text-[#3D2F24]">{t('expenses.modals.attachedFile')}</span>
               </div>
             )}
           </div>
@@ -634,7 +638,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
               onChange={handleChange}
               rows={3}
               className="w-full px-4 py-3 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all resize-none"
-              placeholder="Informations supplémentaires..."
+              placeholder={tc('placeholders.additionalInfo')}
             />
           </div>
 
@@ -644,7 +648,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
@@ -654,7 +658,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Enregistrement...
+                  {tc('saving')}
                 </>
               ) : (
                 <>
@@ -689,21 +693,18 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, expense, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer la dépense ?
+          {t('expenses.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
-          Vous êtes sur le point de supprimer la dépense{' '}
-          <span className="font-semibold text-[#3D2F24]">
-            {expense?.expenseId}
-          </span>.
-          Cette action est irréversible.
+          {t('expenses.modals.deleteMessage', { id: expense?.expenseId })}{' '}
+          {tc('irreversibleAction')}
         </p>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -735,7 +736,7 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails de la dépense
+            {t('expenses.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -756,7 +757,7 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Catégorie</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('category')}</p>
               <CategoryBadge category={expense.category} />
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3">
@@ -766,13 +767,13 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
           </div>
 
           <div className="bg-[#F8F7F4] rounded-lg p-3">
-            <p className="text-xs text-[#6D6D6D]">Description</p>
+            <p className="text-xs text-[#6D6D6D]">{tc('description')}</p>
             <p className="text-sm font-medium text-[#3D2F24]">{expense.description}</p>
           </div>
 
           {expense.supplier && (
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Fournisseur</p>
+              <p className="text-xs text-[#6D6D6D]">{t('expenses.fields.supplier')}</p>
               <p className="text-sm text-[#3D2F24]">{expense.supplier}</p>
             </div>
           )}
@@ -783,7 +784,7 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
               <p className="text-sm font-bold text-[#3D2F24]">{expense.amount.toLocaleString()} {CURRENCY}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">TVA</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('vat')}</p>
               <p className="text-sm font-bold text-[#3D2F24]">{expense.vat}%</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
@@ -794,7 +795,7 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
 
           {expense.referenceNumber && (
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">N° Référence</p>
+              <p className="text-xs text-[#6D6D6D]">{t('expenses.fields.referenceNumber')}</p>
               <p className="text-sm text-[#3D2F24]">{expense.referenceNumber}</p>
             </div>
           )}
@@ -809,12 +810,12 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
           {expense.attachment && (
             <div className="p-3 bg-[#F8F7F4] rounded-lg flex items-center gap-2">
               <FileText size={16} className="text-emerald-500" />
-              <span className="text-sm text-[#3D2F24]">Pièce jointe disponible</span>
+              <span className="text-sm text-[#3D2F24]">{t('expenses.modals.attachmentAvailable')}</span>
             </div>
           )}
 
           <div className="bg-[#F8F7F4] rounded-lg p-3">
-            <p className="text-xs text-[#6D6D6D]">Créé par</p>
+            <p className="text-xs text-[#6D6D6D]">{tc('createdBy')}</p>
             <p className="text-sm text-[#3D2F24]">{expense.createdBy || '—'}</p>
           </div>
 
@@ -822,7 +823,7 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>
@@ -836,6 +837,9 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
 const ExpensesPage = () => {
   const { user } = useAuth();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('expenses');
+  const expenseCategoryOptions = useMemo(() => buildExpenseCategoryOptions(t), [t]);
+  const paymentMethodOptions = useMemo(() => buildPaymentMethodOptions(t), [t]);
+  const paymentStatusOptions = useMemo(() => buildPaymentStatusOptions(t), [t]);
 
   const [expenses, setExpenses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -947,14 +951,14 @@ const ExpensesPage = () => {
   const rowFormatter = (item) => ({
     expenseId: item.expenseId,
     date: new Date(item.date).toLocaleDateString(DATE_LOCALE),
-    category: EXPENSE_CATEGORIES.find(c => c.value === item.category)?.label || '—',
+    category: expenseCategoryOptions.find(c => c.value === item.category)?.label || '—',
     description: item.description,
     supplier: item.supplier || '—',
     amount: `${item.amount.toLocaleString()} ${CURRENCY}`,
     vat: `${item.vat}%`,
     total: `${item.total.toLocaleString()} ${CURRENCY}`,
-    paymentMethod: PAYMENT_METHODS.find(m => m.value === item.paymentMethod)?.label || '—',
-    paymentStatus: PAYMENT_STATUSES.find(s => s.value === item.paymentStatus)?.label || '—',
+    paymentMethod: paymentMethodOptions.find(m => m.value === item.paymentMethod)?.label || '—',
+    paymentStatus: paymentStatusOptions.find(s => s.value === item.paymentStatus)?.label || '—',
     createdBy: item.createdBy || '—'
   });
 
@@ -1157,7 +1161,7 @@ const ExpensesPage = () => {
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
               <option value="all">Toutes les catégories</option>
-              {EXPENSE_CATEGORIES.map(c => (
+              {expenseCategoryOptions.map(c => (
                 <option key={c.value} value={c.value}>{c.label}</option>
               ))}
             </select>
@@ -1167,7 +1171,7 @@ const ExpensesPage = () => {
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
               <option value="all">Tous les statuts</option>
-              {PAYMENT_STATUSES.map(s => (
+              {paymentStatusOptions.map(s => (
                 <option key={s.value} value={s.value}>{s.label}</option>
               ))}
             </select>

@@ -177,11 +177,25 @@
       "transferReason": "سبب النقل",
       "expenseDescription": "وصف المصروف",
       "invoiceNumber": "رقم الفاتورة",
+      "referenceNumber": "رقم الفاتورة / الإيصال / التحويل...",
       "categoryName": "اسم الفئة",
       "categoryDescription": "وصف الفئة",
       "currentPassword": "كلمة المرور الحالية",
       "newPassword": "كلمة المرور الجديدة",
       "confirmNewPassword": "تأكيد كلمة المرور الجديدة"
+    },
+    "reference": "المرجع",
+    "supplier": "المورد",
+    "invoice": "الفاتورة",
+    "validation": {
+      "nameRequired": "الاسم مطلوب",
+      "emailRequired": "البريد الإلكتروني مطلوب",
+      "priceRequired": "السعر مطلوب",
+      "stockRequired": "المخزون مطلوب",
+      "categoryRequired": "الفئة مطلوبة",
+      "descriptionRequired": "الوصف مطلوب",
+      "amountRequired": "المبلغ مطلوب",
+      "invoiceRequired": "الفاتورة مطلوبة"
     },
     "paymentMethods": {
       "cash": "نقداً",
@@ -192,7 +206,8 @@
       "mada": "مدى",
       "stc_pay": "STC Pay",
       "apple_pay": "Apple Pay",
-      "bank_transfer": "تحويل بنكي"
+      "bank_transfer": "تحويل بنكي",
+      "cheque": "شيك"
     },
     "paymentStatus": {
       "paid": "مدفوع",
@@ -557,6 +572,10 @@
       "deleteTitle": "حذف العميل؟",
       "deleteMessage": "أنت على وشك حذف العميل {{name}}."
     },
+    "validation": {
+      "nameRequired": "الاسم مطلوب",
+      "emailRequired": "البريد الإلكتروني مطلوب"
+    },
     "export": {
       "title": "قائمة العملاء",
       "subtitle": "{{count}} عميل"
@@ -581,7 +600,21 @@
       "price": "السعر",
       "stock": "المخزون",
       "status": "الحالة",
-      "unit": "الوحدة"
+      "unit": "الوحدة",
+      "addDate": "تاريخ الإضافة",
+      "product": "المنتج"
+    },
+    "modals": {
+      "addTitle": "إضافة منتج",
+      "editTitle": "تعديل المنتج",
+      "detailsTitle": "تفاصيل المنتج",
+      "deleteTitle": "حذف المنتج؟",
+      "deleteMessage": "أنت على وشك حذف المنتج {{name}}."
+    },
+    "validation": {
+      "nameRequired": "الاسم مطلوب",
+      "priceRequired": "السعر مطلوب",
+      "stockRequired": "المخزون مطلوب"
     }
   },
   "categories": {
@@ -830,6 +863,31 @@
       "method": "طريقة الدفع",
       "date": "التاريخ",
       "status": "الحالة"
+    },
+    "modals": {
+      "addTitle": "دفعة جديدة",
+      "editTitle": "تعديل الدفعة",
+      "addSubtitle": "تسجيل دفعة عميل",
+      "detailsTitle": "تفاصيل الدفعة",
+      "deleteTitle": "حذف الدفعة؟",
+      "deleteMessage": "أنت على وشك حذف الدفعة {{id}}.",
+      "invoiceSummary": "ملخص الفاتورة",
+      "invoiceLabel": "الفاتورة:"
+    },
+    "fields": {
+      "paymentDate": "تاريخ الدفع",
+      "amountReceived": "المبلغ المستلم",
+      "selectInvoice": "اختر فاتورة",
+      "totalInvoice": "إجمالي الفاتورة",
+      "alreadyPaid": "المدفوع سابقاً",
+      "remainingToPay": "المتبقي للدفع",
+      "enteredAmount": "المبلغ المُدخل",
+      "remaining": "المتبقي",
+      "collectedBy": "حُصّل بواسطة"
+    },
+    "validation": {
+      "invoiceRequired": "الفاتورة مطلوبة",
+      "amountRequired": "المبلغ مطلوب"
     }
   },
   "expenses": {
@@ -851,6 +909,41 @@
       "date": "التاريخ",
       "approvedBy": "اعتمدها",
       "status": "الحالة"
+    },
+    "modals": {
+      "addTitle": "مصروف جديد",
+      "editTitle": "تعديل المصروف",
+      "addSubtitle": "تسجيل مصروف جديد",
+      "detailsTitle": "تفاصيل المصروف",
+      "deleteTitle": "حذف المصروف؟",
+      "deleteMessage": "أنت على وشك حذف المصروف {{id}}.",
+      "attachmentAvailable": "مرفق متاح",
+      "attachedFile": "ملف مرفق"
+    },
+    "fields": {
+      "expenseNumber": "رقم المصروف",
+      "supplier": "المورد",
+      "selectCategory": "اختر فئة",
+      "selectSupplier": "اختر مورداً",
+      "referenceNumber": "رقم المرجع",
+      "attachment": "مرفق",
+      "totalInclTax": "الإجمالي شامل الضريبة",
+      "paymentStatus": "حالة الدفع"
+    },
+    "categories": {
+      "maintenance": "صيانة",
+      "utilities": "مرافق",
+      "rent": "إيجار",
+      "salaries": "رواتب",
+      "transportation": "نقل",
+      "marketing": "تسويق",
+      "office_supplies": "مستلزمات مكتب",
+      "taxes": "ضرائب"
+    },
+    "validation": {
+      "categoryRequired": "الفئة مطلوبة",
+      "descriptionRequired": "الوصف مطلوب",
+      "amountRequired": "المبلغ مطلوب"
     }
   },
   "production": {

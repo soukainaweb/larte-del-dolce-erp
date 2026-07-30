@@ -47,6 +47,7 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // CURRENCY
@@ -133,6 +134,7 @@ const ProductCard = ({ product, onEdit, onDelete, onView }) => {
 // PRODUCT TABLE ROW (Desktop)
 // ==========================================
 const ProductTableRow = ({ product, onEdit, onDelete, onView, index }) => {
+  const { t } = useTranslation();
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -164,28 +166,28 @@ const ProductTableRow = ({ product, onEdit, onDelete, onView, index }) => {
         <StatusBadge status={product.status} />
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {new Date(product.createdAt).toLocaleDateString('fr-FR')}
+        {new Date(product.createdAt).toLocaleDateString(DATE_LOCALE)}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1">
           <button
             onClick={() => onView(product)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={t('common.view')}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(product)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={t('common.edit')}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onDelete(product)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={t('common.delete')}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -199,6 +201,7 @@ const ProductTableRow = ({ product, onEdit, onDelete, onView, index }) => {
 // PRODUCT MODAL
 // ==========================================
 const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
@@ -249,11 +252,11 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.name) newErrors.name = 'Le nom est requis';
-    if (!formData.price) newErrors.price = 'Le prix est requis';
-    else if (isNaN(formData.price)) newErrors.price = 'Le prix doit être un nombre';
-    if (!formData.stock) newErrors.stock = 'Le stock est requis';
-    else if (isNaN(formData.stock)) newErrors.stock = 'Le stock doit être un nombre';
+    if (!formData.name) newErrors.name = t('products.validation.nameRequired');
+    if (!formData.price) newErrors.price = t('products.validation.priceRequired');
+    else if (isNaN(formData.price)) newErrors.price = t('common.mustBeNumber');
+    if (!formData.stock) newErrors.stock = t('products.validation.stockRequired');
+    else if (isNaN(formData.stock)) newErrors.stock = t('common.mustBeNumber');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -275,7 +278,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            {product ? 'Modifier le produit' : 'Ajouter un produit'}
+            {product ? t('products.modals.editTitle') : t('products.modals.addTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -287,7 +290,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Nom *</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.name')} *</label>
             <input
               type="text"
               name="name"
@@ -302,7 +305,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">SKU</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.sku')}</label>
               <input
                 type="text"
                 name="sku"
@@ -312,7 +315,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Catégorie</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.category')}</label>
               <input
                 type="text"
                 name="category"
@@ -325,7 +328,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Prix ({CURRENCY}) *</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.price')} ({CURRENCY}) *</label>
               <input
                 type="number"
                 name="price"
@@ -338,7 +341,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
               {errors.price && <p className="text-xs text-rose-500 mt-1">{errors.price}</p>}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Stock *</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.stock')} *</label>
               <input
                 type="number"
                 name="stock"
@@ -353,22 +356,22 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Statut</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.status')}</label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="out_of_stock">Rupture de stock</option>
-              <option value="low_stock">Stock faible</option>
+              <option value="active">{t('common.active')}</option>
+              <option value="inactive">{t('common.inactive')}</option>
+              <option value="out_of_stock">{t('common.statuses.outOfStock')}</option>
+              <option value="low_stock">{t('common.statuses.lowStock')}</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Description</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.description')}</label>
             <textarea
               name="description"
               value={formData.description}
@@ -379,7 +382,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Image</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.image')}</label>
             <input
               type="file"
               name="image"
@@ -398,7 +401,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
             />
             {formData.image && (
               <div className="mt-2 w-20 h-20 rounded-lg overflow-hidden border border-[#ECE8E1]">
-                <img src={formData.image} alt="Aperçu" className="w-full h-full object-cover" />
+                <img src={formData.image} alt={t('common.preview')} className="w-full h-full object-cover" />
               </div>
             )}
           </div>
@@ -409,14 +412,14 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : product ? 'Mettre à jour' : 'Ajouter'}
+              {isLoading ? t('common.saving') : product ? t('common.update') : t('common.add')}
             </button>
           </div>
         </form>
@@ -429,6 +432,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, product, isLoading }) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
@@ -443,28 +447,25 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, product, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer le produit ?
+          {t('products.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
-          Vous êtes sur le point de supprimer le produit{' '}
-          <span className="font-semibold text-[#3D2F24]">
-            {product?.name}
-          </span>.
-          Cette action est irréversible.
+          {t('products.modals.deleteMessage', { name: product?.name })}{' '}
+          {t('common.irreversibleAction')}
         </p>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
           >
-            {isLoading ? 'Suppression...' : 'Supprimer'}
+            {isLoading ? t('common.deleting') : t('common.delete')}
           </button>
         </div>
       </motion.div>
@@ -476,6 +477,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, product, isLoading }) => {
 // PRODUCT DETAILS MODAL
 // ==========================================
 const ProductDetailsModal = ({ isOpen, onClose, product }) => {
+  const { t } = useTranslation();
   if (!isOpen || !product) return null;
 
   return (
@@ -488,7 +490,7 @@ const ProductDetailsModal = ({ isOpen, onClose, product }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails du produit
+            {t('products.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -517,12 +519,12 @@ const ProductDetailsModal = ({ isOpen, onClose, product }) => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Prix</p>
+              <p className="text-xs text-[#6D6D6D]">{t('common.price')}</p>
               <p className="text-lg font-bold text-[#3D2F24]">{product.price.toLocaleString()} {CURRENCY}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Stock</p>
-              <p className="text-lg font-bold text-[#3D2F24]">{product.stock} unités</p>
+              <p className="text-xs text-[#6D6D6D]">{t('common.stock')}</p>
+              <p className="text-lg font-bold text-[#3D2F24]">{product.stock} {t('common.units')}</p>
             </div>
           </div>
 
@@ -530,22 +532,22 @@ const ProductDetailsModal = ({ isOpen, onClose, product }) => {
             {product.sku && (
               <div className="flex items-center gap-2">
                 <Tag size={16} className="text-[#6D6D6D]" />
-                <span className="text-[#3D2F24]">SKU: {product.sku}</span>
+                <span className="text-[#3D2F24]">{t('common.sku')}: {product.sku}</span>
               </div>
             )}
             {product.category && (
               <div className="flex items-center gap-2">
                 <Grid size={16} className="text-[#6D6D6D]" />
-                <span className="text-[#3D2F24]">Catégorie: {product.category}</span>
+                <span className="text-[#3D2F24]">{t('common.category')}: {product.category}</span>
               </div>
             )}
             <div className="flex items-center gap-2">
               <Calendar size={16} className="text-[#6D6D6D]" />
-              <span className="text-[#3D2F24]">Créé le {new Date(product.createdAt).toLocaleDateString('fr-FR')}</span>
+              <span className="text-[#3D2F24]">{t('common.createdOn', { date: new Date(product.createdAt).toLocaleDateString(DATE_LOCALE) })}</span>
             </div>
             {product.description && (
               <div className="mt-2 p-3 bg-[#F8F7F4] rounded-lg">
-                <p className="text-xs text-[#6D6D6D] mb-1">Description</p>
+                <p className="text-xs text-[#6D6D6D] mb-1">{t('common.description')}</p>
                 <p className="text-sm text-[#3D2F24]">{product.description}</p>
               </div>
             )}
@@ -555,7 +557,7 @@ const ProductDetailsModal = ({ isOpen, onClose, product }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {t('common.close')}
           </button>
         </div>
       </motion.div>
