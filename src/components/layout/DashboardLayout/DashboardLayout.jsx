@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useTheme } from '../../../contexts/ThemeContext';
 import { useToast } from '../../../contexts/ToastContext';
 import { getNotifications, getUnreadCount, markNotificationAsRead } from '../../../services/notificationService';
 import { findSearchRoute, getActiveMenuId } from '../../../utils/searchRoutes';
@@ -21,9 +20,8 @@ const BREAKPOINTS = {
 
 const DashboardLayout = () => {
   const { isAuthenticated, isLoading, user, logout, roleKey, permissions } = useAuth();
-  const { theme, setTheme } = useTheme();
   const { showToast } = useToast();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -140,10 +138,6 @@ const DashboardLayout = () => {
     }
   }, [navigate, showToast, t]);
 
-  const handleLanguageChange = useCallback((code) => {
-    i18n.changeLanguage(code);
-  }, [i18n]);
-
   const handleHelp = useCallback(() => {
     navigate('/dashboard/settings');
   }, [navigate]);
@@ -210,7 +204,7 @@ const DashboardLayout = () => {
   const activeItemId = getActiveMenuId(location.pathname);
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] flex">
+    <div className="min-h-screen bg-[#FAF7F2] flex" dir="rtl">
       <Sidebar
         isCollapsed={isCollapsed}
         onToggleCollapse={handleToggleCollapse}
@@ -227,7 +221,7 @@ const DashboardLayout = () => {
         onLogout={handleLogout}
         onHelp={handleHelp}
         onDocumentation={handleDocumentation}
-        language={i18n.language}
+        language="ar"
         appName={t('common.appName')}
         appSuffix={t('common.erp')}
       />
@@ -249,10 +243,6 @@ const DashboardLayout = () => {
           onAllNotificationsView={handleAllNotificationsView}
           onSearchSubmit={handleSearchSubmit}
           onLogoutClick={handleLogout}
-          theme={theme}
-          onThemeChange={setTheme}
-          language={i18n.language}
-          onLanguageChange={handleLanguageChange}
         />
 
         <Breadcrumb />

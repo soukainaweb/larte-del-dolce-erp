@@ -30,8 +30,10 @@ import {
   Package
 } from 'lucide-react';
 import { getRoleUsers } from '../../../services/roleService';
+import { usePageI18n } from '../../../hooks/usePageI18n';
 
 const ViewRoleModal = ({ isOpen, onClose, role, onEdit, onUsers, onPermissions }) => {
+  const { t, tc, commonStatus } = usePageI18n('roles');
   const [activeTab, setActiveTab] = useState('informations');
   const [roleUsers, setRoleUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -63,10 +65,10 @@ const ViewRoleModal = ({ isOpen, onClose, role, onEdit, onUsers, onPermissions }
   if (!isOpen || !role) return null;
 
   const tabs = [
-    { id: 'informations', label: 'Informations' },
-    { id: 'permissions', label: 'Permissions' },
-    { id: 'users', label: 'Utilisateurs' },
-    { id: 'history', label: 'Historique' }
+    { id: 'informations', label: tc('details') },
+    { id: 'permissions', label: t('roles.table.permissions') },
+    { id: 'users', label: t('roles.table.users') },
+    { id: 'history', label: t('activityLog.title') }
   ];
 
   const getIconByName = (iconName) => {
@@ -143,29 +145,29 @@ const ViewRoleModal = ({ isOpen, onClose, role, onEdit, onUsers, onPermissions }
               >
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-[#F8F7F4] rounded-xl p-4">
-                    <p className="text-xs text-[#7A7A7A]">Nom</p>
+                    <p className="text-xs text-[#7A7A7A]">{t('roles.table.name')}</p>
                     <p className="font-medium text-[#2B2B2B]">{role.name}</p>
                   </div>
                   <div className="bg-[#F8F7F4] rounded-xl p-4">
-                    <p className="text-xs text-[#7A7A7A]">Statut</p>
+                    <p className="text-xs text-[#7A7A7A]">{t('roles.table.status')}</p>
                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
-                      role.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-600 border-gray-200'
+                      role.status === 'active' ? commonStatus.active.class : commonStatus.inactive.class
                     }`}>
-                      {role.status === 'active' ? 'Actif' : 'Inactif'}
+                      {role.status === 'active' ? commonStatus.active.label : commonStatus.inactive.label}
                     </span>
                   </div>
                   <div className="bg-[#F8F7F4] rounded-xl p-4">
-                    <p className="text-xs text-[#7A7A7A]">Date de création</p>
+                    <p className="text-xs text-[#7A7A7A]">{tc('table.columns.createdAt')}</p>
                     <p className="font-medium text-[#2B2B2B]">{role.createdAt}</p>
                   </div>
                   <div className="bg-[#F8F7F4] rounded-xl p-4">
-                    <p className="text-xs text-[#7A7A7A]">Dernière modification</p>
+                    <p className="text-xs text-[#7A7A7A]">{tc('table.columns.updatedAt')}</p>
                     <p className="font-medium text-[#2B2B2B]">{role.updatedAt}</p>
                   </div>
                 </div>
                 <div className="bg-[#F8F7F4] rounded-xl p-4">
-                  <p className="text-xs text-[#7A7A7A]">Description</p>
-                  <p className="font-medium text-[#2B2B2B]">{role.description || 'Aucune description'}</p>
+                  <p className="text-xs text-[#7A7A7A]">{t('roles.table.description')}</p>
+                  <p className="font-medium text-[#2B2B2B]">{role.description || tc('noData')}</p>
                 </div>
               </motion.div>
             )}
@@ -179,15 +181,22 @@ const ViewRoleModal = ({ isOpen, onClose, role, onEdit, onUsers, onPermissions }
                 className="space-y-3"
               >
                 <div className="grid grid-cols-2 gap-3">
-                  {['Dashboard', 'Commandes', 'Clients', 'Produits', 'Production', 'Inventaire'].map((module) => (
-                    <div key={module} className="bg-[#F8F7F4] rounded-xl p-3 flex items-center justify-between">
-                      <span className="text-sm font-medium text-[#2B2B2B]">{module}</span>
+                  {[
+                    { key: 'dashboard', label: t('nav.dashboard') },
+                    { key: 'orders', label: t('nav.orders') },
+                    { key: 'customers', label: t('nav.customers') },
+                    { key: 'products', label: t('nav.products') },
+                    { key: 'production', label: t('nav.production') },
+                    { key: 'inventory', label: t('nav.inventory') },
+                  ].map((module) => (
+                    <div key={module.key} className="bg-[#F8F7F4] rounded-xl p-3 flex items-center justify-between">
+                      <span className="text-sm font-medium text-[#2B2B2B]">{module.label}</span>
                       <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">✓</span>
                     </div>
                   ))}
                 </div>
                 <p className="text-xs text-[#7A7A7A] text-center">
-                  {role.permissions} permissions disponibles
+                  {role.permissions} {t('roles.kpi.permissions')}
                 </p>
               </motion.div>
             )}
@@ -203,7 +212,7 @@ const ViewRoleModal = ({ isOpen, onClose, role, onEdit, onUsers, onPermissions }
                 {usersLoading ? (
                   <p className="text-sm text-[#7A7A7A] text-center py-4">...</p>
                 ) : roleUsers.length === 0 ? (
-                  <p className="text-sm text-[#7A7A7A] text-center py-4">Aucun utilisateur associé</p>
+                  <p className="text-sm text-[#7A7A7A] text-center py-4">{t('roles.usersManagement.noUsersRole')}</p>
                 ) : (
                   roleUsers.map((user) => (
                     <div key={user.id} className="bg-[#F8F7F4] rounded-xl p-3 flex items-center justify-between">
@@ -217,9 +226,9 @@ const ViewRoleModal = ({ isOpen, onClose, role, onEdit, onUsers, onPermissions }
                         </div>
                       </div>
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                        user.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-600 border-gray-200'
+                        user.status === 'active' ? commonStatus.active.class : commonStatus.inactive.class
                       }`}>
-                        {user.status === 'active' ? 'Actif' : 'Inactif'}
+                        {user.status === 'active' ? commonStatus.active.label : commonStatus.inactive.label}
                       </span>
                     </div>
                   ))
@@ -258,27 +267,27 @@ const ViewRoleModal = ({ isOpen, onClose, role, onEdit, onUsers, onPermissions }
             className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
           >
             <Edit2 size={16} />
-            Modifier
+            {tc('edit')}
           </button>
           <button
             onClick={() => { onClose(); onUsers(role); }}
             className="flex-1 py-2.5 text-sm font-medium text-[#2B2B2B] border border-[#EAE6DF] rounded-xl hover:bg-[#F8F7F4] transition-colors flex items-center justify-center gap-2"
           >
             <UserPlus size={16} />
-            Utilisateurs
+            {t('roles.table.users')}
           </button>
           <button
             onClick={() => { onClose(); onPermissions(role); }}
             className="flex-1 py-2.5 text-sm font-medium text-[#2B2B2B] border border-[#EAE6DF] rounded-xl hover:bg-[#F8F7F4] transition-colors flex items-center justify-center gap-2"
           >
             <ShieldCheck size={16} />
-            Permissions
+            {t('roles.table.permissions')}
           </button>
           <button
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#7A7A7A] border border-[#EAE6DF] rounded-xl hover:bg-[#F8F7F4] transition-colors"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>

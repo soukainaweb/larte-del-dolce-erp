@@ -19,6 +19,7 @@ import {
   Calendar,
   Clock
 } from 'lucide-react';
+import { usePageI18n } from '../../../hooks/usePageI18n';
 
 const RoleCard = ({
   role,
@@ -29,14 +30,16 @@ const RoleCard = ({
   onPermissions,
   onDelete
 }) => {
+  const { t, tc, commonStatus } = usePageI18n('roles');
+
   const statusColors = {
-    active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    inactive: 'bg-gray-50 text-gray-600 border-gray-200'
+    active: commonStatus.active.class,
+    inactive: commonStatus.inactive.class
   };
 
   const statusLabels = {
-    active: 'Actif',
-    inactive: 'Inactif'
+    active: commonStatus.active.label,
+    inactive: commonStatus.inactive.label
   };
 
   const getIconByName = (iconName) => {
@@ -77,7 +80,7 @@ const RoleCard = ({
           </div>
         </div>
         <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[role.status] || statusColors.inactive}`}>
-          {statusLabels[role.status] || 'Inactif'}
+          {statusLabels[role.status] || commonStatus.inactive.label}
         </span>
       </div>
 
@@ -85,23 +88,23 @@ const RoleCard = ({
       <div className="mt-4 grid grid-cols-4 gap-2">
         <div className="bg-[#F8F7F4] rounded-xl p-2.5 text-center">
           <p className="text-lg font-bold text-[#2B2B2B]">{role.users}</p>
-          <p className="text-[9px] text-[#7A7A7A]">Utilisateurs</p>
+          <p className="text-[9px] text-[#7A7A7A]">{t('roles.table.users')}</p>
         </div>
         <div className="bg-[#F8F7F4] rounded-xl p-2.5 text-center">
           <p className="text-lg font-bold text-[#2B2B2B]">{role.permissions}</p>
-          <p className="text-[9px] text-[#7A7A7A]">Permissions</p>
+          <p className="text-[9px] text-[#7A7A7A]">{t('roles.table.permissions')}</p>
         </div>
         <div className="bg-[#F8F7F4] rounded-xl p-2.5 text-center">
           <div className="flex items-center justify-center gap-1 text-[9px] text-[#7A7A7A]">
             <Calendar size={10} />
-            <span>Créé</span>
+            <span>{tc('table.columns.createdAt')}</span>
           </div>
           <p className="text-[10px] font-medium text-[#2B2B2B]">{role.createdAt}</p>
         </div>
         <div className="bg-[#F8F7F4] rounded-xl p-2.5 text-center">
           <div className="flex items-center justify-center gap-1 text-[9px] text-[#7A7A7A]">
             <Clock size={10} />
-            <span>Modifié</span>
+            <span>{tc('table.columns.updatedAt')}</span>
           </div>
           <p className="text-[10px] font-medium text-[#2B2B2B]">{role.updatedAt}</p>
         </div>
@@ -113,21 +116,21 @@ const RoleCard = ({
           <button
             onClick={() => onView(role)}
             className="p-2 rounded-xl hover:bg-[#F8F7F4] transition-colors group"
-            title="Voir"
+            title={tc('view')}
           >
             <Eye size={16} className="text-[#7A7A7A] group-hover:text-[#C8A45D] transition-colors" />
           </button>
           <button
             onClick={() => onEdit(role)}
             className="p-2 rounded-xl hover:bg-[#F8F7F4] transition-colors group"
-            title="Modifier"
+            title={tc('edit')}
           >
             <Edit2 size={16} className="text-[#7A7A7A] group-hover:text-[#C8A45D] transition-colors" />
           </button>
           <button
             onClick={() => onDuplicate(role)}
             className="p-2 rounded-xl hover:bg-[#F8F7F4] transition-colors group"
-            title="Dupliquer"
+            title={tc('create')}
           >
             <Copy size={16} className="text-[#7A7A7A] group-hover:text-[#C8A45D] transition-colors" />
           </button>
@@ -136,21 +139,21 @@ const RoleCard = ({
           <button
             onClick={() => onUsers(role)}
             className="p-2 rounded-xl hover:bg-[#F8F7F4] transition-colors group"
-            title="Utilisateurs"
+            title={t('roles.table.users')}
           >
             <UserPlus size={16} className="text-[#7A7A7A] group-hover:text-[#C8A45D] transition-colors" />
           </button>
           <button
             onClick={() => onPermissions(role)}
             className="p-2 rounded-xl hover:bg-[#F8F7F4] transition-colors group"
-            title="Permissions"
+            title={t('roles.table.permissions')}
           >
             <ShieldCheck size={16} className="text-[#7A7A7A] group-hover:text-[#C8A45D] transition-colors" />
           </button>
           <button
             onClick={() => onDelete(role)}
             className="p-2 rounded-xl hover:bg-rose-50 transition-colors group"
-            title="Supprimer"
+            title={tc('delete')}
           >
             <Trash2 size={16} className="text-[#7A7A7A] group-hover:text-rose-500 transition-colors" />
           </button>

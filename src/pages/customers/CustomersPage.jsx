@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
+import { useTranslation } from 'react-i18next';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getCustomers,
@@ -49,10 +50,11 @@ const FONT_BODY = "'Inter', sans-serif";
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
+  const { t } = useTranslation();
   const statusConfig = {
-    active: { label: 'Actif', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    inactive: { label: 'Inactif', class: 'bg-gray-50 text-gray-600 border-gray-200' },
-    suspended: { label: 'Suspendu', class: 'bg-amber-50 text-amber-700 border-amber-200' }
+    active: { label: t('common.active'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    inactive: { label: t('common.inactive'), class: 'bg-gray-50 text-gray-600 border-gray-200' },
+    suspended: { label: t('common.statuses.suspended'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
   };
 
   const key = String(status ?? 'inactive').toLowerCase();

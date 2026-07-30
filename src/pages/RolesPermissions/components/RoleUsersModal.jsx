@@ -16,8 +16,10 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
+import { usePageI18n } from '../../../hooks/usePageI18n';
 
 const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, onRemoveUser }) => {
+  const { t, tc, commonStatus } = usePageI18n('roles');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -29,13 +31,13 @@ const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, o
   );
 
   const statusColors = {
-    active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    inactive: 'bg-gray-50 text-gray-600 border-gray-200'
+    active: commonStatus.active.class,
+    inactive: commonStatus.inactive.class
   };
 
   const statusLabels = {
-    active: 'Actif',
-    inactive: 'Inactif'
+    active: commonStatus.active.label,
+    inactive: commonStatus.inactive.label
   };
 
   return (
@@ -50,10 +52,10 @@ const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, o
         <div className="sticky top-0 bg-white border-b border-[#EAE6DF] px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
           <div>
             <h3 className="text-lg font-bold text-[#2B2B2B]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-              Utilisateurs - {role.name}
+              {t('roles.table.users')} - {role.name}
             </h3>
             <p className="text-sm text-[#7A7A7A]">
-              {users.length} utilisateur(s) associé(s) à ce rôle
+              {t('roles.usersManagement.userCount', { count: users.length })}
             </p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[#F8F7F4] rounded-xl transition-colors">
@@ -68,7 +70,7 @@ const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, o
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7A7A7A]" size={18} />
               <input
                 type="text"
-                placeholder="Rechercher un utilisateur..."
+                placeholder={t('roles.usersManagement.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 border border-[#EAE6DF] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C8A45D]/30 focus:border-[#C8A45D] transition-all"
@@ -79,7 +81,7 @@ const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, o
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] text-white font-medium hover:shadow-lg transition-all text-sm"
             >
               <Plus size={18} />
-              Ajouter un utilisateur
+              {t('roles.usersManagement.addUser')}
             </button>
           </div>
 
@@ -87,7 +89,7 @@ const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, o
           {filteredUsers.length === 0 ? (
             <div className="bg-[#F8F7F4] rounded-xl p-8 text-center">
               <User size={32} className="text-[#D1CBC0] mx-auto mb-3" />
-              <p className="text-sm text-[#7A7A7A]">Aucun utilisateur trouvé</p>
+              <p className="text-sm text-[#7A7A7A]">{t('roles.usersManagement.noUsersFilter')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -113,7 +115,7 @@ const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, o
                       </div>
                     </div>
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColors[user.status] || statusColors.inactive}`}>
-                      {statusLabels[user.status] || 'Inactif'}
+                      {statusLabels[user.status] || commonStatus.inactive.label}
                     </span>
                   </div>
 
@@ -121,14 +123,14 @@ const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, o
                     <div className="bg-[#F8F7F4] rounded-lg p-2">
                       <div className="flex items-center gap-1 text-[#7A7A7A]">
                         <Briefcase size={12} />
-                        <span>Département</span>
+                        <span>{t('roles.usersManagement.department')}</span>
                       </div>
                       <p className="font-medium text-[#2B2B2B]">{user.department}</p>
                     </div>
                     <div className="bg-[#F8F7F4] rounded-lg p-2">
                       <div className="flex items-center gap-1 text-[#7A7A7A]">
                         <Building size={12} />
-                        <span>Poste</span>
+                        <span>{t('roles.usersManagement.position')}</span>
                       </div>
                       <p className="font-medium text-[#2B2B2B]">{user.position}</p>
                     </div>
@@ -138,14 +140,14 @@ const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, o
                     <button
                       onClick={() => onEditUser(user)}
                       className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-                      title="Modifier"
+                      title={tc('edit')}
                     >
                       <Edit2 size={14} className="text-[#7A7A7A]" />
                     </button>
                     <button
                       onClick={() => onRemoveUser(user)}
                       className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-                      title="Retirer"
+                      title={t('roles.usersManagement.removeFromRole')}
                     >
                       <UserX size={14} className="text-rose-500" />
                     </button>

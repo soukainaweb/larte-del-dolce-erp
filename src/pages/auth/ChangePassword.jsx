@@ -13,10 +13,9 @@ import {
   FaTimes,
   FaArrowLeft,
 } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { changePassword } from '../../services/authService';
-import { useAuth } from '../../contexts/AuthContext';
 
 const ChangePassword = () => {
   const { t } = useTranslation();
@@ -34,9 +33,6 @@ const ChangePassword = () => {
     number: false,
     special: false,
   });
-
-  const navigate = useNavigate();
-  const { user } = useAuth();
 
   const schema = useMemo(
     () =>

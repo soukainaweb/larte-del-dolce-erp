@@ -1026,6 +1026,27 @@
       "saving": "جاري الحفظ...",
       "adding": "جاري الإضافة...",
       "removing": "جاري الإزالة..."
+    },
+    "modals": {
+      "deleteTitle": "حذف الدور؟",
+      "deleteMessage": "أنت على وشك حذف الدور \"{{name}}\".",
+      "deleteUsersWarning": "{{count}} مستخدم(ون) مرتبط(ون) بهذا الدور. سيتأثرون.",
+      "irreversible": "هذا الإجراء لا يمكن التراجع عنه.",
+      "permissionsTitle": "إدارة الصلاحيات",
+      "selectAll": "تحديد الكل",
+      "deselectAll": "إلغاء تحديد الكل",
+      "reset": "إعادة تعيين",
+      "module": "الوحدة",
+      "apply": "تطبيق",
+      "permissionTypes": {
+        "view": "عرض",
+        "create": "إنشاء",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "export": "تصدير",
+        "validate": "تحقق",
+        "approve": "موافقة"
+      }
     }
   },
   "activityLog": {
@@ -1099,6 +1120,10 @@
     "changePassword": "تغيير كلمة المرور",
     "preferences": "التفضيلات",
     "activity": "النشاط",
+    "fields": {
+      "language": "اللغة",
+      "timezone": "المنطقة الزمنية"
+    },
     "validation": {
       "minPassword": "8 أحرف على الأقل"
     },

@@ -1275,7 +1275,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Langue</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.language')}</label>
             <select
               name="language"
               value={profileData.language}
@@ -1285,9 +1285,7 @@ const MyProfilePage = () => {
                 isEditing ? 'border-[#ECE8E1]' : 'bg-[#F8F7F4] border-transparent'
               }`}
             >
-              <option value="Français">Français</option>
-              <option value="English">English</option>
-              <option value="العربية">العربية</option>
+              <option value="العربية">{t('common.languages.ar')}</option>
             </select>
           </div>
           <div>
@@ -1487,9 +1485,7 @@ const MyProfilePage = () => {
               onChange={(e) => handlePreferenceChange('language', e.target.value)}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="Français">Français</option>
-              <option value="English">English</option>
-              <option value="العربية">العربية</option>
+              <option value="العربية">{t('common.languages.ar')}</option>
             </select>
           </div>
           <div>
