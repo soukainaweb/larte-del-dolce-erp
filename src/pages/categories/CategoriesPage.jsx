@@ -40,7 +40,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
-import { unwrapPaginated, unwrapData } from '../../utils/apiHelpers';
+import { unwrapPaginated, unwrapData, getApiErrorMessage } from '../../utils/apiHelpers';
+import { useToast } from '../../contexts/ToastContext';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getCategories,
@@ -876,6 +877,7 @@ const ViewCategoryModal = ({ isOpen, onClose, category }) => {
 const CategoriesPage = () => {
   const { user } = useAuth();
   const { title, subtitle, searchPlaceholder, t, commonStatus, actions, tc } = usePageI18n('categories');
+  const { showToast } = useToast();
 
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -1039,6 +1041,7 @@ const CategoriesPage = () => {
       await fetchStatistics();
     } catch (error) {
       console.error('Error creating category:', error);
+      showToast(getApiErrorMessage(error, t('categories.errors.save')), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -1057,6 +1060,7 @@ const CategoriesPage = () => {
       await fetchStatistics();
     } catch (error) {
       console.error('Error updating category:', error);
+      showToast(getApiErrorMessage(error, t('categories.errors.save')), 'error');
     } finally {
       setIsSaving(false);
     }

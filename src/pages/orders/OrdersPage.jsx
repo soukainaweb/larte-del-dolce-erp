@@ -437,10 +437,10 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Client Info */}
           <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1]">
-            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">Informations client</h4>
+            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{t('orders.sections.customerInfo')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Client *</label>
+                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('orders.table.customer')} *</label>
                 <input
                   type="text"
                   name="customer"
@@ -453,7 +453,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                 {errors.customer && <p className="text-xs text-rose-500 mt-1">{errors.customer}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Commercial *</label>
+                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('orders.table.rep')} *</label>
                 <input
                   type="text"
                   name="rep"
@@ -470,7 +470,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
 
           {/* Order Info */}
           <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1]">
-            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">Informations générales</h4>
+            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{t('orders.sections.generalInfo')}</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('priority')}</label>
@@ -480,13 +480,13 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
                 >
-                  <option value="low">Basse</option>
-                  <option value="medium">Moyenne</option>
-                  <option value="high">Haute</option>
+                  <option value="low">{t('orders.priority.low')}</option>
+                  <option value="medium">{t('orders.priority.medium')}</option>
+                  <option value="high">{t('orders.priority.high')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Date livraison</label>
+                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('orders.table.deliveryDate')}</label>
                 <input
                   type="date"
                   name="deliveryDate"
@@ -496,7 +496,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Heure livraison</label>
+                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('orders.fields.deliveryTime')}</label>
                 <input
                   type="time"
                   name="deliveryTime"
@@ -506,17 +506,17 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Méthode paiement</label>
+                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('orders.fields.paymentMethod')}</label>
                 <select
                   name="paymentMethod"
                   value={formData.paymentMethod}
                   onChange={handleChange}
                   className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
                 >
-                  <option value="cash">Espèces</option>
-                  <option value="card">Carte bancaire</option>
-                  <option value="transfer">Virement</option>
-                  <option value="credit">Crédit</option>
+                  <option value="cash">{t('common.paymentMethods.cash')}</option>
+                  <option value="card">{t('common.paymentMethods.card')}</option>
+                  <option value="transfer">{t('common.paymentMethods.transfer')}</option>
+                  <option value="credit">{t('common.paymentMethods.credit')}</option>
                 </select>
               </div>
             </div>
@@ -532,7 +532,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#B8863B] rounded-lg hover:bg-[#A67937] transition-colors"
               >
                 <Plus size={14} />
-                Ajouter produit
+                {t('orders.fields.addProduct')}
               </button>
             </div>
             <div className="space-y-3">
@@ -540,7 +540,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                 <div key={index} className="bg-white rounded-lg p-3 border border-[#ECE8E1]">
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     <div className="col-span-2 md:col-span-1">
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Produit</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{tc('product')}</label>
                       <input
                         type="text"
                         value={product.name}
@@ -549,7 +549,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Qté</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{t('orders.fields.quantity')}</label>
                       <input
                         type="number"
                         value={product.quantity}
@@ -558,7 +558,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Prix ({CURRENCY_SYMBOL})</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{tc('price')} ({CURRENCY_SYMBOL})</label>
                       <input
                         type="number"
                         value={product.price}
@@ -567,7 +567,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Remise (%)</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{t('orders.fields.discount')}</label>
                       <input
                         type="number"
                         value={product.discount}
@@ -600,20 +600,20 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
 
           {/* Summary */}
           <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1]">
-            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">Résumé</h4>
+            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{t('orders.summary.title')}</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-[#6D6D6D]">Sous-total</span>
+                <span className="text-[#6D6D6D]">{t('orders.summary.subtotal')}</span>
                 <span className="font-medium text-[#3D2F24]">{calculateSubtotal().toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#6D6D6D]">Remise totale</span>
+                <span className="text-[#6D6D6D]">{t('orders.summary.totalDiscount')}</span>
                 <span className="font-medium text-[#3D2F24]">
                   {(calculateSubtotal() - calculateTotal()).toFixed(2)} {CURRENCY_SYMBOL}
                 </span>
               </div>
               <div className="flex justify-between pt-2 border-t border-[#ECE8E1]">
-                <span className="font-bold text-[#3D2F24]">Total TTC</span>
+                <span className="font-bold text-[#3D2F24]">{t('orders.summary.grandTotal')}</span>
                 <span className="font-bold text-[#3D2F24] text-lg">{calculateTotal().toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
             </div>
@@ -637,7 +637,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
@@ -672,21 +672,18 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, order, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer la commande ?
+          {t('orders.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
-          Vous êtes sur le point de supprimer la commande{' '}
-          <span className="font-semibold text-[#3D2F24]">
-            {order?.orderNumber}
-          </span>.
-          Cette action est irréversible.
+          {t('orders.modals.deleteMessage', { orderNumber: order?.orderNumber })}{' '}
+          {tc('irreversibleAction')}
         </p>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -952,14 +949,14 @@ const OrdersPage = () => {
   // ==========================================
   const columns = [
     { label: t('orders.table.orderNumber'), accessor: 'orderNumber', width: 12 },
-    { label: 'Client', accessor: 'customer', width: 18 },
-    { label: 'Commercial', accessor: 'rep', width: 15 },
-    { label: 'Date', accessor: 'createdAt', width: 12 },
-    { label: 'Produits', accessor: 'productCount', width: 10 },
-    { label: 'Montant', accessor: 'total', width: 12 },
-    { label: 'Statut', accessor: 'status', width: 12 },
-    { label: 'Priorité', accessor: 'priority', width: 10 },
-    { label: 'Paiement', accessor: 'paymentStatus', width: 12 }
+    { label: t('orders.table.customer'), accessor: 'customer', width: 18 },
+    { label: t('orders.table.rep'), accessor: 'rep', width: 15 },
+    { label: t('common.date'), accessor: 'createdAt', width: 12 },
+    { label: t('orders.table.products'), accessor: 'productCount', width: 10 },
+    { label: t('orders.table.total'), accessor: 'total', width: 12 },
+    { label: t('orders.table.status'), accessor: 'status', width: 12 },
+    { label: t('orders.table.priority'), accessor: 'priority', width: 10 },
+    { label: t('orders.table.paymentStatus'), accessor: 'paymentStatus', width: 12 }
   ];
 
   const rowFormatter = (item) => ({
@@ -991,7 +988,7 @@ const OrdersPage = () => {
     { label: t('orders.status.in_production'), value: kpis.inProduction },
     { label: t('orders.kpi.delivered'), value: kpis.delivered },
     { label: t('orders.kpi.cancelled'), value: kpis.cancelled },
-    { label: 'CA', value: `${kpis.revenue.toLocaleString()} ${CURRENCY_SYMBOL}` }
+    { label: t('orders.kpi.revenue'), value: `${kpis.revenue.toLocaleString()} ${CURRENCY_SYMBOL}` }
   ];
 
   // ==========================================
@@ -1152,8 +1149,12 @@ const OrdersPage = () => {
           <ExportButtons
             data={filteredOrders}
             columns={columns}
-            title="Liste des commandes"
-            subtitle={`${filteredOrders.length} commandes - CA: ${kpis.revenue.toLocaleString()} ${CURRENCY_SYMBOL}`}
+            title={t('orders.export.title')}
+            subtitle={t('orders.export.subtitle', {
+              count: filteredOrders.length,
+              revenue: kpis.revenue.toLocaleString(),
+              currency: CURRENCY_SYMBOL
+            })}
             filename={`commandes_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -1166,7 +1167,7 @@ const OrdersPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <Plus size={18} />
-            Nouvelle commande
+            {t('orders.addOrder')}
           </button>
           <button
             onClick={fetchOrders}
@@ -1180,14 +1181,14 @@ const OrdersPage = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
-        <KPICard icon={ShoppingBag} title="Total commandes" value={kpis.total} color="blue" />
-        <KPICard icon={Clock} title="En attente" value={kpis.pending} color="amber" />
-        <KPICard icon={CheckCircle} title="Validées" value={kpis.validated} color="indigo" />
-        <KPICard icon={Factory} title="En production" value={kpis.inProduction} color="purple" />
-        <KPICard icon={Package} title="Prêtes" value={kpis.ready} color="teal" />
-        <KPICard icon={Truck} title="Livrées" value={kpis.delivered} color="emerald" />
-        <KPICard icon={XCircle} title="Annulées" value={kpis.cancelled} color="rose" />
-        <KPICard icon={DollarSign} title={`CA (${CURRENCY_SYMBOL})`} value={kpis.revenue.toLocaleString()} color="gold" />
+        <KPICard icon={ShoppingBag} title={t('orders.kpi.total')} value={kpis.total} color="blue" />
+        <KPICard icon={Clock} title={t('orders.kpi.pending')} value={kpis.pending} color="amber" />
+        <KPICard icon={CheckCircle} title={t('orders.kpi.validated')} value={kpis.validated} color="indigo" />
+        <KPICard icon={Factory} title={t('orders.kpi.inProduction')} value={kpis.inProduction} color="purple" />
+        <KPICard icon={Package} title={t('orders.kpi.ready')} value={kpis.ready} color="teal" />
+        <KPICard icon={Truck} title={t('orders.kpi.delivered')} value={kpis.delivered} color="emerald" />
+        <KPICard icon={XCircle} title={t('orders.kpi.cancelled')} value={kpis.cancelled} color="rose" />
+        <KPICard icon={DollarSign} title={`${t('orders.kpi.revenue')} (${CURRENCY_SYMBOL})`} value={kpis.revenue.toLocaleString()} color="gold" />
       </div>
 
       {/* Filters */}
@@ -1209,7 +1210,7 @@ const OrdersPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
+              <option value="all">{t('common.allStatuses')}</option>
               {uniqueStatuses.map(status => (
                 <option key={status} value={status}>
                   {status === 'draft' ? t('orders.status.draft') :
@@ -1234,7 +1235,7 @@ const OrdersPage = () => {
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des commandes...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('orders.loading')}</p>
           </div>
         </div>
       ) : (
@@ -1262,7 +1263,7 @@ const OrdersPage = () => {
                       <td colSpan="10" className="text-center py-8">
                         <div className="flex flex-col items-center gap-2">
                           <ShoppingBag size={40} className="text-[#ECE8E1]" />
-                          <p className="text-sm text-[#6D6D6D]">Aucune commande trouvée</p>
+                          <p className="text-sm text-[#6D6D6D]">{t('orders.empty')}</p>
                           <button
                             onClick={() => setIsCreateModalOpen(true)}
                             className="text-sm text-[#B8863B] font-medium hover:underline"
@@ -1303,7 +1304,7 @@ const OrdersPage = () => {
             {paginatedOrders.length === 0 ? (
               <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
                 <ShoppingBag size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-                <p className="text-sm text-[#6D6D6D]">Aucune commande trouvée</p>
+                <p className="text-sm text-[#6D6D6D]">{t('orders.empty')}</p>
               </div>
             ) : (
               paginatedOrders.map((order) => (

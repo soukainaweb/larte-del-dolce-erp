@@ -41,6 +41,7 @@ import {
   getProductStatuses,
   uploadProductImage
 } from '../../services/productService';
+import { unwrapPaginated, ensureArray } from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -79,6 +80,7 @@ const StatusBadge = ({ status }) => {
 // PRODUCT CARD (Mobile)
 // ==========================================
 const ProductCard = ({ product, onEdit, onDelete, onView }) => {
+  const { t } = useTranslation();
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
@@ -104,14 +106,14 @@ const ProductCard = ({ product, onEdit, onDelete, onView }) => {
         </div>
         <div className="flex items-center gap-1">
           <Box size={12} />
-          {product.stock} unités
+          {product.stock} {t('common.units')}
         </div>
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#ECE8E1]">
         <div className="text-xs text-[#6D6D6D]">
           <span className="flex items-center gap-1">
             <Calendar size={12} />
-            {new Date(product.createdAt).toLocaleDateString('fr-FR')}
+            {new Date(product.createdAt).toLocaleDateString(DATE_LOCALE)}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -606,11 +608,15 @@ const ProductsPage = () => {
         sort_order: 'desc'
       };
       const response = await getProducts(params);
-      const data = response.data.data || [];
+      const resData = response?.data;
+      const data = Array.isArray(resData?.data)
+        ? resData.data
+        : (Array.isArray(resData) ? resData : []);
       setProducts(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      setTotalCount(resData?.meta?.total ?? data.length);
     } catch (error) {
       console.error('Error fetching products:', error);
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }
@@ -652,9 +658,7 @@ const ProductsPage = () => {
   }, []);
 
   // Filter products (API already handles filters)
-  const filteredProducts = useMemo(() => {
-    return products;
-  }, [products]);
+  const filteredProducts = useMemo(() => ensureArray(products), [products]);
 
   // Paginate
   const paginatedProducts = useMemo(() => {
@@ -667,13 +671,13 @@ const ProductsPage = () => {
   // EXPORT CONFIGURATION
   // ==========================================
   const columns = [
-    { label: 'Nom', accessor: 'name', width: 20 },
-    { label: 'SKU', accessor: 'sku', width: 12 },
-    { label: 'Catégorie', accessor: 'category', width: 15 },
-    { label: 'Prix', accessor: 'price', width: 12 },
-    { label: 'Stock', accessor: 'stock', width: 10 },
-    { label: 'Statut', accessor: 'status', width: 12 },
-    { label: 'Date d\'ajout', accessor: 'createdAt', width: 12 }
+    { label: t('products.table.name'), accessor: 'name', width: 20 },
+    { label: t('products.table.sku'), accessor: 'sku', width: 12 },
+    { label: t('products.table.category'), accessor: 'category', width: 15 },
+    { label: t('products.table.price'), accessor: 'price', width: 12 },
+    { label: t('products.table.stock'), accessor: 'stock', width: 10 },
+    { label: t('products.table.status'), accessor: 'status', width: 12 },
+    { label: t('products.table.addDate'), accessor: 'createdAt', width: 12 }
   ];
 
   const rowFormatter = (item) => ({
@@ -682,20 +686,20 @@ const ProductsPage = () => {
     category: item.category || '—',
     price: `${item.price.toLocaleString()} ${CURRENCY}`,
     stock: item.stock,
-    status: item.status === 'active' ? 'Actif' :
-            item.status === 'inactive' ? 'Inactif' :
-            item.status === 'out_of_stock' ? 'Rupture de stock' :
-            item.status === 'low_stock' ? 'Stock faible' : item.status,
-    createdAt: new Date(item.createdAt).toLocaleDateString('fr-FR')
+    status: item.status === 'active' ? t('common.active') :
+            item.status === 'inactive' ? t('common.inactive') :
+            item.status === 'out_of_stock' ? t('common.statuses.outOfStock') :
+            item.status === 'low_stock' ? t('common.statuses.lowStock') : item.status,
+    createdAt: new Date(item.createdAt).toLocaleDateString(DATE_LOCALE)
   });
 
   const summary = [
-    { label: 'Total produits', value: kpis.total },
-    { label: 'Actifs', value: kpis.active },
-    { label: 'Stock faible', value: kpis.lowStock },
-    { label: 'Rupture', value: kpis.outOfStock },
-    { label: 'Stock total', value: kpis.totalStock },
-    { label: 'Valeur stock', value: `${kpis.totalValue.toLocaleString()} ${CURRENCY}` }
+    { label: t('products.kpi.total'), value: kpis.total },
+    { label: t('products.kpi.active'), value: kpis.active },
+    { label: t('products.kpi.lowStock'), value: kpis.lowStock },
+    { label: t('products.kpi.outOfStock'), value: kpis.outOfStock },
+    { label: t('products.kpi.totalStock'), value: kpis.totalStock },
+    { label: t('products.kpi.stockValue'), value: `${kpis.totalValue.toLocaleString()} ${CURRENCY}` }
   ];
 
   // ==========================================
@@ -730,7 +734,7 @@ const ProductsPage = () => {
     try {
       const response = await updateProduct(selectedProduct.id, formData);
       const updatedProduct = response.data.data;
-      setProducts(prev => prev.map(p =>
+      setProducts(prev => ensureArray(prev).map(p =>
         p.id === selectedProduct.id ? updatedProduct : p
       ));
       setIsEditModalOpen(false);
@@ -747,7 +751,7 @@ const ProductsPage = () => {
     setIsSaving(true);
     try {
       await deleteProduct(selectedProduct.id);
-      setProducts(prev => prev.filter(p => p.id !== selectedProduct.id));
+      setProducts(prev => ensureArray(prev).filter(p => p.id !== selectedProduct.id));
       setIsDeleteModalOpen(false);
       setSelectedProduct(null);
       await fetchStatistics();
@@ -768,7 +772,7 @@ const ProductsPage = () => {
   }, [searchTerm, statusFilter]);
 
   const uniqueStatuses = useMemo(() => {
-    const statuses = new Set(products.map(p => p.status));
+    const statuses = new Set(ensureArray(products).map(p => p.status));
     return Array.from(statuses);
   }, [products]);
 
@@ -787,8 +791,8 @@ const ProductsPage = () => {
           <ExportButtons
             data={filteredProducts}
             columns={columns}
-            title="Liste des produits"
-            subtitle={`${filteredProducts.length} produits`}
+            title={t('products.export.title')}
+            subtitle={t('products.export.subtitle', { count: filteredProducts.length })}
             filename={`produits_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -801,20 +805,20 @@ const ProductsPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <Plus size={18} />
-            Ajouter un produit
+            {t('products.addProduct')}
           </button>
           <div className="flex items-center gap-1 border border-[#ECE8E1] rounded-xl bg-white p-1">
             <button
               onClick={() => setViewMode('table')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue tableau"
+              title={t('common.tableView')}
             >
               <List size={18} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue grille"
+              title={t('common.gridView')}
             >
               <Grid size={18} />
             </button>
@@ -880,7 +884,7 @@ const ProductsPage = () => {
                     <td colSpan="7" className="text-center py-8">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm text-[#6D6D6D]">Chargement des produits...</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.products') })}</p>
                       </div>
                     </td>
                   </tr>
@@ -889,18 +893,18 @@ const ProductsPage = () => {
                     <td colSpan="7" className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <Package size={40} className="text-[#ECE8E1]" />
-                        <p className="text-sm text-[#6D6D6D]">Aucun produit trouvé</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('products.empty')}</p>
                         <button
                           onClick={() => setIsCreateModalOpen(true)}
                           className="text-sm text-[#B8863B] font-medium hover:underline"
                         >
-                          Ajouter un produit
+                          {t('products.addProduct')}
                         </button>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  paginatedProducts.map((product, index) => (
+                  ensureArray(paginatedProducts).map((product, index) => (
                     <ProductTableRow
                       key={product.id}
                       product={product}
@@ -932,15 +936,15 @@ const ProductsPage = () => {
           {isLoading ? (
             <div className="col-span-full flex flex-col items-center justify-center py-8 gap-3">
               <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-[#6D6D6D]">Chargement des produits...</p>
+              <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.products') })}</p>
             </div>
           ) : paginatedProducts.length === 0 ? (
             <div className="col-span-full bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
               <Package size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-              <p className="text-sm text-[#6D6D6D]">Aucun produit trouvé</p>
+              <p className="text-sm text-[#6D6D6D]">{t('products.empty')}</p>
             </div>
           ) : (
-            paginatedProducts.map((product) => (
+            ensureArray(paginatedProducts).map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -967,15 +971,15 @@ const ProductsPage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des produits...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.products') })}</p>
           </div>
         ) : paginatedProducts.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Package size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucun produit trouvé</p>
+            <p className="text-sm text-[#6D6D6D]">{t('products.empty')}</p>
           </div>
         ) : (
-          paginatedProducts.map((product) => (
+          ensureArray(paginatedProducts).map((product) => (
             <ProductCard
               key={product.id}
               product={product}

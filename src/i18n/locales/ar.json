@@ -480,21 +480,33 @@
     "addOrder": "طلب جديد",
     "empty": "لم يتم العثور على طلبات",
     "export": {
-      "title": "قائمة الطلبات"
+      "title": "قائمة الطلبات",
+      "subtitle": "{{count}} طلب - إيرادات: {{revenue}} {{currency}}"
     },
     "modals": {
       "addTitle": "طلب جديد",
       "editTitle": "تعديل الطلب",
       "deleteTitle": "حذف الطلب؟",
+      "deleteMessage": "أنت على وشك حذف الطلب {{orderNumber}}.",
       "detailsTitle": "تفاصيل الطلب"
     },
     "sections": {
       "customerInfo": "معلومات العميل",
       "generalInfo": "معلومات عامة"
     },
+    "loading": "جاري تحميل الطلبات...",
     "fields": {
+      "addProduct": "إضافة منتج",
       "deliveryTime": "وقت التوصيل",
-      "paymentMethod": "طريقة الدفع"
+      "paymentMethod": "طريقة الدفع",
+      "quantity": "الكمية",
+      "discount": "الخصم (%)"
+    },
+    "summary": {
+      "title": "ملخص",
+      "subtotal": "المجموع الفرعي",
+      "totalDiscount": "إجمالي الخصم",
+      "grandTotal": "الإجمالي"
     },
     "validation": {
       "customerRequired": "العميل مطلوب",
@@ -524,7 +536,8 @@
       "status": "الحالة",
       "priority": "الأولوية",
       "orderDate": "تاريخ الطلب",
-      "deliveryDate": "تاريخ التوصيل"
+      "deliveryDate": "تاريخ التوصيل",
+      "paymentStatus": "حالة الدفع"
     },
     "status": {
       "draft": "مسودة",
@@ -549,6 +562,10 @@
     "subtitle": "إدارة قاعدة العملاء",
     "search": "البحث عن عميل...",
     "addCustomer": "عميل جديد",
+    "empty": "لم يتم العثور على أي عميل",
+    "errors": {
+      "save": "خطأ أثناء حفظ العميل"
+    },
     "kpi": {
       "total": "إجمالي العملاء",
       "active": "عملاء نشطون",
@@ -592,13 +609,23 @@
     "title": "المنتجات",
     "subtitle": "إدارة فهرس المنتجات",
     "search": "البحث عن منتج...",
-    "addProduct": "منتج جديد",
+    "addProduct": "إضافة منتج",
+    "empty": "لم يتم العثور على أي منتج",
+    "errors": {
+      "save": "خطأ أثناء حفظ المنتج"
+    },
+    "export": {
+      "title": "قائمة المنتجات",
+      "subtitle": "{{count}} منتج"
+    },
     "kpi": {
       "total": "إجمالي المنتجات",
       "active": "منتجات نشطة",
       "lowStock": "مخزون منخفض",
       "outOfStock": "نفاد المخزون",
-      "categories": "الفئات"
+      "categories": "الفئات",
+      "totalStock": "إجمالي المخزون",
+      "stockValue": "قيمة المخزون"
     },
     "table": {
       "name": "الاسم",
@@ -629,18 +656,63 @@
     "subtitle": "تنظيم المنتجات",
     "search": "البحث عن فئة...",
     "addCategory": "فئة جديدة",
+    "empty": "لم يتم العثور على أي فئة",
+    "errors": {
+      "save": "خطأ أثناء حفظ الفئة"
+    },
     "kpi": {
       "total": "إجمالي الفئات",
       "active": "فئات نشطة",
       "products": "المنتجات",
       "subcategories": "الفئات الفرعية"
     },
+    "kpiExtra": {
+      "mostUsed": "الأكثر استخداماً"
+    },
     "table": {
       "name": "الاسم",
       "description": "الوصف",
       "productsCount": "عدد المنتجات",
       "status": "الحالة",
-      "parent": "الفئة الأب"
+      "parent": "الفئة الأب",
+      "category": "الفئة",
+      "nameAr": "الاسم بالعربية",
+      "products": "المنتجات",
+      "order": "الترتيب",
+      "visible": "الظهور",
+      "updatedAt": "تاريخ التحديث"
+    },
+    "form": {
+      "nameEn": "الاسم (إنجليزي)",
+      "nameAr": "الاسم (عربي)",
+      "icon": "الأيقونة",
+      "color": "اللون",
+      "parentCategory": "الفئة الأب",
+      "displayOrder": "ترتيب العرض",
+      "showOnPOS": "عرض في نقطة البيع",
+      "availableOnline": "متاح عبر الإنترنت",
+      "categoryImage": "صورة الفئة",
+      "uploadHint": "انقر لرفع صورة",
+      "formats": "PNG، JPG أو WEBP (حد أقصى 2 م.ب)",
+      "online": "متاح على الإنترنت"
+    },
+    "labels": {
+      "order": "الترتيب",
+      "parent": "الفئة الأب",
+      "arabic": "العربية"
+    },
+    "modals": {
+      "addTitle": "إضافة فئة",
+      "editTitle": "تعديل الفئة",
+      "deleteTitle": "حذف الفئة؟",
+      "detailsTitle": "تفاصيل الفئة",
+      "deleteMessage": "أنت على وشك حذف الفئة {{name}}.",
+      "warning": "تحذير",
+      "deleteBlocked": "لا يمكن حذف هذه الفئة لأنها تحتوي على {{count}} منتج(ات)."
+    },
+    "export": {
+      "title": "قائمة الفئات",
+      "subtitle": "{{count}} فئة"
     }
   },
   "deliveries": {
