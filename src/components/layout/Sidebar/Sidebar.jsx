@@ -43,6 +43,7 @@ import {
   Cookie,
   FolderTree,
 } from 'lucide-react';
+import brandLogo from '../../../constants/brandAssets';
 
 // ==================================================
 // DESIGN TOKENS — L'arte del dolce ERP Sidebar
@@ -411,7 +412,7 @@ function useDismiss(ref, isOpen, onClose) {
 // ==================================================
 // LOGO MARK
 // ==================================================
-const DEFAULT_LOGO_SRC = '/logo.svg';
+const DEFAULT_LOGO_SRC = brandLogo;
 
 const LogoMark = memo(function LogoMark({ logo, size }) {
   const [failed, setFailed] = useState(false);

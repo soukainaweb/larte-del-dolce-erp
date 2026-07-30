@@ -10,6 +10,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { login as loginService, getOAuthProviders, initiateOAuth } from '../../services/authService';
 import { extractUserFromResponse, extractTokenFromResponse, getApiErrorMessage } from '../../utils/apiHelpers';
 import AuthBrandPanel from '../../components/auth/AuthBrandPanel';
+import brandLogo from '../../constants/brandAssets';
 
 const Login = () => {
   const { t } = useTranslation();
@@ -19,14 +20,21 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [oauthProviders, setOauthProviders] = useState({ google: false, apple: false });
+  const [oauthProvidersStatus, setOauthProvidersStatus] = useState('loading');
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     getOAuthProviders()
-      .then(setOauthProviders)
-      .catch(() => setOauthProviders({ google: false, apple: false }));
+      .then(({ providers, status }) => {
+        setOauthProviders(providers);
+        setOauthProvidersStatus(status);
+      })
+      .catch(() => {
+        setOauthProviders({ google: false, apple: false });
+        setOauthProvidersStatus('error');
+      });
   }, []);
 
   const handleChange = (e) => {
@@ -69,7 +77,7 @@ const Login = () => {
   };
 
   const handleOAuth = (provider) => {
-    if (!oauthProviders[provider]) {
+    if (oauthProvidersStatus === 'ready' && !oauthProviders[provider]) {
       showToast(t('auth.oauthNotConfigured'), 'info');
       return;
     }
@@ -95,7 +103,7 @@ const Login = () => {
         <div className="flex-1 p-8 sm:p-10 lg:p-12 xl:p-16 flex flex-col justify-center">
           <div className="w-full max-w-md mx-auto">
             <div className="lg:hidden flex flex-col items-center gap-3 mb-10">
-              <img src="/logo.svg" alt={t('common.appName')} className="w-20 h-20 object-contain" />
+              <img src={brandLogo} alt={t('common.appName')} className="w-20 h-20 object-contain" />
               <h1 className="font-playfair text-2xl font-bold text-[#3D2F24] text-center">{t('common.appName')}</h1>
             </div>
 

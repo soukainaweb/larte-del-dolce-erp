@@ -64,8 +64,11 @@ class SocialAuthService
         }
 
         return match ($provider) {
-            'google' => filled(config('services.google.client_id')) && filled(config('services.google.client_secret')),
+            'google' => filled(config('services.google.client_id'))
+                && filled(config('services.google.client_secret'))
+                && filled(config('services.google.redirect')),
             'apple' => filled(config('services.apple.client_id'))
+                && filled(config('services.apple.redirect'))
                 && (
                     filled(config('services.apple.client_secret'))
                     || (
