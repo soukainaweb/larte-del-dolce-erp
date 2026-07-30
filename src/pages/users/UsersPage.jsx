@@ -1,5 +1,6 @@
 // src/pages/Users/UsersPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users as UsersIcon,
@@ -528,6 +529,8 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
 const UsersPage = () => {
   const { user } = useAuth();
   const { title, subtitle, searchPlaceholder, t, commonStatus, actions, tc } = usePageI18n('users');
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // State
   const [users, setUsers] = useState([]);
@@ -579,6 +582,33 @@ const UsersPage = () => {
   useEffect(() => {
     fetchUsers();
   }, [currentPage, itemsPerPage, searchTerm, roleFilter, statusFilter]);
+
+  useEffect(() => {
+    const editUserId = location.state?.editUserId;
+    if (!editUserId) return;
+
+    const openEditFromNavigation = async () => {
+      const existing = users.find((u) => u.id === editUserId);
+      if (existing) {
+        setSelectedUser(existing);
+        setIsEditModalOpen(true);
+      } else {
+        try {
+          const response = await getUserById(editUserId);
+          const user = unwrapData(response);
+          if (user) {
+            setSelectedUser(user);
+            setIsEditModalOpen(true);
+          }
+        } catch (error) {
+          console.error('Error loading user for edit:', error);
+        }
+      }
+      navigate(location.pathname, { replace: true, state: {} });
+    };
+
+    openEditFromNavigation();
+  }, [location.state?.editUserId, users]);
 
   // Fetch statistics
   const [kpis, setKpis] = useState({

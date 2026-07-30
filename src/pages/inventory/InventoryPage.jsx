@@ -1,5 +1,6 @@
 // src/pages/Inventory/InventoryPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package,
@@ -613,6 +614,7 @@ const ViewInventoryModal = ({ isOpen, onClose, item }) => {
 // ==========================================
 const InventoryPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('inventory');
 
   const [inventory, setInventory] = useState([]);
@@ -954,6 +956,8 @@ const InventoryPage = () => {
                         <Package size={40} className="text-[#ECE8E1]" />
                         <p className="text-sm text-[#6D6D6D]">Aucun produit trouvé</p>
                         <button
+                          type="button"
+                          onClick={() => navigate('/dashboard/products')}
                           className="text-sm text-[#B8863B] font-medium hover:underline"
                         >
                           Ajouter un produit

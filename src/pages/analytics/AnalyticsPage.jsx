@@ -1054,8 +1054,24 @@ const AnalyticsPage = () => {
     showToast('🔄 Données actualisées avec succès', 'success');
   };
 
-  const handleShare = () => {
-    showToast('🔗 Lien de partage copié dans le presse-papier', 'success');
+  const handleShare = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(window.location.href);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = window.location.href;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      showToast(t('common.linkCopied'), 'success');
+    } catch {
+      showToast(t('common.copyFailed'), 'error');
+    }
   };
 
   const handleResetFilters = () => {
@@ -1071,7 +1087,38 @@ const AnalyticsPage = () => {
   };
 
   const handleDismissAlert = (alertId) => {
-    showToast(`🔔 Alerte ${alertId} marquée comme lue`, 'info');
+    setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
+    showToast(t('common.alertDismissed'), 'info');
+  };
+
+  const handleKpiSearchFocus = () => {
+    const searchInput = document.getElementById('analytics-search-input');
+    if (searchInput) {
+      searchInput.focus();
+      showToast(t('common.searchFocused'), 'info');
+    }
+  };
+
+  const handleKpiTableDownload = () => {
+    if (!kpiComparison.length) {
+      showToast(t('common.noData'), 'info');
+      return;
+    }
+    const headers = ['indicator', 'current', 'previous', 'growth', 'target'];
+    const rows = kpiComparison.map((item) =>
+      [item.indicator, item.current, item.previous, item.growth, item.target]
+        .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
+        .join(',')
+    );
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `analytics-kpi-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast(t('common.exportSuccess', { type: 'CSV', count: kpiComparison.length }), 'success');
   };
 
   // ==========================================
@@ -1597,16 +1644,15 @@ const AnalyticsPage = () => {
   );
 
   const renderKpiTable = () => {
-  const { t, tc, actions } = usePageI18n('analytics');
     return (
       <div className="bg-white border border-[#ECE8E1] rounded-xl overflow-hidden">
         <div className="p-4 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-sm font-bold text-[#3D2F24]">Tableau d'Analyse des KPI</h3>
           <div className="flex items-center gap-2">
-            <button className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
+            <button type="button" onClick={handleKpiSearchFocus} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors" title={t('common.search')}>
               <Search size={16} className="text-[#6D6D6D]" />
             </button>
-            <button className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
+            <button type="button" onClick={handleKpiTableDownload} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors" title={t('common.download')}>
               <Download size={16} className="text-[#6D6D6D]" />
             </button>
           </div>
@@ -1754,6 +1800,7 @@ const AnalyticsPage = () => {
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" />
               <input
+                id="analytics-search-input"
                 type="text"
                 placeholder={searchPlaceholder}
                 value={searchTerm}

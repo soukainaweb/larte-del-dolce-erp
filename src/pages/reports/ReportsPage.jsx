@@ -1829,8 +1829,29 @@ const ReportsPage = () => {
     }
   };
 
+  const copyPageLink = async (label) => {
+    try {
+      const url = window.location.href;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      showToast(label || t('common.linkCopied'), 'success');
+    } catch {
+      showToast(t('common.copyFailed'), 'error');
+    }
+  };
+
   const handleShare = () => {
-    showToast('🔗 Lien de partage copié dans le presse-papier', 'success');
+    copyPageLink(t('common.linkCopied'));
   };
 
   // ==========================================
@@ -1915,7 +1936,7 @@ const ReportsPage = () => {
 
   const handleViewReport = (report) => {
     setSelectedReport(report);
-    showToast(`👁️ Consultation du rapport "${report.name}"`, 'info');
+    setIsReportModalOpen(true);
   };
 
   // ==========================================
@@ -1960,11 +1981,12 @@ const ReportsPage = () => {
   };
 
   const handleShareReport = (report) => {
-    showToast(`🔗 Rapport "${report.name}" partagé avec succès`, 'success');
+    copyPageLink(t('common.linkCopied'));
   };
 
   const handleDismissAlert = (alertId) => {
-    showToast(`🔔 Alerte ${alertId} marquée comme lue`, 'info');
+    setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
+    showToast(t('common.alertDismissed'), 'info');
   };
 
   const handleResetFilters = () => {
@@ -2588,6 +2610,41 @@ const ReportsPage = () => {
         }}
         invoice={selectedInvoice}
       />
+
+      {/* Report Detail Modal */}
+      {isReportModalOpen && selectedReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full"
+          >
+            <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
+                {t('common.details')}
+              </h3>
+              <button type="button" onClick={() => { setIsReportModalOpen(false); setSelectedReport(null); }} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg">
+                <X size={20} className="text-[#6D6D6D]" />
+              </button>
+            </div>
+            <div className="p-6 space-y-3 text-sm">
+              <p className="font-semibold text-[#3D2F24]">{selectedReport.name}</p>
+              {selectedReport.type && <p className="text-[#6D6D6D]">{selectedReport.type}</p>}
+              {selectedReport.date && <p className="text-[#6D6D6D]">{selectedReport.date}</p>}
+              {selectedReport.description && <p className="text-[#3D2F24]">{selectedReport.description}</p>}
+            </div>
+            <div className="p-6 pt-0 flex gap-3">
+              <button type="button" onClick={() => handleDownloadReport(selectedReport)} className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg">
+                {t('common.download')}
+              </button>
+              <button type="button" onClick={() => { setIsReportModalOpen(false); setSelectedReport(null); }} className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg">
+                {t('common.close')}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* ===== HEADER ===== */}
       <div className="mb-6">

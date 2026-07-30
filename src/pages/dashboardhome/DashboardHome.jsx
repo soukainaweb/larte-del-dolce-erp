@@ -578,6 +578,14 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
     window.print();
   };
 
+  const handleViewOrder = (order) => {
+    navigate('/dashboard/orders', { state: { viewOrderId: order.id } });
+  };
+
+  const handleEditOrder = (order) => {
+    navigate('/dashboard/orders', { state: { editOrderId: order.id } });
+  };
+
   const confirmDeleteOrder = async () => {
     if (!orderPendingDelete?.id) {
       setOrderPendingDelete(null);
@@ -909,8 +917,8 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                       <td className="p-3 text-right font-bold" style={{ fontFamily: FONT_NUMBER }}>SAR {formatLocaleNumber(order.amount)}</td>
                       <td className="p-3">
                         <div className="flex items-center justify-center gap-2">
-                          <button className="p-1 hover:text-[#C6923B]" title={t('common.view')}><Eye className="w-3.5 h-3.5" /></button>
-                          <button className="p-1 hover:text-[#C6923B]" title={t('common.edit')}><Edit2 className="w-3.5 h-3.5" /></button>
+                          <button type="button" onClick={() => handleViewOrder(order)} className="p-1 hover:text-[#C6923B]" title={t('common.view')}><Eye className="w-3.5 h-3.5" /></button>
+                          <button type="button" onClick={() => handleEditOrder(order)} className="p-1 hover:text-[#C6923B]" title={t('common.edit')}><Edit2 className="w-3.5 h-3.5" /></button>
                           <button
                             className="p-1 hover:text-[#EF4444]"
                             title={t('common.delete')}
@@ -945,8 +953,8 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                   <div className="flex justify-between items-center mt-2 pt-2 border-t border-[#ECE8E1]">
                     <span className="font-bold text-sm" style={{ fontFamily: FONT_NUMBER }}>SAR {formatLocaleNumber(order.amount)}</span>
                     <div className="flex items-center gap-3">
-                      <button className="p-1 hover:text-[#C6923B]" title={t('common.view')}><Eye className="w-4 h-4" /></button>
-                      <button className="p-1 hover:text-[#C6923B]" title={t('common.edit')}><Edit2 className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => handleViewOrder(order)} className="p-1 hover:text-[#C6923B]" title={t('common.view')}><Eye className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => handleEditOrder(order)} className="p-1 hover:text-[#C6923B]" title={t('common.edit')}><Edit2 className="w-4 h-4" /></button>
                       <button className="p-1 hover:text-[#EF4444]" title={t('common.delete')} onClick={() => setOrderPendingDelete(order)}>
                         <Trash2 className="w-4 h-4" />
                       </button>

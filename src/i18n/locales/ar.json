@@ -164,6 +164,13 @@
     "emailInvalid": "بريد إلكتروني غير صالح",
     "mustBeNumber": "يجب أن يكون رقماً",
     "irreversibleAction": "لا يمكن التراجع عن هذا الإجراء.",
+    "linkCopied": "تم نسخ الرابط إلى الحافظة",
+    "copyFailed": "تعذّر نسخ الرابط",
+    "featureComingSoon": "هذه الميزة قيد التطوير وستكون متاحة قريباً",
+    "featureComingSoonNamed": "{{feature}} — قيد التطوير وستكون متاحة قريباً",
+    "alertDismissed": "تم تجاهل التنبيه",
+    "mockActionSuccess": "تم تنفيذ الإجراء بنجاح (معاينة)",
+    "searchFocused": "استخدم حقل البحث أعلاه للتصفية",
     "createdOn": "أُنشئ في {{date}}",
     "updatedOn": "تم التحديث في {{date}}",
     "placeholders": {
