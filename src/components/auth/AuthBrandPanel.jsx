@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import brandLogo from '../../constants/brandAssets';
+import AuthLogoMark from './AuthLogoMark';
 
 /**
  * Shared left branding panel for auth pages (login, forgot password, reset password).
@@ -22,13 +22,7 @@ const AuthBrandPanel = ({ subtitle }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: 'easeOut' }}
       >
-        <div className="mb-10 p-6 rounded-full bg-white/70 shadow-[0_20px_60px_rgba(184,134,59,0.15)] border border-[#E8DDD1]/80">
-          <img
-            src={brandLogo}
-            alt={t('common.appName')}
-            className="w-36 h-36 xl:w-44 xl:h-44 object-contain"
-          />
-        </div>
+        <AuthLogoMark size="desktop" alt={t('common.appName')} />
 
         <h1 className="font-playfair text-4xl xl:text-5xl font-bold text-[#3D2F24] leading-tight tracking-tight mb-3">
           {t('common.appName')}

@@ -7,6 +7,7 @@ import { FaArrowLeft } from 'react-icons/fa';
 import { resetPassword } from '../../services/authService';
 import { getApiErrorMessage } from '../../utils/apiHelpers';
 import AuthBrandPanel from '../../components/auth/AuthBrandPanel';
+import AuthLogoMark from '../../components/auth/AuthLogoMark';
 
 const ResetPassword = () => {
   const { t } = useTranslation();

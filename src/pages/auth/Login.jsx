@@ -10,7 +10,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { login as loginService } from '../../services/authService';
 import { extractUserFromResponse, extractTokenFromResponse, getApiErrorMessage } from '../../utils/apiHelpers';
 import AuthBrandPanel from '../../components/auth/AuthBrandPanel';
-import brandLogo from '../../constants/brandAssets';
+import AuthLogoMark from '../../components/auth/AuthLogoMark';
 
 const Login = () => {
   const { t } = useTranslation();
@@ -81,7 +81,7 @@ const Login = () => {
         <div className="flex-1 p-8 sm:p-10 lg:p-12 xl:p-16 flex flex-col justify-center">
           <div className="w-full max-w-md mx-auto">
             <div className="lg:hidden flex flex-col items-center gap-3 mb-10">
-              <img src={brandLogo} alt={t('common.appName')} className="w-20 h-20 object-contain" />
+              <AuthLogoMark size="mobile" alt={t('common.appName')} />
               <h1 className="font-playfair text-2xl font-bold text-[#3D2F24] text-center">{t('common.appName')}</h1>
             </div>
 
