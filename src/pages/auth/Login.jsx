@@ -1,71 +1,65 @@
 // src/pages/auth/Login.jsx
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import {
-  FaGoogle,
-  FaApple,
-  FaEye,
-  FaEyeSlash,
-} from "react-icons/fa";
-import {
-  HiOutlineMail,
-  HiOutlineLockClosed,
-} from "react-icons/hi";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { FaGoogle, FaApple, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { HiOutlineMail, HiOutlineLockClosed } from 'react-icons/hi';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Cookie } from 'lucide-react';
-import { useAuth } from "../../contexts/AuthContext";
-import { useToast } from "../../contexts/ToastContext";
-import { login as loginService } from "../../services/authService";
-import { extractUserFromResponse, extractTokenFromResponse, getApiErrorMessage } from "../../utils/apiHelpers";
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
+import { login as loginService, getOAuthProviders, initiateOAuth } from '../../services/authService';
+import { extractUserFromResponse, extractTokenFromResponse, getApiErrorMessage } from '../../utils/apiHelpers';
+import AuthBrandPanel from '../../components/auth/AuthBrandPanel';
 
 const Login = () => {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    remember: false,
-  });
+  const [formData, setFormData] = useState({ email: '', password: '', remember: false });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  
+  const [error, setError] = useState('');
+  const [oauthProviders, setOauthProviders] = useState({ google: false, apple: false });
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    getOAuthProviders()
+      .then(setOauthProviders)
+      .catch(() => setOauthProviders({ google: false, apple: false }));
+  }, []);
+
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError('');
     setIsLoading(true);
-    
+
     try {
       const data = await loginService({
         email: formData.email,
         password: formData.password,
-        remember: formData.remember
+        remember: formData.remember,
       });
-      
+
       const userData = extractUserFromResponse(data);
       const token = extractTokenFromResponse(data);
-      
+
       if (!userData || !token) {
         throw new Error(t('auth.invalidLoginData'));
       }
-      
+
       login(userData, token);
       showToast(t('auth.loginSuccess', { defaultValue: 'Connexion réussie' }), 'success');
       navigate('/dashboard');
     } catch (err) {
-      console.error("Login error:", err);
       const errorMessage = getApiErrorMessage(err, t('auth.loginError'));
       setError(errorMessage);
       showToast(errorMessage, 'error');
@@ -74,192 +68,132 @@ const Login = () => {
     }
   };
 
-  const handleQuickLogin = async () => {
-    setError("");
-    setIsLoading(true);
-    
-    try {
-      const data = await loginService({
-        email: 'madina7ali7@gmail.com',
-        password: '123456',
-        remember: false
-      });
-      
-      const userData = extractUserFromResponse(data);
-      const token = extractTokenFromResponse(data);
-      
-      if (!userData || !token) {
-        throw new Error(t('auth.invalidLoginData'));
-      }
-      
-      login(userData, token);
-      showToast(t('auth.loginSuccess', { defaultValue: 'Connexion réussie' }), 'success');
-      navigate('/dashboard');
-    } catch (err) {
-      console.error("Quick login error:", err);
-      const errorMessage = getApiErrorMessage(err, t('auth.quickLoginError'));
-      setError(errorMessage);
-      showToast(errorMessage, 'error');
-    } finally {
-      setIsLoading(false);
+  const handleOAuth = (provider) => {
+    if (!oauthProviders[provider]) {
+      showToast(t('auth.oauthNotConfigured'), 'info');
+      return;
     }
+    initiateOAuth(provider);
   };
 
+  const inputClass =
+    'w-full h-[54px] pl-12 pr-4 rounded-[18px] border border-[#E8DDD1] bg-white focus:border-[#B8863B] focus:ring-2 focus:ring-[#B8863B]/20 focus:outline-none transition-all duration-300 text-[#3D2F24] placeholder-[#B0A8A0] font-inter text-left';
+
   return (
-    <div className="min-h-screen w-full bg-[#FAF7F2] flex items-center justify-center p-4 font-['Cairo'] relative overflow-hidden">
-      {/* Décorations */}
-      <div className="absolute top-[-150px] right-[-150px] w-[400px] h-[400px] rounded-full bg-[#B88646]/10 blur-3xl" />
-      <div className="absolute bottom-[-150px] left-[-150px] w-[400px] h-[400px] rounded-full bg-[#B88646]/10 blur-3xl" />
-      
-      {/* Carte principale */}
+    <div className="min-h-screen w-full bg-[#FAF7F2] flex items-center justify-center p-4 sm:p-6 lg:p-8 font-inter relative overflow-hidden">
+      <div className="absolute top-[-20%] end-[-10%] w-[500px] h-[500px] rounded-full bg-[#B8863B]/6 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-20%] start-[-10%] w-[500px] h-[500px] rounded-full bg-[#C89B5A]/8 blur-3xl pointer-events-none" />
+
       <motion.div
-        className="w-full max-w-[1200px] bg-white/80 backdrop-blur-sm rounded-[22px] shadow-[0_30px_80px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col md:flex-row border border-white/50"
-        initial={{ opacity: 0, y: 25 }}
+        className="w-full max-w-[1280px] bg-white/95 backdrop-blur-sm rounded-[22px] shadow-[0_30px_80px_rgba(61,47,36,0.1)] overflow-hidden flex flex-col lg:flex-row border border-[#E8DDD1]/50"
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
       >
-        {/* Côté gauche - Image */}
-        <div className="hidden md:flex md:w-[50%] bg-gradient-to-br from-[#FAF7F2] to-[#F3EDE4] p-12 flex-col items-center justify-center relative overflow-hidden min-h-[600px]">
-          <div className="relative z-10 h-full flex flex-col items-center justify-center gap-8 w-full">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-28 h-28 rounded-full bg-[#B88646]/10 flex items-center justify-center border border-[#B88646]/20">
-                <Cookie className="w-14 h-14 text-[#B88646]" strokeWidth={1.5} />
-              </div>
-              <h1 className="text-3xl font-bold text-[#2D2D2D] leading-tight text-center">{t('common.appName')}</h1>
-              <p className="text-[#777777] text-sm tracking-wider text-center">{t('common.erp')}</p>
+        <AuthBrandPanel subtitle={t('auth.loginSubtitle')} />
+
+        <div className="flex-1 p-8 sm:p-10 lg:p-12 xl:p-16 flex flex-col justify-center">
+          <div className="w-full max-w-md mx-auto">
+            <div className="lg:hidden flex flex-col items-center gap-3 mb-10">
+              <img src="/logo.svg" alt={t('common.appName')} className="w-20 h-20 object-contain" />
+              <h1 className="font-playfair text-2xl font-bold text-[#3D2F24] text-center">{t('common.appName')}</h1>
             </div>
 
-            <div className="flex items-center justify-center relative w-full">
-              <div className="relative flex items-center justify-center w-[280px] h-[280px] rounded-full bg-gradient-to-br from-[#B88646]/20 to-[#E9DDCF]/40 shadow-2xl">
-                <Cookie className="w-32 h-32 text-[#B88646]/60" strokeWidth={1} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Côté droit - Formulaire */}
-        <div className="w-full md:w-[50%] p-8 md:p-12 flex flex-col justify-center">
-          <div className="max-w-sm mx-auto w-full">
-            {/* Logo pour mobile */}
-            <div className="md:hidden flex flex-col items-center gap-2 mb-8">
-              <div className="w-16 h-16 rounded-full bg-[#B88646]/10 flex items-center justify-center">
-                <Cookie className="w-8 h-8 text-[#B88646]" />
-              </div>
-              <h1 className="text-xl font-bold text-[#2D2D2D] leading-tight text-center">{t('common.appName')}</h1>
+            <div className="mb-10 text-center lg:text-start">
+              <h2 className="font-playfair text-3xl sm:text-4xl font-bold text-[#3D2F24] mb-2">
+                {t('auth.welcomeBack')}
+              </h2>
+              <p className="font-inter text-[#6B5E54] text-sm sm:text-base">{t('auth.loginSubtitle')}</p>
             </div>
 
-            <div className="mb-8 text-center">
-              <h2 className="text-3xl font-bold text-[#2D2D2D]">{t('auth.welcomeBack')}</h2>
-              <p className="text-[#777777] text-sm mt-2">{t('auth.loginSubtitle')}</p>
-            </div>
-
-            {/* Message d'erreur */}
             {error && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm text-center"
+                className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200/80 text-red-700 text-sm text-center font-inter"
+                role="alert"
               >
                 {error}
               </motion.div>
             )}
 
-            {/* Bouton de connexion rapide pour les tests */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleQuickLogin}
-              disabled={isLoading}
-              className="w-full h-[48px] rounded-[18px] bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all duration-300 mb-6 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  {t('auth.signingIn')}
-                </span>
-              ) : (
-                `⚡ ${t('auth.quickLogin')}`
-              )}
-            </motion.button>
-
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#E9DDCF]"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white/80 backdrop-blur-sm text-[#777777]">{t('auth.orSignInWith')}</span>
-              </div>
-            </div>
-
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-[#2D2D2D] mb-1.5 text-start">{t('auth.email')}</label>
+                <label htmlFor="email" className="block text-sm font-medium text-[#3D2F24] mb-2 font-inter">
+                  {t('auth.email')}
+                </label>
                 <div className="relative">
-                  <HiOutlineMail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#777777] text-lg" />
+                  <HiOutlineMail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9E6C30] text-lg" />
                   <input
+                    id="email"
                     type="email"
                     name="email"
+                    autoComplete="email"
                     placeholder={t('auth.emailPlaceholder')}
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full h-[54px] pl-12 pr-4 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm focus:border-[#B88646] focus:ring-2 focus:ring-[#B88646]/20 focus:outline-none transition-all duration-300 text-[#2D2D2D] placeholder-[#B0A8A0] text-left"
+                    className={inputClass}
                     required
                     disabled={isLoading}
                   />
                 </div>
               </div>
 
-              {/* Mot de passe */}
               <div>
-                <label className="block text-sm font-medium text-[#2D2D2D] mb-1.5 text-start">{t('auth.password')}</label>
+                <label htmlFor="password" className="block text-sm font-medium text-[#3D2F24] mb-2 font-inter">
+                  {t('auth.password')}
+                </label>
                 <div className="relative">
-                  <HiOutlineLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-[#777777] text-lg" />
+                  <HiOutlineLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9E6C30] text-lg" />
                   <input
-                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
                     name="password"
+                    autoComplete="current-password"
                     placeholder={t('auth.passwordPlaceholder')}
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full h-[54px] pl-12 pr-12 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm focus:border-[#B88646] focus:ring-2 focus:ring-[#B88646]/20 focus:outline-none transition-all duration-300 text-[#2D2D2D] placeholder-[#B0A8A0] text-left"
+                    className={`${inputClass} pr-12`}
                     required
                     disabled={isLoading}
                   />
                   <button
                     type="button"
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#777777] hover:text-[#B88646] transition-colors duration-200"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B5E54] hover:text-[#B8863B] transition-colors"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
                   </button>
                 </div>
               </div>
 
-              {/* Options */}
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm text-[#2D2D2D] cursor-pointer">
+              <div className="flex items-center justify-between gap-4">
+                <label className="flex items-center gap-2 text-sm text-[#3D2F24] cursor-pointer font-inter">
                   <input
                     type="checkbox"
                     name="remember"
                     checked={formData.remember}
                     onChange={handleChange}
-                    className="w-4 h-4 rounded border-[#E9DDCF] text-[#B88646] focus:ring-[#B88646]/20 focus:ring-offset-0 cursor-pointer"
+                    className="w-4 h-4 rounded border-[#E8DDD1] text-[#B8863B] focus:ring-[#B8863B]/20"
                     disabled={isLoading}
                   />
                   <span>{t('auth.rememberMe')}</span>
                 </label>
-                <Link to="/forgot-password" className="text-sm text-[#B88646] hover:text-[#9E6C30] transition-colors duration-200">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-[#B8863B] hover:text-[#9E6C30] transition-colors font-inter whitespace-nowrap"
+                >
                   {t('auth.forgotPassword')}
                 </Link>
               </div>
 
-              {/* Bouton de connexion */}
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: isLoading ? 1 : 1.01 }}
+                whileTap={{ scale: isLoading ? 1 : 0.99 }}
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-[56px] rounded-[18px] bg-gradient-to-r from-[#B88646] to-[#9E6C30] text-white font-semibold text-lg shadow-lg shadow-[#B88646]/30 hover:shadow-xl hover:shadow-[#B88646]/40 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full h-[56px] rounded-[18px] bg-gradient-to-r from-[#B8863B] to-[#9E6C30] text-white font-semibold text-lg shadow-lg shadow-[#B8863B]/25 hover:shadow-xl hover:shadow-[#B8863B]/30 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed font-inter"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -271,46 +205,43 @@ const Login = () => {
                 )}
               </motion.button>
 
-              {/* Séparateur */}
-              <div className="relative my-4">
+              <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[#E9DDCF]"></div>
+                  <div className="w-full border-t border-[#E8DDD1]" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white/80 backdrop-blur-sm text-[#777777]">{t('auth.or')}</span>
+                  <span className="px-4 bg-white text-[#6B5E54] font-inter">{t('auth.or')}</span>
                 </div>
               </div>
 
-              {/* Google */}
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => showToast(t('auth.oauthNotConfigured'), 'info')}
-                className="w-full h-[54px] flex items-center justify-center gap-3 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm hover:bg-[#FAF7F2] hover:border-[#B88646] transition-all duration-300 text-[#2D2D2D] font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <FaGoogle className="text-[#EA4335] text-lg" />
-                <span>{t('auth.signInWithGoogle')}</span>
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => handleOAuth('google')}
+                  className="h-[52px] flex items-center justify-center gap-2 rounded-[18px] border border-[#E8DDD1] bg-white hover:bg-[#FAF7F2] hover:border-[#B8863B]/40 transition-all text-[#3D2F24] font-medium font-inter disabled:opacity-60"
+                >
+                  <FaGoogle className="text-[#EA4335] text-lg shrink-0" />
+                  <span className="text-sm">{t('auth.signInWithGoogle')}</span>
+                </button>
 
-              {/* Apple */}
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => showToast(t('auth.oauthNotConfigured'), 'info')}
-                className="w-full h-[54px] flex items-center justify-center gap-3 rounded-[18px] border border-[#E9DDCF] bg-white/70 backdrop-blur-sm hover:bg-[#FAF7F2] hover:border-[#B88646] transition-all duration-300 text-[#2D2D2D] font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <FaApple className="text-[#2D2D2D] text-xl" />
-                <span>{t('auth.signInWithApple')}</span>
-              </button>
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => handleOAuth('apple')}
+                  className="h-[52px] flex items-center justify-center gap-2 rounded-[18px] border border-[#E8DDD1] bg-white hover:bg-[#FAF7F2] hover:border-[#B8863B]/40 transition-all text-[#3D2F24] font-medium font-inter disabled:opacity-60"
+                >
+                  <FaApple className="text-[#1D1D1F] text-xl shrink-0" />
+                  <span className="text-sm">{t('auth.signInWithApple')}</span>
+                </button>
+              </div>
             </form>
 
-            <div className="mt-8 text-center">
-              <p className="text-[#B0A8A0] text-xs">
-                {t('auth.copyright')}
-                <br />
-                {t('auth.platformTagline')}
-              </p>
-            </div>
+            <p className="mt-10 text-center text-[#B0A8A0] text-xs font-inter leading-relaxed">
+              {t('auth.copyright')}
+              <br />
+              {t('auth.platformTagline')}
+            </p>
           </div>
         </div>
       </motion.div>

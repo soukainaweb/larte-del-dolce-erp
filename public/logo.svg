@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="L'arte del dolce">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4AF37"/>
+      <stop offset="50%" stop-color="#B8863B"/>
+      <stop offset="100%" stop-color="#9E6C30"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="#FAF7F2" stroke="url(#gold)" stroke-width="3"/>
+  <path d="M100 38 C72 38 58 62 58 86 C58 108 72 118 86 124 L86 148 L114 148 L114 124 C128 118 142 108 142 86 C142 62 128 38 100 38 Z" fill="url(#gold)" opacity="0.95"/>
+  <ellipse cx="100" cy="88" rx="28" ry="22" fill="#FAF7F2" opacity="0.35"/>
+  <text x="100" y="178" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-size="14" fill="#9E6C30" letter-spacing="2">L'ARTE DEL DOLCE</text>
+</svg>

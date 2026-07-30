@@ -68,7 +68,7 @@ class AuthController extends Controller
         );
 
         return $this->success([
-            'user' => $user->fresh()->load('role'),
+            'user' => $user->fresh()->load('role.permissions'),
             'token' => $token,
         ], 'Connexion réussie');
     }
@@ -96,7 +96,7 @@ class AuthController extends Controller
     public function user(Request $request)
     {
         return $this->success([
-            'user' => $request->user()->load('role'),
+            'user' => $request->user()->load('role.permissions'),
         ]);
     }
 
@@ -114,6 +114,7 @@ class AuthController extends Controller
             description: 'Password reset link requested for ' . $request->input('email'),
             level: 'info',
             status: 'success',
+            userId: User::where('email', $request->input('email'))->value('id'),
             ip: $request->ip(),
         );
 
