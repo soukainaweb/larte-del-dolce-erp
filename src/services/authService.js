@@ -33,9 +33,20 @@ export const resetPassword = async (data) => {
 export const getOAuthProviders = async () => {
   try {
     const response = await api.get('/auth/providers');
-    return unwrapData(response) || { google: false, apple: false };
+    const providers = unwrapData(response) || { google: false, apple: false };
+
+    return {
+      providers: {
+        google: Boolean(providers.google),
+        apple: Boolean(providers.apple),
+      },
+      status: 'ready',
+    };
   } catch {
-    return { google: false, apple: false };
+    return {
+      providers: { google: false, apple: false },
+      status: 'error',
+    };
   }
 };
 

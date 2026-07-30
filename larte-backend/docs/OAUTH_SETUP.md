@@ -13,7 +13,7 @@ FRONTEND_URL=http://localhost:5173
 # Default role assigned to new OAuth users (must exist in roles table)
 OAUTH_DEFAULT_ROLE=viewer
 
-# Google OAuth
+# Google OAuth — required for Google sign-in (see Google Cloud Console setup below)
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_REDIRECT_URI="${APP_URL}/api/auth/google/callback"
@@ -90,9 +90,30 @@ On error:
 4. Backend creates/finds user, issues Sanctum token
 5. Frontend `/auth/callback` stores token, loads `/user`, redirects to `/dashboard`
 
+## Troubleshooting
+
+### "Social login is not configured" on the login page
+
+This toast appears when `GET /api/auth/providers` reports `google: false` or `apple: false`. Fix it on the **backend**:
+
+1. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `larte-backend/.env`
+2. Ensure `APP_URL` matches your running API (e.g. `http://127.0.0.1:8000`)
+3. Set `GOOGLE_REDIRECT_URI="${APP_URL}/api/auth/google/callback"` (or an explicit URI)
+4. Register the same redirect URI in Google Cloud Console → OAuth client → Authorized redirect URIs
+5. Restart the Laravel server after changing `.env`
+
+Verify configuration:
+
+```bash
+curl http://127.0.0.1:8000/api/auth/providers
+# Expected when Google is configured: {"success":true,"data":{"google":true,"apple":false},...}
+```
+
+If the providers request fails (network/API down), the login page still allows OAuth redirect attempts; the backend validates credentials and returns an error redirect when misconfigured.
+
 ## Notes
 
 - OAuth users are created with role `OAUTH_DEFAULT_ROLE` (default: `viewer`) if they don't exist
 - Existing users are matched by email
 - Password reset email links point to `{FRONTEND_URL}/reset-password?token=...&email=...`
-- Social buttons show a toast if the provider is not configured (`GET /api/auth/providers` returns `false`)
+- Social buttons show a toast if the provider is not configured (`GET /api/auth/providers` returns `false`). If the providers check fails due to network/API errors, buttons still attempt redirect and the backend enforces configuration.
