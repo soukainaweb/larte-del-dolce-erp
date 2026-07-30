@@ -188,6 +188,61 @@ export const extractValidationMessage = (data) => {
 };
 
 /**
+ * Ensure value is always an array (safe default for API list states).
+ */
+export const ensureArray = (value) => (Array.isArray(value) ? value : []);
+
+const ACTIVITY_DATE_LOCALE = 'ar-SA';
+
+/**
+ * Normalize a single activity log record for UI consumption.
+ */
+export const normalizeActivityLog = (log) => {
+  if (!log || typeof log !== 'object') return null;
+
+  const createdAt = log.created_at ? new Date(log.created_at) : null;
+  const user = log.user || null;
+  const userName = user
+    ? (user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email)
+    : null;
+
+  const statusMap = {
+    success: 'Succès',
+    failed: 'Echec',
+  };
+
+  return {
+    ...log,
+    date: createdAt ? createdAt.toLocaleDateString(ACTIVITY_DATE_LOCALE) : '—',
+    time: createdAt
+      ? createdAt.toLocaleTimeString(ACTIVITY_DATE_LOCALE, { hour: '2-digit', minute: '2-digit' })
+      : '—',
+    ip: log.ip || log.ip_address || '—',
+    user: user
+      ? {
+          ...user,
+          name: userName,
+        }
+      : null,
+    status: statusMap[log.status] || log.status || '—',
+  };
+};
+
+/**
+ * Normalize a list of activity log records.
+ */
+export const normalizeActivityLogList = (items) => {
+  return ensureArray(items).map(normalizeActivityLog).filter(Boolean);
+};
+
+/**
+ * Parse a list API response into a safe array.
+ */
+export const parseListResponse = (payload, extraKeys = []) => {
+  return ensureArray(toArray(payload, extraKeys));
+};
+
+/**
  * Build a user-facing error message from an axios/Laravel error.
  */
 export const getApiErrorMessage = (error, fallback) => {

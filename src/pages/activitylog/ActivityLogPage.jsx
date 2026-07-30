@@ -178,6 +178,13 @@ import {
   getActivityLevels,
   exportActivityLogs
 } from '../../services/activityLogService';
+import {
+  unwrapPaginated,
+  unwrapData,
+  ensureArray,
+  parseListResponse,
+  normalizeActivityLogList,
+} from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -438,7 +445,8 @@ const ActivityLogPage = () => {
   const { exportPDF, print, isExporting } = useExport({ userName: currentUser?.firstName || 'Utilisateur' });
 
   // States
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [activities, setActivities] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
@@ -465,8 +473,8 @@ const ActivityLogPage = () => {
     users: 0,
     critical: 0,
     success: 0,
-    duration: '2h 35m',
-    security: '100%'
+    duration: '—',
+    security: '—'
   });
 
   // Chart data
@@ -505,6 +513,7 @@ const ActivityLogPage = () => {
   // Charger les activités
   const fetchActivityLogs = async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const params = {
         page: currentPage,
@@ -519,12 +528,20 @@ const ActivityLogPage = () => {
         sort_order: 'desc'
       };
       const response = await getActivityLogs(params);
-      const data = response.data.data || [];
-      setActivities(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      const { items, meta } = unwrapPaginated(response.data);
+      const normalized = normalizeActivityLogList(items);
+      setActivities(normalized);
+      setTotalCount(meta?.total ?? meta?.total_count ?? normalized.length);
     } catch (error) {
       console.error('Error fetching activity logs:', error);
-      showToast(t('activityLog.errors.load'), 'error');
+      setActivities([]);
+      setTotalCount(0);
+      const status = error.response?.status;
+      if (status === 404 || status >= 500) {
+        setLoadError(t('activityLog.errors.fetchFailed'));
+      } else {
+        showToast(t('activityLog.errors.load'), 'error');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -544,17 +561,25 @@ const ActivityLogPage = () => {
         level: levelFilter !== 'all' ? levelFilter : undefined
       };
       const response = await getActivityLogStatistics(params);
-      const data = response.data.data || {};
+      const data = unwrapData(response.data) || {};
       setStats({
         today: data.today || 0,
         users: data.active_users || 0,
         critical: data.critical || 0,
         success: data.success || 0,
-        duration: data.avg_duration || '2h 35m',
-        security: data.security || '100%'
+        duration: data.avg_duration || '—',
+        security: data.security || '—'
       });
     } catch (error) {
       console.error('Error fetching statistics:', error);
+      setStats({
+        today: 0,
+        users: 0,
+        critical: 0,
+        success: 0,
+        duration: '—',
+        security: '—'
+      });
     }
   };
 
@@ -571,12 +596,16 @@ const ActivityLogPage = () => {
         getActivityActions(),
         getActivityLevels()
       ]);
-      setUniqueUsers(usersRes.data.data || []);
-      setUniqueModules(modulesRes.data.data || []);
-      setUniqueActions(actionsRes.data.data || []);
-      setUniqueLevels(levelsRes.data.data || []);
+      setUniqueUsers(parseListResponse(usersRes.data));
+      setUniqueModules(parseListResponse(modulesRes.data));
+      setUniqueActions(parseListResponse(actionsRes.data));
+      setUniqueLevels(parseListResponse(levelsRes.data));
     } catch (error) {
       console.error('Error fetching filter options:', error);
+      setUniqueUsers([]);
+      setUniqueModules([]);
+      setUniqueActions([]);
+      setUniqueLevels([]);
     }
   };
 
@@ -599,12 +628,16 @@ const ActivityLogPage = () => {
         getActivityChartData({ ...params, type: 'by_module', limit: 10 })
       ]);
 
-      setActivitiesByDay(dailyRes.data.data || []);
-      setActivitiesByType(typeRes.data.data || []);
-      setActivitiesByUser(userRes.data.data || []);
-      setActivitiesByModule(moduleRes.data.data || []);
+      setActivitiesByDay(ensureArray(unwrapData(dailyRes.data)));
+      setActivitiesByType(ensureArray(unwrapData(typeRes.data)));
+      setActivitiesByUser(ensureArray(unwrapData(userRes.data)));
+      setActivitiesByModule(ensureArray(unwrapData(moduleRes.data)));
     } catch (error) {
       console.error('Error fetching chart data:', error);
+      setActivitiesByDay([]);
+      setActivitiesByType([]);
+      setActivitiesByUser([]);
+      setActivitiesByModule([]);
     }
   };
 
@@ -616,9 +649,10 @@ const ActivityLogPage = () => {
   const fetchRecentLogins = async () => {
     try {
       const response = await getRecentLogins({ limit: 5 });
-      setRecentLogins(response.data.data || []);
+      setRecentLogins(ensureArray(unwrapData(response.data)));
     } catch (error) {
       console.error('Error fetching recent logins:', error);
+      setRecentLogins([]);
     }
   };
 
@@ -634,9 +668,10 @@ const ActivityLogPage = () => {
         date_filter: dateFilter !== 'all' ? dateFilter : undefined
       };
       const response = await getCriticalActivities(params);
-      setCriticalActivities(response.data.data || []);
+      setCriticalActivities(normalizeActivityLogList(unwrapData(response.data)));
     } catch (error) {
       console.error('Error fetching critical activities:', error);
+      setCriticalActivities([]);
     }
   };
 
@@ -648,9 +683,10 @@ const ActivityLogPage = () => {
   const fetchTimeline = async () => {
     try {
       const response = await getRecentActivities({ limit: 15 });
-      setTimelineActivities(response.data.data || []);
+      setTimelineActivities(normalizeActivityLogList(unwrapData(response.data)));
     } catch (error) {
       console.error('Error fetching timeline:', error);
+      setTimelineActivities([]);
     }
   };
 
@@ -663,11 +699,11 @@ const ActivityLogPage = () => {
   // ==========================================
 
   const filteredActivities = useMemo(() => {
-    return activities;
+    return ensureArray(activities);
   }, [activities]);
 
   const paginatedActivities = useMemo(() => {
-    return filteredActivities;
+    return ensureArray(filteredActivities);
   }, [filteredActivities]);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
@@ -912,6 +948,12 @@ const ActivityLogPage = () => {
       </div>
 
       {/* ===== SEARCH & FILTERS ===== */}
+      {loadError && (
+        <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm text-center" role="alert">
+          {loadError}
+        </div>
+      )}
+
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 mb-6 shadow-sm">
         <div className="flex flex-col gap-4">
           <div className="flex-1 relative">
@@ -1025,6 +1067,22 @@ const ActivityLogPage = () => {
                     </td>
                   </tr>
                 ))
+              ) : loadError ? (
+                <tr>
+                  <td colSpan="10" className="px-3 py-12 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <AlertCircle size={48} className="text-rose-400" />
+                      <h3 className="text-lg font-bold text-[#3D2F24]">{loadError}</h3>
+                      <button
+                        type="button"
+                        onClick={handleRefresh}
+                        className="text-sm text-[#B8863B] font-medium hover:underline"
+                      >
+                        {actions.refresh}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
               ) : paginatedActivities.length === 0 ? (
                 <tr>
                   <td colSpan="10" className="px-3 py-12 text-center">
@@ -1191,7 +1249,7 @@ const ActivityLogPage = () => {
           Timeline d'activité
         </h3>
         <div className="space-y-4 max-h-80 overflow-y-auto">
-          {timelineActivities.slice(0, 10).map((activity, idx) => (
+          {ensureArray(timelineActivities).slice(0, 10).map((activity, idx) => (
             <div key={activity.id} className="flex items-start gap-3">
               <div className="flex flex-col items-center">
                 <div className={`w-3 h-3 rounded-full ${
@@ -1255,7 +1313,7 @@ const ActivityLogPage = () => {
                   label={({ name, value }) => `${value}`}
                   labelLine={false}
                 >
-                  {activitiesByType.map((entry, index) => (
+                  {ensureArray(activitiesByType).map((entry, index) => (
                     <Cell key={index} fill={entry.color || '#B8863B'} />
                   ))}
                 </Pie>
