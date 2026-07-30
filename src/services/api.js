@@ -30,7 +30,7 @@ api.interceptors.response.use(
             localStorage.removeItem('token');
             localStorage.removeItem('user');
 
-            const isAuthPage = ['/login', '/auth/callback', '/forgot-password', '/reset-password'].includes(
+            const isAuthPage = ['/login', '/forgot-password', '/reset-password'].includes(
                 window.location.pathname,
             );
             if (!isAuthPage) {
