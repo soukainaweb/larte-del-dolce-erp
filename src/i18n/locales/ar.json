@@ -1342,6 +1342,7 @@
     "forbidden": "ليس لديك الصلاحيات اللازمة.",
     "notFound": "المورد غير موجود.",
     "serverError": "خطأ داخلي في الخادم.",
+    "serverConnectionError": "حدث خطأ في الاتصال بالخادم",
     "invalidData": "بيانات غير صالحة"
   },
   "success": {

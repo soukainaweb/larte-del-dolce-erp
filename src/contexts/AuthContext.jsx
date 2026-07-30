@@ -1,117 +1,126 @@
 // src/contexts/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getUser as getUserService, logout as logoutService } from '../services/authService';
 import { extractUserFromResponse, normalizeUser } from '../utils/apiHelpers';
+import {
+  clearAuthStorage,
+  getStoredToken,
+  getStoredUser,
+  persistAuth,
+  AUTH_USER_KEY,
+} from '../utils/authStorage';
 import { mapRoleToFrontendKey } from '../utils/roleMapping';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('token'));
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(getStoredToken());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const loadUser = async () => {
-            const storedToken = localStorage.getItem('token');
-            const storedUser = localStorage.getItem('user');
+  const clearSession = useCallback(() => {
+    clearAuthStorage();
+    setToken(null);
+    setUser(null);
+  }, []);
 
-            if (!storedToken) {
-                setLoading(false);
-                return;
-            }
+  useEffect(() => {
+    const bootstrapSession = async () => {
+      const storedToken = getStoredToken();
 
-            setToken(storedToken);
+      if (!storedToken) {
+        setLoading(false);
+        return;
+      }
 
-            // Optimistic restore from localStorage
-            if (storedUser) {
-                try {
-                    setUser(normalizeUser(JSON.parse(storedUser)));
-                } catch {
-                    localStorage.removeItem('user');
-                }
-            }
+      setToken(storedToken);
 
-            try {
-                const response = await getUserService();
-                const currentUser = extractUserFromResponse(response);
-                if (currentUser) {
-                    const formatted = normalizeUser(currentUser);
-                    setUser(formatted);
-                    localStorage.setItem('user', JSON.stringify(formatted));
-                }
-            } catch (err) {
-                console.error('Token invalide:', err);
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                setToken(null);
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        };
+      const cachedUser = getStoredUser();
+      if (cachedUser) {
+        setUser(normalizeUser(cachedUser));
+      }
 
-        loadUser();
-    }, []);
+      try {
+        const response = await getUserService();
+        const currentUser = extractUserFromResponse(response);
 
-    const login = (userData, authToken) => {
-        const formattedUser = normalizeUser(userData);
-
-        setUser(formattedUser);
-        setToken(authToken);
-        localStorage.setItem('token', authToken);
-        localStorage.setItem('user', JSON.stringify(formattedUser));
-        setError(null);
-    };
-
-    const logout = async () => {
-        try {
-            await logoutService();
-        } catch (err) {
-            console.error('Logout error:', err);
-        } finally {
-            setUser(null);
-            setToken(null);
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
+        if (currentUser) {
+          const formatted = normalizeUser(currentUser);
+          setUser(formatted);
+          persistAuth(storedToken, formatted);
+        } else {
+          clearSession();
         }
+      } catch (err) {
+        console.error('Session bootstrap failed:', err);
+        clearSession();
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const updateUser = (userData) => {
-        const formatted = normalizeUser(userData);
-        setUser(formatted);
-        localStorage.setItem('user', JSON.stringify(formatted));
-    };
+    bootstrapSession();
+  }, [clearSession]);
 
-    const value = {
-        user,
-        token,
-        loading,
-        isLoading: loading,
-        error,
-        login,
-        logout,
-        updateUser,
-        isAuthenticated: !!user && !!token,
-        /** Frontend sidebar role key (e.g. sales_rep) */
-        roleKey: user ? mapRoleToFrontendKey(user.role) : null,
-        permissions: user?.permissions || [],
-    };
+  const login = useCallback((userData, authToken) => {
+    const formattedUser = normalizeUser(userData);
 
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
+    setUser(formattedUser);
+    setToken(authToken);
+    persistAuth(authToken, formattedUser);
+    setError(null);
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      if (getStoredToken()) {
+        await logoutService();
+      }
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      clearSession();
+    }
+  }, [clearSession]);
+
+  const updateUser = useCallback((userData) => {
+    const formatted = normalizeUser(userData);
+    setUser(formatted);
+    if (token) {
+      persistAuth(token, formatted);
+    } else {
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(formatted));
+    }
+  }, [token]);
+
+  const value = {
+    user,
+    token,
+    loading,
+    isLoading: loading,
+    error,
+    login,
+    logout,
+    updateUser,
+    isAuthenticated: !!user && !!token,
+    roleKey: user ? mapRoleToFrontendKey(user.role) : null,
+    permissions: user?.permissions || [],
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
 
 export default AuthContext;
