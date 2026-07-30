@@ -47,22 +47,16 @@ import { unwrapData, normalizeUserList, normalizeUserRecord } from '../../utils/
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
-  const statusConfig = {
-    active: { label: 'Actif', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    online: { label: 'En ligne', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    inactive: { label: 'Inactif', class: 'bg-gray-50 text-gray-600 border-gray-200' },
-    offline: { label: 'Hors ligne', class: 'bg-gray-50 text-gray-600 border-gray-200' },
-    suspended: { label: 'Suspendu', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    locked: { label: 'Verrouillé', class: 'bg-rose-50 text-rose-700 border-rose-200' }
-  };
+  const { commonStatus } = usePageI18n('users');
 
   const key = String(status ?? 'inactive').toLowerCase();
-  const config = statusConfig[key] || { label: String(status ?? '—'), class: 'bg-gray-50 text-gray-600 border-gray-200' };
+  const config = commonStatus[key] || { label: String(status ?? '—'), class: 'bg-gray-50 text-gray-600 border-gray-200' };
 
   return (
     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${config.class}`}>
@@ -101,6 +95,8 @@ const RoleBadge = ({ role }) => {
 // USER CARD (Mobile)
 // ==========================================
 const UserCardComponent = ({ user, onEdit, onDelete, onView }) => {
+  const { actions } = usePageI18n('users');
+
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
@@ -122,17 +118,17 @@ const UserCardComponent = ({ user, onEdit, onDelete, onView }) => {
         <div className="text-xs text-[#6D6D6D]">
           <span className="flex items-center gap-1">
             <Calendar size={12} />
-            {user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : '—'}
+            {user.createdAt ? new Date(user.createdAt).toLocaleDateString(DATE_LOCALE) : '—'}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => onView(user)} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
+          <button onClick={() => onView(user)} title={actions.view} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
-          <button onClick={() => onEdit(user)} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
+          <button onClick={() => onEdit(user)} title={actions.edit} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
-          <button onClick={() => onDelete(user)} className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors">
+          <button onClick={() => onDelete(user)} title={actions.delete} className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors">
             <Trash2 size={16} className="text-rose-500" />
           </button>
         </div>
@@ -145,6 +141,8 @@ const UserCardComponent = ({ user, onEdit, onDelete, onView }) => {
 // USER TABLE ROW (Desktop)
 // ==========================================
 const UserTableRow = ({ user, onEdit, onDelete, onView, index }) => {
+  const { actions } = usePageI18n('users');
+
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -170,28 +168,28 @@ const UserTableRow = ({ user, onEdit, onDelete, onView, index }) => {
         <StatusBadge status={user.status} />
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : '—'}
+        {user.createdAt ? new Date(user.createdAt).toLocaleDateString(DATE_LOCALE) : '—'}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1">
           <button
             onClick={() => onView(user)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(user)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={actions.edit}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onDelete(user)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -205,6 +203,8 @@ const UserTableRow = ({ user, onEdit, onDelete, onView, index }) => {
 // USER MODAL
 // ==========================================
 const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
+  const { t, commonStatus, tc } = usePageI18n('users');
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -249,11 +249,11 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.firstName) newErrors.firstName = 'Le prénom est requis';
-    if (!formData.lastName) newErrors.lastName = 'Le nom est requis';
-    if (!formData.email) newErrors.email = 'L\'email est requis';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email invalide';
-    if (!formData.role) newErrors.role = 'Le rôle est requis';
+    if (!formData.firstName) newErrors.firstName = tc('required');
+    if (!formData.lastName) newErrors.lastName = tc('required');
+    if (!formData.email) newErrors.email = tc('required');
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = tc('emailInvalid');
+    if (!formData.role) newErrors.role = tc('required');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -275,7 +275,7 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            {user ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur'}
+            {user ? t('users.modals.editTitle') : t('users.modals.addTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -288,7 +288,7 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Prénom</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('firstName')}</label>
               <input
                 type="text"
                 name="firstName"
@@ -301,7 +301,7 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
               {errors.firstName && <p className="text-xs text-rose-500 mt-1">{errors.firstName}</p>}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Nom</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('lastName')}</label>
               <input
                 type="text"
                 name="lastName"
@@ -316,7 +316,7 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Email</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('email')}</label>
             <input
               type="email"
               name="email"
@@ -330,7 +330,7 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Téléphone</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('phone')}</label>
             <input
               type="tel"
               name="phone"
@@ -341,7 +341,7 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Rôle</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('role')}</label>
             <select
               name="role"
               value={formData.role}
@@ -350,14 +350,14 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
                 errors.role ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}
             >
-              <option value="Administrator">Administrateur</option>
-              <option value="Accountant">Comptable</option>
-              <option value="Sales Representative">Mandoub</option>
-              <option value="Production Manager">Responsable Production</option>
-              <option value="Factory Employee">Employé Usine</option>
-              <option value="Warehouse Manager">Responsable Entrepôt</option>
-              <option value="Delivery Driver">Livreur</option>
-              <option value="Finance Manager">Responsable Finance</option>
+              <option value="Administrator">Administrator</option>
+              <option value="Accountant">Accountant</option>
+              <option value="Sales Representative">Sales Representative</option>
+              <option value="Production Manager">Production Manager</option>
+              <option value="Factory Employee">Factory Employee</option>
+              <option value="Warehouse Manager">Warehouse Manager</option>
+              <option value="Delivery Driver">Delivery Driver</option>
+              <option value="Finance Manager">Finance Manager</option>
               <option value="Manager">Manager</option>
               <option value="Viewer">Viewer</option>
             </select>
@@ -365,17 +365,17 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Statut</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('status')}</label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="suspended">Suspendu</option>
-              <option value="locked">Verrouillé</option>
+              <option value="active">{commonStatus.active.label}</option>
+              <option value="inactive">{commonStatus.inactive.label}</option>
+              <option value="suspended">{commonStatus.suspended.label}</option>
+              <option value="locked">{commonStatus.locked.label}</option>
             </select>
           </div>
 
@@ -385,14 +385,14 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : user ? 'Mettre à jour' : 'Ajouter'}
+              {isLoading ? tc('saving') : user ? tc('update') : tc('add')}
             </button>
           </div>
         </form>
@@ -405,6 +405,8 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, user, isLoading }) => {
+  const { t, tc } = usePageI18n('users');
+
   if (!isOpen) return null;
 
   return (
@@ -419,28 +421,25 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, user, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer l'utilisateur ?
+          {t('users.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
-          Vous êtes sur le point de supprimer l'utilisateur{' '}
-          <span className="font-semibold text-[#3D2F24]">
-            {user?.firstName} {user?.lastName}
-          </span>.
-          Cette action est irréversible.
+          {t('users.modals.deleteMessage', { name: `${user?.firstName} ${user?.lastName}` })}{' '}
+          {tc('irreversibleAction')}
         </p>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
           >
-            {isLoading ? 'Suppression...' : 'Supprimer'}
+            {isLoading ? tc('deleting') : tc('delete')}
           </button>
         </div>
       </motion.div>
@@ -452,6 +451,8 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, user, isLoading }) => {
 // USER DETAILS MODAL
 // ==========================================
 const UserDetailsModal = ({ isOpen, onClose, user }) => {
+  const { t, tc } = usePageI18n('users');
+
   if (!isOpen || !user) return null;
 
   return (
@@ -464,7 +465,7 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails de l'utilisateur
+            {t('users.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -505,7 +506,7 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
             </div>
             <div className="flex items-center gap-3 text-sm">
               <Calendar size={18} className="text-[#6D6D6D]" />
-              <span className="text-[#3D2F24]">Créé le {user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : '—'}</span>
+              <span className="text-[#3D2F24]">{tc('createdOn', { date: user.createdAt ? new Date(user.createdAt).toLocaleDateString(DATE_LOCALE) : '—' })}</span>
             </div>
           </div>
 
@@ -513,7 +514,7 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>
@@ -526,7 +527,7 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
 // ==========================================
 const UsersPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('users');
+  const { title, subtitle, searchPlaceholder, t, commonStatus, actions, tc } = usePageI18n('users');
 
   // State
   const [users, setUsers] = useState([]);
@@ -620,32 +621,34 @@ const UsersPage = () => {
   // EXPORT CONFIGURATION
   // ==========================================
   const columns = [
-    { label: 'Nom complet', accessor: 'fullName', width: 20 },
-    { label: 'Email', accessor: 'email', width: 20 },
-    { label: 'Téléphone', accessor: 'phone', width: 15 },
-    { label: 'Rôle', accessor: 'role', width: 18 },
-    { label: 'Statut', accessor: 'status', width: 12 },
-    { label: 'Date d\'inscription', accessor: 'createdAt', width: 15 }
+    { label: tc('fullName'), accessor: 'fullName', width: 20 },
+    { label: t('users.table.email'), accessor: 'email', width: 20 },
+    { label: tc('phone'), accessor: 'phone', width: 15 },
+    { label: t('users.table.role'), accessor: 'role', width: 18 },
+    { label: t('users.table.status'), accessor: 'status', width: 12 },
+    { label: t('users.table.registrationDate'), accessor: 'createdAt', width: 15 }
   ];
+
+  const formatStatus = (status) => {
+    const key = String(status ?? 'inactive').toLowerCase();
+    return commonStatus[key]?.label || status || '—';
+  };
 
   const rowFormatter = (item) => ({
     fullName: `${item.firstName} ${item.lastName}`,
     email: item.email,
     phone: item.phone || '—',
     role: item.role,
-    status: ['active', 'online'].includes(String(item.status ?? '').toLowerCase()) ? 'Actif' :
-            ['inactive', 'offline'].includes(String(item.status ?? '').toLowerCase()) ? 'Inactif' :
-            item.status === 'suspended' ? 'Suspendu' :
-            item.status === 'locked' ? 'Verrouillé' : (item.status || '—'),
-    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString('fr-FR') : '—'
+    status: formatStatus(item.status),
+    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString(DATE_LOCALE) : '—'
   });
 
   const summary = [
-    { label: 'Total utilisateurs', value: kpis.total },
-    { label: 'Actifs', value: kpis.active },
-    { label: 'Inactifs', value: kpis.inactive },
-    { label: 'Suspendus', value: kpis.suspended },
-    { label: 'Verrouillés', value: kpis.locked }
+    { label: t('users.kpi.total'), value: kpis.total },
+    { label: t('users.kpi.active'), value: kpis.active },
+    { label: t('users.kpi.inactive'), value: kpis.inactive },
+    { label: commonStatus.suspended.label, value: kpis.suspended },
+    { label: commonStatus.locked.label, value: kpis.locked }
   ];
 
   // ==========================================
@@ -749,8 +752,8 @@ const UsersPage = () => {
           <ExportButtons
             data={filteredUsers}
             columns={columns}
-            title="Liste des utilisateurs"
-            subtitle={`${filteredUsers.length} utilisateurs`}
+            title={t('users.export.title')}
+            subtitle={t('users.export.subtitle', { count: filteredUsers.length })}
             filename={`utilisateurs_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -763,12 +766,12 @@ const UsersPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <UserPlus size={18} />
-            Ajouter un utilisateur
+            {t('users.addUser')}
           </button>
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -794,7 +797,7 @@ const UsersPage = () => {
               onChange={(e) => setRoleFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les rôles</option>
+              <option value="all">{tc('allRoles')}</option>
               {uniqueRoles.map(role => (
                 <option key={role} value={role}>{role}</option>
               ))}
@@ -804,11 +807,11 @@ const UsersPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="suspended">Suspendu</option>
-              <option value="locked">Verrouillé</option>
+              <option value="all">{tc('allStatuses')}</option>
+              <option value="active">{commonStatus.active.label}</option>
+              <option value="inactive">{commonStatus.inactive.label}</option>
+              <option value="suspended">{commonStatus.suspended.label}</option>
+              <option value="locked">{commonStatus.locked.label}</option>
             </select>
           </div>
         </div>
@@ -820,12 +823,12 @@ const UsersPage = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Utilisateur</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Rôle</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Date d'inscription</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('users.table.user')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('users.table.email')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('users.table.role')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('users.table.status')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('users.table.registrationDate')}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -834,7 +837,7 @@ const UsersPage = () => {
                   <td colSpan="6" className="text-center py-8">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                      <p className="text-sm text-[#6D6D6D]">Chargement des utilisateurs...</p>
+                      <p className="text-sm text-[#6D6D6D]">{t('common.table.loadingItems', { entity: t('nav.users') })}</p>
                     </div>
                   </td>
                 </tr>
@@ -843,12 +846,12 @@ const UsersPage = () => {
                   <td colSpan="6" className="text-center py-8">
                     <div className="flex flex-col items-center gap-2">
                       <UsersIcon size={40} className="text-[#ECE8E1]" />
-                      <p className="text-sm text-[#6D6D6D]">Aucun utilisateur trouvé</p>
+                      <p className="text-sm text-[#6D6D6D]">{t('common.table.noItemsFound')}</p>
                       <button
                         onClick={() => setIsCreateModalOpen(true)}
                         className="text-sm text-[#B8863B] font-medium hover:underline"
                       >
-                        Ajouter un utilisateur
+                        {t('users.addUser')}
                       </button>
                     </div>
                   </td>
@@ -884,12 +887,12 @@ const UsersPage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des utilisateurs...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.table.loadingItems', { entity: t('nav.users') })}</p>
           </div>
         ) : paginatedUsers.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <UsersIcon size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucun utilisateur trouvé</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.table.noItemsFound')}</p>
           </div>
         ) : (
           paginatedUsers.map((user) => (
@@ -917,8 +920,11 @@ const UsersPage = () => {
       {filteredUsers.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
-            Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} utilisateurs
+            {tc('showingRange', {
+              from: ((currentPage - 1) * itemsPerPage) + 1,
+              to: Math.min(currentPage * itemsPerPage, totalCount),
+              total: totalCount
+            })}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -929,7 +935,7 @@ const UsersPage = () => {
               <ChevronLeft size={16} className="text-[#6D6D6D]" />
             </button>
             <span className="text-sm font-medium text-[#3D2F24]">
-              Page {currentPage} sur {totalPages}
+              {tc('pageOf', { current: currentPage, total: totalPages })}
             </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}

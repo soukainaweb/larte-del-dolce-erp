@@ -7,6 +7,7 @@ import { FaArrowLeft } from 'react-icons/fa';
 import { resetPassword } from '../../services/authService';
 import { getApiErrorMessage } from '../../utils/apiHelpers';
 import AuthBrandPanel from '../../components/auth/AuthBrandPanel';
+import AuthLogoMark from '../../components/auth/AuthLogoMark';
 
 const ResetPassword = () => {
   const { t } = useTranslation();
@@ -73,6 +74,9 @@ const ResetPassword = () => {
 
         <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center">
           <div className="max-w-md mx-auto w-full">
+            <div className="lg:hidden flex flex-col items-center gap-3 mb-8">
+              <AuthLogoMark size="mobile" alt={t('common.appName')} />
+            </div>
             {success ? (
               <div className="text-center py-8">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-r from-[#B8863B] to-[#9E6C30] text-white flex items-center justify-center text-2xl mx-auto mb-4">✓</div>

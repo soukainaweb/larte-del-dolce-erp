@@ -53,14 +53,16 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('warehouse');
   const statusConfig = {
-    active: { label: 'Actif', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    inactive: { label: 'Inactif', class: 'bg-gray-50 text-gray-600 border-gray-200' },
+    active: { label: tc('active'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    inactive: { label: tc('inactive'), class: 'bg-gray-50 text-gray-600 border-gray-200' },
     maintenance: { label: 'Maintenance', class: 'bg-amber-50 text-amber-700 border-amber-200' }
   };
 
@@ -77,11 +79,12 @@ const StatusBadge = ({ status }) => {
 // WAREHOUSE TYPE BADGE
 // ==========================================
 const WarehouseTypeBadge = ({ type }) => {
+  const { t, tc } = usePageI18n('warehouse');
   const typeConfig = {
-    raw: { label: 'Matières premières', class: 'bg-purple-50 text-purple-700 border-purple-200' },
+    raw: { label: t('suppliers.types.raw'), class: 'bg-purple-50 text-purple-700 border-purple-200' },
     finished: { label: 'Produits finis', class: 'bg-blue-50 text-blue-700 border-blue-200' },
-    packaging: { label: 'Emballages', class: 'bg-teal-50 text-teal-700 border-teal-200' },
-    other: { label: 'Autre', class: 'bg-gray-50 text-gray-700 border-gray-200' }
+    packaging: { label: t('suppliers.types.packaging'), class: 'bg-teal-50 text-teal-700 border-teal-200' },
+    other: { label: t('suppliers.types.other'), class: 'bg-gray-50 text-gray-700 border-gray-200' }
   };
 
   const config = typeConfig[type] || typeConfig.other;
@@ -131,6 +134,7 @@ const KPICard = ({ icon: Icon, title, value, color, subtitle }) => {
 // WAREHOUSE CARD (Mobile)
 // ==========================================
 const WarehouseCard = ({ warehouse, onView, onEdit, onDelete, onToggleStatus }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('warehouse');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
@@ -157,11 +161,11 @@ const WarehouseCard = ({ warehouse, onView, onEdit, onDelete, onToggleStatus }) 
       <div className="grid grid-cols-2 gap-2 text-xs text-[#6D6D6D]">
         <div className="flex items-center gap-1">
           <MapPin size={12} />
-          {warehouse.location || 'Non défini'}
+          {warehouse.location || tc('notProvided')}
         </div>
         <div className="flex items-center gap-1">
           <Package size={12} />
-          {warehouse.productCount} produits
+          {warehouse.productCount} {t('orders.table.products')}
         </div>
         <div className="flex items-center gap-1">
           <User size={12} />
@@ -176,7 +180,7 @@ const WarehouseCard = ({ warehouse, onView, onEdit, onDelete, onToggleStatus }) 
         <div className="text-xs text-[#6D6D6D]">
           <span className="flex items-center gap-1">
             <Calendar size={12} />
-            {new Date(warehouse.createdAt).toLocaleDateString('fr-FR')}
+            {new Date(warehouse.createdAt).toLocaleDateString(DATE_LOCALE)}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -202,6 +206,7 @@ const WarehouseCard = ({ warehouse, onView, onEdit, onDelete, onToggleStatus }) 
 // WAREHOUSE TABLE ROW (Desktop)
 // ==========================================
 const WarehouseTableRow = ({ warehouse, onView, onEdit, onDelete, onToggleStatus, index }) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('warehouse');
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -237,28 +242,28 @@ const WarehouseTableRow = ({ warehouse, onView, onEdit, onDelete, onToggleStatus
           <button
             onClick={() => onView(warehouse)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(warehouse)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={actions.edit}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onToggleStatus(warehouse)}
             className="p-1.5 hover:bg-amber-50 rounded-lg transition-colors"
-            title={warehouse.status === 'active' ? 'Désactiver' : 'Activer'}
+            title={warehouse.status === 'active' ? tc('deactivate') : tc('activate')}
           >
             {warehouse.status === 'active' ? <Archive size={16} className="text-amber-500" /> : <CheckCircle size={16} className="text-emerald-500" />}
           </button>
           <button
             onClick={() => onDelete(warehouse)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -272,6 +277,7 @@ const WarehouseTableRow = ({ warehouse, onView, onEdit, onDelete, onToggleStatus
 // WAREHOUSE MODAL
 // ==========================================
 const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
+  const { t, tc } = usePageI18n('warehouse');
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -461,7 +467,7 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Statut</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('status')}</label>
             <select
               name="status"
               value={formData.status}
@@ -487,7 +493,7 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : warehouse ? 'Mettre à jour' : 'Ajouter'}
+              {isLoading ? tc('saving') : warehouse ? tc('update') : tc('add')}
             </button>
           </div>
         </form>
@@ -500,6 +506,7 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, warehouse, isLoading }) => {
+  const { t, tc } = usePageI18n('warehouse');
   if (!isOpen) return null;
 
   const hasProducts = warehouse?.productCount > 0;
@@ -522,8 +529,8 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, warehouse, isLoading }) => {
           {hasProducts ? (
             <>
               <span className="text-rose-500 font-semibold">⚠️ Attention :</span><br />
-              Cet entrepôt contient <span className="font-semibold">{warehouse.productCount}</span> produits.
-              Vous ne pouvez pas le supprimer tant qu'il contient des produits.
+              Cet entrepôt contient <span className="font-semibold">{warehouse.productCount}</span> {t('orders.table.products')}.
+              Vous ne pouvez pas le supprimer tant qu'il contient des {t('orders.table.products')}.
             </>
           ) : (
             <>
@@ -549,7 +556,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, warehouse, isLoading }) => {
               hasProducts ? 'bg-gray-400 cursor-not-allowed' : 'bg-rose-500 hover:bg-rose-600'
             }`}
           >
-            {hasProducts ? 'Impossible' : isLoading ? 'Suppression...' : 'Supprimer'}
+            {hasProducts ? tc('impossible') : isLoading ? tc('deleting') : tc('delete')}
           </button>
         </div>
       </motion.div>
@@ -561,6 +568,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, warehouse, isLoading }) => {
 // VIEW WAREHOUSE MODAL
 // ==========================================
 const ViewWarehouseModal = ({ isOpen, onClose, warehouse }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('warehouse');
   if (!isOpen || !warehouse) return null;
 
   return (
@@ -606,7 +614,7 @@ const ViewWarehouseModal = ({ isOpen, onClose, warehouse }) => {
 
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Produits</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('product')}</p>
               <p className="text-xl font-bold text-[#3D2F24]">{warehouse.productCount || 0}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
@@ -649,6 +657,7 @@ const ViewWarehouseModal = ({ isOpen, onClose, warehouse }) => {
 // TRANSFER MODAL
 // ==========================================
 const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) => {
+  const { t, tc } = usePageI18n('warehouse');
   const [formData, setFormData] = useState({
     fromWarehouse: '',
     toWarehouse: '',
@@ -695,7 +704,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Transférer des produits
+            Transférer des {t('orders.table.products')}
           </h3>
           <button
             onClick={onClose}
@@ -716,7 +725,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
                 errors.fromWarehouse ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}
             >
-              <option value="">Sélectionner</option>
+              <option value="">{tc('selectOption')}</option>
               {warehouses.map(w => (
                 <option key={w.id} value={w.id}>{w.name}</option>
               ))}
@@ -734,7 +743,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
                 errors.toWarehouse ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}
             >
-              <option value="">Sélectionner</option>
+              <option value="">{tc('selectOption')}</option>
               {warehouses.map(w => (
                 <option key={w.id} value={w.id}>{w.name}</option>
               ))}
@@ -752,7 +761,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
                 errors.product ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}
             >
-              <option value="">Sélectionner</option>
+              <option value="">{tc('selectOption')}</option>
             </select>
             {errors.product && <p className="text-xs text-rose-500 mt-1">{errors.product}</p>}
           </div>
@@ -811,7 +820,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
 // ==========================================
 const WarehousePage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('warehouse');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('warehouse');
 
   const [warehouses, setWarehouses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -919,15 +928,15 @@ const WarehousePage = () => {
   const rowFormatter = (item) => ({
     name: item.name,
     code: item.code,
-    type: item.type === 'raw' ? 'Matières premières' :
+    type: item.type === 'raw' ? t('suppliers.types.raw') :
           item.type === 'finished' ? 'Produits finis' :
-          item.type === 'packaging' ? 'Emballages' : 'Autre',
+          item.type === 'packaging' ? t('suppliers.types.packaging') : t('suppliers.types.other'),
     location: item.location || '—',
     manager: item.manager || '—',
     productCount: item.productCount || 0,
     stockValue: `${item.stockValue.toLocaleString()} DH`,
-    status: item.status === 'active' ? 'Actif' :
-            item.status === 'inactive' ? 'Inactif' : 'Maintenance'
+    status: item.status === 'active' ? tc('active') :
+            item.status === 'inactive' ? tc('inactive') : 'Maintenance'
   });
 
   const summary = [
@@ -1081,14 +1090,14 @@ const WarehousePage = () => {
             <button
               onClick={() => setViewMode('table')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue tableau"
+              title={tc('tableView')}
             >
               <List size={18} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue grille"
+              title={tc('gridView')}
             >
               <Grid size={18} />
             </button>
@@ -1096,7 +1105,7 @@ const WarehousePage = () => {
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1133,9 +1142,9 @@ const WarehousePage = () => {
               <option value="all">Tous les types</option>
               {uniqueTypes.map(type => (
                 <option key={type} value={type}>
-                  {type === 'raw' ? 'Matières premières' :
+                  {type === 'raw' ? t('suppliers.types.raw') :
                    type === 'finished' ? 'Produits finis' :
-                   type === 'packaging' ? 'Emballages' : 'Autre'}
+                   type === 'packaging' ? t('suppliers.types.packaging') : t('suppliers.types.other')}
                 </option>
               ))}
             </select>
@@ -1164,10 +1173,10 @@ const WarehousePage = () => {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Type</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Emplacement</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Responsable</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Produits</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('product')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Valeur</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                 </tr>
               </thead>
               <tbody>

@@ -57,6 +57,7 @@ import deliveryService from '../../services/deliveryService';
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // CONSTANTES - DEVISE
@@ -68,13 +69,14 @@ const CURRENCY_SYMBOL = 'ر.س';
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('deliveries');
   const statusConfig = {
-    pending: { label: 'En attente', class: 'bg-amber-50 text-amber-700 border-amber-200' },
+    pending: { label: t('common.pending'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
     assigned: { label: 'Assignée', class: 'bg-blue-50 text-blue-700 border-blue-200' },
     preparing: { label: 'Préparation', class: 'bg-purple-50 text-purple-700 border-purple-200' },
-    out_for_delivery: { label: 'En livraison', class: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-    delivered: { label: 'Livrée', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    cancelled: { label: 'Annulée', class: 'bg-rose-50 text-rose-700 border-rose-200' },
+    out_for_delivery: { label: t('orders.status.in_delivery'), class: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+    delivered: { label: t('orders.status.delivered'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    cancelled: { label: t('common.cancelled'), class: 'bg-rose-50 text-rose-700 border-rose-200' },
     failed: { label: 'Échouée', class: 'bg-red-50 text-red-700 border-red-200' }
   };
 
@@ -91,10 +93,11 @@ const StatusBadge = ({ status }) => {
 // PAYMENT STATUS BADGE
 // ==========================================
 const PaymentBadge = ({ status }) => {
+  const { t, tc } = usePageI18n('deliveries');
   const config = {
-    paid: { label: 'Payée', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    partial: { label: 'Partielle', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    unpaid: { label: 'Non payée', class: 'bg-rose-50 text-rose-700 border-rose-200' }
+    paid: { label: t('common.paymentStatus.paid'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    partial: { label: t('common.paymentStatus.partial'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
+    unpaid: { label: t('common.paymentStatus.unpaid'), class: 'bg-rose-50 text-rose-700 border-rose-200' }
   };
 
   const c = config[status] || config.unpaid;
@@ -165,6 +168,7 @@ const KPICard = ({ icon: Icon, title, value, color, subtitle }) => {
 // DELIVERY CARD (Mobile)
 // ==========================================
 const DeliveryCard = ({ delivery, onView, onEdit, onDelete, onStatusChange }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('deliveries');
   // Valeur par défaut pour éviter les erreurs
   const totalAmount = delivery?.totalAmount || 0;
   const deliveryDate = delivery?.deliveryDate ? new Date(delivery.deliveryDate) : new Date();
@@ -190,7 +194,7 @@ const DeliveryCard = ({ delivery, onView, onEdit, onDelete, onStatusChange }) =>
       <div className="grid grid-cols-2 gap-2 text-xs text-[#6D6D6D]">
         <div className="flex items-center gap-1">
           <Calendar size={12} />
-          {deliveryDate.toLocaleDateString('fr-FR')}
+          {deliveryDate.toLocaleDateString(DATE_LOCALE)}
         </div>
         <div className="flex items-center gap-1">
           <Clock size={12} />
@@ -231,6 +235,7 @@ const DeliveryCard = ({ delivery, onView, onEdit, onDelete, onStatusChange }) =>
 // DELIVERY TABLE ROW (Desktop)
 // ==========================================
 const DeliveryTableRow = ({ delivery, onView, onEdit, onDelete, onStatusChange, index }) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('deliveries');
   // Valeur par défaut pour éviter les erreurs
   const totalAmount = delivery?.totalAmount || 0;
   const deliveryDate = delivery?.deliveryDate ? new Date(delivery.deliveryDate) : new Date();
@@ -249,7 +254,7 @@ const DeliveryTableRow = ({ delivery, onView, onEdit, onDelete, onStatusChange, 
       <td className="px-4 py-3 text-sm text-[#3D2F24]">{delivery?.customer || '—'}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{delivery?.deliveryPerson || '—'}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {deliveryDate.toLocaleDateString('fr-FR')}
+        {deliveryDate.toLocaleDateString(DATE_LOCALE)}
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{delivery?.deliveryTime || '—'}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#3D2F24]">
@@ -266,21 +271,21 @@ const DeliveryTableRow = ({ delivery, onView, onEdit, onDelete, onStatusChange, 
           <button
             onClick={() => onView(delivery)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(delivery)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={actions.edit}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onDelete(delivery)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -294,6 +299,7 @@ const DeliveryTableRow = ({ delivery, onView, onEdit, onDelete, onStatusChange, 
 // DELIVERY MODAL (Add/Edit) - CORRIGÉ
 // ==========================================
 const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('deliveries');
   const [formData, setFormData] = useState({
     orderNumber: '',
     customer: '',
@@ -376,7 +382,7 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
     e.preventDefault();
     const newErrors = {};
     if (!formData.orderNumber) newErrors.orderNumber = 'Le numéro de commande est requis';
-    if (!formData.customer) newErrors.customer = 'Le client est requis';
+    if (!formData.customer) newErrors.customer = t('orders.validation.customerRequired');
     if (!formData.address) newErrors.address = 'L\'adresse est requise';
 
     if (Object.keys(newErrors).length > 0) {
@@ -475,7 +481,7 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="">Sélectionner</option>
+                <option value="">{tc('selectOption')}</option>
                 {deliveryPersons.map(p => (
                   <option key={p} value={p}>{p}</option>
                 ))}
@@ -520,7 +526,7 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Notes</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
@@ -532,7 +538,7 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Statut</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('status')}</label>
               <select
                 name="status"
                 value={formData.status}
@@ -614,7 +620,7 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : delivery ? 'Mettre à jour' : 'Ajouter'}
+              {isLoading ? tc('saving') : delivery ? tc('update') : tc('add')}
             </button>
           </div>
         </form>
@@ -627,6 +633,7 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, delivery, isLoading }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('deliveries');
   if (!isOpen) return null;
 
   return (
@@ -681,8 +688,8 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, delivery, isLoading }) => {
             }`}
           >
             {delivery?.status === 'delivered' || delivery?.status === 'out_for_delivery'
-              ? 'Impossible'
-              : isLoading ? 'Suppression...' : 'Supprimer'}
+              ? tc('impossible')
+              : isLoading ? tc('deleting') : tc('delete')}
           </button>
         </div>
       </motion.div>
@@ -694,6 +701,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, delivery, isLoading }) => {
 // VIEW DELIVERY MODAL
 // ==========================================
 const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('deliveries');
   if (!isOpen || !delivery) return null;
 
   const totalAmount = delivery?.totalAmount || 0;
@@ -746,7 +754,7 @@ const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Client</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('customer')}</p>
               <p className="font-medium text-[#3D2F24]">{delivery.customer}</p>
               <p className="text-xs text-[#6D6D6D]">{delivery.phone}</p>
             </div>
@@ -764,9 +772,9 @@ const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
 
           <div className="grid grid-cols-4 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Date</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('date')}</p>
               <p className="text-sm font-medium text-[#3D2F24]">
-                {deliveryDate.toLocaleDateString('fr-FR')}
+                {deliveryDate.toLocaleDateString(DATE_LOCALE)}
               </p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
@@ -774,7 +782,7 @@ const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
               <p className="text-sm font-medium text-[#3D2F24]">{delivery.deliveryTime}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Total</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('total')}</p>
               <p className="text-sm font-bold text-[#3D2F24]">{totalAmount.toLocaleString()} {CURRENCY_SYMBOL}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
@@ -785,7 +793,7 @@ const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
 
           {delivery.notes && (
             <div className="p-3 bg-[#F8F7F4] rounded-lg">
-              <p className="text-xs text-[#6D6D6D] mb-1">Notes</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('notes')}</p>
               <p className="text-sm text-[#3D2F24]">{delivery.notes}</p>
             </div>
           )}
@@ -832,7 +840,7 @@ const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
 // ==========================================
 const DeliveriesPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('deliveries');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('deliveries');
   const { showToast } = useToast();
 
   const [deliveries, setDeliveries] = useState([]);
@@ -928,13 +936,13 @@ const DeliveriesPage = () => {
   // ==========================================
   const columns = [
     { label: 'ID Livraison', accessor: 'deliveryId', width: 12 },
-    { label: 'N° Commande', accessor: 'orderNumber', width: 12 },
+    { label: t('orders.table.orderNumber'), accessor: 'orderNumber', width: 12 },
     { label: 'Client', accessor: 'customer', width: 15 },
     { label: 'Livreur', accessor: 'deliveryPerson', width: 15 },
     { label: 'Date', accessor: 'deliveryDate', width: 12 },
     { label: 'Heure', accessor: 'deliveryTime', width: 10 },
     { label: 'Montant', accessor: 'totalAmount', width: 10 },
-    { label: 'Statut paiement', accessor: 'paymentStatus', width: 12 },
+    { label: t('invoices.fields.paymentStatus'), accessor: 'paymentStatus', width: 12 },
     { label: 'Statut', accessor: 'status', width: 12 }
   ];
 
@@ -943,26 +951,26 @@ const DeliveriesPage = () => {
     orderNumber: item.orderNumber || '—',
     customer: item.customer || '—',
     deliveryPerson: item.deliveryPerson || 'Non assigné',
-    deliveryDate: item.deliveryDate ? new Date(item.deliveryDate).toLocaleDateString('fr-FR') : '—',
+    deliveryDate: item.deliveryDate ? new Date(item.deliveryDate).toLocaleDateString(DATE_LOCALE) : '—',
     deliveryTime: item.deliveryTime || '—',
     totalAmount: `${(item.totalAmount || 0).toLocaleString()} ${CURRENCY_SYMBOL}`,
-    paymentStatus: item.paymentStatus === 'paid' ? 'Payée' : item.paymentStatus === 'partial' ? 'Partielle' : 'Non payée',
-    status: item.status === 'pending' ? 'En attente' :
+    paymentStatus: item.paymentStatus === 'paid' ? t('common.paymentStatus.paid') : item.paymentStatus === 'partial' ? t('common.paymentStatus.partial') : t('common.paymentStatus.unpaid'),
+    status: item.status === 'pending' ? t('common.pending') :
             item.status === 'assigned' ? 'Assignée' :
             item.status === 'preparing' ? 'Préparation' :
-            item.status === 'out_for_delivery' ? 'En livraison' :
-            item.status === 'delivered' ? 'Livrée' :
-            item.status === 'cancelled' ? 'Annulée' :
+            item.status === 'out_for_delivery' ? t('orders.status.in_delivery') :
+            item.status === 'delivered' ? t('orders.status.delivered') :
+            item.status === 'cancelled' ? t('common.cancelled') :
             item.status === 'failed' ? 'Échouée' : item.status || '—'
   });
 
   const summary = [
     { label: 'Total livraisons', value: kpis.total },
-    { label: 'Livrées', value: kpis.delivered },
-    { label: 'En attente', value: kpis.pending },
+    { label: t('orders.kpi.delivered'), value: kpis.delivered },
+    { label: t('common.pending'), value: kpis.pending },
     { label: 'En cours', value: kpis.inProgress },
-    { label: 'Annulées', value: kpis.cancelled },
-    { label: "Aujourd'hui", value: kpis.today }
+    { label: t('orders.kpi.cancelled'), value: kpis.cancelled },
+    { label: tc('today'), value: kpis.today }
   ];
 
   // ==========================================
@@ -1104,14 +1112,14 @@ const DeliveriesPage = () => {
             <button
               onClick={() => setViewMode('table')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue tableau"
+              title={tc('tableView')}
             >
               <List size={18} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue grille"
+              title={tc('gridView')}
             >
               <Grid size={18} />
             </button>
@@ -1119,7 +1127,7 @@ const DeliveriesPage = () => {
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1133,7 +1141,7 @@ const DeliveriesPage = () => {
         <KPICard icon={Clock} title="En attente" value={kpis.pending} color="amber" />
         <KPICard icon={TrendingUp} title="En cours" value={kpis.inProgress} color="indigo" />
         <KPICard icon={XCircle} title="Annulées" value={kpis.cancelled} color="rose" />
-        <KPICard icon={Calendar} title="Aujourd'hui" value={kpis.today} color="purple" />
+        <KPICard icon={Calendar} title={tc('today')} value={kpis.today} color="purple" />
       </div>
 
       {/* Filters */}
@@ -1158,12 +1166,12 @@ const DeliveriesPage = () => {
               <option value="all">Tous les statuts</option>
               {uniqueStatuses.map(status => (
                 <option key={status} value={status}>
-                  {status === 'pending' ? 'En attente' :
+                  {status === 'pending' ? t('common.pending') :
                    status === 'assigned' ? 'Assignée' :
                    status === 'preparing' ? 'Préparation' :
-                   status === 'out_for_delivery' ? 'En livraison' :
-                   status === 'delivered' ? 'Livrée' :
-                   status === 'cancelled' ? 'Annulée' :
+                   status === 'out_for_delivery' ? t('orders.status.in_delivery') :
+                   status === 'delivered' ? t('orders.status.delivered') :
+                   status === 'cancelled' ? t('common.cancelled') :
                    status === 'failed' ? 'Échouée' : status}
                 </option>
               ))}
@@ -1186,14 +1194,14 @@ const DeliveriesPage = () => {
               <thead>
                 <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Livraison</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Client</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('customer')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Livreur</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('date')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Heure</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Montant</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('amount')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Paiement</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                 </tr>
               </thead>
               <tbody>

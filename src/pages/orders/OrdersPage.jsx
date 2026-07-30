@@ -59,6 +59,7 @@ import { printData } from '../../services/export/printService';
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // CONSTANTES - DEVISE
@@ -70,24 +71,34 @@ const CURRENCY_SYMBOL = 'ر.س';
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
-  const statusConfig = {
-    draft: { label: 'Brouillon', class: 'bg-gray-50 text-gray-600 border-gray-200' },
-    pending: { label: 'En attente', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    validated: { label: 'Validée', class: 'bg-blue-50 text-blue-700 border-blue-200' },
-    in_production: { label: 'En production', class: 'bg-purple-50 text-purple-700 border-purple-200' },
-    ready: { label: 'Prête', class: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-    in_delivery: { label: 'En livraison', class: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
-    delivered: { label: 'Livrée', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    cancelled: { label: 'Annulée', class: 'bg-rose-50 text-rose-700 border-rose-200' },
-    rejected: { label: 'Refusée', class: 'bg-red-50 text-red-700 border-red-200' },
-    archived: { label: 'Archivée', class: 'bg-gray-50 text-gray-500 border-gray-200' }
+  const { statusLabel } = usePageI18n('orders');
+  const classes = {
+    draft: 'bg-gray-50 text-gray-600 border-gray-200',
+    pending: 'bg-amber-50 text-amber-700 border-amber-200',
+    validated: 'bg-blue-50 text-blue-700 border-blue-200',
+    in_production: 'bg-purple-50 text-purple-700 border-purple-200',
+    ready: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    in_delivery: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+    delivered: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    cancelled: 'bg-rose-50 text-rose-700 border-rose-200',
+    rejected: 'bg-red-50 text-red-700 border-red-200',
+    archived: 'bg-gray-50 text-gray-500 border-gray-200',
+    active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    inactive: 'bg-gray-50 text-gray-600 border-gray-200',
+    paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    unpaid: 'bg-rose-50 text-rose-700 border-rose-200',
+    partial: 'bg-amber-50 text-amber-700 border-amber-200',
+    overdue: 'bg-red-50 text-red-700 border-red-200',
+    sent: 'bg-blue-50 text-blue-700 border-blue-200',
+    failed: 'bg-rose-50 text-rose-700 border-rose-200',
+    assigned: 'bg-blue-50 text-blue-700 border-blue-200',
+    preparing: 'bg-purple-50 text-purple-700 border-purple-200',
+    out_for_delivery: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   };
-
-  const config = statusConfig[status] || statusConfig.draft;
-
+  const key = status || 'draft';
   return (
-    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${config.class}`}>
-      {config.label}
+    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${classes[key] || classes.draft}`}>
+      {statusLabel(key)}
     </span>
   );
 };
@@ -96,17 +107,17 @@ const StatusBadge = ({ status }) => {
 // PRIORITY BADGE
 // ==========================================
 const PriorityBadge = ({ priority }) => {
-  const priorityConfig = {
-    high: { label: 'Haute', class: 'bg-rose-50 text-rose-700 border-rose-200' },
-    medium: { label: 'Moyenne', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    low: { label: 'Basse', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+  const { t } = usePageI18n('orders');
+  const classes = {
+    high: 'bg-rose-50 text-rose-700 border-rose-200',
+    medium: 'bg-amber-50 text-amber-700 border-amber-200',
+    low: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   };
-
-  const config = priorityConfig[priority] || priorityConfig.medium;
-
+  const key = priority || 'medium';
+  const label = t(`orders.priority.${key}`);
   return (
-    <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${config.class}`}>
-      {config.label}
+    <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${classes[key] || classes.medium}`}>
+      {label}
     </span>
   );
 };
@@ -115,17 +126,16 @@ const PriorityBadge = ({ priority }) => {
 // PAYMENT STATUS BADGE
 // ==========================================
 const PaymentBadge = ({ status }) => {
-  const config = {
-    paid: { label: 'Payée', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    partial: { label: 'Partielle', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    unpaid: { label: 'Non payée', class: 'bg-rose-50 text-rose-700 border-rose-200' }
+  const { t } = usePageI18n('orders');
+  const classes = {
+    paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    partial: 'bg-amber-50 text-amber-700 border-amber-200',
+    unpaid: 'bg-rose-50 text-rose-700 border-rose-200',
   };
-
-  const c = config[status] || config.unpaid;
-
+  const key = status || 'unpaid';
   return (
-    <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${c.class}`}>
-      {c.label}
+    <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${classes[key] || classes.unpaid}`}>
+      {t('common.paymentStatus.' + key)}
     </span>
   );
 };
@@ -163,6 +173,7 @@ const KPICard = ({ icon: Icon, title, value, color }) => {
 // ORDER CARD (Mobile)
 // ==========================================
 const OrderCard = ({ order, onView, onEdit, onDelete }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('orders');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
@@ -179,7 +190,7 @@ const OrderCard = ({ order, onView, onEdit, onDelete }) => {
       <div className="grid grid-cols-2 gap-2 text-xs text-[#6D6D6D]">
         <div className="flex items-center gap-1">
           <Package size={12} />
-          {order.products?.length || 0} produits
+          {order.products?.length || 0} {t('orders.table.products')}
         </div>
         <div className="flex items-center gap-1">
           <DollarSign size={12} />
@@ -191,7 +202,7 @@ const OrderCard = ({ order, onView, onEdit, onDelete }) => {
         </div>
         <div className="flex items-center gap-1">
           <Calendar size={12} />
-          {new Date(order.createdAt).toLocaleDateString('fr-FR')}
+          {new Date(order.createdAt).toLocaleDateString(DATE_LOCALE)}
         </div>
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#ECE8E1]">
@@ -200,16 +211,16 @@ const OrderCard = ({ order, onView, onEdit, onDelete }) => {
           {order.status === 'pending' && <Clock size={14} className="text-amber-500" />}
           {order.status === 'cancelled' && <XCircle size={14} className="text-rose-500" />}
           <span className="text-xs text-[#6D6D6D]">
-            {order.status === 'draft' ? 'Brouillon' :
-             order.status === 'pending' ? 'En attente' :
-             order.status === 'validated' ? 'Validée' :
-             order.status === 'in_production' ? 'En production' :
-             order.status === 'ready' ? 'Prête' :
-             order.status === 'in_delivery' ? 'En livraison' :
-             order.status === 'delivered' ? 'Livrée' :
-             order.status === 'cancelled' ? 'Annulée' :
-             order.status === 'rejected' ? 'Refusée' :
-             order.status === 'archived' ? 'Archivée' : order.status}
+            {order.status === 'draft' ? t('orders.status.draft') :
+             order.status === 'pending' ? t('common.pending') :
+             order.status === 'validated' ? t('orders.status.validated') :
+             order.status === 'in_production' ? t('orders.status.in_production') :
+             order.status === 'ready' ? t('orders.status.ready') :
+             order.status === 'in_delivery' ? t('orders.status.in_delivery') :
+             order.status === 'delivered' ? t('orders.status.delivered') :
+             order.status === 'cancelled' ? t('common.cancelled') :
+             order.status === 'rejected' ? t('orders.status.rejected') :
+             order.status === 'archived' ? t('common.statuses.archived') : order.status}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -232,6 +243,7 @@ const OrderCard = ({ order, onView, onEdit, onDelete }) => {
 // ORDER TABLE ROW (Desktop)
 // ==========================================
 const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('orders');
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -245,7 +257,7 @@ const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
       <td className="px-4 py-3 text-sm text-[#3D2F24]">{order.customer}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{order.rep}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {new Date(order.createdAt).toLocaleDateString('fr-FR')}
+        {new Date(order.createdAt).toLocaleDateString(DATE_LOCALE)}
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{order.products?.length || 0}</td>
       <td className="px-4 py-3 text-sm font-bold text-[#3D2F24]">
@@ -265,21 +277,21 @@ const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
           <button
             onClick={() => onView(order)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(order)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={actions.edit}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onDelete(order)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -293,6 +305,7 @@ const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
 // ORDER MODAL (Create/Edit)
 // ==========================================
 const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('orders');
   const [formData, setFormData] = useState({
     customer: '',
     rep: '',
@@ -356,6 +369,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
   };
 
   const addProduct = () => {
+  const { t, tc } = usePageI18n('orders');
     setFormData(prev => ({
       ...prev,
       products: [...prev.products, { id: Date.now(), name: '', quantity: 1, price: 0, discount: 0, total: 0 }]
@@ -372,20 +386,22 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
   };
 
   const calculateTotal = () => {
+  const { t, tc } = usePageI18n('orders');
     return formData.products.reduce((sum, p) => sum + (p.total || 0), 0);
   };
 
   const calculateSubtotal = () => {
+  const { t, tc } = usePageI18n('orders');
     return formData.products.reduce((sum, p) => sum + (p.quantity * p.price || 0), 0);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.customer) newErrors.customer = 'Le client est requis';
-    if (!formData.rep) newErrors.rep = 'Le commercial est requis';
-    if (formData.products.length === 0) newErrors.products = 'Au moins un produit est requis';
-    if (formData.products.some(p => !p.name)) newErrors.products = 'Tous les produits doivent avoir un nom';
+    if (!formData.customer) newErrors.customer = t('orders.validation.customerRequired');
+    if (!formData.rep) newErrors.rep = t('orders.validation.repRequired');
+    if (formData.products.length === 0) newErrors.products = t('orders.validation.productsRequired');
+    if (formData.products.some(p => !p.name)) newErrors.products = t('orders.validation.productNameRequired');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -407,7 +423,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            {order ? 'Modifier la commande' : 'Nouvelle commande'}
+            {order ? t('orders.modals.editTitle') : t('orders.addOrder')}
           </h3>
           <button
             onClick={onClose}
@@ -456,7 +472,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
             <h4 className="text-sm font-bold text-[#3D2F24] mb-3">Informations générales</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Priorité</label>
+                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('priority')}</label>
                 <select
                   name="priority"
                   value={formData.priority}
@@ -508,7 +524,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
           {/* Products */}
           <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1]">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-bold text-[#3D2F24]">Produits</h4>
+              <h4 className="text-sm font-bold text-[#3D2F24]">{tc('product')}</h4>
               <button
                 type="button"
                 onClick={addProduct}
@@ -560,7 +576,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                     </div>
                     <div className="flex items-end justify-between">
                       <div>
-                        <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Total</label>
+                        <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{tc('total')}</label>
                         <p className="text-sm font-bold text-[#3D2F24]">
                           {(product.total || 0).toFixed(2)} {CURRENCY_SYMBOL}
                         </p>
@@ -604,7 +620,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Notes</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
@@ -627,7 +643,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : order ? 'Mettre à jour' : 'Créer la commande'}
+              {isLoading ? tc('saving') : order ? tc('update') : t('orders.addOrder')}
             </button>
           </div>
         </form>
@@ -640,6 +656,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, order, isLoading }) => {
+  const { t, tc } = usePageI18n('orders');
   if (!isOpen) return null;
 
   return (
@@ -675,7 +692,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, order, isLoading }) => {
             disabled={isLoading}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
           >
-            {isLoading ? 'Suppression...' : 'Supprimer'}
+            {isLoading ? tc('deleting') : tc('delete')}
           </button>
         </div>
       </motion.div>
@@ -687,6 +704,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, order, isLoading }) => {
 // ORDER DETAILS MODAL
 // ==========================================
 const OrderDetailsModal = ({ isOpen, onClose, order }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('orders');
   if (!isOpen || !order) return null;
 
   return (
@@ -727,26 +745,26 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
           {/* Info Grid */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Commercial</p>
+              <p className="text-xs text-[#6D6D6D]">{t('orders.table.rep')}</p>
               <p className="font-medium text-[#3D2F24]">{order.rep}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3">
               <p className="text-xs text-[#6D6D6D]">Date de création</p>
-              <p className="font-medium text-[#3D2F24]">{new Date(order.createdAt).toLocaleDateString('fr-FR')}</p>
+              <p className="font-medium text-[#3D2F24]">{new Date(order.createdAt).toLocaleDateString(DATE_LOCALE)}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3">
               <p className="text-xs text-[#6D6D6D]">Paiement</p>
               <PaymentBadge status={order.paymentStatus} />
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Total</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('total')}</p>
               <p className="text-lg font-bold text-[#3D2F24]">{order.total.toLocaleString()} {CURRENCY_SYMBOL}</p>
             </div>
           </div>
 
           {/* Products */}
           <div className="bg-[#F8F7F4] rounded-lg p-4">
-            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">Produits</h4>
+            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{tc('product')}</h4>
             <div className="space-y-2">
               {order.products && order.products.map((p, i) => (
                 <div key={i} className="flex justify-between items-center bg-white rounded-lg p-2 border border-[#ECE8E1]">
@@ -763,7 +781,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
           {/* Notes */}
           {order.notes && (
             <div className="bg-[#F8F7F4] rounded-lg p-4">
-              <h4 className="text-sm font-bold text-[#3D2F24] mb-2">Notes</h4>
+              <h4 className="text-sm font-bold text-[#3D2F24] mb-2">{tc('notes')}</h4>
               <p className="text-sm text-[#6D6D6D]">{order.notes}</p>
             </div>
           )}
@@ -786,7 +804,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
 const OrdersPage = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('orders');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('orders');
 
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -828,7 +846,7 @@ const OrdersPage = () => {
       }));
     } catch (error) {
       console.error('Error fetching orders:', error);
-      showToast(getApiErrorMessage(error, 'Erreur lors du chargement des commandes'), 'error');
+      showToast(getApiErrorMessage(error, t('orders.errors.load')), 'error');
       setOrders([]);
     } finally {
       setIsLoading(false);
@@ -894,7 +912,7 @@ const OrdersPage = () => {
   // EXPORT CONFIGURATION
   // ==========================================
   const columns = [
-    { label: 'N° Commande', accessor: 'orderNumber', width: 12 },
+    { label: t('orders.table.orderNumber'), accessor: 'orderNumber', width: 12 },
     { label: 'Client', accessor: 'customer', width: 18 },
     { label: 'Commercial', accessor: 'rep', width: 15 },
     { label: 'Date', accessor: 'createdAt', width: 12 },
@@ -909,31 +927,31 @@ const OrdersPage = () => {
     orderNumber: item.orderNumber || '—',
     customer: item.customer || '—',
     rep: item.rep || '—',
-    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString('fr-FR') : '—',
+    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString(DATE_LOCALE) : '—',
     productCount: item.products?.length || 0,
     total: `${(item.total || 0).toLocaleString()} ${CURRENCY_SYMBOL}`,
-    status: item.status === 'draft' ? 'Brouillon' :
-            item.status === 'pending' ? 'En attente' :
-            item.status === 'validated' ? 'Validée' :
-            item.status === 'in_production' ? 'En production' :
-            item.status === 'ready' ? 'Prête' :
-            item.status === 'in_delivery' ? 'En livraison' :
-            item.status === 'delivered' ? 'Livrée' :
-            item.status === 'cancelled' ? 'Annulée' :
-            item.status === 'rejected' ? 'Refusée' :
-            item.status === 'archived' ? 'Archivée' : item.status || '—',
-    priority: item.priority === 'high' ? 'Haute' :
-              item.priority === 'medium' ? 'Moyenne' : 'Basse',
-    paymentStatus: item.paymentStatus === 'paid' ? 'Payée' :
-                   item.paymentStatus === 'partial' ? 'Partielle' : 'Non payée'
+    status: item.status === 'draft' ? t('orders.status.draft') :
+            item.status === 'pending' ? t('common.pending') :
+            item.status === 'validated' ? t('orders.status.validated') :
+            item.status === 'in_production' ? t('orders.status.in_production') :
+            item.status === 'ready' ? t('orders.status.ready') :
+            item.status === 'in_delivery' ? t('orders.status.in_delivery') :
+            item.status === 'delivered' ? t('orders.status.delivered') :
+            item.status === 'cancelled' ? t('common.cancelled') :
+            item.status === 'rejected' ? t('orders.status.rejected') :
+            item.status === 'archived' ? t('common.statuses.archived') : item.status || '—',
+    priority: item.priority === 'high' ? t('orders.priority.high') :
+              item.priority === 'medium' ? t('orders.priority.medium') : t('orders.priority.low'),
+    paymentStatus: item.paymentStatus === 'paid' ? t('common.paymentStatus.paid') :
+                   item.paymentStatus === 'partial' ? t('common.paymentStatus.partial') : t('common.paymentStatus.unpaid')
   });
 
   const summary = [
-    { label: 'Total commandes', value: kpis.total },
-    { label: 'En attente', value: kpis.pending },
-    { label: 'En production', value: kpis.inProduction },
-    { label: 'Livrées', value: kpis.delivered },
-    { label: 'Annulées', value: kpis.cancelled },
+    { label: t('orders.kpi.total'), value: kpis.total },
+    { label: t('common.pending'), value: kpis.pending },
+    { label: t('orders.status.in_production'), value: kpis.inProduction },
+    { label: t('orders.kpi.delivered'), value: kpis.delivered },
+    { label: t('orders.kpi.cancelled'), value: kpis.cancelled },
     { label: 'CA', value: `${kpis.revenue.toLocaleString()} ${CURRENCY_SYMBOL}` }
   ];
 
@@ -956,11 +974,11 @@ const OrdersPage = () => {
       switch (type) {
         case 'pdf':
           await exportPDF({
-            title: 'Liste des commandes',
+            title: t('orders.export.title'),
             data: exportData,
             columns: columns,
             filename: `${filename}.pdf`,
-            userName: user?.firstName || 'Utilisateur',
+            userName: user?.firstName || t('users.table.user'),
             summary: summary.reduce((acc, item) => {
               acc[item.label] = item.value;
               return acc;
@@ -969,28 +987,28 @@ const OrdersPage = () => {
           break;
         case 'excel':
           await exportExcel({
-            title: 'Liste des commandes',
+            title: t('orders.export.title'),
             data: exportData,
             columns: columns,
             filename: `${filename}.xlsx`,
-            userName: user?.firstName || 'Utilisateur'
+            userName: user?.firstName || t('users.table.user')
           });
           break;
         case 'csv':
           await exportCSV({
-            title: 'Liste des commandes',
+            title: t('orders.export.title'),
             data: exportData,
             columns: columns,
             filename: `${filename}.csv`,
-            userName: user?.firstName || 'Utilisateur'
+            userName: user?.firstName || t('users.table.user')
           });
           break;
         case 'print':
           await printData({
-            title: 'Liste des commandes',
+            title: t('orders.export.title'),
             data: exportData,
             columns: columns,
-            userName: user?.firstName || 'Utilisateur'
+            userName: user?.firstName || t('users.table.user')
           });
           break;
         default:
@@ -1114,7 +1132,7 @@ const OrdersPage = () => {
           <button
             onClick={fetchOrders}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1155,16 +1173,16 @@ const OrdersPage = () => {
               <option value="all">Tous les statuts</option>
               {uniqueStatuses.map(status => (
                 <option key={status} value={status}>
-                  {status === 'draft' ? 'Brouillon' :
-                   status === 'pending' ? 'En attente' :
-                   status === 'validated' ? 'Validée' :
-                   status === 'in_production' ? 'En production' :
-                   status === 'ready' ? 'Prête' :
-                   status === 'in_delivery' ? 'En livraison' :
-                   status === 'delivered' ? 'Livrée' :
-                   status === 'cancelled' ? 'Annulée' :
-                   status === 'rejected' ? 'Refusée' :
-                   status === 'archived' ? 'Archivée' : status}
+                  {status === 'draft' ? t('orders.status.draft') :
+                   status === 'pending' ? t('common.pending') :
+                   status === 'validated' ? t('orders.status.validated') :
+                   status === 'in_production' ? t('orders.status.in_production') :
+                   status === 'ready' ? t('orders.status.ready') :
+                   status === 'in_delivery' ? t('orders.status.in_delivery') :
+                   status === 'delivered' ? t('orders.status.delivered') :
+                   status === 'cancelled' ? t('common.cancelled') :
+                   status === 'rejected' ? t('orders.status.rejected') :
+                   status === 'archived' ? t('common.statuses.archived') : status}
                 </option>
               ))}
             </select>
@@ -1188,15 +1206,15 @@ const OrdersPage = () => {
                 <thead>
                   <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">N° Commande</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Client</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Commercial</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Produits</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Montant</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Priorité</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('customer')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('orders.table.rep')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('date')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('product')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('amount')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('priority')}</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Paiement</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                   </tr>
                 </thead>
                 <tbody>

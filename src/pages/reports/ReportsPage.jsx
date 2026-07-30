@@ -144,6 +144,7 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // CONSTANTS
@@ -161,7 +162,7 @@ const formatPercentage = (value) => {
 // ==========================================
 // COMPOSANT: CONFIRM DIALOG
 // ==========================================
-const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirmText = 'Confirmer', cancelText = 'Annuler' }) => {
+const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirmText = tc('confirm'), cancelText = tc('cancel') }) => {
   if (!isOpen) return null;
 
   return (
@@ -202,6 +203,7 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirm
 // COMPOSANT: TOAST
 // ==========================================
 const Toast = ({ message, type = 'success', onClose }) => {
+  const { t, tc } = usePageI18n('reports');
   const typeConfig = {
     success: 'bg-emerald-50 border-emerald-200 text-emerald-700',
     error: 'bg-rose-50 border-rose-200 text-rose-700',
@@ -241,6 +243,7 @@ const Toast = ({ message, type = 'success', onClose }) => {
 // COMPOSANT: PRODUCTION DETAIL MODAL
 // ==========================================
 const ProductionDetailModal = ({ isOpen, onClose, order }) => {
+  const { t, tc } = usePageI18n('reports');
   if (!isOpen || !order) return null;
 
   const productionDetails = {
@@ -250,30 +253,30 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
     remaining: 55,
     assignedTo: order.salesRep || 'Ahmed Benjelloun',
     startDate: order.date || '08/05/2025',
-    status: order.status || 'En production',
+    status: order.status || 'in_production',
     notes: 'Suspendue pour maintenance',
     productName: order.productName || 'Éclair Vanille',
     orderId: order.id || 'CMD-1256'
   };
 
   const statusColors = {
-    'En production': 'bg-blue-50 text-blue-700 border-blue-200',
+    'in_production': 'bg-blue-50 text-blue-700 border-blue-200',
     'Suspendue': 'bg-amber-50 text-amber-700 border-amber-200',
     'Terminée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'En attente': 'bg-gray-50 text-gray-600 border-gray-200',
-    'Prête': 'bg-teal-50 text-teal-700 border-teal-200',
-    'Livrée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'Validée': 'bg-purple-50 text-purple-700 border-purple-200'
+    'pending': 'bg-gray-50 text-gray-600 border-gray-200',
+    'ready': 'bg-teal-50 text-teal-700 border-teal-200',
+    'delivered': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    'validated': 'bg-purple-50 text-purple-700 border-purple-200'
   };
 
   const statusIcons = {
-    'En production': <Loader2 size={16} className="text-blue-500 animate-spin" />,
+    'in_production': <Loader2 size={16} className="text-blue-500 animate-spin" />,
     'Suspendue': <PauseCircle size={16} className="text-amber-500" />,
     'Terminée': <CheckCircle size={16} className="text-emerald-500" />,
-    'En attente': <Clock size={16} className="text-gray-500" />,
-    'Prête': <CheckCircle size={16} className="text-teal-500" />,
-    'Livrée': <CheckCircle size={16} className="text-emerald-500" />,
-    'Validée': <CheckCircle size={16} className="text-purple-500" />
+    'pending': <Clock size={16} className="text-gray-500" />,
+    'ready': <CheckCircle size={16} className="text-teal-500" />,
+    'delivered': <CheckCircle size={16} className="text-emerald-500" />,
+    'validated': <CheckCircle size={16} className="text-purple-500" />
   };
 
   return (
@@ -303,8 +306,8 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
           </div>
 
           <div className="absolute -bottom-4 left-6 right-6 flex items-center gap-3 flex-wrap">
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border shadow-sm bg-white ${statusColors[productionDetails.status] || statusColors['En attente']}`}>
-              {statusIcons[productionDetails.status] || statusIcons['En attente']}
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border shadow-sm bg-white ${statusColors[productionDetails.status] || statusColors[t('common.pending')]}`}>
+              {statusIcons[productionDetails.status] || statusIcons[t('common.pending')]}
               <span className="text-sm font-semibold">{productionDetails.status}</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl border shadow-sm bg-white border-[#ECE8E1]">
@@ -334,7 +337,7 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
               />
             </div>
             <div className="flex items-center justify-between text-xs text-[#6D6D6D] mt-1.5">
-              <span>{productionDetails.produced} produits</span>
+              <span>{productionDetails.produced} {t('orders.table.products')}</span>
               <span>Objectif: {productionDetails.quantity}</span>
               <span>Restant: {productionDetails.remaining}</span>
             </div>
@@ -406,17 +409,18 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
 // COMPOSANT: DELIVERY DETAIL MODAL
 // ==========================================
 const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
+  const { t, tc } = usePageI18n('reports');
   if (!isOpen || !delivery) return null;
 
   const statusColors = {
     'Effectuée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'En attente': 'bg-amber-50 text-amber-700 border-amber-200',
+    'pending': 'bg-amber-50 text-amber-700 border-amber-200',
     'Retard': 'bg-rose-50 text-rose-700 border-rose-200'
   };
 
   const statusIcons = {
     'Effectuée': <CheckCircle size={18} className="text-emerald-500" />,
-    'En attente': <Clock size={18} className="text-amber-500" />,
+    'pending': <Clock size={18} className="text-amber-500" />,
     'Retard': <XCircle size={18} className="text-rose-500" />
   };
 
@@ -448,14 +452,14 @@ const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
         </div>
 
         <div className="p-6">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${statusColors[delivery.status] || statusColors['En attente']} mb-6`}>
-            {statusIcons[delivery.status] || statusIcons['En attente']}
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${statusColors[delivery.status] || statusColors[t('common.pending')]} mb-6`}>
+            {statusIcons[delivery.status] || statusIcons[t('common.pending')]}
             <span className="text-sm font-semibold">{delivery.status}</span>
           </div>
 
           <div className="space-y-4">
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Client</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('customer')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <User size={14} className="text-[#6D6D6D]" />
                 {delivery.client}
@@ -471,7 +475,7 @@ const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
             </div>
 
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Date</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('date')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <Calendar size={14} className="text-[#6D6D6D]" />
                 {delivery.date}
@@ -487,7 +491,7 @@ const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
             </div>
 
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Notes</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('notes')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <FileText size={14} className="text-[#6D6D6D]" />
                 {delivery.notes || 'Aucune note'}
@@ -527,18 +531,19 @@ const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
 // COMPOSANT: INVOICE DETAIL MODAL
 // ==========================================
 const InvoiceDetailModal = ({ isOpen, onClose, invoice }) => {
+  const { t, tc } = usePageI18n('reports');
   if (!isOpen || !invoice) return null;
 
   const statusColors = {
-    'Payée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    'paid': 'bg-emerald-50 text-emerald-700 border-emerald-200',
     'Impayée': 'bg-rose-50 text-rose-700 border-rose-200',
-    'En attente': 'bg-amber-50 text-amber-700 border-amber-200'
+    'pending': 'bg-amber-50 text-amber-700 border-amber-200'
   };
 
   const statusIcons = {
-    'Payée': <CheckCircle size={18} className="text-emerald-500" />,
+    'paid': <CheckCircle size={18} className="text-emerald-500" />,
     'Impayée': <XCircle size={18} className="text-rose-500" />,
-    'En attente': <Clock size={18} className="text-amber-500" />
+    'pending': <Clock size={18} className="text-amber-500" />
   };
 
   return (
@@ -569,14 +574,14 @@ const InvoiceDetailModal = ({ isOpen, onClose, invoice }) => {
         </div>
 
         <div className="p-6">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${statusColors[invoice.status] || statusColors['En attente']} mb-6`}>
-            {statusIcons[invoice.status] || statusIcons['En attente']}
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${statusColors[invoice.status] || statusColors[t('common.pending')]} mb-6`}>
+            {statusIcons[invoice.status] || statusIcons[t('common.pending')]}
             <span className="text-sm font-semibold">{invoice.status}</span>
           </div>
 
           <div className="space-y-4">
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Client</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('customer')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <User size={14} className="text-[#6D6D6D]" />
                 {invoice.client}
@@ -584,7 +589,7 @@ const InvoiceDetailModal = ({ isOpen, onClose, invoice }) => {
             </div>
 
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Date</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('date')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <Calendar size={14} className="text-[#6D6D6D]" />
                 {invoice.date}
@@ -592,7 +597,7 @@ const InvoiceDetailModal = ({ isOpen, onClose, invoice }) => {
             </div>
 
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Montant</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('amount')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <DollarSign size={14} className="text-[#6D6D6D]" />
                 {invoice.amount.toLocaleString()} {CURRENCY}
@@ -700,13 +705,14 @@ const KPICard = ({ icon: Icon, title, value, change, color, isCurrency, subtitle
 // COMPOSANT: ORDER CARD
 // ==========================================
 const OrderCard = ({ order, onView, onDelete, onExport }) => {
+  const { t, tc, actions } = usePageI18n('reports');
   const statusColors = {
-    'Livrée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'En production': 'bg-blue-50 text-blue-700 border-blue-200',
-    'Validée': 'bg-purple-50 text-purple-700 border-purple-200',
-    'En attente': 'bg-amber-50 text-amber-700 border-amber-200',
-    'Prête': 'bg-teal-50 text-teal-700 border-teal-200',
-    'Annulée': 'bg-rose-50 text-rose-700 border-rose-200'
+    'delivered': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    'in_production': 'bg-blue-50 text-blue-700 border-blue-200',
+    'validated': 'bg-purple-50 text-purple-700 border-purple-200',
+    'pending': 'bg-amber-50 text-amber-700 border-amber-200',
+    'ready': 'bg-teal-50 text-teal-700 border-teal-200',
+    'cancelled': 'bg-rose-50 text-rose-700 border-rose-200'
   };
 
   return (
@@ -719,21 +725,21 @@ const OrderCard = ({ order, onView, onDelete, onExport }) => {
           <p className="text-sm font-semibold text-[#3D2F24]">{order.id}</p>
           <p className="text-xs text-[#6D6D6D]">{order.client}</p>
         </div>
-        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[order.status] || statusColors['En attente']}`}>
+        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[order.status] || statusColors[t('common.pending')]}`}>
           {order.status}
         </span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
         <div>
-          <p className="text-[#6D6D6D]">Commercial</p>
+          <p className="text-[#6D6D6D]">{t('orders.table.rep')}</p>
           <p className="font-medium text-[#3D2F24]">{order.salesRep}</p>
         </div>
         <div>
-          <p className="text-[#6D6D6D]">Date</p>
+          <p className="text-[#6D6D6D]">{tc('date')}</p>
           <p className="font-medium text-[#3D2F24]">{order.date}</p>
         </div>
         <div>
-          <p className="text-[#6D6D6D]">Montant</p>
+          <p className="text-[#6D6D6D]">{tc('amount')}</p>
           <p className="font-medium text-[#3D2F24]">{order.amount.toLocaleString()} {CURRENCY}</p>
         </div>
         <div>
@@ -745,7 +751,7 @@ const OrderCard = ({ order, onView, onDelete, onExport }) => {
         <button
           onClick={() => onView && onView(order)}
           className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-          title="Voir"
+          title={actions.view}
         >
           <Eye size={15} className="text-[#6D6D6D]" />
         </button>
@@ -759,7 +765,7 @@ const OrderCard = ({ order, onView, onDelete, onExport }) => {
         <button
           onClick={() => onDelete && onDelete(order)}
           className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-          title="Supprimer"
+          title={actions.delete}
         >
           <Trash2 size={15} className="text-rose-500" />
         </button>
@@ -772,10 +778,11 @@ const OrderCard = ({ order, onView, onDelete, onExport }) => {
 // COMPOSANT: INVOICE CARD
 // ==========================================
 const InvoiceCard = ({ invoice, onView, onDelete, onExport }) => {
+  const { t, tc, actions } = usePageI18n('reports');
   const statusColors = {
-    'Payée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    'paid': 'bg-emerald-50 text-emerald-700 border-emerald-200',
     'Impayée': 'bg-rose-50 text-rose-700 border-rose-200',
-    'En attente': 'bg-amber-50 text-amber-700 border-amber-200'
+    'pending': 'bg-amber-50 text-amber-700 border-amber-200'
   };
 
   return (
@@ -788,17 +795,17 @@ const InvoiceCard = ({ invoice, onView, onDelete, onExport }) => {
           <p className="text-sm font-semibold text-[#3D2F24]">{invoice.id}</p>
           <p className="text-xs text-[#6D6D6D]">{invoice.client}</p>
         </div>
-        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[invoice.status] || statusColors['En attente']}`}>
+        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[invoice.status] || statusColors[t('common.pending')]}`}>
           {invoice.status}
         </span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
         <div>
-          <p className="text-[#6D6D6D]">Date</p>
+          <p className="text-[#6D6D6D]">{tc('date')}</p>
           <p className="font-medium text-[#3D2F24]">{invoice.date}</p>
         </div>
         <div>
-          <p className="text-[#6D6D6D]">Montant</p>
+          <p className="text-[#6D6D6D]">{tc('amount')}</p>
           <p className="font-medium text-[#3D2F24]">{invoice.amount.toLocaleString()} {CURRENCY}</p>
         </div>
       </div>
@@ -806,7 +813,7 @@ const InvoiceCard = ({ invoice, onView, onDelete, onExport }) => {
         <button
           onClick={() => onView && onView(invoice)}
           className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-          title="Voir"
+          title={actions.view}
         >
           <Eye size={15} className="text-[#6D6D6D]" />
         </button>
@@ -820,7 +827,7 @@ const InvoiceCard = ({ invoice, onView, onDelete, onExport }) => {
         <button
           onClick={() => onDelete && onDelete(invoice)}
           className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-          title="Supprimer"
+          title={actions.delete}
         >
           <Trash2 size={15} className="text-rose-500" />
         </button>
@@ -833,9 +840,10 @@ const InvoiceCard = ({ invoice, onView, onDelete, onExport }) => {
 // COMPOSANT: DELIVERY CARD
 // ==========================================
 const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
+  const { t, tc, actions } = usePageI18n('reports');
   const statusColors = {
     'Effectuée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'En attente': 'bg-amber-50 text-amber-700 border-amber-200',
+    'pending': 'bg-amber-50 text-amber-700 border-amber-200',
     'Retard': 'bg-rose-50 text-rose-700 border-rose-200'
   };
 
@@ -849,7 +857,7 @@ const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
           <p className="text-sm font-semibold text-[#3D2F24]">{delivery.id}</p>
           <p className="text-xs text-[#6D6D6D]">{delivery.client}</p>
         </div>
-        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[delivery.status] || statusColors['En attente']}`}>
+        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[delivery.status] || statusColors[t('common.pending')]}`}>
           {delivery.status}
         </span>
       </div>
@@ -859,7 +867,7 @@ const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
           <p className="font-medium text-[#3D2F24] truncate">{delivery.address}</p>
         </div>
         <div>
-          <p className="text-[#6D6D6D]">Date</p>
+          <p className="text-[#6D6D6D]">{tc('date')}</p>
           <p className="font-medium text-[#3D2F24]">{delivery.date}</p>
         </div>
       </div>
@@ -867,7 +875,7 @@ const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
         <button
           onClick={() => onView && onView(delivery)}
           className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-          title="Voir"
+          title={actions.view}
         >
           <Eye size={15} className="text-[#6D6D6D]" />
         </button>
@@ -881,7 +889,7 @@ const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
         <button
           onClick={() => onDelete && onDelete(delivery)}
           className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-          title="Supprimer"
+          title={actions.delete}
         >
           <Trash2 size={15} className="text-rose-500" />
         </button>
@@ -894,6 +902,7 @@ const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
 // COMPOSANT: REPORT CARD
 // ==========================================
 const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) => {
+  const { t, tc, actions } = usePageI18n('reports');
   const typeColors = {
     Ventes: 'bg-blue-50 text-blue-700 border-blue-200',
     Commandes: 'bg-purple-50 text-purple-700 border-purple-200',
@@ -906,7 +915,7 @@ const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) 
   const statusColors = {
     'Généré': 'bg-emerald-50 text-emerald-700 border-emerald-200',
     'En cours': 'bg-amber-50 text-amber-700 border-amber-200',
-    'En attente': 'bg-gray-50 text-gray-600 border-gray-200',
+    'pending': 'bg-gray-50 text-gray-600 border-gray-200',
     'Erreur': 'bg-red-50 text-red-700 border-red-200'
   };
 
@@ -924,7 +933,7 @@ const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) 
             <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${typeColors[report.type] || typeColors.Ventes}`}>
               {report.type}
             </span>
-            <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[report.status] || statusColors['En attente']}`}>
+            <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[report.status] || statusColors[t('common.pending')]}`}>
               {report.status}
             </span>
           </div>
@@ -943,7 +952,7 @@ const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) 
           <button
             onClick={() => onView && onView(report)}
             className="p-2 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
@@ -971,7 +980,7 @@ const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) 
           <button
             onClick={() => onDelete && onDelete(report)}
             className="p-2 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -1089,13 +1098,14 @@ const TopListCard = ({ title, items, valueLabel, icon: Icon, valueKey, nameKey }
 // COMPOSANT: ADVANCED FILTERS
 // ==========================================
 const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onApply }) => {
+  const { t, tc } = usePageI18n('reports');
   const [localFilters, setLocalFilters] = useState(filters);
 
   const filterGroups = [
     {
       title: 'Période',
       fields: [
-        { key: 'period', type: 'select', options: ['Aujourd\'hui', 'Cette semaine', 'Ce mois', 'Cette année', 'Période personnalisée'] }
+        { key: 'period', type: 'select', options: [tc('today'), 'Cette semaine', 'Ce mois', 'Cette année', 'Période personnalisée'] }
       ]
     },
     {
@@ -1113,7 +1123,7 @@ const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onAppl
     {
       title: 'Statut',
       fields: [
-        { key: 'status', type: 'select', options: ['Tous', 'En attente', 'Validée', 'En production', 'Prête', 'Livrée', 'Annulée'] }
+        { key: 'status', type: 'select', options: ['Tous', t('common.pending'), t('orders.status.validated'), t('orders.status.in_production'), t('orders.status.ready'), t('orders.status.delivered'), t('common.cancelled')] }
       ]
     }
   ];
@@ -1214,6 +1224,7 @@ const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onAppl
 // ==========================================
 
 const SalesChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -1271,6 +1282,7 @@ const SalesChart = ({ data }) => {
 };
 
 const OrderStatusChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Répartition des commandes</h3>
@@ -1317,6 +1329,7 @@ const OrderStatusChart = ({ data }) => {
 };
 
 const TopProductsChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   const top10 = data.slice(0, 10);
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
@@ -1344,6 +1357,7 @@ const TopProductsChart = ({ data }) => {
 };
 
 const MonthlyRevenueChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Chiffre d'affaires mensuel</h3>
@@ -1382,6 +1396,7 @@ const MonthlyRevenueChart = ({ data }) => {
 };
 
 const ProductionChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Production Journalière</h3>
@@ -1410,6 +1425,7 @@ const ProductionChart = ({ data }) => {
 };
 
 const DeliveryChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Livraisons</h3>
@@ -1437,6 +1453,7 @@ const DeliveryChart = ({ data }) => {
 };
 
 const SalesRepChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Performance Commerciaux</h3>
@@ -1463,6 +1480,7 @@ const SalesRepChart = ({ data }) => {
 };
 
 const YearlyComparisonChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Comparaison Annuelle</h3>
@@ -1504,7 +1522,7 @@ const YearlyComparisonChart = ({ data }) => {
 // ==========================================
 const ReportsPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('reports');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('reports');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
@@ -1681,8 +1699,8 @@ const ReportsPage = () => {
     
     const totalInvoices = invoicesList.length;
     const totalDeliveries = deliveriesList.length;
-    const inProduction = ordersData.filter(o => o.status === 'En production').length;
-    const pendingOrders = ordersData.filter(o => o.status === 'En attente').length;
+    const inProduction = ordersData.filter(o => o.status === t('orders.status.in_production')).length;
+    const pendingOrders = ordersData.filter(o => o.status === t('common.pending')).length;
     const totalCustomers = topCustomers.reduce((sum, c) => sum + (c.orders || 0), 0);
 
     const revenueTrend = salesData.map(d => ({ value: d.revenue || 0 }));
@@ -1717,7 +1735,7 @@ const ReportsPage = () => {
     { label: 'Montant', accessor: 'amount', width: 15 },
     { label: 'Statut', accessor: 'status', width: 12 },
     { label: 'Production', accessor: 'production', width: 14 },
-    { label: 'Livraison', accessor: 'delivery', width: 14 }
+    { label: t('common.delivery'), accessor: 'delivery', width: 14 }
   ];
 
   const exportRowFormatter = (item) => ({
@@ -1732,18 +1750,18 @@ const ReportsPage = () => {
   });
 
   const exportSummary = [
-    { label: 'Total commandes', value: ordersData.length },
+    { label: t('orders.kpi.total'), value: ordersData.length },
     { label: 'Montant total', value: `${ordersData.reduce((sum, o) => sum + o.amount, 0).toLocaleString()} ${CURRENCY}` },
-    { label: 'Statut : Livrées', value: ordersData.filter(o => o.status === 'Livrée').length },
-    { label: 'Statut : En production', value: ordersData.filter(o => o.status === 'En production').length },
-    { label: 'Statut : En attente', value: ordersData.filter(o => o.status === 'En attente').length }
+    { label: 'Statut : Livrées', value: ordersData.filter(o => o.status === t('orders.status.delivered')).length },
+    { label: 'Statut : En production', value: ordersData.filter(o => o.status === t('orders.status.in_production')).length },
+    { label: 'Statut : En attente', value: ordersData.filter(o => o.status === t('common.pending')).length }
   ];
 
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    showToast('Export réalisé avec succès', 'success');
+    showToast(tc('exportSuccess', { type: 'PDF', count: 0 }), 'success');
   };
 
   const handleExportError = () => {
@@ -1754,10 +1772,12 @@ const ReportsPage = () => {
   // HANDLERS - TOAST
   // ==========================================
   const showToast = (message, type = 'success') => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     setToast({ isOpen: true, message, type });
   };
 
   const hideToast = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     setToast({ isOpen: false, message: '', type: 'success' });
   };
 
@@ -1765,10 +1785,12 @@ const ReportsPage = () => {
   // HANDLERS - CONFIRM DIALOG
   // ==========================================
   const showConfirm = (title, description, onConfirm) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     setConfirmDialog({ isOpen: true, title, description, onConfirm });
   };
 
   const hideConfirm = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     setConfirmDialog({ isOpen: false, title: '', description: '', onConfirm: null });
   };
 
@@ -2087,8 +2109,9 @@ const ReportsPage = () => {
   );
 
   const renderOrders = () => {
-    const paidCount = ordersData.filter(o => o.status === 'Livrée').length;
-    const pending = ordersData.filter(o => o.status === 'En attente').length;
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
+    const paidCount = ordersData.filter(o => o.status === t('orders.status.delivered')).length;
+    const pending = ordersData.filter(o => o.status === t('common.pending')).length;
 
     return (
       <div>
@@ -2181,6 +2204,7 @@ const ReportsPage = () => {
   );
 
   const renderProducts = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     return (
       <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -2258,6 +2282,7 @@ const ReportsPage = () => {
   };
 
   const renderCustomers = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     return (
       <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -2320,9 +2345,10 @@ const ReportsPage = () => {
   };
 
   const renderInvoices = () => {
-    const paidCount = invoicesList.filter(i => i.status === 'Payée').length;
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
+    const paidCount = invoicesList.filter(i => i.status === t('common.paymentStatus.paid')).length;
     const unpaidCount = invoicesList.filter(i => i.status === 'Impayée').length;
-    const pendingCount = invoicesList.filter(i => i.status === 'En attente').length;
+    const pendingCount = invoicesList.filter(i => i.status === t('common.pending')).length;
 
     return (
       <div>
@@ -2356,8 +2382,9 @@ const ReportsPage = () => {
   };
 
   const renderDeliveries = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     const deliveredCount = deliveriesList.filter(d => d.status === 'Effectuée').length;
-    const pendingCount = deliveriesList.filter(d => d.status === 'En attente').length;
+    const pendingCount = deliveriesList.filter(d => d.status === t('common.pending')).length;
     const delayedCount = deliveriesList.filter(d => d.status === 'Retard').length;
 
     return (
@@ -2444,6 +2471,7 @@ const ReportsPage = () => {
   );
 
   const renderGeneratedReports = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     return (
       <div>
         <div className="flex items-center gap-3 mb-6 flex-wrap">
@@ -2457,7 +2485,7 @@ const ReportsPage = () => {
           </div>
           <div className="flex items-center gap-2 bg-white border border-[#ECE8E1] rounded-lg px-3 py-2">
             <Clock size={16} className="text-amber-500" />
-            <span className="text-sm text-[#3D2F24]">{generatedReports.filter(r => r.status === 'En cours' || r.status === 'En attente').length} En cours</span>
+            <span className="text-sm text-[#3D2F24]">{generatedReports.filter(r => r.status === 'En cours' || r.status === t('common.pending')).length} En cours</span>
           </div>
         </div>
         {generatedReports.length === 0 ? (
@@ -2621,7 +2649,7 @@ const ReportsPage = () => {
             <button
               onClick={handleRefresh}
               className="p-2 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-              title="Actualiser"
+              title={actions.refresh}
             >
               <RefreshCw size={18} className="text-[#6D6D6D]" />
             </button>

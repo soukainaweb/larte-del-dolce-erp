@@ -48,17 +48,19 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('production');
   const statusConfig = {
-    pending: { label: 'En attente', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    in_progress: { label: 'En production', class: 'bg-blue-50 text-blue-700 border-blue-200' },
+    pending: { label: t('common.pending'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
+    in_progress: { label: t('orders.status.in_production'), class: 'bg-blue-50 text-blue-700 border-blue-200' },
     paused: { label: 'Suspendue', class: 'bg-purple-50 text-purple-700 border-purple-200' },
     completed: { label: 'Terminée', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    cancelled: { label: 'Annulée', class: 'bg-rose-50 text-rose-700 border-rose-200' }
+    cancelled: { label: t('common.cancelled'), class: 'bg-rose-50 text-rose-700 border-rose-200' }
   };
 
   const config = statusConfig[status] || statusConfig.pending;
@@ -74,10 +76,11 @@ const StatusBadge = ({ status }) => {
 // PRIORITY BADGE
 // ==========================================
 const PriorityBadge = ({ priority }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('production');
   const priorityConfig = {
-    high: { label: 'Haute', class: 'bg-rose-50 text-rose-700 border-rose-200' },
-    medium: { label: 'Moyenne', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    low: { label: 'Basse', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+    high: { label: t('orders.priority.high'), class: 'bg-rose-50 text-rose-700 border-rose-200' },
+    medium: { label: t('orders.priority.medium'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
+    low: { label: t('orders.priority.low'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
   };
 
   const config = priorityConfig[priority] || priorityConfig.medium;
@@ -93,6 +96,7 @@ const PriorityBadge = ({ priority }) => {
 // PROGRESS BAR
 // ==========================================
 const ProgressBar = ({ progress }) => {
+  const { t, tc } = usePageI18n('production');
   return (
     <div className="w-full bg-[#F8F7F4] rounded-full h-2 overflow-hidden">
       <motion.div
@@ -109,6 +113,7 @@ const ProgressBar = ({ progress }) => {
 // PRODUCTION CARD (Mobile)
 // ==========================================
 const ProductionCard = ({ production, onEdit, onDelete, onView }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('production');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
@@ -136,7 +141,7 @@ const ProductionCard = ({ production, onEdit, onDelete, onView }) => {
       <div className="grid grid-cols-2 gap-2 text-xs text-[#6D6D6D]">
         <div className="flex items-center gap-1">
           <Clock size={12} />
-          {production.startDate ? new Date(production.startDate).toLocaleDateString('fr-FR') : 'Non commencée'}
+          {production.startDate ? new Date(production.startDate).toLocaleDateString(DATE_LOCALE) : 'Non commencée'}
         </div>
         <div className="flex items-center gap-1">
           <User size={12} />
@@ -147,7 +152,7 @@ const ProductionCard = ({ production, onEdit, onDelete, onView }) => {
         <div className="text-xs text-[#6D6D6D]">
           <span className="flex items-center gap-1">
             <Calendar size={12} />
-            {new Date(production.createdAt).toLocaleDateString('fr-FR')}
+            {new Date(production.createdAt).toLocaleDateString(DATE_LOCALE)}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -170,6 +175,7 @@ const ProductionCard = ({ production, onEdit, onDelete, onView }) => {
 // PRODUCTION TABLE ROW (Desktop)
 // ==========================================
 const ProductionTableRow = ({ production, onEdit, onDelete, onView, index }) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('production');
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -206,31 +212,31 @@ const ProductionTableRow = ({ production, onEdit, onDelete, onView, index }) => 
         {production.assignedTo || '—'}
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {production.startDate ? new Date(production.startDate).toLocaleDateString('fr-FR') : '—'}
+        {production.startDate ? new Date(production.startDate).toLocaleDateString(DATE_LOCALE) : '—'}
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {production.endDate ? new Date(production.endDate).toLocaleDateString('fr-FR') : '—'}
+        {production.endDate ? new Date(production.endDate).toLocaleDateString(DATE_LOCALE) : '—'}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1">
           <button
             onClick={() => onView(production)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(production)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={actions.edit}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onDelete(production)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -244,6 +250,7 @@ const ProductionTableRow = ({ production, onEdit, onDelete, onView, index }) => 
 // PRODUCTION MODAL
 // ==========================================
 const ProductionModal = ({ isOpen, onClose, onSave, production, isLoading }) => {
+  const { t, tc } = usePageI18n('production');
   const [formData, setFormData] = useState({
     name: '',
     orderId: '',
@@ -402,7 +409,7 @@ const ProductionModal = ({ isOpen, onClose, onSave, production, isLoading }) => 
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Statut</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('status')}</label>
               <select
                 name="status"
                 value={formData.status}
@@ -417,7 +424,7 @@ const ProductionModal = ({ isOpen, onClose, onSave, production, isLoading }) => 
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Priorité</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('priority')}</label>
               <select
                 name="priority"
                 value={formData.priority}
@@ -471,7 +478,7 @@ const ProductionModal = ({ isOpen, onClose, onSave, production, isLoading }) => 
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Notes</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
@@ -494,7 +501,7 @@ const ProductionModal = ({ isOpen, onClose, onSave, production, isLoading }) => 
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : production ? 'Mettre à jour' : 'Ajouter'}
+              {isLoading ? tc('saving') : production ? tc('update') : tc('add')}
             </button>
           </div>
         </form>
@@ -507,6 +514,7 @@ const ProductionModal = ({ isOpen, onClose, onSave, production, isLoading }) => 
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, production, isLoading }) => {
+  const { t, tc } = usePageI18n('production');
   if (!isOpen) return null;
 
   return (
@@ -542,7 +550,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, production, isLoading }) => {
             disabled={isLoading}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
           >
-            {isLoading ? 'Suppression...' : 'Supprimer'}
+            {isLoading ? tc('deleting') : tc('delete')}
           </button>
         </div>
       </motion.div>
@@ -554,6 +562,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, production, isLoading }) => {
 // PRODUCTION DETAILS MODAL
 // ==========================================
 const ProductionDetailsModal = ({ isOpen, onClose, production }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('production');
   if (!isOpen || !production) return null;
 
   return (
@@ -622,18 +631,18 @@ const ProductionDetailsModal = ({ isOpen, onClose, production }) => {
             {production.startDate && (
               <div className="flex items-center gap-2">
                 <Clock size={16} className="text-[#6D6D6D]" />
-                <span className="text-[#3D2F24]">Début: {new Date(production.startDate).toLocaleDateString('fr-FR')}</span>
+                <span className="text-[#3D2F24]">Début: {new Date(production.startDate).toLocaleDateString(DATE_LOCALE)}</span>
               </div>
             )}
             {production.endDate && (
               <div className="flex items-center gap-2">
                 <Calendar size={16} className="text-[#6D6D6D]" />
-                <span className="text-[#3D2F24]">Fin: {new Date(production.endDate).toLocaleDateString('fr-FR')}</span>
+                <span className="text-[#3D2F24]">Fin: {new Date(production.endDate).toLocaleDateString(DATE_LOCALE)}</span>
               </div>
             )}
             {production.notes && (
               <div className="mt-2 p-3 bg-[#F8F7F4] rounded-lg">
-                <p className="text-xs text-[#6D6D6D] mb-1">Notes</p>
+                <p className="text-xs text-[#6D6D6D] mb-1">{tc('notes')}</p>
                 <p className="text-sm text-[#3D2F24]">{production.notes}</p>
               </div>
             )}
@@ -656,7 +665,7 @@ const ProductionDetailsModal = ({ isOpen, onClose, production }) => {
 // ==========================================
 const ProductionPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('production');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('production');
 
   const [productions, setProductions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -751,7 +760,7 @@ const ProductionPage = () => {
   // ==========================================
   const columns = [
     { label: 'Nom', accessor: 'name', width: 25 },
-    { label: 'N° Commande', accessor: 'orderId', width: 12 },
+    { label: t('orders.table.orderNumber'), accessor: 'orderId', width: 12 },
     { label: 'Produit', accessor: 'product', width: 18 },
     { label: 'Quantité', accessor: 'quantity', width: 10 },
     { label: 'Statut', accessor: 'status', width: 12 },
@@ -767,26 +776,26 @@ const ProductionPage = () => {
     orderId: item.orderId,
     product: item.product || '—',
     quantity: item.quantity || 0,
-    status: item.status === 'pending' ? 'En attente' :
-            item.status === 'in_progress' ? 'En production' :
+    status: item.status === 'pending' ? t('common.pending') :
+            item.status === 'in_progress' ? t('orders.status.in_production') :
             item.status === 'paused' ? 'Suspendue' :
             item.status === 'completed' ? 'Terminée' :
-            item.status === 'cancelled' ? 'Annulée' : item.status,
-    priority: item.priority === 'high' ? 'Haute' :
-              item.priority === 'medium' ? 'Moyenne' : 'Basse',
+            item.status === 'cancelled' ? t('common.cancelled') : item.status,
+    priority: item.priority === 'high' ? t('orders.priority.high') :
+              item.priority === 'medium' ? t('orders.priority.medium') : t('orders.priority.low'),
     progress: `${item.progress}%`,
     assignedTo: item.assignedTo || '—',
-    startDate: item.startDate ? new Date(item.startDate).toLocaleDateString('fr-FR') : '—',
-    endDate: item.endDate ? new Date(item.endDate).toLocaleDateString('fr-FR') : '—'
+    startDate: item.startDate ? new Date(item.startDate).toLocaleDateString(DATE_LOCALE) : '—',
+    endDate: item.endDate ? new Date(item.endDate).toLocaleDateString(DATE_LOCALE) : '—'
   });
 
   const summary = useMemo(() => {
     return [
       { label: 'Total productions', value: kpis.total },
-      { label: 'En production', value: kpis.inProgress },
-      { label: 'En attente', value: kpis.pending },
+      { label: t('orders.status.in_production'), value: kpis.inProgress },
+      { label: t('common.pending'), value: kpis.pending },
       { label: 'Terminées', value: kpis.completed },
-      { label: 'Annulées', value: kpis.cancelled },
+      { label: t('orders.kpi.cancelled'), value: kpis.cancelled },
       { label: 'Progression moyenne', value: `${kpis.avgProgress}%` }
     ];
   }, [kpis]);
@@ -895,7 +904,7 @@ const ProductionPage = () => {
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -924,11 +933,11 @@ const ProductionPage = () => {
               <option value="all">Tous les statuts</option>
               {uniqueStatuses.map(status => (
                 <option key={status} value={status}>
-                  {status === 'pending' ? 'En attente' :
-                   status === 'in_progress' ? 'En production' :
+                  {status === 'pending' ? t('common.pending') :
+                   status === 'in_progress' ? t('orders.status.in_production') :
                    status === 'paused' ? 'Suspendue' :
                    status === 'completed' ? 'Terminée' :
-                   status === 'cancelled' ? 'Annulée' : status}
+                   status === 'cancelled' ? t('common.cancelled') : status}
                 </option>
               ))}
             </select>
@@ -943,13 +952,13 @@ const ProductionPage = () => {
             <thead>
               <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Production</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Priorité</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('priority')}</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Progression</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Assigné à</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Début</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Fin</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
               </tr>
             </thead>
             <tbody>

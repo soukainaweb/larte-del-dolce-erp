@@ -57,15 +57,17 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('suppliers');
   const statusConfig = {
-    active: { label: 'Actif', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    inactive: { label: 'Inactif', class: 'bg-gray-50 text-gray-600 border-gray-200' },
-    pending: { label: 'En attente', class: 'bg-amber-50 text-amber-700 border-amber-200' }
+    active: { label: tc('active'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    inactive: { label: tc('inactive'), class: 'bg-gray-50 text-gray-600 border-gray-200' },
+    pending: { label: t('common.pending'), class: 'bg-amber-50 text-amber-700 border-amber-200' }
   };
 
   const config = statusConfig[status] || statusConfig.inactive;
@@ -81,12 +83,13 @@ const StatusBadge = ({ status }) => {
 // SUPPLIER TYPE BADGE
 // ==========================================
 const SupplierTypeBadge = ({ type }) => {
+  const { t, tc } = usePageI18n('suppliers');
   const typeConfig = {
-    raw: { label: 'Matières premières', class: 'bg-purple-50 text-purple-700 border-purple-200' },
-    packaging: { label: 'Emballages', class: 'bg-teal-50 text-teal-700 border-teal-200' },
-    equipment: { label: 'Équipements', class: 'bg-blue-50 text-blue-700 border-blue-200' },
-    services: { label: 'Services', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    other: { label: 'Autre', class: 'bg-gray-50 text-gray-700 border-gray-200' }
+    raw: { label: t('suppliers.types.raw'), class: 'bg-purple-50 text-purple-700 border-purple-200' },
+    packaging: { label: t('suppliers.types.packaging'), class: 'bg-teal-50 text-teal-700 border-teal-200' },
+    equipment: { label: t('suppliers.types.equipment'), class: 'bg-blue-50 text-blue-700 border-blue-200' },
+    services: { label: t('suppliers.types.services'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
+    other: { label: t('suppliers.types.other'), class: 'bg-gray-50 text-gray-700 border-gray-200' }
   };
 
   const config = typeConfig[type] || typeConfig.other;
@@ -102,10 +105,11 @@ const SupplierTypeBadge = ({ type }) => {
 // PAYMENT TERMS BADGE
 // ==========================================
 const PaymentTermsBadge = ({ terms }) => {
+  const { t, tc } = usePageI18n('suppliers');
   const termsConfig = {
-    cash: { label: 'Comptant', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    credit: { label: 'Crédit', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    monthly: { label: 'Mensuel', class: 'bg-blue-50 text-blue-700 border-blue-200' }
+    cash: { label: t('common.paymentTerms.cash'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    credit: { label: t('common.paymentMethods.credit'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
+    monthly: { label: t('common.paymentTerms.monthly'), class: 'bg-blue-50 text-blue-700 border-blue-200' }
   };
 
   const config = termsConfig[terms] || termsConfig.cash;
@@ -150,6 +154,7 @@ const KPICard = ({ icon: Icon, title, value, color }) => {
 // SUPPLIER CARD (Mobile)
 // ==========================================
 const SupplierCard = ({ supplier, onView, onEdit, onDelete, onToggleStatus }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('suppliers');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
@@ -179,7 +184,7 @@ const SupplierCard = ({ supplier, onView, onEdit, onDelete, onToggleStatus }) =>
         </div>
         <div className="flex items-center gap-1">
           <MapPin size={12} />
-          {supplier.location || 'Non défini'}
+          {supplier.location || tc('notProvided')}
         </div>
         <div className="flex items-center gap-1">
           <DollarSign size={12} />
@@ -190,7 +195,7 @@ const SupplierCard = ({ supplier, onView, onEdit, onDelete, onToggleStatus }) =>
         <div className="text-xs text-[#6D6D6D]">
           <span className="flex items-center gap-1">
             <Calendar size={12} />
-            {new Date(supplier.createdAt).toLocaleDateString('fr-FR')}
+            {new Date(supplier.createdAt).toLocaleDateString(DATE_LOCALE)}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -216,6 +221,7 @@ const SupplierCard = ({ supplier, onView, onEdit, onDelete, onToggleStatus }) =>
 // SUPPLIER TABLE ROW (Desktop)
 // ==========================================
 const SupplierTableRow = ({ supplier, onView, onEdit, onDelete, onToggleStatus, index }) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('suppliers');
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -251,28 +257,28 @@ const SupplierTableRow = ({ supplier, onView, onEdit, onDelete, onToggleStatus, 
           <button
             onClick={() => onView(supplier)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(supplier)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={actions.edit}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onToggleStatus(supplier)}
             className="p-1.5 hover:bg-amber-50 rounded-lg transition-colors"
-            title={supplier.status === 'active' ? 'Désactiver' : 'Activer'}
+            title={supplier.status === 'active' ? tc('deactivate') : tc('activate')}
           >
             {supplier.status === 'active' ? <Archive size={16} className="text-amber-500" /> : <CheckCircle size={16} className="text-emerald-500" />}
           </button>
           <button
             onClick={() => onDelete(supplier)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -286,6 +292,7 @@ const SupplierTableRow = ({ supplier, onView, onEdit, onDelete, onToggleStatus, 
 // SUPPLIER MODAL
 // ==========================================
 const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
+  const { t, tc } = usePageI18n('suppliers');
   const [formData, setFormData] = useState({
     name: '',
     company: '',
@@ -488,7 +495,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Notes</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
@@ -500,7 +507,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Statut</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('status')}</label>
             <select
               name="status"
               value={formData.status}
@@ -526,7 +533,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : supplier ? 'Mettre à jour' : 'Ajouter'}
+              {isLoading ? tc('saving') : supplier ? tc('update') : tc('add')}
             </button>
           </div>
         </form>
@@ -539,6 +546,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, supplier, isLoading }) => {
+  const { t, tc } = usePageI18n('suppliers');
   if (!isOpen) return null;
 
   const hasPurchases = supplier?.totalPurchases > 0;
@@ -588,7 +596,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, supplier, isLoading }) => {
               hasPurchases ? 'bg-gray-400 cursor-not-allowed' : 'bg-rose-500 hover:bg-rose-600'
             }`}
           >
-            {hasPurchases ? 'Impossible' : isLoading ? 'Suppression...' : 'Supprimer'}
+            {hasPurchases ? tc('impossible') : isLoading ? tc('deleting') : tc('delete')}
           </button>
         </div>
       </motion.div>
@@ -600,6 +608,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, supplier, isLoading }) => {
 // VIEW SUPPLIER MODAL
 // ==========================================
 const ViewSupplierModal = ({ isOpen, onClose, supplier }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('suppliers');
   if (!isOpen || !supplier) return null;
 
   return (
@@ -674,7 +683,7 @@ const ViewSupplierModal = ({ isOpen, onClose, supplier }) => {
             )}
             {supplier.notes && (
               <div className="p-3 bg-[#F8F7F4] rounded-lg">
-                <p className="text-xs text-[#6D6D6D] mb-1">Notes</p>
+                <p className="text-xs text-[#6D6D6D] mb-1">{tc('notes')}</p>
                 <p className="text-sm text-[#3D2F24]">{supplier.notes}</p>
               </div>
             )}
@@ -697,7 +706,7 @@ const ViewSupplierModal = ({ isOpen, onClose, supplier }) => {
 // ==========================================
 const SuppliersPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('suppliers');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('suppliers');
 
   const [suppliers, setSuppliers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -794,7 +803,7 @@ const SuppliersPage = () => {
     { label: 'Entreprise', accessor: 'company', width: 18 },
     { label: 'Type', accessor: 'type', width: 14 },
     { label: 'Contact', accessor: 'contactPerson', width: 14 },
-    { label: 'Téléphone', accessor: 'phone', width: 14 },
+    { label: tc('phone'), accessor: 'phone', width: 14 },
     { label: 'Email', accessor: 'email', width: 20 },
     { label: 'Total achats', accessor: 'totalPurchases', width: 14 },
     { label: 'Statut', accessor: 'status', width: 10 }
@@ -804,23 +813,23 @@ const SuppliersPage = () => {
     name: item.name,
     supplierId: item.supplierId,
     company: item.company || '—',
-    type: item.type === 'raw' ? 'Matières premières' :
-          item.type === 'packaging' ? 'Emballages' :
-          item.type === 'equipment' ? 'Équipements' :
-          item.type === 'services' ? 'Services' : 'Autre',
+    type: item.type === 'raw' ? t('suppliers.types.raw') :
+          item.type === 'packaging' ? t('suppliers.types.packaging') :
+          item.type === 'equipment' ? t('suppliers.types.equipment') :
+          item.type === 'services' ? t('suppliers.types.services') : t('suppliers.types.other'),
     contactPerson: item.contactPerson || '—',
     phone: item.phone,
     email: item.email,
     totalPurchases: `${item.totalPurchases.toLocaleString()} DH`,
-    status: item.status === 'active' ? 'Actif' :
-            item.status === 'inactive' ? 'Inactif' : 'En attente'
+    status: item.status === 'active' ? tc('active') :
+            item.status === 'inactive' ? tc('inactive') : t('common.pending')
   });
 
   const summary = [
     { label: 'Total fournisseurs', value: kpis.total },
     { label: 'Fournisseurs actifs', value: kpis.active },
-    { label: 'Matières premières', value: kpis.raw },
-    { label: 'Emballages', value: kpis.packaging }
+    { label: t('suppliers.types.raw'), value: kpis.raw },
+    { label: t('suppliers.types.packaging'), value: kpis.packaging }
   ];
 
   // ==========================================
@@ -947,14 +956,14 @@ const SuppliersPage = () => {
             <button
               onClick={() => setViewMode('table')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue tableau"
+              title={tc('tableView')}
             >
               <List size={18} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue grille"
+              title={tc('gridView')}
             >
               <Grid size={18} />
             </button>
@@ -962,7 +971,7 @@ const SuppliersPage = () => {
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -999,10 +1008,10 @@ const SuppliersPage = () => {
               <option value="all">Tous les types</option>
               {uniqueTypes.map(type => (
                 <option key={type} value={type}>
-                  {type === 'raw' ? 'Matières premières' :
-                   type === 'packaging' ? 'Emballages' :
-                   type === 'equipment' ? 'Équipements' :
-                   type === 'services' ? 'Services' : 'Autre'}
+                  {type === 'raw' ? t('suppliers.types.raw') :
+                   type === 'packaging' ? t('suppliers.types.packaging') :
+                   type === 'equipment' ? t('suppliers.types.equipment') :
+                   type === 'services' ? t('suppliers.types.services') : t('suppliers.types.other')}
                 </option>
               ))}
             </select>
@@ -1033,8 +1042,8 @@ const SuppliersPage = () => {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Téléphone</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Email</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Achats</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                 </tr>
               </thead>
               <tbody>

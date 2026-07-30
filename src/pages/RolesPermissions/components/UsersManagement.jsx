@@ -47,6 +47,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { getRoles } from '../../../services/roleService';
+import { usePageI18n } from '../../../hooks/usePageI18n';
 
 // ==========================================
 // TYPOGRAPHY
@@ -117,14 +118,16 @@ const Toast = ({ message, type = 'success', onClose }) => {
 // USER CARD
 // ==========================================
 const UserCard = ({ user, onView, onEdit, onRemove, role }) => {
+  const { t, tc, commonStatus } = usePageI18n('roles');
+
   const statusColors = {
-    active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    inactive: 'bg-gray-50 text-gray-600 border-gray-200'
+    active: commonStatus.active.class,
+    inactive: commonStatus.inactive.class
   };
 
   const statusLabels = {
-    active: 'Actif',
-    inactive: 'Inactif'
+    active: commonStatus.active.label,
+    inactive: commonStatus.inactive.label
   };
 
   const getInitials = (name) => {
@@ -161,7 +164,7 @@ const UserCard = ({ user, onView, onEdit, onRemove, role }) => {
           </div>
         </div>
         <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[user.status] || statusColors.inactive}`}>
-          {statusLabels[user.status] || 'Inactif'}
+          {statusLabels[user.status] || commonStatus.inactive.label}
         </span>
       </div>
 
@@ -170,28 +173,28 @@ const UserCard = ({ user, onView, onEdit, onRemove, role }) => {
         <div className="bg-[#F8F7F4] rounded-xl p-2.5">
           <div className="flex items-center gap-1.5 text-[#7A7A7A]">
             <Briefcase size={12} />
-            <span>Département</span>
+            <span>{t('roles.usersManagement.department')}</span>
           </div>
           <p className="font-medium text-[#2B2B2B] mt-0.5">{user.department}</p>
         </div>
         <div className="bg-[#F8F7F4] rounded-xl p-2.5">
           <div className="flex items-center gap-1.5 text-[#7A7A7A]">
             <Building size={12} />
-            <span>Poste</span>
+            <span>{t('roles.usersManagement.position')}</span>
           </div>
           <p className="font-medium text-[#2B2B2B] mt-0.5">{user.position}</p>
         </div>
         <div className="bg-[#F8F7F4] rounded-xl p-2.5">
           <div className="flex items-center gap-1.5 text-[#7A7A7A]">
             <Shield size={12} />
-            <span>Rôle</span>
+            <span>{t('roles.usersManagement.role')}</span>
           </div>
           <p className="font-medium text-[#2B2B2B] mt-0.5">{user.role || role?.name || '—'}</p>
         </div>
         <div className="bg-[#F8F7F4] rounded-xl p-2.5">
           <div className="flex items-center gap-1.5 text-[#7A7A7A]">
             <Clock size={12} />
-            <span>Dernière connexion</span>
+            <span>{t('roles.usersManagement.lastLogin')}</span>
           </div>
           <p className="font-medium text-[#2B2B2B] mt-0.5">{user.lastLogin}</p>
         </div>
@@ -202,21 +205,21 @@ const UserCard = ({ user, onView, onEdit, onRemove, role }) => {
         <button
           onClick={() => onView(user)}
           className="p-2 rounded-xl hover:bg-[#F8F7F4] transition-colors group"
-          title="Voir le profil"
+          title={t('roles.usersManagement.viewProfile')}
         >
           <Eye size={16} className="text-[#7A7A7A] group-hover:text-[#C8A45D] transition-colors" />
         </button>
         <button
           onClick={() => onEdit(user)}
           className="p-2 rounded-xl hover:bg-[#F8F7F4] transition-colors group"
-          title="Modifier"
+          title={tc('edit')}
         >
           <Edit2 size={16} className="text-[#7A7A7A] group-hover:text-[#C8A45D] transition-colors" />
         </button>
         <button
           onClick={() => onRemove(user)}
           className="p-2 rounded-xl hover:bg-rose-50 transition-colors group"
-          title="Retirer du rôle"
+          title={t('roles.usersManagement.removeFromRole')}
         >
           <UserX size={16} className="text-[#7A7A7A] group-hover:text-rose-500 transition-colors" />
         </button>
@@ -229,6 +232,8 @@ const UserCard = ({ user, onView, onEdit, onRemove, role }) => {
 // VIEW USER DRAWER
 // ==========================================
 const ViewUserDrawer = ({ isOpen, onClose, user, role }) => {
+  const { t, tc, commonStatus } = usePageI18n('roles');
+
   if (!isOpen || !user) return null;
 
   return (
@@ -253,7 +258,7 @@ const ViewUserDrawer = ({ isOpen, onClose, user, role }) => {
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-[#EAE6DF] px-6 py-4 flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#2B2B2B]" style={{ fontFamily: FONT_HEADING }}>
-            Détails de l'utilisateur
+            {t('roles.usersManagement.userDetails')}
           </h3>
           <button
             onClick={onClose}
@@ -287,7 +292,7 @@ const ViewUserDrawer = ({ isOpen, onClose, user, role }) => {
                 <Briefcase size={16} className="text-[#7A7A7A]" />
               </div>
               <div>
-                <p className="text-xs text-[#7A7A7A]">Département</p>
+                <p className="text-xs text-[#7A7A7A]">{t('roles.usersManagement.department')}</p>
                 <p className="font-medium text-[#2B2B2B]">{user.department}</p>
               </div>
             </div>
@@ -296,7 +301,7 @@ const ViewUserDrawer = ({ isOpen, onClose, user, role }) => {
                 <Building size={16} className="text-[#7A7A7A]" />
               </div>
               <div>
-                <p className="text-xs text-[#7A7A7A]">Poste</p>
+                <p className="text-xs text-[#7A7A7A]">{t('roles.usersManagement.position')}</p>
                 <p className="font-medium text-[#2B2B2B]">{user.position}</p>
               </div>
             </div>
@@ -305,7 +310,7 @@ const ViewUserDrawer = ({ isOpen, onClose, user, role }) => {
                 <Shield size={16} className="text-[#7A7A7A]" />
               </div>
               <div>
-                <p className="text-xs text-[#7A7A7A]">Rôle</p>
+                <p className="text-xs text-[#7A7A7A]">{t('roles.usersManagement.role')}</p>
                 <p className="font-medium text-[#2B2B2B]">{user.role || role?.name || '—'}</p>
               </div>
             </div>
@@ -314,7 +319,7 @@ const ViewUserDrawer = ({ isOpen, onClose, user, role }) => {
                 <Calendar size={16} className="text-[#7A7A7A]" />
               </div>
               <div>
-                <p className="text-xs text-[#7A7A7A]">Date d'assignation</p>
+                <p className="text-xs text-[#7A7A7A]">{t('roles.usersManagement.assignedDate')}</p>
                 <p className="font-medium text-[#2B2B2B]">{user.assignedDate || '17/07/2026'}</p>
               </div>
             </div>
@@ -323,7 +328,7 @@ const ViewUserDrawer = ({ isOpen, onClose, user, role }) => {
                 <Clock size={16} className="text-[#7A7A7A]" />
               </div>
               <div>
-                <p className="text-xs text-[#7A7A7A]">Dernière connexion</p>
+                <p className="text-xs text-[#7A7A7A]">{t('roles.usersManagement.lastLogin')}</p>
                 <p className="font-medium text-[#2B2B2B]">{user.lastLogin}</p>
               </div>
             </div>
@@ -332,11 +337,11 @@ const ViewUserDrawer = ({ isOpen, onClose, user, role }) => {
                 <BadgeCheck size={16} className="text-[#7A7A7A]" />
               </div>
               <div>
-                <p className="text-xs text-[#7A7A7A]">Statut</p>
+                <p className="text-xs text-[#7A7A7A]">{t('roles.usersManagement.status')}</p>
                 <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
-                  user.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-600 border-gray-200'
+                  user.status === 'active' ? commonStatus.active.class : commonStatus.inactive.class
                 }`}>
-                  {user.status === 'active' ? 'Actif' : 'Inactif'}
+                  {user.status === 'active' ? commonStatus.active.label : commonStatus.inactive.label}
                 </span>
               </div>
             </div>
@@ -345,7 +350,7 @@ const ViewUserDrawer = ({ isOpen, onClose, user, role }) => {
           {/* Permissions */}
           {user.permissions && user.permissions.length > 0 && (
             <div>
-              <h5 className="text-sm font-semibold text-[#2B2B2B] mb-2">Permissions</h5>
+              <h5 className="text-sm font-semibold text-[#2B2B2B] mb-2">{t('roles.usersManagement.permissions')}</h5>
               <div className="bg-[#F8F7F4] rounded-xl p-3">
                 <div className="flex flex-wrap gap-1.5">
                   {user.permissions.map((perm, idx) => (
@@ -363,7 +368,7 @@ const ViewUserDrawer = ({ isOpen, onClose, user, role }) => {
             onClick={onClose}
             className="w-full py-3 text-sm font-medium text-white bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] rounded-xl hover:shadow-lg transition-all"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>
@@ -375,6 +380,7 @@ const ViewUserDrawer = ({ isOpen, onClose, user, role }) => {
 // EDIT USER MODAL
 // ==========================================
 const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }) => {
+  const { t, tc } = usePageI18n('roles');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -398,7 +404,7 @@ const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }
         department: user.department || '',
         position: user.position || '',
         status: user.status || 'active',
-        assignedDate: user.assignedDate || new Date().toLocaleDateString('fr-FR'),
+        assignedDate: user.assignedDate || new Date().toLocaleDateString('ar-SA'),
         permissions: user.permissions || [],
         notes: user.notes || ''
       });
@@ -416,8 +422,8 @@ const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.name) newErrors.name = 'Le nom est requis';
-    if (!formData.email) newErrors.email = 'L\'email est requis';
+    if (!formData.name) newErrors.name = t('roles.usersManagement.nameRequired');
+    if (!formData.email) newErrors.email = t('roles.usersManagement.emailRequired');
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -437,7 +443,7 @@ const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }
       >
         <div className="sticky top-0 bg-white border-b border-[#EAE6DF] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#2B2B2B]" style={{ fontFamily: FONT_HEADING }}>
-            Modifier l'utilisateur
+            {t('roles.usersManagement.editUser')}
           </h3>
           <button onClick={onClose} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <X size={20} className="text-[#7A7A7A]" />
@@ -446,7 +452,7 @@ const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Nom *</label>
+            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{tc('name')} *</label>
             <input
               type="text"
               name="name"
@@ -460,7 +466,7 @@ const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Email *</label>
+            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{tc('email')} *</label>
             <input
               type="email"
               name="email"
@@ -475,7 +481,7 @@ const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Département</label>
+              <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('roles.usersManagement.department')}</label>
               <input
                 type="text"
                 name="department"
@@ -485,7 +491,7 @@ const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Poste</label>
+              <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('roles.usersManagement.position')}</label>
               <input
                 type="text"
                 name="position"
@@ -498,7 +504,7 @@ const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Rôle</label>
+              <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('roles.usersManagement.role')}</label>
               <select
                 name="roleId"
                 value={formData.roleId}
@@ -511,21 +517,21 @@ const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Statut</label>
+              <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('roles.usersManagement.status')}</label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#EAE6DF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A45D]/30 focus:border-[#C8A45D] transition-all"
               >
-                <option value="active">Actif</option>
-                <option value="inactive">Inactif</option>
+                <option value="active">{tc('active')}</option>
+                <option value="inactive">{tc('inactive')}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Date d'assignation</label>
+            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('roles.usersManagement.assignedDate')}</label>
             <input
               type="text"
               name="assignedDate"
@@ -536,7 +542,7 @@ const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Notes</label>
+            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('roles.usersManagement.notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
@@ -552,14 +558,14 @@ const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#7A7A7A] border border-[#EAE6DF] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : 'Enregistrer'}
+              {isLoading ? t('roles.usersManagement.saving') : tc('save')}
             </button>
           </div>
         </form>
@@ -572,6 +578,7 @@ const EditUserModal = ({ isOpen, onClose, onSave, user, role, roles, isLoading }
 // ADD USER MODAL
 // ==========================================
 const AddUserModal = ({ isOpen, onClose, onAdd, roles, isLoading }) => {
+  const { t, tc } = usePageI18n('roles');
   const [formData, setFormData] = useState({
     userId: '',
     roleId: '',
@@ -593,7 +600,7 @@ const AddUserModal = ({ isOpen, onClose, onAdd, roles, isLoading }) => {
       setFormData({
         userId: '',
         roleId: roles[0]?.id || '',
-        assignedDate: new Date().toLocaleDateString('fr-FR'),
+        assignedDate: new Date().toLocaleDateString('ar-SA'),
         status: 'active',
         permissions: [],
         notes: ''
@@ -613,8 +620,8 @@ const AddUserModal = ({ isOpen, onClose, onAdd, roles, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.userId) newErrors.userId = 'Veuillez sélectionner un utilisateur';
-    if (!formData.roleId) newErrors.roleId = 'Veuillez sélectionner un rôle';
+    if (!formData.userId) newErrors.userId = t('roles.usersManagement.userRequired');
+    if (!formData.roleId) newErrors.roleId = t('roles.usersManagement.roleRequired');
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -640,7 +647,7 @@ const AddUserModal = ({ isOpen, onClose, onAdd, roles, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#EAE6DF] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#2B2B2B]" style={{ fontFamily: FONT_HEADING }}>
-            Ajouter un utilisateur
+            {t('roles.usersManagement.addUser')}
           </h3>
           <button onClick={onClose} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <X size={20} className="text-[#7A7A7A]" />
@@ -649,7 +656,7 @@ const AddUserModal = ({ isOpen, onClose, onAdd, roles, isLoading }) => {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Utilisateur *</label>
+            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('nav.users')} *</label>
             <select
               name="userId"
               value={formData.userId}
@@ -658,7 +665,7 @@ const AddUserModal = ({ isOpen, onClose, onAdd, roles, isLoading }) => {
                 errors.userId ? 'border-rose-500' : 'border-[#EAE6DF]'
               }`}
             >
-              <option value="">Sélectionner un utilisateur</option>
+              <option value="">{t('roles.usersManagement.selectUser')}</option>
               {availableUsers.map(u => (
                 <option key={u.id} value={u.id}>{u.name} - {u.email}</option>
               ))}
@@ -667,7 +674,7 @@ const AddUserModal = ({ isOpen, onClose, onAdd, roles, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Rôle *</label>
+            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('roles.usersManagement.role')} *</label>
             <select
               name="roleId"
               value={formData.roleId}
@@ -676,7 +683,7 @@ const AddUserModal = ({ isOpen, onClose, onAdd, roles, isLoading }) => {
                 errors.roleId ? 'border-rose-500' : 'border-[#EAE6DF]'
               }`}
             >
-              <option value="">Sélectionner un rôle</option>
+              <option value="">{t('roles.usersManagement.selectRole')}</option>
               {roles.map(r => (
                 <option key={r.id} value={r.id}>{r.name}</option>
               ))}
@@ -685,7 +692,7 @@ const AddUserModal = ({ isOpen, onClose, onAdd, roles, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Date d'assignation</label>
+            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('roles.usersManagement.assignedDate')}</label>
             <input
               type="text"
               name="assignedDate"
@@ -696,20 +703,20 @@ const AddUserModal = ({ isOpen, onClose, onAdd, roles, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Statut</label>
+            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('roles.usersManagement.status')}</label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm border border-[#EAE6DF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A45D]/30 focus:border-[#C8A45D] transition-all"
             >
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
+              <option value="active">{tc('active')}</option>
+              <option value="inactive">{tc('inactive')}</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Notes</label>
+            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('roles.usersManagement.notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
@@ -725,14 +732,14 @@ const AddUserModal = ({ isOpen, onClose, onAdd, roles, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#7A7A7A] border border-[#EAE6DF] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Ajout...' : 'Ajouter'}
+              {isLoading ? t('roles.usersManagement.adding') : tc('add')}
             </button>
           </div>
         </form>
@@ -744,7 +751,9 @@ const AddUserModal = ({ isOpen, onClose, onAdd, roles, isLoading }) => {
 // ==========================================
 // CONFIRM DELETE MODAL
 // ==========================================
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, description, confirmText = 'Retirer', isLoading }) => {
+const ConfirmModal = ({ isOpen, onClose, onConfirm, title, description, confirmText, isLoading }) => {
+  const { t, tc } = usePageI18n('roles');
+
   if (!isOpen) return null;
 
   return (
@@ -769,14 +778,14 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, description, confirmT
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#7A7A7A] border border-[#EAE6DF] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
           >
-            {isLoading ? 'Suppression...' : confirmText}
+            {isLoading ? t('roles.usersManagement.removing') : (confirmText || t('roles.usersManagement.removeFromRole'))}
           </button>
         </div>
       </motion.div>
@@ -788,6 +797,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, description, confirmT
 // COMPOSANT PRINCIPAL - USERS MANAGEMENT
 // ==========================================
 const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
+  const { t, tc } = usePageI18n('roles');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
@@ -897,7 +907,7 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
       setIsConfirmModalOpen(false);
       setSelectedUser(null);
       setIsLoading(false);
-      showToast('👤 Utilisateur retiré du rôle avec succès', 'success');
+      showToast(t('roles.usersManagement.userRemoved'), 'success');
     }, 800);
   };
 
@@ -912,8 +922,8 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
         position: 'Employé',
         roleId: parseInt(formData.roleId),
         status: formData.status,
-        lastLogin: "Aujourd'hui",
-        assignedDate: formData.assignedDate || new Date().toLocaleDateString('fr-FR'),
+        lastLogin: tc('today'),
+        assignedDate: formData.assignedDate || new Date().toLocaleDateString('ar-SA'),
         permissions: formData.permissions || [],
         notes: formData.notes
       };
@@ -922,7 +932,7 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
       if (onUpdate) onUpdate(updatedUsers);
       setIsAddModalOpen(false);
       setIsLoading(false);
-      showToast('✅ Utilisateur ajouté avec succès', 'success');
+      showToast(t('roles.usersManagement.userAdded'), 'success');
     }, 800);
   };
 
@@ -939,7 +949,7 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
       setIsEditModalOpen(false);
       setSelectedUser(null);
       setIsLoading(false);
-      showToast('✅ Utilisateur modifié avec succès', 'success');
+      showToast(t('roles.usersManagement.userUpdated'), 'success');
     }, 800);
   };
 
@@ -962,7 +972,7 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7A7A7A]" size={18} />
           <input
             type="text"
-            placeholder="Rechercher un utilisateur..."
+            placeholder={t('roles.usersManagement.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 border border-[#EAE6DF] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C8A45D]/30 focus:border-[#C8A45D] transition-all"
@@ -974,26 +984,26 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2.5 border border-[#EAE6DF] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C8A45D]/30 focus:border-[#C8A45D] transition-all"
           >
-            <option value="all">Tous</option>
-            <option value="active">Actifs</option>
-            <option value="inactive">Inactifs</option>
+            <option value="all">{tc('all')}</option>
+            <option value="active">{t('roles.usersManagement.activeUsers')}</option>
+            <option value="inactive">{t('roles.usersManagement.inactiveUsers')}</option>
           </select>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className="px-4 py-2.5 border border-[#EAE6DF] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C8A45D]/30 focus:border-[#C8A45D] transition-all"
           >
-            <option value="newest">Plus récents</option>
-            <option value="oldest">Plus anciens</option>
-            <option value="az">A-Z</option>
-            <option value="lastLogin">Dernière connexion</option>
+            <option value="newest">{t('roles.usersManagement.sortNewest')}</option>
+            <option value="oldest">{t('roles.usersManagement.sortOldest')}</option>
+            <option value="az">{t('roles.usersManagement.sortAz')}</option>
+            <option value="lastLogin">{t('roles.usersManagement.sortLastLogin')}</option>
           </select>
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] text-white font-medium hover:shadow-lg transition-all text-sm"
           >
             <Plus size={18} />
-            Ajouter un utilisateur
+            {t('roles.usersManagement.addUser')}
           </button>
         </div>
       </div>
@@ -1002,7 +1012,7 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
       <div className="flex items-center gap-2">
         <Users size={16} className="text-[#C8A45D]" />
         <span className="text-sm text-[#7A7A7A]">
-          {filteredUsers.length} utilisateur(s) associé(s)
+          {t('roles.usersManagement.userCount', { count: filteredUsers.length })}
         </span>
       </div>
 
@@ -1014,11 +1024,11 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
               <Users size={36} className="text-[#D1CBC0]" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-[#2B2B2B]">Aucun utilisateur</h3>
+              <h3 className="text-lg font-bold text-[#2B2B2B]">{t('roles.usersManagement.noUsers')}</h3>
               <p className="text-sm text-[#7A7A7A]">
                 {searchTerm || statusFilter !== 'all'
-                  ? 'Aucun utilisateur ne correspond à vos filtres'
-                  : 'Aucun utilisateur n\'est associé à ce rôle'}
+                  ? t('roles.usersManagement.noUsersFilter')
+                  : t('roles.usersManagement.noUsersRole')}
               </p>
             </div>
             <button
@@ -1026,7 +1036,7 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] text-white font-medium hover:shadow-lg transition-all"
             >
               <Plus size={18} />
-              Ajouter un utilisateur
+              {t('roles.usersManagement.addUser')}
             </button>
           </div>
         </div>
@@ -1091,9 +1101,9 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
             setSelectedUser(null);
           }}
           onConfirm={confirmRemoveUser}
-          title="Retirer l'utilisateur"
-          description={`Voulez-vous retirer "${selectedUser?.name}" de ce rôle ?`}
-          confirmText="Retirer"
+          title={t('roles.usersManagement.removeUser')}
+          description={t('roles.usersManagement.removeUserConfirm', { name: selectedUser?.name })}
+          confirmText={t('roles.usersManagement.removeFromRole')}
           isLoading={isLoading}
         />
       </AnimatePresence>

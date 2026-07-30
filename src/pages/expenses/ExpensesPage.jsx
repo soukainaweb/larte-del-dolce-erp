@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
+import { useTranslation } from 'react-i18next';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getExpenses,
@@ -65,10 +66,6 @@ import {
   updateExpensePaymentStatus,
   getExpenseStatistics,
   exportExpenses,
-  getExpenseCategories,
-  getPaymentMethods,
-  getPaymentStatuses,
-  downloadExpenseAttachment
 } from '../../services/expenseService';
 
 // ==========================================
@@ -76,49 +73,52 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // CONSTANTS
 // ==========================================
 const CURRENCY = 'SAR (ر.س)';
 
-const EXPENSE_CATEGORIES = [
-  { value: 'raw_materials', label: 'Matières premières', icon: Package, color: 'bg-purple-50 text-purple-700 border-purple-200' },
-  { value: 'packaging', label: 'Emballages', icon: Box, color: 'bg-teal-50 text-teal-700 border-teal-200' },
-  { value: 'equipment', label: 'Équipements', icon: Settings, color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { value: 'maintenance', label: 'Maintenance', icon: Wrench, color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { value: 'utilities', label: 'Services publics', icon: Zap, color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-  { value: 'rent', label: 'Loyer', icon: Building, color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  { value: 'salaries', label: 'Salaires', icon: Users, color: 'bg-rose-50 text-rose-700 border-rose-200' },
-  { value: 'transportation', label: 'Transport', icon: Truck, color: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
-  { value: 'marketing', label: 'Marketing', icon: Megaphone, color: 'bg-pink-50 text-pink-700 border-pink-200' },
-  { value: 'office_supplies', label: 'Fournitures bureau', icon: ClipboardList, color: 'bg-gray-50 text-gray-700 border-gray-200' },
-  { value: 'services', label: 'Services', icon: Handshake, color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { value: 'taxes', label: 'Taxes', icon: FileText, color: 'bg-red-50 text-red-700 border-red-200' },
-  { value: 'other', label: 'Autre', icon: MoreHorizontal, color: 'bg-gray-50 text-gray-600 border-gray-200' }
+const buildExpenseCategoryOptions = (t) => [
+  { value: 'raw_materials', label: t('suppliers.types.raw'), icon: Package, color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  { value: 'packaging', label: t('suppliers.types.packaging'), icon: Box, color: 'bg-teal-50 text-teal-700 border-teal-200' },
+  { value: 'equipment', label: t('suppliers.types.equipment'), icon: Settings, color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { value: 'maintenance', label: t('expenses.categories.maintenance'), icon: Wrench, color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { value: 'utilities', label: t('expenses.categories.utilities'), icon: Zap, color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+  { value: 'rent', label: t('expenses.categories.rent'), icon: Building, color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  { value: 'salaries', label: t('expenses.categories.salaries'), icon: Users, color: 'bg-rose-50 text-rose-700 border-rose-200' },
+  { value: 'transportation', label: t('expenses.categories.transportation'), icon: Truck, color: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
+  { value: 'marketing', label: t('expenses.categories.marketing'), icon: Megaphone, color: 'bg-pink-50 text-pink-700 border-pink-200' },
+  { value: 'office_supplies', label: t('expenses.categories.office_supplies'), icon: ClipboardList, color: 'bg-gray-50 text-gray-700 border-gray-200' },
+  { value: 'services', label: t('suppliers.types.services'), icon: Handshake, color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { value: 'taxes', label: t('expenses.categories.taxes'), icon: FileText, color: 'bg-red-50 text-red-700 border-red-200' },
+  { value: 'other', label: t('suppliers.types.other'), icon: MoreHorizontal, color: 'bg-gray-50 text-gray-600 border-gray-200' }
 ];
 
-const PAYMENT_METHODS = [
-  { value: 'cash', label: 'Espèces', icon: Banknote },
-  { value: 'card', label: 'Carte bancaire', icon: CreditCard },
-  { value: 'mada', label: 'Mada', icon: CreditCard },
-  { value: 'stc_pay', label: 'STC Pay', icon: Smartphone },
-  { value: 'apple_pay', label: 'Apple Pay', icon: Apple },
-  { value: 'bank_transfer', label: 'Virement bancaire', icon: Landmark },
-  { value: 'cheque', label: 'Chèque', icon: FileText }
+const buildPaymentMethodOptions = (t) => [
+  { value: 'cash', label: t('common.paymentMethods.cash'), icon: Banknote },
+  { value: 'card', label: t('common.paymentMethods.card'), icon: CreditCard },
+  { value: 'mada', label: t('common.paymentMethods.mada'), icon: CreditCard },
+  { value: 'stc_pay', label: t('common.paymentMethods.stc_pay'), icon: Smartphone },
+  { value: 'apple_pay', label: t('common.paymentMethods.apple_pay'), icon: Apple },
+  { value: 'bank_transfer', label: t('common.paymentMethods.bank_transfer'), icon: Landmark },
+  { value: 'cheque', label: t('common.paymentMethods.cheque'), icon: FileText }
 ];
 
-const PAYMENT_STATUSES = [
-  { value: 'paid', label: 'Payée', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { value: 'pending', label: 'En attente', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { value: 'partial', label: 'Partielle', class: 'bg-blue-50 text-blue-700 border-blue-200' }
+const buildPaymentStatusOptions = (t) => [
+  { value: 'paid', label: t('common.paymentStatus.paid'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { value: 'pending', label: t('common.pending'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { value: 'partial', label: t('common.paymentStatus.partial'), class: 'bg-blue-50 text-blue-700 border-blue-200' }
 ];
 
 // ==========================================
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
-  const config = PAYMENT_STATUSES.find(s => s.value === status) || PAYMENT_STATUSES[0];
+  const { t } = useTranslation();
+  const paymentStatuses = buildPaymentStatusOptions(t);
+  const config = paymentStatuses.find(s => s.value === status) || paymentStatuses[0];
   return (
     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${config.class}`}>
       {config.label}
@@ -130,7 +130,8 @@ const StatusBadge = ({ status }) => {
 // CATEGORY BADGE
 // ==========================================
 const CategoryBadge = ({ category }) => {
-  const config = EXPENSE_CATEGORIES.find(c => c.value === category);
+  const { t } = useTranslation();
+  const config = buildExpenseCategoryOptions(t).find(c => c.value === category);
   if (!config) return <span className="text-[10px] text-[#6D6D6D]">—</span>;
   return (
     <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${config.color}`}>
@@ -143,7 +144,8 @@ const CategoryBadge = ({ category }) => {
 // PAYMENT METHOD BADGE
 // ==========================================
 const PaymentMethodBadge = ({ method }) => {
-  const config = PAYMENT_METHODS.find(m => m.value === method);
+  const { t } = useTranslation();
+  const config = buildPaymentMethodOptions(t).find(m => m.value === method);
   if (!config) return <span className="text-[10px] text-[#6D6D6D]">—</span>;
   const Icon = config.icon;
   return (
@@ -195,7 +197,7 @@ const ExpenseCard = ({ expense, onView, onEdit, onDelete }) => {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-bold text-[#3D2F24]">{expense.expenseId}</p>
-          <p className="text-xs text-[#6D6D6D]">{new Date(expense.date).toLocaleDateString('fr-FR')}</p>
+          <p className="text-xs text-[#6D6D6D]">{new Date(expense.date).toLocaleDateString(DATE_LOCALE)}</p>
         </div>
         <StatusBadge status={expense.paymentStatus} />
       </div>
@@ -231,6 +233,7 @@ const ExpenseCard = ({ expense, onView, onEdit, onDelete }) => {
 // EXPENSE TABLE ROW (Desktop)
 // ==========================================
 const ExpenseTableRow = ({ expense, onView, onEdit, onDelete, index }) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('expenses');
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -240,7 +243,7 @@ const ExpenseTableRow = ({ expense, onView, onEdit, onDelete, index }) => {
     >
       <td className="px-4 py-3">
         <p className="text-sm font-bold text-[#3D2F24]">{expense.expenseId}</p>
-        <p className="text-xs text-[#6D6D6D]">{new Date(expense.date).toLocaleDateString('fr-FR')}</p>
+        <p className="text-xs text-[#6D6D6D]">{new Date(expense.date).toLocaleDateString(DATE_LOCALE)}</p>
       </td>
       <td className="px-4 py-3">
         <CategoryBadge category={expense.category} />
@@ -266,21 +269,21 @@ const ExpenseTableRow = ({ expense, onView, onEdit, onDelete, index }) => {
           <button
             onClick={() => onView(expense)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(expense)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={actions.edit}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onDelete(expense)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -294,6 +297,10 @@ const ExpenseTableRow = ({ expense, onView, onEdit, onDelete, index }) => {
 // EXPENSE MODAL (Add/Edit)
 // ==========================================
 const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
+  const { t, tc } = usePageI18n('expenses');
+  const expenseCategories = buildExpenseCategoryOptions(t);
+  const paymentMethods = buildPaymentMethodOptions(t);
+  const paymentStatuses = buildPaymentStatusOptions(t);
   const [formData, setFormData] = useState({
     expenseNumber: `EXP-${String(Math.floor(Math.random() * 9000) + 1000).padStart(4, '0')}`,
     date: new Date().toISOString().split('T')[0],
@@ -372,9 +379,9 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.category) newErrors.category = 'La catégorie est requise';
-    if (!formData.description) newErrors.description = 'La description est requise';
-    if (formData.amount <= 0) newErrors.amount = 'Le montant est requis';
+    if (!formData.category) newErrors.category = t('expenses.validation.categoryRequired');
+    if (!formData.description) newErrors.description = t('expenses.validation.descriptionRequired');
+    if (formData.amount <= 0) newErrors.amount = t('expenses.validation.amountRequired');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -401,9 +408,9 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
             </div>
             <div>
               <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-                {expense ? 'Modifier la dépense' : 'Nouvelle dépense'}
+                {expense ? t('expenses.modals.editTitle') : t('expenses.modals.addTitle')}
               </h3>
-              <p className="text-xs text-[#6D6D6D]">Enregistrer une nouvelle dépense</p>
+              <p className="text-xs text-[#6D6D6D]">{t('expenses.modals.addSubtitle')}</p>
             </div>
           </div>
           <button
@@ -417,7 +424,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">N° Dépense</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('expenses.fields.expenseNumber')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <FileText size={14} className="text-[#6D6D6D]" />
                 <input
@@ -431,7 +438,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Date</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('date')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <Calendar size={14} className="text-[#6D6D6D]" />
                 <input
@@ -447,7 +454,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Catégorie *</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('category')} *</label>
               <div className={`flex items-center gap-2 px-3 py-2 bg-white border rounded-lg ${
                 errors.category ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}>
@@ -458,8 +465,8 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                   onChange={handleChange}
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
                 >
-                  <option value="">Sélectionner une catégorie</option>
-                  {EXPENSE_CATEGORIES.map(c => (
+                  <option value="">{t('expenses.fields.selectCategory')}</option>
+                  {expenseCategories.map(c => (
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
                 </select>
@@ -467,7 +474,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
               {errors.category && <p className="text-[10px] text-rose-500 mt-1">{errors.category}</p>}
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Fournisseur</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('expenses.fields.supplier')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <Building size={14} className="text-[#6D6D6D]" />
                 <select
@@ -476,7 +483,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                   onChange={handleChange}
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
                 >
-                  <option value="">Sélectionner un fournisseur</option>
+                  <option value="">{t('expenses.fields.selectSupplier')}</option>
                   <option value="Farine du Maroc">Farine du Maroc</option>
                   <option value="ABC Packaging">ABC Packaging</option>
                   <option value="Choco Deluxe">Choco Deluxe</option>
@@ -487,7 +494,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Description *</label>
+            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('description')} *</label>
             <div className={`flex items-center gap-2 px-3 py-2 bg-white border rounded-lg ${
               errors.description ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}>
@@ -498,7 +505,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                 value={formData.description}
                 onChange={handleChange}
                 className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
-                placeholder="Description de la dépense..."
+                placeholder={tc('placeholders.expenseDescription')}
               />
             </div>
             {errors.description && <p className="text-[10px] text-rose-500 mt-1">{errors.description}</p>}
@@ -506,7 +513,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Montant *</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('amount')} *</label>
               <div className={`flex items-center gap-2 px-3 py-2 bg-white border rounded-lg ${
                 errors.amount ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}>
@@ -525,7 +532,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
               {errors.amount && <p className="text-[10px] text-rose-500 mt-1">{errors.amount}</p>}
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">TVA %</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('vatPercent')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <Percent size={14} className="text-[#6D6D6D]" />
                 <input
@@ -541,7 +548,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Total TTC</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('expenses.fields.totalInclTax')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-[#F8F7F4] border border-[#ECE8E1] rounded-lg">
                 <DollarSign size={14} className="text-[#6D6D6D]" />
                 <input
@@ -556,7 +563,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Méthode de paiement</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('method')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <CreditCard size={14} className="text-[#6D6D6D]" />
                 <select
@@ -565,14 +572,14 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                   onChange={handleChange}
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
                 >
-                  {PAYMENT_METHODS.map(m => (
+                  {paymentMethods.map(m => (
                     <option key={m.value} value={m.value}>{m.label}</option>
                   ))}
                 </select>
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Statut paiement</label>
+              <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('expenses.fields.paymentStatus')}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
                 <CheckCircle size={14} className="text-[#6D6D6D]" />
                 <select
@@ -581,7 +588,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                   onChange={handleChange}
                   className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
                 >
-                  {PAYMENT_STATUSES.map(s => (
+                  {paymentStatuses.map(s => (
                     <option key={s.value} value={s.value}>{s.label}</option>
                   ))}
                 </select>
@@ -590,7 +597,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">N° Référence</label>
+            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('expenses.fields.referenceNumber')}</label>
             <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg">
               <Tag size={14} className="text-[#6D6D6D]" />
               <input
@@ -599,13 +606,13 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
                 value={formData.referenceNumber}
                 onChange={handleChange}
                 className="flex-1 text-sm bg-transparent focus:outline-none text-[#3D2F24]"
-                placeholder="N° facture / reçu / transfert..."
+                placeholder={tc('placeholders.referenceNumber')}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Pièce jointe</label>
+            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{t('expenses.fields.attachment')}</label>
             <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#ECE8E1] rounded-lg cursor-pointer hover:border-[#B8863B] transition-colors">
               <Upload size={14} className="text-[#6D6D6D]" />
               <input
@@ -618,20 +625,20 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
             {formData.attachment && (
               <div className="mt-2 flex items-center gap-2 p-2 bg-[#F8F7F4] rounded-lg border border-[#ECE8E1]">
                 <FileText size={14} className="text-emerald-500" />
-                <span className="text-xs text-[#3D2F24]">Fichier joint</span>
+                <span className="text-xs text-[#3D2F24]">{t('expenses.modals.attachedFile')}</span>
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Notes</label>
+            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
               onChange={handleChange}
               rows={3}
               className="w-full px-4 py-3 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all resize-none"
-              placeholder="Informations supplémentaires..."
+              placeholder={tc('placeholders.additionalInfo')}
             />
           </div>
 
@@ -641,7 +648,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
@@ -651,12 +658,12 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Enregistrement...
+                  {tc('saving')}
                 </>
               ) : (
                 <>
                   <Wallet size={16} />
-                  {expense ? 'Mettre à jour' : 'Enregistrer'}
+                  {expense ? tc('update') : tc('save')}
                 </>
               )}
             </button>
@@ -671,6 +678,7 @@ const ExpenseModal = ({ isOpen, onClose, onSave, expense, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, expense, isLoading }) => {
+  const { t, tc } = usePageI18n('expenses');
   if (!isOpen) return null;
 
   return (
@@ -685,28 +693,25 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, expense, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer la dépense ?
+          {t('expenses.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
-          Vous êtes sur le point de supprimer la dépense{' '}
-          <span className="font-semibold text-[#3D2F24]">
-            {expense?.expenseId}
-          </span>.
-          Cette action est irréversible.
+          {t('expenses.modals.deleteMessage', { id: expense?.expenseId })}{' '}
+          {tc('irreversibleAction')}
         </p>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
           >
-            {isLoading ? 'Suppression...' : 'Supprimer'}
+            {isLoading ? tc('deleting') : tc('delete')}
           </button>
         </div>
       </motion.div>
@@ -718,6 +723,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, expense, isLoading }) => {
 // VIEW EXPENSE MODAL
 // ==========================================
 const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('expenses');
   if (!isOpen || !expense) return null;
 
   return (
@@ -730,7 +736,7 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails de la dépense
+            {t('expenses.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -744,59 +750,59 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
           <div className="flex items-center justify-between pb-4 border-b border-[#ECE8E1]">
             <div>
               <p className="text-xl font-bold text-[#3D2F24]">{expense.expenseId}</p>
-              <p className="text-sm text-[#6D6D6D]">{new Date(expense.date).toLocaleDateString('fr-FR')}</p>
+              <p className="text-sm text-[#6D6D6D]">{new Date(expense.date).toLocaleDateString(DATE_LOCALE)}</p>
             </div>
             <StatusBadge status={expense.paymentStatus} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Catégorie</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('category')}</p>
               <CategoryBadge category={expense.category} />
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Méthode</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('method')}</p>
               <PaymentMethodBadge method={expense.paymentMethod} />
             </div>
           </div>
 
           <div className="bg-[#F8F7F4] rounded-lg p-3">
-            <p className="text-xs text-[#6D6D6D]">Description</p>
+            <p className="text-xs text-[#6D6D6D]">{tc('description')}</p>
             <p className="text-sm font-medium text-[#3D2F24]">{expense.description}</p>
           </div>
 
           {expense.supplier && (
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Fournisseur</p>
+              <p className="text-xs text-[#6D6D6D]">{t('expenses.fields.supplier')}</p>
               <p className="text-sm text-[#3D2F24]">{expense.supplier}</p>
             </div>
           )}
 
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Montant</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('amount')}</p>
               <p className="text-sm font-bold text-[#3D2F24]">{expense.amount.toLocaleString()} {CURRENCY}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">TVA</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('vat')}</p>
               <p className="text-sm font-bold text-[#3D2F24]">{expense.vat}%</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Total</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('total')}</p>
               <p className="text-sm font-bold text-[#3D2F24]">{expense.total.toLocaleString()} {CURRENCY}</p>
             </div>
           </div>
 
           {expense.referenceNumber && (
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">N° Référence</p>
+              <p className="text-xs text-[#6D6D6D]">{t('expenses.fields.referenceNumber')}</p>
               <p className="text-sm text-[#3D2F24]">{expense.referenceNumber}</p>
             </div>
           )}
 
           {expense.notes && (
             <div className="p-3 bg-[#F8F7F4] rounded-lg">
-              <p className="text-xs text-[#6D6D6D] mb-1">Notes</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('notes')}</p>
               <p className="text-sm text-[#3D2F24]">{expense.notes}</p>
             </div>
           )}
@@ -804,12 +810,12 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
           {expense.attachment && (
             <div className="p-3 bg-[#F8F7F4] rounded-lg flex items-center gap-2">
               <FileText size={16} className="text-emerald-500" />
-              <span className="text-sm text-[#3D2F24]">Pièce jointe disponible</span>
+              <span className="text-sm text-[#3D2F24]">{t('expenses.modals.attachmentAvailable')}</span>
             </div>
           )}
 
           <div className="bg-[#F8F7F4] rounded-lg p-3">
-            <p className="text-xs text-[#6D6D6D]">Créé par</p>
+            <p className="text-xs text-[#6D6D6D]">{tc('createdBy')}</p>
             <p className="text-sm text-[#3D2F24]">{expense.createdBy || '—'}</p>
           </div>
 
@@ -817,7 +823,7 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>
@@ -830,7 +836,10 @@ const ViewExpenseModal = ({ isOpen, onClose, expense }) => {
 // ==========================================
 const ExpensesPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('expenses');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('expenses');
+  const expenseCategoryOptions = useMemo(() => buildExpenseCategoryOptions(t), [t]);
+  const paymentMethodOptions = useMemo(() => buildPaymentMethodOptions(t), [t]);
+  const paymentStatusOptions = useMemo(() => buildPaymentStatusOptions(t), [t]);
 
   const [expenses, setExpenses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -933,31 +942,31 @@ const ExpensesPage = () => {
     { label: 'Fournisseur', accessor: 'supplier', width: 12 },
     { label: 'Montant', accessor: 'amount', width: 10 },
     { label: 'TVA %', accessor: 'vat', width: 8 },
-    { label: 'Total TTC', accessor: 'total', width: 12 },
+    { label: t('common.totalInclTax'), accessor: 'total', width: 12 },
     { label: 'Méthode', accessor: 'paymentMethod', width: 10 },
-    { label: 'Statut paiement', accessor: 'paymentStatus', width: 12 },
+    { label: t('invoices.fields.paymentStatus'), accessor: 'paymentStatus', width: 12 },
     { label: 'Créé par', accessor: 'createdBy', width: 12 }
   ];
 
   const rowFormatter = (item) => ({
     expenseId: item.expenseId,
-    date: new Date(item.date).toLocaleDateString('fr-FR'),
-    category: EXPENSE_CATEGORIES.find(c => c.value === item.category)?.label || '—',
+    date: new Date(item.date).toLocaleDateString(DATE_LOCALE),
+    category: expenseCategoryOptions.find(c => c.value === item.category)?.label || '—',
     description: item.description,
     supplier: item.supplier || '—',
     amount: `${item.amount.toLocaleString()} ${CURRENCY}`,
     vat: `${item.vat}%`,
     total: `${item.total.toLocaleString()} ${CURRENCY}`,
-    paymentMethod: PAYMENT_METHODS.find(m => m.value === item.paymentMethod)?.label || '—',
-    paymentStatus: PAYMENT_STATUSES.find(s => s.value === item.paymentStatus)?.label || '—',
+    paymentMethod: paymentMethodOptions.find(m => m.value === item.paymentMethod)?.label || '—',
+    paymentStatus: paymentStatusOptions.find(s => s.value === item.paymentStatus)?.label || '—',
     createdBy: item.createdBy || '—'
   });
 
   const summary = [
     { label: 'Total dépenses', value: `${kpis.total.toLocaleString()} ${CURRENCY}` },
-    { label: "Aujourd'hui", value: `${kpis.today.toLocaleString()} ${CURRENCY}` },
+    { label: tc('today'), value: `${kpis.today.toLocaleString()} ${CURRENCY}` },
     { label: 'Ce mois', value: `${kpis.month.toLocaleString()} ${CURRENCY}` },
-    { label: 'En attente', value: `${kpis.pending.toLocaleString()} ${CURRENCY}` },
+    { label: t('common.pending'), value: `${kpis.pending.toLocaleString()} ${CURRENCY}` },
     { label: 'Catégorie la plus élevée', value: kpis.highestCategory },
     { label: 'Nombre de dépenses', value: kpis.count }
   ];
@@ -1100,14 +1109,14 @@ const ExpensesPage = () => {
             <button
               onClick={() => setViewMode('table')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue tableau"
+              title={tc('tableView')}
             >
               <List size={18} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue grille"
+              title={tc('gridView')}
             >
               <Grid size={18} />
             </button>
@@ -1115,7 +1124,7 @@ const ExpensesPage = () => {
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1125,7 +1134,7 @@ const ExpensesPage = () => {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
         <KPICard icon={Wallet} title="Total dépenses" value={kpis.total} color="blue" isCurrency />
-        <KPICard icon={Calendar} title="Aujourd'hui" value={kpis.today} color="emerald" isCurrency />
+        <KPICard icon={Calendar} title={tc('today')} value={kpis.today} color="emerald" isCurrency />
         <KPICard icon={TrendingUp} title="Ce mois" value={kpis.month} color="purple" isCurrency />
         <KPICard icon={Clock} title="En attente" value={kpis.pending} color="amber" isCurrency />
         <KPICard icon={FolderTree} title="Catégorie la plus élevée" value={kpis.highestCategory} color="gold" />
@@ -1152,7 +1161,7 @@ const ExpensesPage = () => {
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
               <option value="all">Toutes les catégories</option>
-              {EXPENSE_CATEGORIES.map(c => (
+              {expenseCategoryOptions.map(c => (
                 <option key={c.value} value={c.value}>{c.label}</option>
               ))}
             </select>
@@ -1162,7 +1171,7 @@ const ExpensesPage = () => {
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
               <option value="all">Tous les statuts</option>
-              {PAYMENT_STATUSES.map(s => (
+              {paymentStatusOptions.map(s => (
                 <option key={s.value} value={s.value}>{s.label}</option>
               ))}
             </select>
@@ -1187,13 +1196,13 @@ const ExpensesPage = () => {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Catégorie</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Description</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Fournisseur</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Montant</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('amount')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">TVA</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Total</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Méthode</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('total')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('method')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Créé par</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                 </tr>
               </thead>
               <tbody>

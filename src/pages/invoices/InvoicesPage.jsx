@@ -69,16 +69,18 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // PAYMENT STATUS BADGE
 // ==========================================
 const PaymentStatusBadge = ({ status }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('invoices');
   const statusConfig = {
-    paid: { label: 'Payée', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    unpaid: { label: 'Non payée', class: 'bg-rose-50 text-rose-700 border-rose-200' },
-    partial: { label: 'Partielle', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    overdue: { label: 'En retard', class: 'bg-red-50 text-red-700 border-red-200' }
+    paid: { label: t('common.paymentStatus.paid'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    unpaid: { label: t('common.paymentStatus.unpaid'), class: 'bg-rose-50 text-rose-700 border-rose-200' },
+    partial: { label: t('common.paymentStatus.partial'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
+    overdue: { label: t('common.statuses.overdue'), class: 'bg-red-50 text-red-700 border-red-200' }
   };
 
   const config = statusConfig[status] || statusConfig.unpaid;
@@ -94,11 +96,12 @@ const PaymentStatusBadge = ({ status }) => {
 // INVOICE STATUS BADGE
 // ==========================================
 const InvoiceStatusBadge = ({ status }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('invoices');
   const statusConfig = {
-    draft: { label: 'Brouillon', class: 'bg-gray-50 text-gray-600 border-gray-200' },
-    sent: { label: 'Envoyée', class: 'bg-blue-50 text-blue-700 border-blue-200' },
-    paid: { label: 'Payée', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    cancelled: { label: 'Annulée', class: 'bg-rose-50 text-rose-700 border-rose-200' }
+    draft: { label: t('orders.status.draft'), class: 'bg-gray-50 text-gray-600 border-gray-200' },
+    sent: { label: t('common.statuses.sent'), class: 'bg-blue-50 text-blue-700 border-blue-200' },
+    paid: { label: t('common.paymentStatus.paid'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    cancelled: { label: t('common.cancelled'), class: 'bg-rose-50 text-rose-700 border-rose-200' }
   };
 
   const config = statusConfig[status] || statusConfig.draft;
@@ -114,11 +117,12 @@ const InvoiceStatusBadge = ({ status }) => {
 // PAYMENT METHOD BADGE
 // ==========================================
 const PaymentMethodBadge = ({ method }) => {
+  const { t, tc } = usePageI18n('invoices');
   const methodConfig = {
-    cash: { label: 'Espèces', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    card: { label: 'Carte', class: 'bg-blue-50 text-blue-700 border-blue-200' },
-    transfer: { label: 'Virement', class: 'bg-purple-50 text-purple-700 border-purple-200' },
-    online: { label: 'En ligne', class: 'bg-indigo-50 text-indigo-700 border-indigo-200' }
+    cash: { label: t('common.paymentMethods.cash'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    card: { label: t('common.paymentMethods.card'), class: 'bg-blue-50 text-blue-700 border-blue-200' },
+    transfer: { label: t('common.paymentMethods.transfer'), class: 'bg-purple-50 text-purple-700 border-purple-200' },
+    online: { label: t('common.paymentMethods.online'), class: 'bg-indigo-50 text-indigo-700 border-indigo-200' }
   };
 
   const config = methodConfig[method] || methodConfig.cash;
@@ -164,6 +168,7 @@ const KPICard = ({ icon: Icon, title, value, color, subtitle }) => {
 // INVOICE CARD (Mobile)
 // ==========================================
 const InvoiceCard = ({ invoice, onView, onEdit, onDelete }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('invoices');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
@@ -184,11 +189,11 @@ const InvoiceCard = ({ invoice, onView, onEdit, onDelete }) => {
       <div className="grid grid-cols-2 gap-2 text-xs text-[#6D6D6D]">
         <div className="flex items-center gap-1">
           <Calendar size={12} />
-          {new Date(invoice.invoiceDate).toLocaleDateString('fr-FR')}
+          {new Date(invoice.invoiceDate).toLocaleDateString(DATE_LOCALE)}
         </div>
         <div className="flex items-center gap-1">
           <Clock size={12} />
-          {new Date(invoice.dueDate).toLocaleDateString('fr-FR')}
+          {new Date(invoice.dueDate).toLocaleDateString(DATE_LOCALE)}
         </div>
         <div className="flex items-center gap-1">
           <DollarSign size={12} />
@@ -225,6 +230,7 @@ const InvoiceCard = ({ invoice, onView, onEdit, onDelete }) => {
 // INVOICE TABLE ROW (Desktop)
 // ==========================================
 const InvoiceTableRow = ({ invoice, onView, onEdit, onDelete, index }) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('invoices');
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -238,10 +244,10 @@ const InvoiceTableRow = ({ invoice, onView, onEdit, onDelete, index }) => {
       </td>
       <td className="px-4 py-3 text-sm text-[#3D2F24]">{invoice.customer}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {new Date(invoice.invoiceDate).toLocaleDateString('fr-FR')}
+        {new Date(invoice.invoiceDate).toLocaleDateString(DATE_LOCALE)}
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {new Date(invoice.dueDate).toLocaleDateString('fr-FR')}
+        {new Date(invoice.dueDate).toLocaleDateString(DATE_LOCALE)}
       </td>
       <td className="px-4 py-3 text-sm font-medium text-[#3D2F24]">
         {invoice.totalAmount.toLocaleString()} DH
@@ -263,21 +269,21 @@ const InvoiceTableRow = ({ invoice, onView, onEdit, onDelete, index }) => {
           <button
             onClick={() => onView(invoice)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(invoice)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={actions.edit}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onDelete(invoice)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -291,6 +297,7 @@ const InvoiceTableRow = ({ invoice, onView, onEdit, onDelete, index }) => {
 // INVOICE MODAL (Add/Edit)
 // ==========================================
 const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('invoices');
   const [formData, setFormData] = useState({
     customer: '',
     orderNumber: '',
@@ -361,6 +368,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
   };
 
   const addProduct = () => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('invoices');
     setFormData(prev => ({
       ...prev,
       products: [...prev.products, { id: Date.now(), name: '', quantity: 1, price: 0, vat: 20, discount: 0, total: 0 }]
@@ -377,6 +385,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
   };
 
   const calculateTotals = () => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('invoices');
     const subtotal = formData.products.reduce((sum, p) => sum + (p.quantity * p.price || 0), 0);
     const totalDiscount = formData.products.reduce((sum, p) => {
       const sub = p.quantity * p.price || 0;
@@ -400,9 +409,9 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.customer) newErrors.customer = 'Le client est requis';
-    if (!formData.orderNumber) newErrors.orderNumber = 'La commande est requise';
-    if (formData.products.some(p => !p.name)) newErrors.products = 'Tous les produits doivent avoir un nom';
+    if (!formData.customer) newErrors.customer = t('orders.validation.customerRequired');
+    if (!formData.orderNumber) newErrors.orderNumber = t('invoices.validation.orderRequired');
+    if (formData.products.some(p => !p.name)) newErrors.products = t('orders.validation.productNameRequired');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -426,7 +435,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            {invoice ? 'Modifier la facture' : 'Nouvelle facture'}
+            {invoice ? t('invoices.modals.editTitle') : t('invoices.addInvoice')}
           </h3>
           <button
             onClick={onClose}
@@ -448,7 +457,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                   errors.customer ? 'border-rose-500' : 'border-[#ECE8E1]'
                 }`}
               >
-                <option value="">Sélectionner</option>
+                <option value="">{tc('selectOption')}</option>
                 {customers.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
@@ -465,7 +474,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                   errors.orderNumber ? 'border-rose-500' : 'border-[#ECE8E1]'
                 }`}
               >
-                <option value="">Sélectionner</option>
+                <option value="">{tc('selectOption')}</option>
                 {availableOrders.map(o => (
                   <option key={o} value={o}>{o}</option>
                 ))}
@@ -523,7 +532,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Statut</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('status')}</label>
               <select
                 name="status"
                 value={formData.status}
@@ -541,7 +550,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
           {/* Products */}
           <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1]">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-bold text-[#3D2F24]">Produits</h4>
+              <h4 className="text-sm font-bold text-[#3D2F24]">{tc('product')}</h4>
               <button
                 type="button"
                 onClick={addProduct}
@@ -602,7 +611,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                     </div>
                     <div className="flex items-end justify-between">
                       <div>
-                        <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Total</label>
+                        <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{tc('total')}</label>
                         <p className="text-sm font-bold text-[#3D2F24]">
                           {(product.total || 0).toFixed(2)} DH
                         </p>
@@ -678,7 +687,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Notes</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
@@ -701,7 +710,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : invoice ? 'Mettre à jour' : 'Créer'}
+              {isLoading ? tc('saving') : invoice ? tc('update') : tc('create')}
             </button>
           </div>
         </form>
@@ -714,6 +723,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, invoice, isLoading }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('invoices');
   if (!isOpen) return null;
 
   const isPaid = invoice?.paymentStatus === 'paid';
@@ -762,7 +772,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, invoice, isLoading }) => {
               isPaid ? 'bg-gray-400 cursor-not-allowed' : 'bg-rose-500 hover:bg-rose-600'
             }`}
           >
-            {isPaid ? 'Impossible' : isLoading ? 'Suppression...' : 'Supprimer'}
+            {isPaid ? tc('impossible') : isLoading ? tc('deleting') : tc('delete')}
           </button>
         </div>
       </motion.div>
@@ -774,6 +784,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, invoice, isLoading }) => {
 // VIEW INVOICE MODAL
 // ==========================================
 const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('invoices');
   if (!isOpen || !invoice) return null;
 
   const remainingAmount = invoice.totalAmount - invoice.paidAmount;
@@ -814,7 +825,7 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Client</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('customer')}</p>
               <p className="font-medium text-[#3D2F24]">{invoice.customer}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3">
@@ -827,21 +838,21 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">Date facture</p>
               <p className="text-sm font-medium text-[#3D2F24]">
-                {new Date(invoice.invoiceDate).toLocaleDateString('fr-FR')}
+                {new Date(invoice.invoiceDate).toLocaleDateString(DATE_LOCALE)}
               </p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">Échéance</p>
               <p className="text-sm font-medium text-[#3D2F24]">
-                {new Date(invoice.dueDate).toLocaleDateString('fr-FR')}
+                {new Date(invoice.dueDate).toLocaleDateString(DATE_LOCALE)}
               </p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Total</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('total')}</p>
               <p className="text-sm font-bold text-[#3D2F24]">{invoice.totalAmount.toLocaleString()} DH</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Payé</p>
+              <p className="text-xs text-[#6D6D6D]">{t('common.statuses.paid')}</p>
               <p className="text-sm font-bold text-[#3D2F24]">{invoice.paidAmount.toLocaleString()} DH</p>
             </div>
           </div>
@@ -856,7 +867,7 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
           )}
 
           <div className="bg-[#F8F7F4] rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-[#3D2F24] mb-3">Produits</h4>
+            <h4 className="text-sm font-semibold text-[#3D2F24] mb-3">{tc('product')}</h4>
             <div className="space-y-2">
               {invoice.products && invoice.products.map((p, idx) => (
                 <div key={idx} className="flex justify-between items-center bg-white rounded-lg p-2 border border-[#ECE8E1]">
@@ -890,7 +901,7 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
 
           {invoice.notes && (
             <div className="p-3 bg-[#F8F7F4] rounded-lg">
-              <p className="text-xs text-[#6D6D6D] mb-1">Notes</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('notes')}</p>
               <p className="text-sm text-[#3D2F24]">{invoice.notes}</p>
             </div>
           )}
@@ -912,7 +923,7 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
 // ==========================================
 const InvoicesPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('invoices');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('invoices');
 
   const [invoices, setInvoices] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -1008,15 +1019,15 @@ const InvoicesPage = () => {
   // EXPORT CONFIGURATION
   // ==========================================
   const columns = [
-    { label: 'N° Facture', accessor: 'invoiceNumber', width: 12 },
-    { label: 'N° Commande', accessor: 'orderNumber', width: 12 },
+    { label: t('invoices.table.invoiceNumber'), accessor: 'invoiceNumber', width: 12 },
+    { label: t('orders.table.orderNumber'), accessor: 'orderNumber', width: 12 },
     { label: 'Client', accessor: 'customer', width: 15 },
     { label: 'Date', accessor: 'invoiceDate', width: 12 },
-    { label: 'Échéance', accessor: 'dueDate', width: 12 },
+    { label: t('invoices.table.dueDate'), accessor: 'dueDate', width: 12 },
     { label: 'Total', accessor: 'totalAmount', width: 12 },
-    { label: 'Payé', accessor: 'paidAmount', width: 12 },
+    { label: t('common.labels.paidAmount'), accessor: 'paidAmount', width: 12 },
     { label: 'Méthode', accessor: 'paymentMethod', width: 10 },
-    { label: 'Statut paiement', accessor: 'paymentStatus', width: 12 },
+    { label: t('invoices.fields.paymentStatus'), accessor: 'paymentStatus', width: 12 },
     { label: 'Statut', accessor: 'status', width: 10 }
   ];
 
@@ -1024,28 +1035,28 @@ const InvoicesPage = () => {
     invoiceNumber: item.invoiceNumber,
     orderNumber: item.orderNumber,
     customer: item.customer,
-    invoiceDate: new Date(item.invoiceDate).toLocaleDateString('fr-FR'),
-    dueDate: new Date(item.dueDate).toLocaleDateString('fr-FR'),
+    invoiceDate: new Date(item.invoiceDate).toLocaleDateString(DATE_LOCALE),
+    dueDate: new Date(item.dueDate).toLocaleDateString(DATE_LOCALE),
     totalAmount: `${item.totalAmount.toLocaleString()} DH`,
     paidAmount: `${item.paidAmount.toLocaleString()} DH`,
-    paymentMethod: item.paymentMethod === 'cash' ? 'Espèces' :
-                   item.paymentMethod === 'card' ? 'Carte' :
-                   item.paymentMethod === 'transfer' ? 'Virement' : 'En ligne',
-    paymentStatus: item.paymentStatus === 'paid' ? 'Payée' :
-                   item.paymentStatus === 'unpaid' ? 'Non payée' :
-                   item.paymentStatus === 'partial' ? 'Partielle' : 'En retard',
-    status: item.status === 'draft' ? 'Brouillon' :
-            item.status === 'sent' ? 'Envoyée' :
-            item.status === 'paid' ? 'Payée' : 'Annulée'
+    paymentMethod: item.paymentMethod === 'cash' ? t('common.paymentMethods.cash') :
+                   item.paymentMethod === 'card' ? t('common.paymentMethods.card') :
+                   item.paymentMethod === 'transfer' ? t('common.paymentMethods.transfer') : t('common.paymentMethods.online'),
+    paymentStatus: item.paymentStatus === 'paid' ? t('common.paymentStatus.paid') :
+                   item.paymentStatus === 'unpaid' ? t('common.paymentStatus.unpaid') :
+                   item.paymentStatus === 'partial' ? t('common.paymentStatus.partial') : t('common.statuses.overdue'),
+    status: item.status === 'draft' ? t('orders.status.draft') :
+            item.status === 'sent' ? t('common.statuses.sent') :
+            item.status === 'paid' ? t('common.paymentStatus.paid') : t('common.cancelled')
   });
 
   const summary = [
-    { label: 'Total factures', value: kpis.total },
-    { label: 'Payées', value: kpis.paid },
-    { label: 'Non payées', value: kpis.unpaid },
-    { label: 'En retard', value: kpis.overdue },
-    { label: "Aujourd'hui", value: kpis.today },
-    { label: 'Revenu total', value: `${kpis.revenue.toLocaleString()} DH` }
+    { label: t('invoices.kpi.total'), value: kpis.total },
+    { label: t('invoices.kpi.paid'), value: kpis.paid },
+    { label: t('invoices.kpi.unpaid'), value: kpis.unpaid },
+    { label: t('common.statuses.overdue'), value: kpis.overdue },
+    { label: tc('today'), value: kpis.today },
+    { label: t('finance.kpi.totalRevenue'), value: `${kpis.revenue.toLocaleString()} DH` }
   ];
 
   // ==========================================
@@ -1157,14 +1168,14 @@ const InvoicesPage = () => {
             <button
               onClick={() => setViewMode('table')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue tableau"
+              title={tc('tableView')}
             >
               <List size={18} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue grille"
+              title={tc('gridView')}
             >
               <Grid size={18} />
             </button>
@@ -1172,7 +1183,7 @@ const InvoicesPage = () => {
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1185,7 +1196,7 @@ const InvoicesPage = () => {
         <KPICard icon={CheckCircle} title="Payées" value={kpis.paid} color="emerald" />
         <KPICard icon={XCircle} title="Non payées" value={kpis.unpaid} color="rose" />
         <KPICard icon={AlertCircle} title="En retard" value={kpis.overdue} color="red" />
-        <KPICard icon={Calendar} title="Aujourd'hui" value={kpis.today} color="purple" />
+        <KPICard icon={Calendar} title={tc('today')} value={kpis.today} color="purple" />
         <KPICard icon={DollarSign} title="Revenu total" value={`${kpis.revenue.toLocaleString()} DH`} color="gold" />
       </div>
 
@@ -1211,10 +1222,10 @@ const InvoicesPage = () => {
               <option value="all">Tous les paiements</option>
               {uniquePaymentStatuses.map(status => (
                 <option key={status} value={status}>
-                  {status === 'paid' ? 'Payé' :
-                   status === 'unpaid' ? 'Non payé' :
-                   status === 'partial' ? 'Partiel' :
-                   status === 'overdue' ? 'En retard' : status}
+                  {status === 'paid' ? t('common.labels.paidAmount') :
+                   status === 'unpaid' ? t('common.paymentStatus.unpaid') :
+                   status === 'partial' ? t('common.paymentStatus.partial') :
+                   status === 'overdue' ? t('common.statuses.overdue') : status}
                 </option>
               ))}
             </select>
@@ -1241,15 +1252,15 @@ const InvoicesPage = () => {
               <thead>
                 <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Facture</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('customer')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('date')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Échéance</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Total</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Payé</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Méthode</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('total')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.statuses.paid')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('method')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Paiement</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                 </tr>
               </thead>
               <tbody>

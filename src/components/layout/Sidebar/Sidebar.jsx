@@ -380,11 +380,11 @@ const DEFAULT_MENU_CONFIG = [
 ];
 
 const GROUP_LABELS = [
-  { id: 'gestion', label: 'GESTION' },
-  { id: 'stock', label: 'STOCK & PRODUCTION' },
-  { id: 'finance', label: 'FINANCE' },
-  { id: 'rapports', label: 'RAPPORTS' },
-  { id: 'parametres', label: 'PARAMÈTRES' },
+  { id: 'gestion', labelKey: 'nav.groups.gestion' },
+  { id: 'stock', labelKey: 'nav.groups.stock' },
+  { id: 'finance', labelKey: 'nav.groups.finance' },
+  { id: 'rapports', labelKey: 'nav.groups.rapports' },
+  { id: 'parametres', labelKey: 'nav.groups.parametres' },
 ];
 export { GROUP_LABELS };
 
@@ -671,11 +671,11 @@ const Sidebar = ({
   onHelp = () => {},
   onDocumentation = () => {},
   onLogout = () => {},
-  language = 'fr',
+  language = 'ar',
   className = '',
 }) => {
   const { t } = useTranslation();
-  const isRTL = language === 'ar';
+  const isRTL = true;
 
   const translatedDashboard = useMemo(() => ({
     ...DASHBOARD_ITEM,
