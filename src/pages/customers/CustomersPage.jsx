@@ -1,5 +1,6 @@
 // src/pages/Customers/CustomersPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
@@ -605,6 +606,8 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
 const CustomersPage = () => {
   const { user } = useAuth();
   const { title, subtitle, searchPlaceholder, t } = usePageI18n('customers');
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -653,6 +656,12 @@ const CustomersPage = () => {
   useEffect(() => {
     fetchCustomers();
   }, [currentPage, itemsPerPage, searchTerm, typeFilter, statusFilter]);
+
+  useEffect(() => {
+    if (!location.state?.openAddModal) return;
+    setIsCreateModalOpen(true);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state?.openAddModal, navigate, location.pathname]);
 
   // Fetch KPIs from statistics API
   const [kpis, setKpis] = useState({

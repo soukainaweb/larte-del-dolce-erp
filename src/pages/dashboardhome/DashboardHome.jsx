@@ -553,9 +553,29 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
     : (Array.isArray(FALLBACK_DATA.notifications) ? FALLBACK_DATA.notifications : []);
 
   // ===== HANDLERS =====
-  const handleQuickAction = (route, callback) => {
-    if (callback) callback();
-    navigate(route);
+  const handleQuickAction = (action) => {
+    switch (action) {
+      case 'newOrder':
+        navigate('/dashboard/orders', { state: { openAddModal: true } });
+        break;
+      case 'newCustomer':
+        navigate('/dashboard/customers', { state: { openAddModal: true } });
+        break;
+      case 'newInvoice':
+        navigate('/dashboard/invoices', { state: { openAddModal: true } });
+        break;
+      case 'startProduction':
+        navigate('/dashboard/production', { state: { openAddModal: true } });
+        break;
+      case 'warehouse':
+        navigate('/dashboard/warehouse');
+        break;
+      case 'generateReport':
+        navigate('/dashboard/reports', { state: { openReportsTab: true } });
+        break;
+      default:
+        break;
+    }
   };
 
   const handlePeriodChange = (period) => {
@@ -620,12 +640,12 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
   ];
 
   const quickActions = [
-    { label: t('dashboard.quickActions.newOrder'), icon: PlusCircle, path: '/commandes/nouvelle' },
-    { label: t('dashboard.quickActions.newCustomer'), icon: UserPlus, path: '/clients/nouveau' },
-    { label: t('dashboard.quickActions.newInvoice'), icon: FilePlus, path: '/factures/nouvelle' },
-    { label: t('dashboard.quickActions.startProduction'), icon: Layers, path: '/production/lancer' },
-    { label: t('dashboard.quickActions.warehouse'), icon: Package, path: '/entrepot' },
-    { label: t('dashboard.quickActions.generateReport'), icon: BarChart3, path: '/rapports/generer' },
+    { label: t('dashboard.quickActions.newOrder'), icon: PlusCircle, action: 'newOrder' },
+    { label: t('dashboard.quickActions.newCustomer'), icon: UserPlus, action: 'newCustomer' },
+    { label: t('dashboard.quickActions.newInvoice'), icon: FilePlus, action: 'newInvoice' },
+    { label: t('dashboard.quickActions.startProduction'), icon: Layers, action: 'startProduction' },
+    { label: t('dashboard.quickActions.warehouse'), icon: Package, action: 'warehouse' },
+    { label: t('dashboard.quickActions.generateReport'), icon: BarChart3, action: 'generateReport' },
   ];
 
   // ===== LOADING STATE =====
@@ -862,8 +882,9 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
           {quickActions.map((action, idx) => (
             <button
               key={idx}
-              onClick={() => handleQuickAction(action.path)}
-              className="flex flex-col items-center justify-center p-4 border border-[#ECE8E1] rounded-xl hover:border-[#C6923B] bg-[#F8F7F4] hover:bg-white transition-all group"
+              type="button"
+              onClick={() => handleQuickAction(action.action)}
+              className="flex flex-col items-center justify-center p-4 border border-[#ECE8E1] rounded-xl hover:border-[#C6923B] bg-[#F8F7F4] hover:bg-white hover:shadow-sm transition-all group cursor-pointer"
             >
               <action.icon className="w-5 h-5 text-[#707070] group-hover:text-[#C6923B] stroke-[1.5] transition-colors mb-2" />
               <span className="text-xs font-semibold text-[#202020] text-center line-clamp-1">{action.label}</span>

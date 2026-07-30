@@ -864,6 +864,12 @@ const OrdersPage = () => {
   }, [fetchOrders]);
 
   useEffect(() => {
+    if (!location.state?.openAddModal) return;
+    setIsCreateModalOpen(true);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state?.openAddModal, navigate, location.pathname]);
+
+  useEffect(() => {
     const viewOrderId = location.state?.viewOrderId;
     const editOrderId = location.state?.editOrderId;
     const targetId = viewOrderId || editOrderId;

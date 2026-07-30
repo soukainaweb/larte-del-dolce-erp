@@ -1,5 +1,6 @@
 // src/pages/Reports/ReportsPage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart3,
@@ -1524,6 +1525,8 @@ const YearlyComparisonChart = ({ data }) => {
 const ReportsPage = () => {
   const { user } = useAuth();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('reports');
+  const location = useLocation();
+  const navigate = useNavigate();
   const { exportPDF, exportExcel } = useExport({ userName: user?.firstName || 'Utilisateur' });
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -1681,6 +1684,12 @@ const ReportsPage = () => {
     };
     loadAllData();
   }, [dateRange, searchTerm]);
+
+  useEffect(() => {
+    if (!location.state?.openReportsTab && !location.state?.openAddModal) return;
+    setActiveTab('reports');
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state?.openReportsTab, location.state?.openAddModal, navigate, location.pathname]);
 
   // ==========================================
   // KPI CALCULATIONS
