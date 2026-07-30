@@ -1,4 +1,5 @@
 import { normalizeRole, extractUserPermissions } from './roleMapping';
+import i18n from '../i18n';
 
 /**
  * Unwrap Laravel ApiResponse envelope from an axios response or plain body.
@@ -164,53 +165,133 @@ export const normalizeCustomerList = (payload) => {
 };
 
 /**
+ * Extract the first validation error message from a Laravel 422 payload.
+ * Prefers Arabic messages when the API returns them.
+ */
+export const extractValidationMessage = (data) => {
+  if (!data) return null;
+
+  if (data.message && typeof data.message === 'string') {
+    return data.message;
+  }
+
+  if (data.errors && typeof data.errors === 'object') {
+    const firstField = Object.keys(data.errors)[0];
+    if (firstField && Array.isArray(data.errors[firstField])) {
+      return data.errors[firstField][0];
+    }
+    const first = Object.values(data.errors).flat()[0];
+    if (first) return first;
+  }
+
+  return null;
+};
+
+/**
+ * Ensure value is always an array (safe default for API list states).
+ */
+export const ensureArray = (value) => (Array.isArray(value) ? value : []);
+
+const ACTIVITY_DATE_LOCALE = 'ar-SA';
+
+/**
+ * Normalize a single activity log record for UI consumption.
+ */
+export const normalizeActivityLog = (log) => {
+  if (!log || typeof log !== 'object') return null;
+
+  const createdAt = log.created_at ? new Date(log.created_at) : null;
+  const user = log.user || null;
+  const userName = user
+    ? (user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email)
+    : null;
+
+  const statusMap = {
+    success: 'Succès',
+    failed: 'Echec',
+  };
+
+  return {
+    ...log,
+    date: createdAt ? createdAt.toLocaleDateString(ACTIVITY_DATE_LOCALE) : '—',
+    time: createdAt
+      ? createdAt.toLocaleTimeString(ACTIVITY_DATE_LOCALE, { hour: '2-digit', minute: '2-digit' })
+      : '—',
+    ip: log.ip || log.ip_address || '—',
+    user: user
+      ? {
+          ...user,
+          name: userName,
+        }
+      : null,
+    status: statusMap[log.status] || log.status || '—',
+  };
+};
+
+/**
+ * Normalize a list of activity log records.
+ */
+export const normalizeActivityLogList = (items) => {
+  return ensureArray(items).map(normalizeActivityLog).filter(Boolean);
+};
+
+/**
+ * Parse a list API response into a safe array.
+ */
+export const parseListResponse = (payload, extraKeys = []) => {
+  return ensureArray(toArray(payload, extraKeys));
+};
+
+/**
  * Build a user-facing error message from an axios/Laravel error.
  */
-export const getApiErrorMessage = (error, fallback = 'Une erreur est survenue') => {
-  if (!error) return fallback;
+export const getApiErrorMessage = (error, fallback) => {
+  const defaultFallback = fallback || i18n.t('errors.loadFailed');
+
+  if (!error) return defaultFallback;
+
+  if (error.validationMessage) {
+    return error.validationMessage;
+  }
+
+  if (error.serverMessage) {
+    return error.serverMessage;
+  }
 
   // Network error (no response)
   if (!error.response) {
     if (error.code === 'ECONNABORTED') {
-      return 'La requête a expiré. Vérifiez votre connexion.';
+      return i18n.t('errors.networkError');
     }
     if (error.request) {
-      return 'Impossible de joindre le serveur. Vérifiez que l\'API Laravel est démarrée.';
+      return i18n.t('errors.networkError');
     }
-    return error.message || fallback;
+    return error.message || defaultFallback;
   }
 
   const { status, data } = error.response;
 
   if (status === 401) {
-    return data?.message || 'Session expirée. Veuillez vous reconnecter.';
+    return data?.message || i18n.t('errors.unauthorized');
   }
 
   if (status === 403) {
-    return data?.message || 'Accès refusé.';
+    return data?.message || i18n.t('errors.forbidden');
   }
 
   if (status === 404) {
-    return data?.message || 'Ressource introuvable.';
+    return data?.message || i18n.t('errors.notFound');
   }
 
-  if (status === 422 && data?.errors) {
-    const errors = data.errors;
-    const firstField = Object.keys(errors)[0];
-    if (firstField && Array.isArray(errors[firstField])) {
-      return errors[firstField][0];
-    }
-    if (typeof errors === 'object') {
-      const first = Object.values(errors).flat()[0];
-      if (first) return first;
-    }
+  if (status === 422) {
+    return extractValidationMessage(data) || data?.message || i18n.t('errors.invalidData');
   }
 
   if (status >= 500) {
-    return data?.message || 'Erreur serveur. Réessayez plus tard.';
+    return data?.message || i18n.t('errors.serverConnectionError');
   }
 
-  return data?.message || fallback;
+  return data?.message || defaultFallback;
 };
 
 /**

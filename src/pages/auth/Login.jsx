@@ -51,8 +51,8 @@ const Login = () => {
       }
 
       login(userData, token);
-      showToast(t('auth.loginSuccess', { defaultValue: 'Connexion réussie' }), 'success');
-      navigate('/dashboard');
+      showToast(t('auth.loginSuccess'), 'success');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       const errorMessage = getApiErrorMessage(err, t('auth.loginError'));
       setError(errorMessage);

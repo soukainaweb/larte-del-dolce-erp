@@ -16,6 +16,9 @@ export const getUser = async () => {
   return response.data;
 };
 
+/** Alias for Sanctum session bootstrap (`GET /api/me` pattern). */
+export const getMe = getUser;
+
 export const forgotPassword = async (emailOrPayload) => {
   const email = typeof emailOrPayload === 'string' ? emailOrPayload : emailOrPayload?.email;
   const response = await api.post('/password/email', { email });
@@ -54,6 +57,7 @@ const authService = {
   login,
   logout,
   getUser,
+  getMe,
   forgotPassword,
   resetPassword,
   updateProfile,

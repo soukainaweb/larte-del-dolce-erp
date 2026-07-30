@@ -41,7 +41,7 @@ export const getActivityLogStatistics = (params = {}) => {
  * @returns {Promise} - Axios response
  */
 export const getActivityChartData = (params = {}) => {
-  return api.get("/activity-logs/charts", { params });
+  return api.get("/activity-logs/chart-data", { params });
 };
 
 /**

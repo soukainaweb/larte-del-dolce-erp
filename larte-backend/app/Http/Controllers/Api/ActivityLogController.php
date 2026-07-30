@@ -18,7 +18,10 @@ class ActivityLogController extends Controller
     {
         $this->authorize('viewAny', ActivityLog::class);
 
-        return $this->success($this->activityLogService->list($request->all()));
+        return $this->paginated(
+            $this->activityLogService->list($request->all()),
+            'Activity logs retrieved successfully'
+        );
     }
 
     public function show(ActivityLog $activityLog)
@@ -39,7 +42,60 @@ class ActivityLogController extends Controller
     {
         $this->authorize('viewAny', ActivityLog::class);
 
-        return $this->success($this->activityLogService->recent($request->integer('limit', 10)));
+        return $this->success(
+            $this->activityLogService->recent($request->integer('limit', 10))
+        );
+    }
+
+    public function users(Request $request)
+    {
+        $this->authorize('viewAny', ActivityLog::class);
+
+        return $this->success($this->activityLogService->uniqueUsers());
+    }
+
+    public function modules(Request $request)
+    {
+        $this->authorize('viewAny', ActivityLog::class);
+
+        return $this->success($this->activityLogService->uniqueModules());
+    }
+
+    public function actions(Request $request)
+    {
+        $this->authorize('viewAny', ActivityLog::class);
+
+        return $this->success($this->activityLogService->uniqueActions());
+    }
+
+    public function levels(Request $request)
+    {
+        $this->authorize('viewAny', ActivityLog::class);
+
+        return $this->success($this->activityLogService->uniqueLevels());
+    }
+
+    public function chartData(Request $request)
+    {
+        $this->authorize('viewAny', ActivityLog::class);
+
+        return $this->success($this->activityLogService->chartData($request->all()));
+    }
+
+    public function logins(Request $request)
+    {
+        $this->authorize('viewAny', ActivityLog::class);
+
+        return $this->success(
+            $this->activityLogService->recentLogins($request->integer('limit', 5))
+        );
+    }
+
+    public function critical(Request $request)
+    {
+        $this->authorize('viewAny', ActivityLog::class);
+
+        return $this->success($this->activityLogService->critical($request->all()));
     }
 
     public function userLogs($userId, Request $request)
@@ -48,17 +104,20 @@ class ActivityLogController extends Controller
 
         $user = User::findOrFail($userId);
 
-        return $this->success([
-            'user' => $user,
-            'logs' => $this->activityLogService->userLogs((int) $userId, $request->all()),
-        ]);
+        return $this->paginated(
+            $this->activityLogService->userLogs((int) $userId, $request->all()),
+            'User activity logs retrieved successfully'
+        );
     }
 
     public function errors(Request $request)
     {
         $this->authorize('viewAny', ActivityLog::class);
 
-        return $this->success($this->activityLogService->errors($request->all()));
+        return $this->paginated(
+            $this->activityLogService->errors($request->all()),
+            'Error activity logs retrieved successfully'
+        );
     }
 
     public function export(Request $request)
