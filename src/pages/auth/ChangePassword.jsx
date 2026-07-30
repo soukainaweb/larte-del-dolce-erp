@@ -1,5 +1,5 @@
 // src/pages/auth/ChangePassword.jsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -14,29 +14,12 @@ import {
   FaArrowLeft,
 } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { changePassword } from '../../services/authService';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Validation Schema - French
-const schema = yup.object().shape({
-  currentPassword: yup
-    .string()
-    .required('Le mot de passe actuel est requis'),
-  newPassword: yup
-    .string()
-    .required('Le nouveau mot de passe est obligatoire')
-    .min(8, 'Minimum 8 caractères')
-    .matches(/[A-Z]/, 'Le nouveau mot de passe doit contenir au moins une lettre majuscule')
-    .matches(/[a-z]/, 'Le nouveau mot de passe doit contenir au moins une lettre minuscule')
-    .matches(/[0-9]/, 'Le nouveau mot de passe doit contenir au moins un chiffre')
-    .matches(/[!@#$%^&*(),.?":{}|<>]/, 'Le nouveau mot de passe doit contenir au moins un caractère spécial'),
-  confirmPassword: yup
-    .string()
-    .required('La confirmation du mot de passe est requise')
-    .oneOf([yup.ref('newPassword'), null], 'Les mots de passe ne correspondent pas'),
-});
-
 const ChangePassword = () => {
+  const { t } = useTranslation();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -55,6 +38,26 @@ const ChangePassword = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const schema = useMemo(
+    () =>
+      yup.object().shape({
+        currentPassword: yup.string().required(t('auth.currentPasswordRequired')),
+        newPassword: yup
+          .string()
+          .required(t('auth.newPasswordRequired'))
+          .min(8, t('auth.min8Chars'))
+          .matches(/[A-Z]/, t('auth.uppercaseRequired'))
+          .matches(/[a-z]/, t('auth.lowercaseRequired'))
+          .matches(/[0-9]/, t('auth.numberRequired'))
+          .matches(/[!@#$%^&*(),.?":{}|<>]/, t('auth.specialRequired')),
+        confirmPassword: yup
+          .string()
+          .required(t('auth.confirmPasswordRequired'))
+          .oneOf([yup.ref('newPassword'), null], t('auth.passwordMismatch')),
+      }),
+    [t]
+  );
+
   const {
     register,
     handleSubmit,
@@ -68,7 +71,6 @@ const ChangePassword = () => {
 
   const newPassword = watch('newPassword', '');
 
-  // Password Strength Calculator
   const calculateStrength = (password) => {
     let strength = 0;
     const rules = {
@@ -89,21 +91,31 @@ const ChangePassword = () => {
   };
 
   const getStrengthLabel = (score) => {
-    if (score === 0) return 'Très faible';
-    if (score <= 20) return 'Faible';
-    if (score <= 40) return 'Moyen';
-    if (score <= 60) return 'Fort';
-    return 'Très fort';
+    if (score === 0) return t('auth.strengthVeryWeak');
+    if (score <= 20) return t('auth.strengthWeak');
+    if (score <= 40) return t('auth.strengthMedium');
+    if (score <= 60) return t('auth.strengthStrong');
+    return t('auth.strengthVeryStrong');
   };
 
-  // Gold-themed password strength colors matching L'arte del dolce design system
   const getStrengthColor = (score) => {
-    if (score === 0) return 'bg-[#E8DDD1]'; // Champagne/Border
-    if (score <= 20) return 'bg-[#D8B67A]'; // Champagne Gold
-    if (score <= 40) return 'bg-[#C89B5A]'; // Soft Gold
-    if (score <= 60) return 'bg-[#B8863B]'; // Primary Gold
-    return 'bg-[#9E6C30]'; // Dark Gold (full strength)
+    if (score === 0) return 'bg-[#E8DDD1]';
+    if (score <= 20) return 'bg-[#D8B67A]';
+    if (score <= 40) return 'bg-[#C89B5A]';
+    if (score <= 60) return 'bg-[#B8863B]';
+    return 'bg-[#9E6C30]';
   };
+
+  const passwordRuleItems = useMemo(
+    () => [
+      { key: 'length', label: t('auth.ruleMin8') },
+      { key: 'uppercase', label: t('auth.ruleUppercase') },
+      { key: 'lowercase', label: t('auth.ruleLowercase') },
+      { key: 'number', label: t('auth.ruleNumber') },
+      { key: 'special', label: t('auth.ruleSpecial') },
+    ],
+    [t]
+  );
 
   const onSubmit = async (data) => {
     setIsLoading(true);
@@ -112,7 +124,7 @@ const ChangePassword = () => {
       await changePassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
-        newPassword_confirmation: data.confirmPassword
+        newPassword_confirmation: data.confirmPassword,
       });
       setIsSuccess(true);
       reset();
@@ -126,13 +138,12 @@ const ChangePassword = () => {
       });
     } catch (err) {
       console.error('Change password error:', err);
-      setError(err.response?.data?.message || 'Erreur lors du changement de mot de passe');
+      setError(err.response?.data?.message || t('auth.changePasswordError'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Animation Variants
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -162,22 +173,18 @@ const ChangePassword = () => {
         variants={containerVariants}
         className="bg-white rounded-2xl shadow-xl shadow-gray-100/50 overflow-hidden border border-gray-100"
       >
-        {/* Header */}
         <motion.div variants={itemVariants} className="px-8 pt-8 pb-6 border-b border-gray-100">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#B88646] to-[#9E6C30] flex items-center justify-center shadow-lg shadow-[#B88646]/25 flex-shrink-0">
               <FaShieldAlt className="text-white text-2xl" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Changer le mot de passe</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Pour protéger votre compte, choisissez un mot de passe fort et unique.
-              </p>
+              <h1 className="text-2xl font-bold text-gray-900">{t('auth.changePassword')}</h1>
+              <p className="text-sm text-gray-500 mt-1">{t('auth.changePasswordSubtitle')}</p>
             </div>
           </div>
         </motion.div>
 
-        {/* Form */}
         <motion.div variants={itemVariants} className="p-8">
           {error && (
             <motion.div
@@ -191,17 +198,16 @@ const ChangePassword = () => {
 
           {!isSuccess ? (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Current Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Mot de passe actuel
+                  {t('auth.currentPassword')}
                 </label>
                 <div className="relative">
                   <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
                   <input
                     type={showCurrentPassword ? 'text' : 'password'}
                     {...register('currentPassword')}
-                    placeholder="Entrez votre mot de passe actuel"
+                    placeholder={t('common.placeholders.currentPassword')}
                     className={`w-full h-[54px] pl-12 pr-12 rounded-xl border ${
                       errors.currentPassword ? 'border-red-500' : 'border-gray-200'
                     } bg-gray-50/50 focus:bg-white focus:border-[#B88646] focus:ring-2 focus:ring-[#B88646]/20 focus:outline-none transition-all duration-300 text-gray-900 placeholder-gray-400 text-start`}
@@ -225,17 +231,16 @@ const ChangePassword = () => {
                 )}
               </div>
 
-              {/* New Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Nouveau mot de passe
+                  {t('auth.newPassword')}
                 </label>
                 <div className="relative">
                   <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
                   <input
                     type={showNewPassword ? 'text' : 'password'}
                     {...register('newPassword')}
-                    placeholder="Entrez un nouveau mot de passe"
+                    placeholder={t('common.placeholders.newPassword')}
                     onChange={(e) => {
                       register('newPassword').onChange(e);
                       calculateStrength(e.target.value);
@@ -262,7 +267,6 @@ const ChangePassword = () => {
                   </motion.p>
                 )}
 
-                {/* Password Strength */}
                 {newPassword.length > 0 && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
@@ -271,12 +275,12 @@ const ChangePassword = () => {
                   >
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-700">
-                        Force du mot de passe:
+                        {t('auth.passwordStrength')}
                       </span>
                       <span className={`text-sm font-semibold ${
-                        passwordStrength > 60 ? 'text-[#B8863B]' : 
-                        passwordStrength > 40 ? 'text-[#C89B5A]' : 
-                        passwordStrength > 20 ? 'text-[#D8B67A]' : 
+                        passwordStrength > 60 ? 'text-[#B8863B]' :
+                        passwordStrength > 40 ? 'text-[#C89B5A]' :
+                        passwordStrength > 20 ? 'text-[#D8B67A]' :
                         'text-[#7A6855]'
                       }`}>
                         {getStrengthLabel(passwordStrength)}
@@ -291,15 +295,8 @@ const ChangePassword = () => {
                       />
                     </div>
 
-                    {/* Password Rules */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-                      {[
-                        { key: 'length', label: '✓ Minimum 8 caractères' },
-                        { key: 'uppercase', label: '✓ Une lettre majuscule' },
-                        { key: 'lowercase', label: '✓ Une lettre minuscule' },
-                        { key: 'number', label: '✓ Un chiffre' },
-                        { key: 'special', label: '✓ Un caractère spécial' },
-                      ].map((rule) => (
+                      {passwordRuleItems.map((rule) => (
                         <div key={rule.key} className="flex items-center gap-2 text-sm">
                           {passwordRules[rule.key] ? (
                             <FaCheckCircle className="text-green-500 text-sm flex-shrink-0" />
@@ -316,17 +313,16 @@ const ChangePassword = () => {
                 )}
               </div>
 
-              {/* Confirm Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Confirmer le nouveau mot de passe
+                  {t('auth.confirmPassword')}
                 </label>
                 <div className="relative">
                   <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
                     {...register('confirmPassword')}
-                    placeholder="Confirmez votre nouveau mot de passe"
+                    placeholder={t('common.placeholders.confirmNewPassword')}
                     className={`w-full h-[54px] pl-12 pr-12 rounded-xl border ${
                       errors.confirmPassword ? 'border-red-500' : 'border-gray-200'
                     } bg-gray-50/50 focus:bg-white focus:border-[#B88646] focus:ring-2 focus:ring-[#B88646]/20 focus:outline-none transition-all duration-300 text-gray-900 placeholder-gray-400 text-start`}
@@ -350,7 +346,6 @@ const ChangePassword = () => {
                 )}
               </div>
 
-              {/* Buttons */}
               <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-3 pt-4">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -365,10 +360,10 @@ const ChangePassword = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Modification en cours...
+                      {t('auth.updatingPassword')}
                     </>
                   ) : (
-                    'Changer le mot de passe'
+                    t('auth.changePassword')
                   )}
                 </motion.button>
 
@@ -377,12 +372,11 @@ const ChangePassword = () => {
                   className="flex-1 h-[54px] rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <FaTimes className="text-lg" />
-                  Annuler
+                  {t('common.cancel')}
                 </Link>
               </motion.div>
             </form>
           ) : (
-            /* Success Message - French */
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -392,17 +386,17 @@ const ChangePassword = () => {
                 <FaCheckCircle className="text-green-500 text-4xl" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                Votre mot de passe a été modifié avec succès.
+                {t('auth.passwordUpdated')}
               </h2>
               <p className="text-gray-500 text-sm max-w-md mx-auto mb-8">
-                Votre mot de passe a été mis à jour avec succès. Vous pouvez continuer à utiliser votre compte en toute sécurité.
+                {t('auth.passwordUpdatedDetail')}
               </p>
               <Link
                 to="/profile"
                 className="inline-flex items-center gap-2 text-[#B88646] hover:text-[#9E6C30] font-semibold transition-colors duration-200"
               >
                 <FaArrowLeft className="text-sm" />
-                Retour au profil
+                {t('auth.backToProfile')}
               </Link>
             </motion.div>
           )}

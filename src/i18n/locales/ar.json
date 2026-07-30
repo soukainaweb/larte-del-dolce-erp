@@ -3,6 +3,8 @@
     "appName": "L'arte del dolce",
     "erp": "ERP",
     "loading": "جاري تحميل مساحة العمل...",
+    "loadingData": "جاري تحميل البيانات...",
+    "loadingModule": "جاري تحميل {{module}}...",
     "search": "بحث...",
     "searchInErp": "البحث في النظام...",
     "save": "حفظ",
@@ -13,6 +15,9 @@
     "add": "إضافة",
     "create": "إنشاء",
     "update": "تحديث",
+    "submit": "إرسال",
+    "share": "مشاركة",
+    "download": "تنزيل",
     "refresh": "تحديث",
     "export": "تصدير",
     "import": "استيراد",
@@ -26,10 +31,12 @@
     "no": "لا",
     "close": "إغلاق",
     "confirm": "تأكيد",
+    "confirmDelete": "هل أنت متأكد من الحذف؟",
     "back": "رجوع",
     "next": "التالي",
     "previous": "السابق",
     "noData": "لا توجد بيانات",
+    "noResultsFound": "لم يتم العثور على نتائج",
     "error": "حدث خطأ",
     "success": "تمت العملية بنجاح",
     "online": "متصل",
@@ -55,11 +62,27 @@
     "amount": "المبلغ",
     "total": "المجموع",
     "name": "الاسم",
+    "fullName": "الاسم الكامل",
     "email": "البريد الإلكتروني",
     "phone": "الهاتف",
     "address": "العنوان",
     "city": "المدينة",
     "country": "البلد",
+    "role": "الدور",
+    "department": "القسم",
+    "lastLogin": "آخر تسجيل دخول",
+    "permissions": "الصلاحيات",
+    "priority": "الأولوية",
+    "quantity": "الكمية",
+    "category": "الفئة",
+    "method": "طريقة الدفع",
+    "createdBy": "أنشأه",
+    "assignedTo": "مُسند إلى",
+    "additionalInfo": "معلومات إضافية",
+    "listOf": "قائمة {{entity}}",
+    "totalCount": "الإجمالي: {{count}}",
+    "newItem": "عنصر جديد",
+    "selectOption": "اختر خياراً",
     "active": "نشط",
     "inactive": "غير نشط",
     "pending": "قيد الانتظار",
@@ -72,7 +95,94 @@
     "thisWeek": "هذا الأسبوع",
     "thisMonth": "هذا الشهر",
     "thisYear": "هذا العام",
-    "custom": "مخصص"
+    "custom": "مخصص",
+    "statuses": {
+      "online": "متصل",
+      "offline": "غير متصل",
+      "suspended": "موقوف",
+      "locked": "مقفل",
+      "validated": "تم التحقق",
+      "inProduction": "قيد الإنتاج",
+      "ready": "جاهز",
+      "delivered": "تم التوصيل",
+      "paid": "مدفوع",
+      "unpaid": "غير مدفوع",
+      "overdue": "متأخر",
+      "sent": "مُرسل",
+      "archived": "مؤرشف",
+      "failed": "فشل",
+      "assigned": "تم التعيين",
+      "preparing": "قيد التحضير",
+      "out_for_delivery": "في الطريق",
+      "rejected": "مرفوض",
+      "draft": "مسودة",
+      "in_delivery": "قيد التوصيل",
+      "lowStock": "مخزون منخفض",
+      "outOfStock": "نفاد المخزون"
+    },
+    "table": {
+      "listTitle": "قائمة {{entity}}",
+      "noItemsFound": "لم يتم العثور على عناصر",
+      "loadingItems": "جاري تحميل {{entity}}...",
+      "columns": {
+        "role": "الدور",
+        "createdAt": "تاريخ الإنشاء",
+        "updatedAt": "تاريخ التحديث"
+      }
+    },
+    "allStatuses": "جميع الحالات",
+    "allRoles": "جميع الأدوار",
+    "allTypes": "جميع الأنواع",
+    "saving": "جاري الحفظ...",
+    "deleting": "جاري الحذف...",
+    "notProvided": "غير محدد",
+    "pageOf": "صفحة {{current}} من {{total}}",
+    "showingRange": "عرض {{from}} إلى {{to}} من {{total}}",
+    "units": "وحدات",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "type": "النوع",
+    "code": "الرمز",
+    "image": "الصورة",
+    "visible": "مرئي",
+    "hidden": "مخفي",
+    "featured": "مميز",
+    "none": "لا يوجد",
+    "impossible": "غير ممكن",
+    "preview": "معاينة",
+    "sku": "رمز المنتج",
+    "price": "السعر",
+    "stock": "المخزون",
+    "product": "المنتج",
+    "customer": "العميل",
+    "taxId": "الرقم الضريبي",
+    "website": "الموقع الإلكتروني",
+    "activate": "تفعيل",
+    "deactivate": "إلغاء التفعيل",
+    "tableView": "عرض جدول",
+    "gridView": "عرض شبكي",
+    "emailInvalid": "بريد إلكتروني غير صالح",
+    "mustBeNumber": "يجب أن يكون رقماً",
+    "irreversibleAction": "لا يمكن التراجع عن هذا الإجراء.",
+    "createdOn": "أُنشئ في {{date}}",
+    "updatedOn": "تم التحديث في {{date}}",
+    "placeholders": {
+      "additionalInfo": "أدخل معلومات إضافية...",
+      "searchUser": "البحث عن مستخدم...",
+      "customerName": "اسم العميل",
+      "transactionId": "معرّف المعاملة",
+      "fullAddress": "العنوان الكامل",
+      "warehouseLocation": "موقع المستودع",
+      "warehouseDescription": "وصف المستودع",
+      "transferReason": "سبب النقل",
+      "expenseDescription": "وصف المصروف",
+      "invoiceNumber": "رقم الفاتورة",
+      "categoryName": "اسم الفئة",
+      "categoryDescription": "وصف الفئة",
+      "currentPassword": "كلمة المرور الحالية",
+      "newPassword": "كلمة المرور الجديدة",
+      "confirmNewPassword": "تأكيد كلمة المرور الجديدة"
+    }
   },
   "nav": {
     "dashboard": "لوحة التحكم",
@@ -119,6 +229,9 @@
     "activityLog": "سجل النشاط",
     "helpCenter": "مركز المساعدة",
     "logout": "تسجيل الخروج",
+    "toggleSidebar": "تبديل الشريط الجانبي",
+    "toggleMobileSearch": "تبديل البحث",
+    "profileMenu": "قائمة الملف الشخصي",
     "themes": {
       "light": "فاتح",
       "dark": "داكن",
@@ -166,6 +279,7 @@
     "signingIn": "جاري الدخول...",
     "welcomeBack": "مرحباً بعودتك",
     "loginSubtitle": "سجل الدخول للوصول إلى مساحة العمل",
+    "loginSuccess": "تم تسجيل الدخول بنجاح",
     "invalidCredentials": "بيانات الدخول غير صحيحة",
     "loginError": "خطأ في تسجيل الدخول. حاول مرة أخرى.",
     "forgotPasswordTitle": "نسيت كلمة المرور",
@@ -180,6 +294,30 @@
     "confirmPassword": "تأكيد كلمة المرور",
     "updatePassword": "تحديث كلمة المرور",
     "passwordUpdated": "تم تحديث كلمة المرور بنجاح",
+    "passwordUpdatedDetail": "تم تحديث كلمة المرور بنجاح. يمكنك متابعة استخدام حسابك بأمان.",
+    "changePasswordSubtitle": "لحماية حسابك، اختر كلمة مرور قوية وفريدة.",
+    "currentPasswordRequired": "كلمة المرور الحالية مطلوبة",
+    "newPasswordRequired": "كلمة المرور الجديدة مطلوبة",
+    "min8Chars": "8 أحرف على الأقل",
+    "uppercaseRequired": "يجب أن تحتوي كلمة المرور الجديدة على حرف كبير واحد على الأقل",
+    "lowercaseRequired": "يجب أن تحتوي كلمة المرور الجديدة على حرف صغير واحد على الأقل",
+    "numberRequired": "يجب أن تحتوي كلمة المرور الجديدة على رقم واحد على الأقل",
+    "specialRequired": "يجب أن تحتوي كلمة المرور الجديدة على رمز خاص واحد على الأقل",
+    "confirmPasswordRequired": "تأكيد كلمة المرور مطلوب",
+    "passwordStrength": "قوة كلمة المرور:",
+    "strengthVeryWeak": "ضعيفة جداً",
+    "strengthWeak": "ضعيفة",
+    "strengthMedium": "متوسطة",
+    "strengthStrong": "قوية",
+    "strengthVeryStrong": "قوية جداً",
+    "ruleMin8": "8 أحرف على الأقل",
+    "ruleUppercase": "حرف كبير واحد",
+    "ruleLowercase": "حرف صغير واحد",
+    "ruleNumber": "رقم واحد",
+    "ruleSpecial": "رمز خاص واحد",
+    "updatingPassword": "جاري التحديث...",
+    "changePasswordError": "خطأ أثناء تغيير كلمة المرور",
+    "backToProfile": "العودة إلى الملف الشخصي",
     "passwordMismatch": "كلمات المرور غير متطابقة",
     "emailPlaceholder": "example@email.com",
     "passwordPlaceholder": "••••••••",
@@ -191,6 +329,8 @@
   "dashboard": {
     "title": "لوحة التحكم",
     "subtitle": "نظرة عامة على نشاطك",
+    "welcome": "مرحباً، {{name}}",
+    "systemLabel": "نظام ERP L'arte",
     "recentOrders": "الطلبات الأخيرة",
     "liveProduction": "الإنتاج المباشر",
     "topProducts": "المنتجات الأكثر مبيعاً",
@@ -199,16 +339,96 @@
     "kpiProduction": "الإنتاج",
     "kpiRevenue": "الإيرادات",
     "kpiCustomers": "العملاء",
+    "kpiDeliveries": "التوصيل",
+    "kpiInvoices": "الفواتير",
+    "kpiTodayOrders": "طلبات اليوم",
+    "kpiPendingOrders": "طلبات قيد الانتظار",
+    "kpiCompletedOrders": "طلبات مكتملة",
+    "kpiActiveCustomers": "عملاء نشطون",
+    "kpiPendingInvoices": "فواتير معلقة",
+    "activityAnalysis": "تحليل النشاط",
+    "activityAnalysisSubtitle": "متابعة مالية وحجم الإنتاج",
+    "orderDistribution": "توزيع الطلبات",
+    "orderDistributionSubtitle": "الحالة التشغيلية في الوقت الفعلي",
+    "revenueLabel": "الإيرادات (SAR)",
+    "distributionPending": "قيد الانتظار",
+    "distributionInProduction": "قيد الإنتاج",
+    "distributionReady": "جاهزة",
+    "distributionDelivered": "تم التوصيل",
+    "noDataAvailable": "لا توجد بيانات",
+    "currentScope": "النطاق الحالي",
+    "retry": "إعادة المحاولة",
     "exportPdfSoon": "تصدير PDF متاح عبر أزرار التصدير",
     "exportExcelSoon": "تصدير Excel متاح عبر أزرار التصدير",
     "deleteOrderConfirm": "هل أنت متأكد من حذف هذا الطلب؟",
-    "orderDeleted": "تم حذف الطلب بنجاح"
+    "deleteOrderTitle": "حذف الطلب؟",
+    "deleteOrderMessage": "أنت على وشك حذف الطلب {{id}} الخاص بـ {{customer}}. هذا الإجراء لا رجعة فيه.",
+    "orderDeleted": "تم حذف الطلب بنجاح",
+    "recentOrdersSubtitle": "سجل المعاملات المباشر",
+    "notificationsSubtitle": "سجل النظام المباشر",
+    "productionToday": "إنتاج اليوم",
+    "productionTodaySubtitle": "متابعة تقدم الورش",
+    "topProductsSubtitle": "أداء المبيعات",
+    "viewAll": "عرض الكل",
+    "representative": "المندوب",
+    "defaultUser": "مستخدم",
+    "accessDenied": "تم رفض الوصول إلى لوحة التحكم. اطلب من المسؤول صلاحية « dashboard.view ».",
+    "serverUnreachable": "تعذر الاتصال بالخادم. تحقق من تشغيل API Laravel.",
+    "partialLoadTimeout": "انتهت مهلة بعض أقسام لوحة التحكم. يتم عرض البيانات المتاحة.",
+    "partialLoadFailed": "تعذر تحميل بعض أقسام لوحة التحكم.",
+    "distributionOrders": "{{count}} طلبات",
+    "volumeShare": "{{percent}}% من إجمالي الحجم · {{units}} وحدة",
+    "unitsAbbrev": "و.",
+    "periodLabels": {
+      "Today": "اليوم",
+      "Week": "هذا الأسبوع",
+      "Month": "هذا الشهر",
+      "Quarter": "هذا الربع",
+      "Year": "هذا العام"
+    },
+    "quickActions": {
+      "title": "إجراءات سريعة",
+      "newOrder": "طلب جديد",
+      "newCustomer": "عميل جديد",
+      "newInvoice": "فاتورة جديدة",
+      "startProduction": "بدء الإنتاج",
+      "warehouse": "اللوجستيات / المستودع",
+      "generateReport": "إنشاء تقرير"
+    },
+    "table": {
+      "orderId": "رقم الطلب",
+      "customer": "العميل",
+      "product": "المنتج",
+      "status": "الحالة",
+      "amount": "المبلغ",
+      "date": "التاريخ",
+      "progress": "التقدم",
+      "sales": "المبيعات",
+      "quantity": "الكمية"
+    }
   },
   "orders": {
     "title": "الطلبات",
     "subtitle": "إدارة طلبات العملاء",
     "search": "البحث عن طلب...",
     "addOrder": "طلب جديد",
+    "kpi": {
+      "total": "إجمالي الطلبات",
+      "pending": "قيد الانتظار",
+      "inProduction": "قيد الإنتاج",
+      "delivered": "تم التوصيل",
+      "revenue": "إيرادات الطلبات"
+    },
+    "table": {
+      "orderNumber": "رقم الطلب",
+      "customer": "العميل",
+      "products": "المنتجات",
+      "total": "المجموع",
+      "status": "الحالة",
+      "priority": "الأولوية",
+      "orderDate": "تاريخ الطلب",
+      "deliveryDate": "تاريخ التوصيل"
+    },
     "status": {
       "draft": "مسودة",
       "pending": "قيد الانتظار",
@@ -231,25 +451,104 @@
     "title": "العملاء",
     "subtitle": "إدارة قاعدة العملاء",
     "search": "البحث عن عميل...",
-    "addCustomer": "عميل جديد"
+    "addCustomer": "عميل جديد",
+    "kpi": {
+      "total": "إجمالي العملاء",
+      "active": "عملاء نشطون",
+      "newThisMonth": "جدد هذا الشهر",
+      "totalOrders": "إجمالي الطلبات",
+      "totalRevenue": "إجمالي الإيرادات"
+    },
+    "types": {
+      "enterprise": "شركة",
+      "individual": "فرد"
+    },
+    "table": {
+      "client": "العميل",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "city": "المدينة",
+      "orders": "الطلبات",
+      "totalSpent": "إجمالي الإنفاق",
+      "status": "الحالة",
+      "lastOrder": "آخر طلب",
+      "registrationDate": "تاريخ التسجيل"
+    },
+    "modals": {
+      "addTitle": "إضافة عميل",
+      "editTitle": "تعديل العميل",
+      "detailsTitle": "تفاصيل العميل",
+      "deleteTitle": "حذف العميل؟",
+      "deleteMessage": "أنت على وشك حذف العميل {{name}}."
+    },
+    "export": {
+      "title": "قائمة العملاء",
+      "subtitle": "{{count}} عميل"
+    }
   },
   "products": {
     "title": "المنتجات",
-    "subtitle": "إدارة كatalog المنتجات",
+    "subtitle": "إدارة فهرس المنتجات",
     "search": "البحث عن منتج...",
-    "addProduct": "منتج جديد"
+    "addProduct": "منتج جديد",
+    "kpi": {
+      "total": "إجمالي المنتجات",
+      "active": "منتجات نشطة",
+      "lowStock": "مخزون منخفض",
+      "outOfStock": "نفاد المخزون",
+      "categories": "الفئات"
+    },
+    "table": {
+      "name": "الاسم",
+      "sku": "رمز المنتج",
+      "category": "الفئة",
+      "price": "السعر",
+      "stock": "المخزون",
+      "status": "الحالة",
+      "unit": "الوحدة"
+    }
   },
   "categories": {
     "title": "الفئات",
     "subtitle": "تنظيم المنتجات",
     "search": "البحث عن فئة...",
-    "addCategory": "فئة جديدة"
+    "addCategory": "فئة جديدة",
+    "kpi": {
+      "total": "إجمالي الفئات",
+      "active": "فئات نشطة",
+      "products": "المنتجات",
+      "subcategories": "الفئات الفرعية"
+    },
+    "table": {
+      "name": "الاسم",
+      "description": "الوصف",
+      "productsCount": "عدد المنتجات",
+      "status": "الحالة",
+      "parent": "الفئة الأب"
+    }
   },
   "deliveries": {
     "title": "التوصيل",
     "subtitle": "تتبع وإدارة التوصيل",
     "search": "البحث عن توصيل...",
     "addDelivery": "توصيل جديد",
+    "kpi": {
+      "total": "إجمالي التوصيلات",
+      "pending": "قيد الانتظار",
+      "inTransit": "في الطريق",
+      "delivered": "تم التوصيل",
+      "failed": "فشل"
+    },
+    "table": {
+      "deliveryNumber": "رقم التوصيل",
+      "order": "الطلب",
+      "customer": "العميل",
+      "driver": "السائق",
+      "address": "العنوان",
+      "status": "الحالة",
+      "scheduledDate": "التاريخ المجدول"
+    },
     "status": {
       "pending": "قيد الانتظار",
       "assigned": "تم التعيين",
@@ -265,52 +564,250 @@
     "subtitle": "نظرة عامة على الصحة المالية",
     "viewTransactions": "عرض المعاملات",
     "viewPayments": "عرض المدفوعات",
-    "viewSuppliers": "عرض الموردين"
+    "viewSuppliers": "عرض الموردين",
+    "viewAll": "عرض الكل",
+    "recentTransactions": "المعاملات الأخيرة",
+    "recentTransactionsSubtitle": "آخر المعاملات المالية",
+    "revenueVsExpenses": "الإيرادات مقابل المصروفات",
+    "last12Months": "آخر 12 شهراً",
+    "revenue": "الإيرادات",
+    "expenses": "المصروفات",
+    "kpi": {
+      "totalRevenue": "إجمالي الإيرادات",
+      "totalExpenses": "إجمالي المصروفات",
+      "netProfit": "صافي الربح",
+      "cashBalance": "الرصيد النقدي",
+      "outstandingPayments": "مدفوعات معلقة",
+      "supplierPaymentsDue": "مستحقات الموردين",
+      "monthlyRevenue": "الإيرادات الشهرية",
+      "todayRevenue": "إيرادات اليوم"
+    },
+    "table": {
+      "id": "المعرّف",
+      "date": "التاريخ",
+      "type": "النوع",
+      "customerSupplier": "العميل / المورد",
+      "amount": "المبلغ",
+      "method": "طريقة الدفع",
+      "status": "الحالة",
+      "reference": "المرجع"
+    },
+    "quickActions": {
+      "createInvoice": "إنشاء فاتورة",
+      "receivePayment": "استلام دفعة",
+      "addExpense": "إضافة مصروف",
+      "purchaseOrder": "أمر شراء",
+      "financialReports": "التقارير المالية",
+      "accounting": "المحاسبة"
+    },
+    "expenseBreakdown": "توزيع المصروفات",
+    "pendingCustomerPayments": "مدفوعات العملاء المعلقة",
+    "pendingCustomerPaymentsSubtitle": "مدفوعات العملاء قيد الانتظار",
+    "pendingSupplierPayments": "مدفوعات الموردين المعلقة",
+    "pendingSupplierPaymentsSubtitle": "مدفوعات الموردين قيد الانتظار",
+    "financeNotificationsSubtitle": "التنبيهات المالية",
+    "topCustomers": "أفضل العملاء",
+    "topCustomersSubtitle": "العملاء الأكثر إيراداً",
+    "topSuppliers": "أفضل الموردين",
+    "topSuppliersSubtitle": "الموردون الأكثر مشتريات",
+    "financialReport": "التقرير المالي",
+    "periodLabel": "الفترة: {{period}} — {{date}}",
+    "fromLastMonth": "↑ {{percent}}% عن الشهر الماضي",
+    "dueDateLabel": "تاريخ الاستحقاق: {{date}}",
+    "outstanding": "المستحق",
+    "lastPurchase": "آخر شراء",
+    "ordersCount": "{{count}} طلب",
+    "purchasesCount": "{{count}} عملية شراء",
+    "purchases": "المشتريات",
+    "supplier": "المورد",
+    "customerLabel": "العميل"
   },
   "inventory": {
     "title": "المخزون",
     "subtitle": "إدارة المخزون",
-    "search": "البحث عن منتج..."
+    "search": "البحث عن منتج...",
+    "kpi": {
+      "totalItems": "إجمالي الأصناف",
+      "inStock": "متوفر",
+      "lowStock": "مخزون منخفض",
+      "outOfStock": "نفاد المخزون",
+      "totalValue": "القيمة الإجمالية"
+    },
+    "table": {
+      "product": "المنتج",
+      "sku": "رمز المنتج",
+      "warehouse": "المستودع",
+      "quantity": "الكمية",
+      "minStock": "الحد الأدنى",
+      "status": "الحالة",
+      "lastUpdated": "آخر تحديث"
+    }
   },
   "warehouse": {
     "title": "المستودع",
     "subtitle": "إدارة المستودعات",
-    "search": "البحث عن مستودع..."
+    "search": "البحث عن مستودع...",
+    "kpi": {
+      "totalWarehouses": "إجمالي المستودعات",
+      "active": "نشطة",
+      "totalCapacity": "السعة الإجمالية",
+      "utilization": "نسبة الاستخدام",
+      "transfers": "عمليات النقل"
+    },
+    "table": {
+      "name": "الاسم",
+      "location": "الموقع",
+      "capacity": "السعة",
+      "items": "الأصناف",
+      "manager": "المسؤول",
+      "status": "الحالة"
+    }
   },
   "suppliers": {
     "title": "الموردون",
     "subtitle": "إدارة الموردين",
-    "search": "البحث عن مورد..."
+    "search": "البحث عن مورد...",
+    "addSupplier": "مورد جديد",
+    "kpi": {
+      "total": "إجمالي الموردين",
+      "active": "نشطون",
+      "pendingPayments": "مدفوعات معلقة",
+      "totalPurchases": "إجمالي المشتريات",
+      "topSupplier": "أفضل مورد"
+    },
+    "table": {
+      "name": "الاسم",
+      "contact": "جهة الاتصال",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "products": "المنتجات",
+      "balance": "الرصيد",
+      "status": "الحالة"
+    }
   },
   "invoices": {
     "title": "الفواتير",
     "subtitle": "إدارة الفواتير",
-    "search": "البحث عن فاتورة..."
+    "search": "البحث عن فاتورة...",
+    "addInvoice": "فاتورة جديدة",
+    "kpi": {
+      "total": "إجمالي الفواتير",
+      "paid": "مدفوعة",
+      "unpaid": "غير مدفوعة",
+      "overdue": "متأخرة",
+      "totalAmount": "المبلغ الإجمالي"
+    },
+    "table": {
+      "invoiceNumber": "رقم الفاتورة",
+      "customer": "العميل",
+      "issueDate": "تاريخ الإصدار",
+      "dueDate": "تاريخ الاستحقاق",
+      "amount": "المبلغ",
+      "status": "الحالة"
+    }
   },
   "payments": {
     "title": "المدفوعات",
     "subtitle": "تتبع المدفوعات",
-    "search": "البحث عن دفعة..."
+    "search": "البحث عن دفعة...",
+    "addPayment": "دفعة جديدة",
+    "kpi": {
+      "total": "إجمالي المدفوعات",
+      "received": "مستلمة",
+      "pending": "معلقة",
+      "overdue": "متأخرة",
+      "totalAmount": "المبلغ الإجمالي"
+    },
+    "table": {
+      "paymentId": "معرّف الدفعة",
+      "invoice": "الفاتورة",
+      "customer": "العميل",
+      "amount": "المبلغ",
+      "method": "طريقة الدفع",
+      "date": "التاريخ",
+      "status": "الحالة"
+    }
   },
   "expenses": {
     "title": "المصروفات",
     "subtitle": "إدارة المصروفات",
-    "search": "البحث عن مصروف..."
+    "search": "البحث عن مصروف...",
+    "addExpense": "مصروف جديد",
+    "kpi": {
+      "total": "إجمالي المصروفات",
+      "thisMonth": "هذا الشهر",
+      "pending": "معلقة",
+      "approved": "معتمدة",
+      "byCategory": "حسب الفئة"
+    },
+    "table": {
+      "description": "الوصف",
+      "category": "الفئة",
+      "amount": "المبلغ",
+      "date": "التاريخ",
+      "approvedBy": "اعتمدها",
+      "status": "الحالة"
+    }
   },
   "production": {
     "title": "الإنتاج",
     "subtitle": "تتبع الإنتاج",
-    "search": "البحث عن إنتاج..."
+    "search": "البحث عن إنتاج...",
+    "addProduction": "إنتاج جديد",
+    "kpi": {
+      "total": "إجمالي أوامر الإنتاج",
+      "inProgress": "قيد التنفيذ",
+      "completed": "مكتملة",
+      "pending": "معلقة",
+      "efficiency": "الكفاءة"
+    },
+    "table": {
+      "batchNumber": "رقم الدفعة",
+      "product": "المنتج",
+      "quantity": "الكمية",
+      "startDate": "تاريخ البدء",
+      "endDate": "تاريخ الانتهاء",
+      "status": "الحالة",
+      "assignedTo": "مُسند إلى"
+    }
   },
   "reports": {
     "title": "التقارير",
     "subtitle": "تقارير النشاط",
-    "search": "بحث..."
+    "search": "بحث...",
+    "kpi": {
+      "totalReports": "إجمالي التقارير",
+      "generated": "تم إنشاؤها",
+      "scheduled": "مجدولة",
+      "thisMonth": "هذا الشهر"
+    },
+    "table": {
+      "name": "الاسم",
+      "type": "النوع",
+      "period": "الفترة",
+      "generatedBy": "أنشأه",
+      "date": "التاريخ",
+      "format": "التنسيق"
+    }
   },
   "analytics": {
     "title": "التحليلات",
     "subtitle": "تحليل البيانات",
-    "search": "بحث..."
+    "search": "بحث...",
+    "kpi": {
+      "revenue": "الإيرادات",
+      "orders": "الطلبات",
+      "customers": "العملاء",
+      "growth": "النمو",
+      "conversion": "معدل التحويل"
+    },
+    "table": {
+      "metric": "المؤشر",
+      "current": "الحالي",
+      "previous": "السابق",
+      "change": "التغيير",
+      "trend": "الاتجاه"
+    }
   },
   "notifications": {
     "title": "الإشعارات",
@@ -318,32 +815,176 @@
     "search": "بحث...",
     "markAsRead": "تحديد كمقروء",
     "markAllRead": "تحديد الكل كمقروء",
-    "noNotifications": "لا توجد إشعارات"
+    "noNotifications": "لا توجد إشعارات",
+    "kpi": {
+      "total": "إجمالي الإشعارات",
+      "unread": "غير مقروءة",
+      "today": "اليوم",
+      "critical": "حرجة"
+    },
+    "table": {
+      "title": "العنوان",
+      "message": "الرسالة",
+      "type": "النوع",
+      "date": "التاريخ",
+      "status": "الحالة"
+    }
   },
   "users": {
     "title": "المستخدمون",
     "subtitle": "إدارة المستخدمين",
     "search": "البحث عن مستخدم...",
-    "addUser": "مستخدم جديد"
+    "addUser": "مستخدم جديد",
+    "kpi": {
+      "total": "إجمالي المستخدمين",
+      "active": "نشطون",
+      "inactive": "غير نشطين",
+      "online": "متصلون الآن",
+      "newThisMonth": "جدد هذا الشهر"
+    },
+    "table": {
+      "user": "المستخدم",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "role": "الدور",
+      "department": "القسم",
+      "status": "الحالة",
+      "lastLogin": "آخر تسجيل دخول",
+      "registrationDate": "تاريخ التسجيل"
+    },
+    "modals": {
+      "addTitle": "إضافة مستخدم",
+      "editTitle": "تعديل المستخدم",
+      "detailsTitle": "تفاصيل المستخدم",
+      "deleteTitle": "حذف المستخدم؟",
+      "deleteMessage": "أنت على وشك حذف المستخدم {{name}}."
+    },
+    "export": {
+      "title": "قائمة المستخدمين",
+      "subtitle": "{{count}} مستخدم"
+    }
   },
   "roles": {
     "title": "الأدوار والصلاحيات",
     "subtitle": "التحكم في الوصول",
-    "search": "البحث عن دور..."
+    "search": "البحث عن دور...",
+    "addRole": "دور جديد",
+    "kpi": {
+      "totalRoles": "إجمالي الأدوار",
+      "totalUsers": "إجمالي المستخدمين",
+      "permissions": "الصلاحيات",
+      "customRoles": "أدوار مخصصة"
+    },
+    "table": {
+      "name": "الاسم",
+      "description": "الوصف",
+      "users": "المستخدمون",
+      "permissions": "الصلاحيات",
+      "status": "الحالة"
+    },
+    "usersManagement": {
+      "title": "إدارة المستخدمين",
+      "searchPlaceholder": "البحث عن مستخدم...",
+      "addUser": "إضافة مستخدم",
+      "editUser": "تعديل المستخدم",
+      "userDetails": "تفاصيل المستخدم",
+      "removeUser": "إزالة المستخدم",
+      "removeUserConfirm": "هل تريد إزالة \"{{name}}\" من هذا الدور؟",
+      "removeFromRole": "إزالة من الدور",
+      "viewProfile": "عرض الملف الشخصي",
+      "department": "القسم",
+      "position": "المنصب",
+      "role": "الدور",
+      "assignedDate": "تاريخ التعيين",
+      "lastLogin": "آخر تسجيل دخول",
+      "status": "الحالة",
+      "permissions": "الصلاحيات",
+      "notes": "ملاحظات",
+      "selectUser": "اختر مستخدماً",
+      "selectRole": "اختر دوراً",
+      "userRequired": "يرجى اختيار مستخدم",
+      "roleRequired": "يرجى اختيار دور",
+      "nameRequired": "الاسم مطلوب",
+      "emailRequired": "البريد الإلكتروني مطلوب",
+      "userCount": "{{count}} مستخدم(ون) مرتبط(ون)",
+      "noUsers": "لا يوجد مستخدمون",
+      "noUsersFilter": "لا يوجد مستخدمون يطابقون الفلاتر",
+      "noUsersRole": "لا يوجد مستخدمون مرتبطون بهذا الدور",
+      "sortNewest": "الأحدث",
+      "sortOldest": "الأقدم",
+      "sortAz": "أ-ي",
+      "sortLastLogin": "آخر تسجيل دخول",
+      "activeUsers": "نشطون",
+      "inactiveUsers": "غير نشطين",
+      "userAdded": "تمت إضافة المستخدم بنجاح",
+      "userUpdated": "تم تعديل المستخدم بنجاح",
+      "userRemoved": "تمت إزالة المستخدم من الدور بنجاح",
+      "saving": "جاري الحفظ...",
+      "adding": "جاري الإضافة...",
+      "removing": "جاري الإزالة..."
+    }
   },
   "activityLog": {
     "title": "سجل النشاط",
     "subtitle": "سجل إجراءات النظام",
-    "search": "البحث عن مستخدم، إجراء، وحدة..."
+    "search": "البحث عن مستخدم، إجراء، وحدة...",
+    "kpi": {
+      "totalEvents": "إجمالي الأحداث",
+      "today": "اليوم",
+      "thisWeek": "هذا الأسبوع",
+      "critical": "حرجة"
+    },
+    "table": {
+      "user": "المستخدم",
+      "action": "الإجراء",
+      "module": "الوحدة",
+      "description": "الوصف",
+      "ipAddress": "عنوان IP",
+      "timestamp": "الطابع الزمني"
+    }
   },
   "settings": {
     "title": "الإعدادات",
     "subtitle": "إعدادات النظام",
-    "search": "البحث عن إعداد..."
+    "search": "البحث عن إعداد...",
+    "kpi": {
+      "general": "عام",
+      "security": "الأمان",
+      "notifications": "الإشعارات",
+      "integrations": "التكاملات"
+    },
+    "table": {
+      "setting": "الإعداد",
+      "category": "الفئة",
+      "value": "القيمة",
+      "lastModified": "آخر تعديل"
+    },
+    "sections": {
+      "general": "الإعدادات العامة",
+      "company": "معلومات الشركة",
+      "security": "الأمان",
+      "notifications": "الإشعارات",
+      "localization": "اللغة والمنطقة",
+      "billing": "الفوترة"
+    }
   },
   "profile": {
     "title": "ملفي الشخصي",
-    "subtitle": "إدارة معلوماتك الشخصية"
+    "subtitle": "إدارة معلوماتك الشخصية",
+    "personalInfo": "المعلومات الشخصية",
+    "changePassword": "تغيير كلمة المرور",
+    "preferences": "التفضيلات",
+    "activity": "النشاط",
+    "kpi": {
+      "lastLogin": "آخر تسجيل دخول",
+      "memberSince": "عضو منذ",
+      "role": "الدور",
+      "department": "القسم"
+    },
+    "table": {
+      "field": "الحقل",
+      "value": "القيمة"
+    }
   },
   "moduleFallback": {
     "detailUnavailable": "صفحة التفاصيل غير متاحة بعد",
