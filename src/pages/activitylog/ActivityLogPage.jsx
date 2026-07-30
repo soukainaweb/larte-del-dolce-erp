@@ -182,6 +182,7 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // CONSTANTS
@@ -271,6 +272,7 @@ const KPICard = ({ icon: Icon, title, value, color, subtitle, onClick }) => {
 
 // ViewActivityModal
 const ViewActivityModal = ({ isOpen, onClose, activity }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('activityLog');
   if (!isOpen || !activity) return null;
 
   const levelColors = {
@@ -286,10 +288,11 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
     success: 'Succès',
     warning: 'Avertissement',
     error: 'Erreur',
-    critical: 'Critique'
+    critical: t('notifications.kpi.critical')
   };
 
   const showToast = (message, type = 'success') => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('activityLog');
     window.dispatchEvent(new CustomEvent('showToast', { detail: { message, type } }));
   };
 
@@ -320,7 +323,7 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
               )}
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#3D2F24]">{activity.user?.name || 'Utilisateur inconnu'}</p>
+              <p className="text-sm font-semibold text-[#3D2F24]">{activity.user?.name || t('activityLog.unknownUser')}</p>
               <p className="text-xs text-[#6D6D6D]">{activity.user?.email || '—'}</p>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${levelColors[activity.level] || levelColors.info}`}>
@@ -341,7 +344,7 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
               <p className="text-sm font-medium text-[#3D2F24]">{activity.action}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-3">
-              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">Date</p>
+              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">{tc('date')}</p>
               <p className="text-sm font-medium text-[#3D2F24]">{activity.date}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-3">
@@ -361,7 +364,7 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
               <p className="text-sm font-medium text-[#3D2F24]">{activity.device || '—'}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-3">
-              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">Statut</p>
+              <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">{tc('status')}</p>
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                 activity.status === 'Succès' ? 'bg-emerald-50 text-emerald-700' : 
                 activity.status === 'Echec' ? 'bg-rose-50 text-rose-700' : 'bg-gray-50 text-gray-600'
@@ -441,7 +444,7 @@ const ViewActivityModal = ({ isOpen, onClose, activity }) => {
 // ==========================================
 const ActivityLogPage = () => {
   const { user: currentUser } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('activityLog');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('activityLog');
 
   // States
   const [isLoading, setIsLoading] = useState(false);
@@ -486,10 +489,12 @@ const ActivityLogPage = () => {
 
   // Toast
   const showToast = (message, type = 'success') => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('activityLog');
     setToast({ isOpen: true, message, type });
   };
 
   const hideToast = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('activityLog');
     setToast({ isOpen: false, message: '', type: 'success' });
   };
 
@@ -528,7 +533,7 @@ const ActivityLogPage = () => {
       setTotalCount(response.data.meta?.total || data.length);
     } catch (error) {
       console.error('Error fetching activity logs:', error);
-      showToast('Erreur lors du chargement du journal', 'error');
+      showToast(t('activityLog.errors.load'), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -683,7 +688,7 @@ const ActivityLogPage = () => {
   const exportColumns = [
     { label: 'Date', accessor: 'date', width: 20 },
     { label: 'Heure', accessor: 'time', width: 15 },
-    { label: 'Utilisateur', accessor: 'userName', width: 25 },
+    { label: t('users.table.user'), accessor: 'userName', width: 25 },
     { label: 'Module', accessor: 'module', width: 25 },
     { label: 'Action', accessor: 'action', width: 25 },
     { label: 'Description', accessor: 'description', width: 50 },
@@ -708,9 +713,9 @@ const ActivityLogPage = () => {
 
   const exportSummary = {
     'Total activités': filteredActivities.length,
-    "Aujourd'hui": stats.today,
-    'Utilisateurs actifs': stats.users,
-    'Actions critiques': stats.critical,
+    'today': stats.today,
+    'activeUsers': stats.users,
+    'critical': stats.critical,
     'Actions réussies': stats.success,
     'Sécurité': stats.security
   };
@@ -805,7 +810,7 @@ const ActivityLogPage = () => {
             onClick={handleRefresh}
             disabled={isLoading}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors disabled:opacity-50"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className={`text-[#6D6D6D] ${isLoading ? 'animate-spin' : ''}`} />
           </button>
@@ -818,7 +823,7 @@ const ActivityLogPage = () => {
             filename={`journal_activite_${new Date().toISOString().split('T')[0]}`}
             summary={exportSummary}
             rowFormatter={rowFormatter}
-            userName={currentUser?.firstName || 'Utilisateur'}
+            userName={currentUser?.firstName || t('users.table.user')}
             onSuccess={handleExportSuccess}
             onError={handleExportError}
           />
@@ -943,7 +948,7 @@ const ActivityLogPage = () => {
                    level === 'success' ? 'Succès' :
                    level === 'warning' ? 'Avertissement' :
                    level === 'error' ? 'Erreur' :
-                   level === 'critical' ? 'Critique' : level}
+                   level === 'critical' ? t('notifications.kpi.critical') : level}
                 </option>
               ))}
             </select>
@@ -964,7 +969,7 @@ const ActivityLogPage = () => {
           <table className="w-full text-sm">
             <thead className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
               <tr>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Date</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('date')}</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Heure</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Utilisateur</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Module</th>
@@ -972,8 +977,8 @@ const ActivityLogPage = () => {
                 <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Description</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Niveau</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">IP</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
-                <th className="px-3 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#ECE8E1]">
@@ -1016,7 +1021,7 @@ const ActivityLogPage = () => {
                     success: 'Succès',
                     warning: 'Avertissement',
                     error: 'Erreur',
-                    critical: 'Critique'
+                    critical: t('notifications.kpi.critical')
                   };
 
                   return (
@@ -1063,7 +1068,7 @@ const ActivityLogPage = () => {
                           <button
                             onClick={() => handleViewActivity(activity)}
                             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-                            title="Voir"
+                            title={actions.view}
                           >
                             <Eye size={15} className="text-[#6D6D6D]" />
                           </button>

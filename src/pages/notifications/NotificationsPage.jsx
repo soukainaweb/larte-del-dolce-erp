@@ -180,6 +180,7 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 const CURRENCY = 'MAD';
 
 // ==========================================
@@ -273,6 +274,7 @@ const NotificationItem = ({
   isSelected,
   onSelect 
 }) => {
+  const { t, tc, actions } = usePageI18n('notifications');
   const priorityColors = {
     low: 'bg-blue-100 text-blue-700 border-blue-200',
     medium: 'bg-amber-100 text-amber-700 border-amber-200',
@@ -281,10 +283,10 @@ const NotificationItem = ({
   };
 
   const priorityLabels = {
-    low: 'Faible',
-    medium: 'Moyenne',
-    high: 'Haute',
-    critical: 'Critique'
+    low: t('orders.priority.low'),
+    medium: t('orders.priority.medium'),
+    high: t('orders.priority.high'),
+    critical: t('notifications.kpi.critical')
   };
 
   const Icon = notification.icon;
@@ -325,7 +327,7 @@ const NotificationItem = ({
               <div className="flex items-center gap-1 md:gap-2 flex-wrap">
                 <p className="text-xs md:text-sm font-semibold text-[#3D2F24] truncate">{notification.title}</p>
                 <span className={`text-[8px] md:text-[10px] font-semibold px-1.5 md:px-2 py-0.5 rounded-full border ${priorityColors[notification.priority] || priorityColors.low}`}>
-                  {priorityLabels[notification.priority] || 'Faible'}
+                  {priorityLabels[notification.priority] || t('orders.priority.low')}
                 </span>
                 <span className="text-[8px] md:text-[10px] text-[#6D6D6D] bg-[#F8F7F4] px-1.5 md:px-2 py-0.5 rounded-full hidden sm:inline-block">
                   {moduleLabel}
@@ -387,7 +389,7 @@ const NotificationItem = ({
               <button
                 onClick={() => onDelete && onDelete(notification)}
                 className="p-1 md:p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-                title="Supprimer"
+                title={actions.delete}
               >
                 <Trash2 size={14} className="md:w-4 md:h-4 text-rose-500" />
               </button>
@@ -403,6 +405,7 @@ const NotificationItem = ({
 // NOTIFICATION DETAIL MODAL - AVEC NAVIGATION CORRIGÉE
 // ==========================================
 const NotificationDetailModal = ({ isOpen, onClose, notification, onMarkRead }) => {
+  const { t, tc } = usePageI18n('notifications');
   const navigate = useNavigate();
 
   if (!isOpen || !notification) return null;
@@ -453,7 +456,7 @@ const NotificationDetailModal = ({ isOpen, onClose, notification, onMarkRead }) 
         <div className="p-4 md:p-6">
           <div className="flex flex-wrap gap-1.5 md:gap-2 mb-4 md:mb-6">
             <span className={`text-[10px] md:text-xs font-semibold px-2 md:px-3 py-1 md:py-1.5 rounded-full ${priorityColors[notification.priority] || priorityColors.low}`}>
-              {notification.priorityLabel || 'Faible'}
+              {notification.priorityLabel || t('orders.priority.low')}
             </span>
             <span className="text-[10px] md:text-xs font-semibold text-[#6D6D6D] bg-[#F8F7F4] px-2 md:px-3 py-1 md:py-1.5 rounded-full">
               {moduleLabel}
@@ -493,7 +496,7 @@ const NotificationDetailModal = ({ isOpen, onClose, notification, onMarkRead }) 
               </p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-3 md:p-4">
-              <p className="text-[9px] md:text-xs text-[#6D6D6D] mb-0.5 md:mb-1">Date</p>
+              <p className="text-[9px] md:text-xs text-[#6D6D6D] mb-0.5 md:mb-1">{tc('date')}</p>
               <p className="text-xs md:text-sm font-semibold text-[#3D2F24] flex items-center gap-1.5 md:gap-2">
                 <Calendar size={12} className="md:w-3.5 md:h-3.5 text-[#6D6D6D]" />
                 {notification.createdAt}
@@ -566,6 +569,7 @@ const NotificationFilters = ({
   onReset, 
   onApply 
 }) => {
+  const { t, tc } = usePageI18n('notifications');
   const [localFilters, setLocalFilters] = useState(filters);
 
   const modules = [
@@ -576,10 +580,10 @@ const NotificationFilters = ({
 
   const priorities = [
     { id: 'all', label: 'Toutes' },
-    { id: 'low', label: 'Faible' },
-    { id: 'medium', label: 'Moyenne' },
-    { id: 'high', label: 'Haute' },
-    { id: 'critical', label: 'Critique' }
+    { id: 'low', label: t('orders.priority.low') },
+    { id: 'medium', label: t('orders.priority.medium') },
+    { id: 'high', label: t('orders.priority.high') },
+    { id: 'critical', label: t('notifications.kpi.critical') }
   ];
 
   const statuses = [
@@ -589,7 +593,7 @@ const NotificationFilters = ({
   ];
 
   const periods = [
-    { id: 'today', label: "Aujourd'hui" },
+    { id: 'today', label: tc('today') },
     { id: 'week', label: 'Cette semaine' },
     { id: 'month', label: 'Ce mois' },
     { id: 'year', label: 'Cette année' }
@@ -681,7 +685,7 @@ const NotificationFilters = ({
             </div>
 
             <div>
-              <label className="text-[9px] md:text-xs font-medium text-[#6D6D6D] block mb-0.5 md:mb-1">Priorité</label>
+              <label className="text-[9px] md:text-xs font-medium text-[#6D6D6D] block mb-0.5 md:mb-1">{tc('priority')}</label>
               <select
                 value={localFilters.priority || 'all'}
                 onChange={(e) => handleChange('priority', e.target.value)}
@@ -694,7 +698,7 @@ const NotificationFilters = ({
             </div>
 
             <div>
-              <label className="text-[9px] md:text-xs font-medium text-[#6D6D6D] block mb-0.5 md:mb-1">Statut</label>
+              <label className="text-[9px] md:text-xs font-medium text-[#6D6D6D] block mb-0.5 md:mb-1">{tc('status')}</label>
               <select
                 value={localFilters.status || 'all'}
                 onChange={(e) => handleChange('status', e.target.value)}
@@ -717,7 +721,7 @@ const NotificationFilters = ({
 // ==========================================
 const NotificationsPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('notifications');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('notifications');
   const navigate = useNavigate();
   
   const [isLoading, setIsLoading] = useState(false);
@@ -815,9 +819,9 @@ const NotificationsPage = () => {
     title: item.title,
     description: item.description,
     module: item.module,
-    priority: item.priority === 'critical' ? 'Critique' :
-             item.priority === 'high' ? 'Haute' :
-             item.priority === 'medium' ? 'Moyenne' : 'Faible',
+    priority: item.priority === 'critical' ? t('notifications.kpi.critical') :
+             item.priority === 'high' ? t('orders.priority.high') :
+             item.priority === 'medium' ? t('orders.priority.medium') : t('orders.priority.low'),
     createdBy: item.createdBy,
     createdAt: item.createdAt,
     time: item.time,
@@ -828,14 +832,14 @@ const NotificationsPage = () => {
     { label: 'Total notifications', value: stats.total },
     { label: 'Non lues', value: stats.unread },
     { label: 'Critiques', value: stats.critical },
-    { label: "Aujourd'hui", value: stats.today }
+    { label: tc('today'), value: stats.today }
   ];
 
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    showToast('Export réalisé avec succès', 'success');
+    showToast(tc('exportSuccess', { type: 'PDF', count: 0 }), 'success');
   };
 
   const handleExportError = () => {
@@ -847,10 +851,12 @@ const NotificationsPage = () => {
   // ==========================================
 
   const showToast = (message, type = 'success') => {
+  const { t, tc, actions } = usePageI18n('notifications');
     setToast({ isOpen: true, message, type });
   };
 
   const hideToast = () => {
+  const { t, tc, actions } = usePageI18n('notifications');
     setToast({ isOpen: false, message: '', type: 'success' });
   };
 
@@ -1123,7 +1129,7 @@ const NotificationsPage = () => {
               <button
                 onClick={handleRefresh}
                 className="p-1.5 md:p-2 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-                title="Actualiser"
+                title={actions.refresh}
               >
                 <RefreshCw size={15} className="md:w-[18px] md:h-[18px] text-[#6D6D6D]" />
               </button>
@@ -1178,7 +1184,7 @@ const NotificationsPage = () => {
         />
         <KPICard
           icon={Bell}
-          title="Aujourd'hui"
+          title={tc('today')}
           value={stats.today}
           color="green"
           subtitle="Nouvelles"

@@ -94,6 +94,7 @@ import { printData } from '../../services/export/printService';
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // TOAST COMPONENT
@@ -137,7 +138,7 @@ const Toast = ({ message, type = 'success', onClose }) => {
 // ==========================================
 // CONFIRM DIALOG
 // ==========================================
-const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirmText = 'Confirmer', cancelText = 'Annuler', isLoading = false }) => {
+const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirmText = tc('confirm'), cancelText = tc('cancel'), isLoading = false }) => {
   if (!isOpen) return null;
 
   return (
@@ -181,6 +182,7 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirm
 // MODAL COMPONENT
 // ==========================================
 const Modal = ({ isOpen, onClose, onSave, title, description, children, isLoading = false, saveText = 'Sauvegarder' }) => {
+  const { t, tc } = usePageI18n('settings');
   if (!isOpen) return null;
 
   return (
@@ -231,6 +233,7 @@ const Modal = ({ isOpen, onClose, onSave, title, description, children, isLoadin
 // TEST MODAL
 // ==========================================
 const TestModal = ({ isOpen, onClose, onTest, title, description, isLoading = false }) => {
+  const { t, tc } = usePageI18n('settings');
   if (!isOpen) return null;
 
   return (
@@ -262,7 +265,7 @@ const TestModal = ({ isOpen, onClose, onTest, title, description, isLoading = fa
               </p>
               <div className="flex items-center gap-4 text-xs text-[#6D6D6D]">
                 <span>⏱️ Durée estimée: 2-5 secondes</span>
-                <span>📊 Données: 50 produits</span>
+                <span>📊 Données: 50 {t('orders.table.products')}</span>
               </div>
             </div>
           </div>
@@ -294,6 +297,7 @@ const TestModal = ({ isOpen, onClose, onTest, title, description, isLoading = fa
 // INVOICE PREVIEW MODAL
 // ==========================================
 const InvoicePreviewModal = ({ isOpen, onClose, data, invoiceConfig, onExportPDF }) => {
+  const { t, tc } = usePageI18n('settings');
   if (!isOpen || !data) return null;
 
   const totalItems = data.items.reduce((sum, item) => sum + item.total, 0);
@@ -303,6 +307,7 @@ const InvoicePreviewModal = ({ isOpen, onClose, data, invoiceConfig, onExportPDF
   const currencySymbol = currency === 'SAR' ? 'ر.س' : currency;
 
   const showToast = (message, type) => {
+  const { t, tc } = usePageI18n('settings');
     const event = new CustomEvent('showToast', { detail: { message, type } });
     window.dispatchEvent(event);
   };
@@ -348,14 +353,14 @@ const InvoicePreviewModal = ({ isOpen, onClose, data, invoiceConfig, onExportPDF
 
           {/* Client */}
           <div className="mb-6 p-4 bg-[#F8F7F4] rounded-xl">
-            <p className="text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Client</p>
+            <p className="text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('customer')}</p>
             <p className="text-sm font-semibold text-[#2B2B2B]">{data.client}</p>
             <p className="text-xs text-[#6D6D6D]">{data.clientAddress}</p>
             <p className="text-xs text-[#6D6D6D]">Tél: {data.clientPhone}</p>
             <p className="text-xs text-[#6D6D6D]">Email: {data.clientEmail}</p>
           </div>
 
-          {/* Tableau des produits */}
+          {/* Tableau des {t('orders.table.products')} */}
           <div className="overflow-x-auto mb-6">
             <table className="w-full text-sm">
               <thead>
@@ -364,7 +369,7 @@ const InvoicePreviewModal = ({ isOpen, onClose, data, invoiceConfig, onExportPDF
                   <th className="px-3 py-2 text-center text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Qté</th>
                   <th className="px-3 py-2 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Prix</th>
                   <th className="px-3 py-2 text-center text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">TVA</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Total</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('total')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EAE6DF]">
@@ -443,7 +448,7 @@ const InvoicePreviewModal = ({ isOpen, onClose, data, invoiceConfig, onExportPDF
 // ==========================================
 const SettingsPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('settings');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('settings');
 
   // ===== STATE =====
   const [isLoading, setIsLoading] = useState(false);
@@ -594,10 +599,12 @@ const SettingsPage = () => {
 
   // ===== TOAST =====
   const showToast = (message, type = 'success') => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('settings');
     setToast({ isOpen: true, message, type });
   };
 
   const hideToast = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('settings');
     setToast({ isOpen: false, message: '', type: 'success' });
   };
 
@@ -612,10 +619,12 @@ const SettingsPage = () => {
 
   // ===== CONFIRM DIALOG =====
   const showConfirm = (title, description, onConfirm) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('settings');
     setConfirmDialog({ isOpen: true, title, description, onConfirm });
   };
 
   const hideConfirm = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('settings');
     setConfirmDialog({ isOpen: false, title: '', description: '', onConfirm: null });
   };
 
@@ -625,13 +634,14 @@ const SettingsPage = () => {
       isOpen: true,
       type,
       data,
-      title: title || 'Modifier',
+      title: title || tc('edit'),
       description: description || 'Mettez à jour les informations',
       onSave: onSave || (() => {})
     });
   };
 
   const closeModal = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('settings');
     setModalConfig({
       isOpen: false,
       title: '',
@@ -654,6 +664,7 @@ const SettingsPage = () => {
   };
 
   const closeTestModal = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('settings');
     setTestModalConfig({
       isOpen: false,
       title: '',
@@ -719,7 +730,7 @@ const SettingsPage = () => {
             data: exportData,
             columns: columns,
             filename: `${filename}.pdf`,
-            userName: user?.firstName || 'Utilisateur'
+            userName: user?.firstName || t('users.table.user')
           });
           showToast('✅ PDF exporté avec succès', 'success');
           break;
@@ -729,7 +740,7 @@ const SettingsPage = () => {
             data: exportData,
             columns: columns,
             filename: `${filename}.xlsx`,
-            userName: user?.firstName || 'Utilisateur'
+            userName: user?.firstName || t('users.table.user')
           });
           showToast('✅ Excel exporté avec succès', 'success');
           break;
@@ -739,7 +750,7 @@ const SettingsPage = () => {
             data: exportData,
             columns: columns,
             filename: `${filename}.csv`,
-            userName: user?.firstName || 'Utilisateur'
+            userName: user?.firstName || t('users.table.user')
           });
           showToast('✅ CSV exporté avec succès', 'success');
           break;
@@ -748,7 +759,7 @@ const SettingsPage = () => {
             title: 'Export des paramètres',
             data: exportData,
             columns: columns,
-            userName: user?.firstName || 'Utilisateur'
+            userName: user?.firstName || t('users.table.user')
           });
           showToast('🖨️ Impression lancée', 'success');
           break;
@@ -788,7 +799,7 @@ const SettingsPage = () => {
       { label: 'Adresse', accessor: 'address' },
       { label: 'Ville', accessor: 'city' },
       { label: 'Pays', accessor: 'country' },
-      { label: 'Téléphone', accessor: 'phone' },
+      { label: tc('phone'), accessor: 'phone' },
       { label: 'Email', accessor: 'email' },
       { label: 'ICE', accessor: 'ice' }
     ];
@@ -901,8 +912,8 @@ const SettingsPage = () => {
   const handlePreviewInvoice = () => {
     const invoiceData = {
       id: `FAC-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-      date: new Date().toLocaleDateString('fr-FR'),
-      dueDate: new Date(Date.now() + parseInt(invoiceConfig.paymentTerms) * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR'),
+      date: new Date().toLocaleDateString(DATE_LOCALE),
+      dueDate: new Date(Date.now() + parseInt(invoiceConfig.paymentTerms) * 24 * 60 * 60 * 1000).toLocaleDateString(DATE_LOCALE),
       client: 'Café Al Amir',
       clientAddress: '123, Rue Mohamed V, Casablanca',
       clientPhone: '+212 5 22 12 34 56',
@@ -936,7 +947,7 @@ const SettingsPage = () => {
       date: data.date
     }];
     const columns = [
-      { label: 'N° Facture', accessor: 'id' },
+      { label: t('invoices.table.invoiceNumber'), accessor: 'id' },
       { label: 'Client', accessor: 'client' },
       { label: 'Total', accessor: 'total' },
       { label: 'Devise', accessor: 'currency' },
@@ -947,7 +958,7 @@ const SettingsPage = () => {
       data: exportData,
       columns: columns,
       filename: `facture_${data.id}.pdf`,
-      userName: user?.firstName || 'Utilisateur'
+      userName: user?.firstName || t('users.table.user')
     });
     showToast('📄 Facture exportée en PDF avec succès', 'success');
   };
@@ -995,6 +1006,7 @@ const SettingsPage = () => {
   // ==========================================
 
   const renderModalContent = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('settings');
     const { type, data } = modalConfig;
 
     switch (type) {
@@ -1438,6 +1450,7 @@ const SettingsPage = () => {
   };
 
   const toggleAllNotifications = (state) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('settings');
     const newChannels = {};
     Object.keys(notifications.channels).forEach(key => {
       newChannels[key] = state;
@@ -1952,7 +1965,7 @@ const SettingsPage = () => {
               onClick={() => toggleNotificationType('email')}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${notifications.email ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}
             >
-              {notifications.email ? 'Activé' : 'Désactivé'}
+              {notifications.email ? tc('active') : tc('inactive')}
             </button>
           </div>
           <div className="flex items-center justify-between p-3 bg-[#F8F7F4] rounded-xl">
@@ -1961,7 +1974,7 @@ const SettingsPage = () => {
               onClick={() => toggleNotificationType('push')}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${notifications.push ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}
             >
-              {notifications.push ? 'Activé' : 'Désactivé'}
+              {notifications.push ? tc('active') : tc('inactive')}
             </button>
           </div>
           <div className="flex items-center justify-between p-3 bg-[#F8F7F4] rounded-xl">
@@ -1970,7 +1983,7 @@ const SettingsPage = () => {
               onClick={() => toggleNotificationType('desktop')}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${notifications.desktop ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}
             >
-              {notifications.desktop ? 'Activé' : 'Désactivé'}
+              {notifications.desktop ? tc('active') : tc('inactive')}
             </button>
           </div>
           <div className="flex items-center justify-between p-3 bg-[#F8F7F4] rounded-xl">
@@ -1979,7 +1992,7 @@ const SettingsPage = () => {
               onClick={() => toggleNotificationType('sms')}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${notifications.sms ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}
             >
-              {notifications.sms ? 'Activé' : 'Désactivé'}
+              {notifications.sms ? tc('active') : tc('inactive')}
             </button>
           </div>
         </div>
@@ -2004,7 +2017,7 @@ const SettingsPage = () => {
                     onClick={() => toggleNotification(key)}
                     className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${notifications.channels[key] ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}
                   >
-                    {notifications.channels[key] ? 'Activé' : 'Désactivé'}
+                    {notifications.channels[key] ? tc('active') : tc('inactive')}
                   </button>
                 </div>
               );
@@ -2064,7 +2077,7 @@ const SettingsPage = () => {
                 onClick={handleToggle2FA}
                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${security.twoFactorAuth ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}
               >
-                {security.twoFactorAuth ? 'Désactiver' : 'Activer'}
+                {security.twoFactorAuth ? tc('deactivate') : tc('activate')}
               </button>
             </div>
             <div className="flex items-center justify-between p-3 bg-[#F8F7F4] rounded-xl">
@@ -2270,9 +2283,9 @@ const SettingsPage = () => {
                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Utilisateur</th>
                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Action</th>
                 <th className="px-3 py-2 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Module</th>
-                <th className="px-3 py-2 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Date</th>
-                <th className="px-3 py-2 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
-                <th className="px-3 py-2 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                <th className="px-3 py-2 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('date')}</th>
+                <th className="px-3 py-2 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
+                <th className="px-3 py-2 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EAE6DF]">
@@ -2314,6 +2327,7 @@ const SettingsPage = () => {
 
   // ===== FILTER SEARCH =====
   const getFilteredTabs = () => {
+  const { t, tc, actions } = usePageI18n('settings');
     const tabLabels = {
       company: 'entreprise company informations',
       production: 'production manufacture fabrication',
@@ -2339,6 +2353,7 @@ const SettingsPage = () => {
 
   // ===== RENDER ACTIVE TAB =====
   const renderActiveTab = () => {
+  const { t, tc, actions } = usePageI18n('settings');
     switch (activeTab) {
       case 'company': return renderCompany();
       case 'production': return renderProduction();
@@ -2420,7 +2435,7 @@ const SettingsPage = () => {
           <button
             onClick={handleRefresh}
             className={`p-2.5 rounded-xl border border-[#EAE6DF] bg-white hover:bg-[#F8F7F4] transition-colors ${isLoading ? 'animate-spin' : ''}`}
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>

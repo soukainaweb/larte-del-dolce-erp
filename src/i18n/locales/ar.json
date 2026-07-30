@@ -182,6 +182,50 @@
       "currentPassword": "كلمة المرور الحالية",
       "newPassword": "كلمة المرور الجديدة",
       "confirmNewPassword": "تأكيد كلمة المرور الجديدة"
+    },
+    "paymentMethods": {
+      "cash": "نقداً",
+      "card": "بطاقة بنكية",
+      "transfer": "تحويل",
+      "online": "عبر الإنترنت",
+      "credit": "ائتمان",
+      "mada": "مدى",
+      "stc_pay": "STC Pay",
+      "apple_pay": "Apple Pay",
+      "bank_transfer": "تحويل بنكي"
+    },
+    "paymentStatus": {
+      "paid": "مدفوع",
+      "partial": "جزئي",
+      "unpaid": "غير مدفوع",
+      "overdue": "متأخر"
+    },
+    "paymentTerms": {
+      "cash": "نقداً",
+      "credit": "ائتمان",
+      "monthly": "شهري"
+    },
+    "labels": {
+      "paidAmount": "المدفوع",
+      "orderLabel": "الطلب:",
+      "quantityLabel": "الكمية:"
+    },
+    "summary": "الملخص",
+    "subtotal": "المجموع الفرعي",
+    "totalDiscount": "إجمالي الخصم",
+    "totalInclTax": "الإجمالي شامل الضريبة",
+    "discountPercent": "الخصم (%)",
+    "qty": "الكمية",
+    "priceDh": "السعر (ر.س)",
+    "vatPercent": "ض.ق.م (%)",
+    "vat": "ض.ق.م",
+    "delivery": "التوصيل",
+    "addProduct": "إضافة منتج",
+    "employee": "الموظف",
+    "languages": {
+      "ar": "العربية",
+      "fr": "الفرنسية",
+      "en": "الإنجليزية"
     }
   },
   "nav": {
@@ -412,16 +456,47 @@
     "subtitle": "إدارة طلبات العملاء",
     "search": "البحث عن طلب...",
     "addOrder": "طلب جديد",
+    "empty": "لم يتم العثور على طلبات",
+    "export": {
+      "title": "قائمة الطلبات"
+    },
+    "modals": {
+      "addTitle": "طلب جديد",
+      "editTitle": "تعديل الطلب",
+      "deleteTitle": "حذف الطلب؟",
+      "detailsTitle": "تفاصيل الطلب"
+    },
+    "sections": {
+      "customerInfo": "معلومات العميل",
+      "generalInfo": "معلومات عامة"
+    },
+    "fields": {
+      "deliveryTime": "وقت التوصيل",
+      "paymentMethod": "طريقة الدفع"
+    },
+    "validation": {
+      "customerRequired": "العميل مطلوب",
+      "repRequired": "مندوب المبيعات مطلوب",
+      "productsRequired": "منتج واحد على الأقل مطلوب",
+      "productNameRequired": "يجب أن يحتوي جميع المنتجات على اسم"
+    },
+    "errors": {
+      "load": "خطأ في تحميل الطلبات"
+    },
     "kpi": {
       "total": "إجمالي الطلبات",
       "pending": "قيد الانتظار",
+      "validated": "تم التحقق",
+      "ready": "جاهزة",
       "inProduction": "قيد الإنتاج",
       "delivered": "تم التوصيل",
+      "cancelled": "ملغاة",
       "revenue": "إيرادات الطلبات"
     },
     "table": {
       "orderNumber": "رقم الطلب",
       "customer": "العميل",
+      "rep": "مندوب المبيعات",
       "products": "المنتجات",
       "total": "المجموع",
       "status": "الحالة",
@@ -668,6 +743,13 @@
     "subtitle": "إدارة الموردين",
     "search": "البحث عن مورد...",
     "addSupplier": "مورد جديد",
+    "types": {
+      "raw": "مواد خام",
+      "packaging": "تغليف",
+      "equipment": "معدات",
+      "services": "خدمات",
+      "other": "أخرى"
+    },
     "kpi": {
       "total": "إجمالي الموردين",
       "active": "نشطون",
@@ -690,6 +772,24 @@
     "subtitle": "إدارة الفواتير",
     "search": "البحث عن فاتورة...",
     "addInvoice": "فاتورة جديدة",
+    "empty": "لم يتم العثور على فواتير",
+    "export": {
+      "title": "قائمة الفواتير"
+    },
+    "modals": {
+      "addTitle": "فاتورة جديدة",
+      "editTitle": "تعديل الفاتورة",
+      "deleteTitle": "حذف الفاتورة؟",
+      "detailsTitle": "تفاصيل الفاتورة"
+    },
+    "fields": {
+      "paidAmount": "المبلغ المدفوع",
+      "paymentStatus": "حالة الدفع",
+      "remainingAmount": "المبلغ المتبقي:"
+    },
+    "validation": {
+      "orderRequired": "الطلب مطلوب"
+    },
     "kpi": {
       "total": "إجمالي الفواتير",
       "paid": "مدفوعة",
@@ -711,10 +811,14 @@
     "subtitle": "تتبع المدفوعات",
     "search": "البحث عن دفعة...",
     "addPayment": "دفعة جديدة",
+    "filters": {
+      "allPayments": "جميع المدفوعات"
+    },
     "kpi": {
       "total": "إجمالي المدفوعات",
       "received": "مستلمة",
       "pending": "معلقة",
+      "partial": "جزئية",
       "overdue": "متأخرة",
       "totalAmount": "المبلغ الإجمالي"
     },
@@ -928,6 +1032,15 @@
     "title": "سجل النشاط",
     "subtitle": "سجل إجراءات النظام",
     "search": "البحث عن مستخدم، إجراء، وحدة...",
+    "unknownUser": "مستخدم غير معروف",
+    "newValue": "القيمة الجديدة",
+    "activeUsers": "المستخدمون النشطون",
+    "modals": {
+      "detailsTitle": "تفاصيل النشاط"
+    },
+    "errors": {
+      "load": "خطأ في تحميل سجل النشاط"
+    },
     "kpi": {
       "totalEvents": "إجمالي الأحداث",
       "today": "اليوم",
@@ -966,15 +1079,37 @@
       "notifications": "الإشعارات",
       "localization": "اللغة والمنطقة",
       "billing": "الفوترة"
-    }
+    },
+    "companyDescription": "إدارة معلومات شركتك",
+    "noForm": "لا يوجد نموذج متاح لهذا القسم"
   },
   "profile": {
     "title": "ملفي الشخصي",
     "subtitle": "إدارة معلوماتك الشخصية",
     "personalInfo": "المعلومات الشخصية",
+    "professionalInfo": "المعلومات المهنية",
+    "editProfile": "تعديل الملف الشخصي",
+    "pageDescription": "عرض وإدارة معلوماتك الشخصية والمهنية",
+    "loading": "جاري تحميل الملف الشخصي...",
+    "recentActivity": "النشاط الأخير",
+    "noActivity": "لا يوجد نشاط حديث",
+    "noSessions": "لا توجد جلسات نشطة",
+    "noDocuments": "لا توجد مستندات",
+    "noPermissions": "لا توجد صلاحيات",
     "changePassword": "تغيير كلمة المرور",
     "preferences": "التفضيلات",
     "activity": "النشاط",
+    "validation": {
+      "minPassword": "8 أحرف على الأقل"
+    },
+    "messages": {
+      "updated": "تم تحديث الملف الشخصي بنجاح",
+      "cancelled": "تم إلغاء التعديلات"
+    },
+    "sessions": {
+      "disconnect": "قطع الاتصال",
+      "disconnectAll": "قطع جميع الجلسات"
+    },
     "kpi": {
       "lastLogin": "آخر تسجيل دخول",
       "memberSince": "عضو منذ",
@@ -1001,7 +1136,11 @@
     "saveFailed": "فشل الحفظ",
     "deleteFailed": "فشل الحذف",
     "networkError": "خطأ في الشبكة. تحقق من اتصالك.",
-    "unauthorized": "انتهت الجلسة. يرجى تسجيل الدخول مجدداً."
+    "unauthorized": "انتهت الجلسة. يرجى تسجيل الدخول مجدداً.",
+    "forbidden": "ليس لديك الصلاحيات اللازمة.",
+    "notFound": "المورد غير موجود.",
+    "serverError": "خطأ داخلي في الخادم.",
+    "invalidData": "بيانات غير صالحة"
   },
   "success": {
     "created": "تم الإنشاء بنجاح",

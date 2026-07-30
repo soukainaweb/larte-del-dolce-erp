@@ -12,6 +12,7 @@ import {
   ClipboardList, CreditCard, DollarSign, BarChart3, Settings
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getProfile,
@@ -44,6 +45,7 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 const CURRENCY = 'SAR';
 
 // ==========================================
@@ -89,6 +91,7 @@ const Toast = ({ message, type = 'success', onClose }) => {
 // COMPOSANT: AVATAR UPLOAD
 // ==========================================
 const AvatarUpload = ({ avatar, onUpload, onRemove, isUploading }) => {
+  const { t, tc } = usePageI18n('profile');
   const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState(avatar);
   const fileInputRef = useRef(null);
@@ -271,6 +274,7 @@ const ActivityItem = ({ activity }) => {
 // COMPOSANT: SESSION CARD
 // ==========================================
 const SessionCard = ({ session, onDisconnect }) => {
+  const { t, tc } = usePageI18n('profile');
   return (
     <div className={`bg-white border rounded-xl p-3 md:p-4 ${session.current ? 'border-[#B8863B] bg-[#FDFBF7]' : 'border-[#ECE8E1]'}`}>
       <div className="flex items-start justify-between">
@@ -316,6 +320,7 @@ const SessionCard = ({ session, onDisconnect }) => {
 // COMPOSANT: CHANGE PASSWORD MODAL
 // ==========================================
 const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) => {
+  const { t, tc } = usePageI18n('profile');
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -326,6 +331,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
   const [passwordStrength, setPasswordStrength] = useState(0);
 
   const checkPasswordStrength = (password) => {
+  const { t, tc } = usePageI18n('profile');
     let score = 0;
     if (password.length >= 8) score++;
     if (password.match(/[a-z]/)) score++;
@@ -351,7 +357,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
     const newErrors = {};
     if (!formData.currentPassword) newErrors.currentPassword = 'Mot de passe actuel requis';
     if (!formData.newPassword) newErrors.newPassword = 'Nouveau mot de passe requis';
-    else if (formData.newPassword.length < 8) newErrors.newPassword = 'Minimum 8 caractères';
+    else if (formData.newPassword.length < 8) newErrors.newPassword = t('profile.validation.minPassword');
     if (formData.newPassword !== formData.newPassword_confirmation) {
       newErrors.newPassword_confirmation = 'Les mots de passe ne correspondent pas';
     }
@@ -364,7 +370,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
     onChangePassword(formData);
   };
 
-  const strengthLabels = ['Très faible', 'Faible', 'Moyen', 'Fort', 'Très fort'];
+  const strengthLabels = ['Très faible', t('orders.priority.low'), 'Moyen', 'Fort', 'Très fort'];
   const strengthColors = ['bg-rose-500', 'bg-amber-500', 'bg-yellow-500', 'bg-emerald-500', 'bg-emerald-600'];
 
   if (!isOpen) return null;
@@ -486,7 +492,8 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
 // ==========================================
 const MyProfilePage = () => {
   const { user, updateUser, logout } = useAuth();
-  const navigate = useNavigate(); // ✅ Ajout
+  const navigate = useNavigate();
+  const { title, subtitle, t, tc, actions, commonStatus } = usePageI18n('profile');
 
   // États
   const [isLoading, setIsLoading] = useState(true);
@@ -510,7 +517,7 @@ const MyProfilePage = () => {
     city: '',
     postalCode: '',
     country: '',
-    language: 'Français',
+    language: t('common.languages.ar'),
     timezone: 'GMT +01:00'
   });
 
@@ -523,12 +530,12 @@ const MyProfilePage = () => {
     company: '',
     office: '',
     role: '',
-    status: 'En ligne',
+    status: tc('online'),
     lastLogin: ''
   });
 
   const [preferences, setPreferences] = useState({
-    language: 'Français',
+    language: t('common.languages.ar'),
     theme: 'Clair',
     dateFormat: 'DD/MM/YYYY',
     timeFormat: '24h',
@@ -570,7 +577,7 @@ const MyProfilePage = () => {
   };
 
   // Gestion d'erreur Axios
-  const handleApiError = (error, defaultMessage = 'Une erreur est survenue') => {
+  const handleApiError = (error, defaultMessage = t('common.error')) => {
     console.error('API Error:', error);
     
     if (error.response) {
@@ -580,28 +587,28 @@ const MyProfilePage = () => {
       if (status === 422) {
         // Erreur de validation
         const errors = data.errors || {};
-        const firstError = Object.values(errors)[0]?.[0] || 'Données invalides';
+        const firstError = Object.values(errors)[0]?.[0] || t('errors.invalidData');
         showToast(firstError, 'error');
         return firstError;
       } else if (status === 401) {
         showToast('Session expirée. Veuillez vous reconnecter.', 'error');
-        return 'Session expirée';
+        return t('errors.unauthorized');
       } else if (status === 403) {
         showToast('Vous n\'avez pas les permissions nécessaires.', 'error');
-        return 'Permission refusée';
+        return t('errors.forbidden');
       } else if (status === 404) {
         showToast('Ressource non trouvée.', 'error');
-        return 'Ressource non trouvée';
+        return t('errors.notFound');
       } else if (status === 500) {
-        showToast('Erreur interne du serveur.', 'error');
-        return 'Erreur serveur';
+        showToast(t('errors.serverError'), 'error');
+        return t('errors.serverError');
       }
       
       showToast(data.message || defaultMessage, 'error');
       return data.message || defaultMessage;
     } else if (error.request) {
       showToast('Impossible de contacter le serveur.', 'error');
-      return 'Erreur réseau';
+      return t('errors.networkError');
     } else {
       showToast(defaultMessage, 'error');
       return defaultMessage;
@@ -630,7 +637,7 @@ const MyProfilePage = () => {
         city: userData.city || '',
         postalCode: userData.postal_code || userData.postalCode || '',
         country: userData.country || '',
-        language: userData.language || 'Français',
+        language: userData.language || t('common.languages.ar'),
         timezone: userData.timezone || 'GMT +01:00'
       });
 
@@ -645,7 +652,7 @@ const MyProfilePage = () => {
         role: userData.role?.display_name || userData.role?.name || userData.role || '—',
         status: userData.status || user?.status || 'offline',
         lastLogin: userData.last_login_at 
-          ? new Date(userData.last_login_at).toLocaleString('fr-FR') 
+          ? new Date(userData.last_login_at).toLocaleString(DATE_LOCALE) 
           : '—'
       });
 
@@ -964,17 +971,17 @@ const MyProfilePage = () => {
   const profileSummary = [
     { label: 'Nom complet', value: `${profileData.firstName} ${profileData.lastName}` },
     { label: 'Email', value: profileData.email },
-    { label: 'Téléphone', value: profileData.phone },
+    { label: tc('phone'), value: profileData.phone },
     { label: 'Fonction', value: professionalData.position || '—' },
-    { label: 'Département', value: professionalData.department || '—' },
-    { label: 'Total commandes', value: stats.orders },
+    { label: tc('department'), value: professionalData.department || '—' },
+    { label: t('orders.kpi.total'), value: stats.orders },
     { label: 'Clients', value: stats.clients },
     { label: 'Produits', value: stats.products },
     { label: 'Documents', value: stats.documents }
   ];
 
   const handleExportSuccess = () => {
-    showToast('Export réalisé avec succès', 'success');
+    showToast(tc('exportSuccess', { type: 'PDF', count: 0 }), 'success');
   };
 
   const handleExportError = () => {
@@ -1057,7 +1064,7 @@ const MyProfilePage = () => {
             >
               <Edit2 size={16} className="md:w-[18px] md:h-[18px]" />
               <span className="hidden sm:inline">Modifier le profil</span>
-              <span className="sm:hidden">Modifier</span>
+              <span className="sm:hidden">{tc('edit')}</span>
             </button>
           ) : (
             <>
@@ -1073,7 +1080,7 @@ const MyProfilePage = () => {
                 className="flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all disabled:opacity-50 text-xs md:text-sm"
               >
                 <Save size={16} className="md:w-[18px] md:h-[18px]" />
-                {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+                {isSaving ? tc('saving') : tc('save')}
               </button>
             </>
           )}
@@ -1195,7 +1202,7 @@ const MyProfilePage = () => {
                 isEditing ? 'border-[#ECE8E1]' : 'bg-[#F8F7F4] border-transparent'
               }`}
             >
-              <option value="">Sélectionner</option>
+              <option value="">{tc('selectOption')}</option>
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
               <option value="Autre">Autre</option>
@@ -1419,13 +1426,13 @@ const MyProfilePage = () => {
               </div>
               <div className="flex-1">
                 <p className="text-xs md:text-sm font-medium text-[#3D2F24]">Authentification à deux facteurs</p>
-                <p className="text-[10px] md:text-xs text-[#6D6D6D]">{twoFactorEnabled ? 'Activé' : 'Désactivé'}</p>
+                <p className="text-[10px] md:text-xs text-[#6D6D6D]">{twoFactorEnabled ? tc('active') : tc('inactive')}</p>
               </div>
               <button
                 onClick={handleToggle2FA}
                 className="px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium text-[#B8863B] hover:bg-[#B8863B]/10 rounded-lg transition-colors"
               >
-                {twoFactorEnabled ? 'Désactiver' : 'Activer'}
+                {twoFactorEnabled ? tc('deactivate') : tc('activate')}
               </button>
             </div>
           </div>
@@ -1443,7 +1450,7 @@ const MyProfilePage = () => {
                 disabled={isLoadingSessions}
                 className="px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium text-rose-500 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50"
               >
-                {isLoadingSessions ? '...' : 'Tout déconnecter'}
+                {isLoadingSessions ? '...' : t('profile.sessions.disconnectAll')}
               </button>
             </div>
           </div>
@@ -1684,7 +1691,7 @@ const MyProfilePage = () => {
                   <button
                     onClick={() => handleDeleteDocument(doc.id)}
                     className="p-1 hover:bg-rose-50 rounded-lg transition-colors"
-                    title="Supprimer"
+                    title={actions.delete}
                   >
                     <Trash2 size={12} className="md:w-[14px] md:h-[14px] text-rose-500" />
                   </button>
@@ -1706,9 +1713,9 @@ const MyProfilePage = () => {
               <tr>
                 <th className="px-2 md:px-4 py-2 text-left text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Module</th>
                 <th className="px-2 md:px-4 py-2 text-center text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Voir</th>
-                <th className="px-2 md:px-4 py-2 text-center text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Créer</th>
-                <th className="px-2 md:px-4 py-2 text-center text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Modifier</th>
-                <th className="px-2 md:px-4 py-2 text-center text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Supprimer</th>
+                <th className="px-2 md:px-4 py-2 text-center text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('create')}</th>
+                <th className="px-2 md:px-4 py-2 text-center text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('edit')}</th>
+                <th className="px-2 md:px-4 py-2 text-center text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('delete')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#ECE8E1]">

@@ -73,6 +73,7 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // CONSTANTS
@@ -80,20 +81,20 @@ const FONT_BODY = "'Inter', sans-serif";
 const CURRENCY = 'SAR (ر.س)';
 
 const PAYMENT_METHODS = [
-  { value: 'cash', label: 'Espèces', icon: Banknote },
-  { value: 'card', label: 'Carte bancaire', icon: CardIcon },
+  { value: 'cash', label: t('common.paymentMethods.cash'), icon: Banknote },
+  { value: 'card', label: t('common.paymentMethods.card'), icon: CardIcon },
   { value: 'mada', label: 'Mada', icon: CreditCard },
   { value: 'stc_pay', label: 'STC Pay', icon: Smartphone },
   { value: 'apple_pay', label: 'Apple Pay', icon: Apple },
-  { value: 'bank_transfer', label: 'Virement bancaire', icon: Landmark },
+  { value: 'bank_transfer', label: t('common.paymentMethods.bank_transfer'), icon: Landmark },
   { value: 'online', label: 'Paiement en ligne', icon: Sparkles }
 ];
 
 const PAYMENT_STATUSES = [
-  { value: 'paid', label: 'Payé', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { value: 'pending', label: 'En attente', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { value: 'partial', label: 'Partiel', class: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { value: 'overdue', label: 'En retard', class: 'bg-rose-50 text-rose-700 border-rose-200' }
+  { value: 'paid', label: t('common.labels.paidAmount'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { value: 'pending', label: t('common.pending'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { value: 'partial', label: t('common.paymentStatus.partial'), class: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { value: 'overdue', label: t('common.statuses.overdue'), class: 'bg-rose-50 text-rose-700 border-rose-200' }
 ];
 
 // ==========================================
@@ -181,7 +182,7 @@ const PaymentCard = ({ payment, onView, onEdit, onDelete }) => {
       <div className="grid grid-cols-2 gap-2 text-xs text-[#6D6D6D]">
         <div className="flex items-center gap-1">
           <Calendar size={12} />
-          {new Date(payment.date).toLocaleDateString('fr-FR')}
+          {new Date(payment.date).toLocaleDateString(DATE_LOCALE)}
         </div>
         <div className="flex items-center gap-1">
           <DollarSign size={12} />
@@ -218,6 +219,7 @@ const PaymentCard = ({ payment, onView, onEdit, onDelete }) => {
 // PAYMENT TABLE ROW (Desktop)
 // ==========================================
 const PaymentTableRow = ({ payment, onView, onEdit, onDelete, index }) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('payments');
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -231,7 +233,7 @@ const PaymentTableRow = ({ payment, onView, onEdit, onDelete, index }) => {
       </td>
       <td className="px-4 py-3 text-sm text-[#3D2F24]">{payment.customer}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {new Date(payment.date).toLocaleDateString('fr-FR')}
+        {new Date(payment.date).toLocaleDateString(DATE_LOCALE)}
       </td>
       <td className="px-4 py-3">
         <PaymentMethodBadge method={payment.method} />
@@ -251,21 +253,21 @@ const PaymentTableRow = ({ payment, onView, onEdit, onDelete, index }) => {
           <button
             onClick={() => onView(payment)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(payment)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={actions.edit}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onDelete(payment)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -279,6 +281,7 @@ const PaymentTableRow = ({ payment, onView, onEdit, onDelete, index }) => {
 // PAYMENT MODAL (Add/Edit)
 // ==========================================
 const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
+  const { t, tc } = usePageI18n('payments');
   const [formData, setFormData] = useState({
     customer: '',
     invoiceNumber: '',
@@ -339,7 +342,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.customer) newErrors.customer = 'Le client est requis';
+    if (!formData.customer) newErrors.customer = t('orders.validation.customerRequired');
     if (!formData.invoiceNumber) newErrors.invoiceNumber = 'La facture est requise';
     if (formData.amountReceived <= 0) newErrors.amountReceived = 'Le montant est requis';
 
@@ -527,7 +530,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">Notes</label>
+            <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1 uppercase tracking-wide">{tc('notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
@@ -559,7 +562,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
               ) : (
                 <>
                   <CreditCard size={16} />
-                  {payment ? 'Mettre à jour' : 'Enregistrer le paiement'}
+                  {payment ? tc('update') : t('payments.addPayment')}
                 </>
               )}
             </button>
@@ -574,6 +577,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, payment, isLoading }) => {
+  const { t, tc } = usePageI18n('payments');
   if (!isOpen) return null;
 
   return (
@@ -609,7 +613,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, payment, isLoading }) => {
             disabled={isLoading}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
           >
-            {isLoading ? 'Suppression...' : 'Supprimer'}
+            {isLoading ? tc('deleting') : tc('delete')}
           </button>
         </div>
       </motion.div>
@@ -621,6 +625,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, payment, isLoading }) => {
 // VIEW PAYMENT MODAL
 // ==========================================
 const ViewPaymentModal = ({ isOpen, onClose, payment }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('payments');
   if (!isOpen || !payment) return null;
 
   return (
@@ -654,24 +659,24 @@ const ViewPaymentModal = ({ isOpen, onClose, payment }) => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Client</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('customer')}</p>
               <p className="font-medium text-[#3D2F24]">{payment.customer}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Méthode</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('method')}</p>
               <PaymentMethodBadge method={payment.method} />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Date</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('date')}</p>
               <p className="text-sm font-medium text-[#3D2F24]">
-                {new Date(payment.date).toLocaleDateString('fr-FR')}
+                {new Date(payment.date).toLocaleDateString(DATE_LOCALE)}
               </p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Montant</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('amount')}</p>
               <p className="text-sm font-bold text-[#3D2F24]">{payment.amount.toLocaleString()} {CURRENCY}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
@@ -694,7 +699,7 @@ const ViewPaymentModal = ({ isOpen, onClose, payment }) => {
 
           {payment.notes && (
             <div className="p-3 bg-[#F8F7F4] rounded-lg">
-              <p className="text-xs text-[#6D6D6D] mb-1">Notes</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('notes')}</p>
               <p className="text-sm text-[#3D2F24]">{payment.notes}</p>
             </div>
           )}
@@ -716,7 +721,7 @@ const ViewPaymentModal = ({ isOpen, onClose, payment }) => {
 // ==========================================
 const PaymentsPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('payments');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('payments');
 
   const [payments, setPayments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -811,36 +816,36 @@ const PaymentsPage = () => {
   // ==========================================
   const columns = [
     { label: 'N° Paiement', accessor: 'paymentId', width: 12 },
-    { label: 'N° Facture', accessor: 'invoiceNumber', width: 12 },
+    { label: t('invoices.table.invoiceNumber'), accessor: 'invoiceNumber', width: 12 },
     { label: 'Client', accessor: 'customer', width: 18 },
     { label: 'Date', accessor: 'date', width: 12 },
     { label: 'Méthode', accessor: 'method', width: 12 },
     { label: 'Montant', accessor: 'amount', width: 12 },
     { label: 'Reste', accessor: 'remainingAmount', width: 12 },
     { label: 'Statut', accessor: 'status', width: 10 },
-    { label: 'Employé', accessor: 'collectedBy', width: 14 }
+    { label: t('common.employee'), accessor: 'collectedBy', width: 14 }
   ];
 
   const rowFormatter = (item) => ({
     paymentId: item.paymentId,
     invoiceNumber: item.invoiceNumber,
     customer: item.customer,
-    date: new Date(item.date).toLocaleDateString('fr-FR'),
+    date: new Date(item.date).toLocaleDateString(DATE_LOCALE),
     method: PAYMENT_METHODS.find(m => m.value === item.method)?.label || '—',
     amount: `${item.amount.toLocaleString()} ${CURRENCY}`,
     remainingAmount: `${item.remainingAmount.toLocaleString()} ${CURRENCY}`,
-    status: item.status === 'paid' ? 'Payé' :
-            item.status === 'pending' ? 'En attente' :
-            item.status === 'partial' ? 'Partiel' : 'En retard',
+    status: item.status === 'paid' ? t('common.labels.paidAmount') :
+            item.status === 'pending' ? t('common.pending') :
+            item.status === 'partial' ? t('common.paymentStatus.partial') : t('common.statuses.overdue'),
     collectedBy: item.collectedBy || '—'
   });
 
   const summary = [
-    { label: 'Total des paiements', value: `${kpis.total.toLocaleString()} ${CURRENCY}` },
+    { label: t('payments.kpi.total'), value: `${kpis.total.toLocaleString()} ${CURRENCY}` },
     { label: "Reçu aujourd'hui", value: `${kpis.today.toLocaleString()} ${CURRENCY}` },
-    { label: 'En attente', value: `${kpis.pending.toLocaleString()} ${CURRENCY}` },
-    { label: 'Partiellement payées', value: kpis.partiallyPaid },
-    { label: 'En retard', value: `${kpis.overdue.toLocaleString()} ${CURRENCY}` },
+    { label: t('common.pending'), value: `${kpis.pending.toLocaleString()} ${CURRENCY}` },
+    { label: t('payments.kpi.partial'), value: kpis.partiallyPaid },
+    { label: t('common.statuses.overdue'), value: `${kpis.overdue.toLocaleString()} ${CURRENCY}` },
     { label: 'Revenu du mois', value: `${kpis.monthRevenue.toLocaleString()} ${CURRENCY}` }
   ];
 
@@ -952,14 +957,14 @@ const PaymentsPage = () => {
             <button
               onClick={() => setViewMode('table')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue tableau"
+              title={tc('tableView')}
             >
               <List size={18} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue grille"
+              title={tc('gridView')}
             >
               <Grid size={18} />
             </button>
@@ -967,7 +972,7 @@ const PaymentsPage = () => {
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1006,10 +1011,10 @@ const PaymentsPage = () => {
               <option value="all">Tous les statuts</option>
               {uniqueStatuses.map(status => (
                 <option key={status} value={status}>
-                  {status === 'paid' ? 'Payé' :
-                   status === 'pending' ? 'En attente' :
-                   status === 'partial' ? 'Partiel' :
-                   status === 'overdue' ? 'En retard' : status}
+                  {status === 'paid' ? t('common.labels.paidAmount') :
+                   status === 'pending' ? t('common.pending') :
+                   status === 'partial' ? t('common.paymentStatus.partial') :
+                   status === 'overdue' ? t('common.statuses.overdue') : status}
                 </option>
               ))}
             </select>
@@ -1025,14 +1030,14 @@ const PaymentsPage = () => {
               <thead>
                 <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Paiement</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Méthode</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Montant</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('customer')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('date')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('method')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('amount')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Reste</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Employé</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                 </tr>
               </thead>
               <tbody>
