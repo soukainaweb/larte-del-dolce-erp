@@ -39,7 +39,8 @@ import {
   getCustomerStatuses,
   getCustomerOrders
 } from '../../services/customerService';
-import { unwrapData, normalizeCustomerList, normalizeCustomerRecord } from '../../utils/apiHelpers';
+import { unwrapData, normalizeCustomerList, normalizeCustomerRecord, getApiErrorMessage } from '../../utils/apiHelpers';
+import { useToast } from '../../contexts/ToastContext';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -92,6 +93,7 @@ const TypeBadge = ({ type }) => {
 // CLIENT CARD (Mobile)
 // ==========================================
 const ClientCard = ({ client, onEdit, onDelete, onView }) => {
+  const { tc } = usePageI18n('customers');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
@@ -112,18 +114,18 @@ const ClientCard = ({ client, onEdit, onDelete, onView }) => {
       <div className="grid grid-cols-2 gap-2 text-xs text-[#6D6D6D]">
         <div className="flex items-center gap-1">
           <Phone size={12} />
-          {client.phone || 'Non renseigné'}
+          {client.phone || tc('notProvided')}
         </div>
         <div className="flex items-center gap-1">
           <MapPin size={12} />
-          {client.city || 'Non renseigné'}
+          {client.city || tc('notProvided')}
         </div>
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#ECE8E1]">
         <div className="text-xs text-[#6D6D6D]">
           <span className="flex items-center gap-1">
             <Calendar size={12} />
-            {client.createdAt ? new Date(client.createdAt).toLocaleDateString('fr-FR') : '—'}
+            {client.createdAt ? new Date(client.createdAt).toLocaleDateString(DATE_LOCALE) : '—'}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -605,7 +607,8 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
 // ==========================================
 const CustomersPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('customers');
+  const { title, subtitle, searchPlaceholder, t, tc, commonStatus } = usePageI18n('customers');
+  const { showToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -706,38 +709,38 @@ const CustomersPage = () => {
   // EXPORT CONFIGURATION
   // ==========================================
   const columns = [
-    { label: 'Nom', accessor: 'name', width: 20 },
-    { label: 'Email', accessor: 'email', width: 20 },
-    { label: 'Téléphone', accessor: 'phone', width: 15 },
-    { label: 'Type', accessor: 'type', width: 12 },
-    { label: 'Statut', accessor: 'status', width: 12 },
-    { label: 'Ville', accessor: 'city', width: 10 },
-    { label: 'Pays', accessor: 'country', width: 6 },
-    { label: 'Date d\'inscription', accessor: 'createdAt', width: 15 }
+    { label: t('customers.table.name'), accessor: 'name', width: 20 },
+    { label: t('customers.table.email'), accessor: 'email', width: 20 },
+    { label: t('customers.table.phone'), accessor: 'phone', width: 15 },
+    { label: t('common.type'), accessor: 'type', width: 12 },
+    { label: t('customers.table.status'), accessor: 'status', width: 12 },
+    { label: t('customers.table.city'), accessor: 'city', width: 10 },
+    { label: tc('country'), accessor: 'country', width: 6 },
+    { label: t('customers.table.registrationDate'), accessor: 'createdAt', width: 15 }
   ];
 
   const rowFormatter = (item) => ({
     name: item.name,
     email: item.email,
     phone: item.phone || '—',
-    type: item.type === 'enterprise' ? 'Entreprise' : 'Particulier',
-    status: item.status === 'active' ? 'Actif' : item.status === 'inactive' ? 'Inactif' : 'Suspendu',
+    type: item.type === 'enterprise' ? t('customers.types.enterprise') : t('customers.types.individual'),
+    status: commonStatus[item.status]?.label || item.status,
     city: item.city || '—',
     country: item.country || '—',
-    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString('fr-FR') : '—'
+    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString(DATE_LOCALE) : '—'
   });
 
   // Calculate summary
   const summary = useMemo(() => {
     return [
-      { label: 'Total clients', value: kpis.total },
-      { label: 'Actifs', value: kpis.active },
-      { label: 'Inactifs', value: kpis.inactive },
-      { label: 'Suspendus', value: kpis.suspended },
-      { label: 'Entreprises', value: kpis.enterprise },
-      { label: 'Particuliers', value: kpis.individual }
+      { label: t('customers.kpi.total'), value: kpis.total },
+      { label: t('customers.kpi.active'), value: kpis.active },
+      { label: commonStatus.inactive?.label, value: kpis.inactive },
+      { label: commonStatus.suspended?.label, value: kpis.suspended },
+      { label: t('customers.types.enterprise'), value: kpis.enterprise },
+      { label: t('customers.types.individual'), value: kpis.individual }
     ];
-  }, [kpis]);
+  }, [kpis, t, commonStatus]);
 
   // ==========================================
   // EXPORT HANDLERS
@@ -765,6 +768,7 @@ const CustomersPage = () => {
       await fetchStatistics();
     } catch (error) {
       console.error('Error creating client:', error);
+      showToast(getApiErrorMessage(error, t('customers.errors.save')), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -786,6 +790,7 @@ const CustomersPage = () => {
       await fetchStatistics();
     } catch (error) {
       console.error('Error updating client:', error);
+      showToast(getApiErrorMessage(error, t('customers.errors.save')), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -839,8 +844,8 @@ const CustomersPage = () => {
           <ExportButtons
             data={filteredClients}
             columns={columns}
-            title="Liste des clients"
-            subtitle={`${filteredClients.length} clients`}
+            title={t('customers.export.title')}
+            subtitle={t('customers.export.subtitle', { count: filteredClients.length })}
             filename={`clients_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -853,12 +858,12 @@ const CustomersPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <UserPlus size={18} />
-            Ajouter un client
+            {t('customers.modals.addTitle')}
           </button>
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={t('common.refresh')}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -884,10 +889,10 @@ const CustomersPage = () => {
               onChange={(e) => setTypeFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les types</option>
+              <option value="all">{t('common.allTypes')}</option>
               {uniqueTypes.map(type => (
                 <option key={type} value={type}>
-                  {type === 'enterprise' ? 'Entreprise' : 'Particulier'}
+                  {type === 'enterprise' ? t('customers.types.enterprise') : t('customers.types.individual')}
                 </option>
               ))}
             </select>
@@ -896,10 +901,10 @@ const CustomersPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="suspended">Suspendu</option>
+              <option value="all">{t('common.allStatuses')}</option>
+              <option value="active">{commonStatus.active?.label}</option>
+              <option value="inactive">{commonStatus.inactive?.label}</option>
+              <option value="suspended">{commonStatus.suspended?.label}</option>
             </select>
           </div>
         </div>
@@ -926,7 +931,7 @@ const CustomersPage = () => {
                   <td colSpan="7" className="text-center py-8">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                      <p className="text-sm text-[#6D6D6D]">Chargement des clients...</p>
+                      <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.customers') })}</p>
                     </div>
                   </td>
                 </tr>
@@ -935,12 +940,12 @@ const CustomersPage = () => {
                   <td colSpan="7" className="text-center py-8">
                     <div className="flex flex-col items-center gap-2">
                       <Users size={40} className="text-[#ECE8E1]" />
-                      <p className="text-sm text-[#6D6D6D]">Aucun client trouvé</p>
-                      <button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="text-sm text-[#B8863B] font-medium hover:underline"
-                      >
-                        Ajouter un client
+                      <p className="text-sm text-[#6D6D6D]">{t('customers.empty')}</p>
+                        <button
+                          onClick={() => setIsCreateModalOpen(true)}
+                          className="text-sm text-[#B8863B] font-medium hover:underline"
+                        >
+                          {t('customers.modals.addTitle')}
                       </button>
                     </div>
                   </td>
@@ -976,12 +981,12 @@ const CustomersPage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des clients...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.customers') })}</p>
           </div>
         ) : paginatedClients.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Users size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucun client trouvé</p>
+            <p className="text-sm text-[#6D6D6D]">{t('customers.empty')}</p>
           </div>
         ) : (
           paginatedClients.map((client) => (
