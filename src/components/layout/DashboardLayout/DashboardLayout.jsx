@@ -226,8 +226,9 @@ const DashboardLayout = () => {
         appSuffix={t('common.erp')}
       />
 
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden min-w-0">
-        <Header
+      <div className="flex-1 flex flex-col min-h-screen overflow-hidden min-w-0 relative">
+        <div className="relative z-[60] flex-shrink-0">
+          <Header
           onMenuClick={toggleSidebar}
           onToggleSidebar={handleToggleCollapse}
           isMobile={isMobile}
@@ -244,6 +245,7 @@ const DashboardLayout = () => {
           onSearchSubmit={handleSearchSubmit}
           onLogoutClick={handleLogout}
         />
+        </div>
 
         <Breadcrumb />
 

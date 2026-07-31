@@ -1,6 +1,10 @@
 import { normalizeRole, extractUserPermissions } from './roleMapping';
 import i18n from '../i18n';
 import { translateApiErrorMessage } from './apiErrorTranslator';
+import {
+  translateActivityAction,
+  translateActivityModule,
+} from './activityLogTranslator';
 
 /**
  * Unwrap Laravel ApiResponse envelope from an axios response or plain body.
@@ -231,6 +235,8 @@ export const normalizeActivityLog = (log) => {
       ? createdAt.toLocaleTimeString(ACTIVITY_DATE_LOCALE, { hour: '2-digit', minute: '2-digit' })
       : '—',
     ip: log.ip || log.ip_address || '—',
+    actionLabel: translateActivityAction(log.action),
+    moduleLabel: translateActivityModule(log.module),
     user: user
       ? {
           ...user,

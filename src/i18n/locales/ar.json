@@ -1892,7 +1892,26 @@
       "module": "الوحدة",
       "description": "الوصف",
       "ipAddress": "عنوان IP",
-      "timestamp": "الطابع الزمني"
+      "timestamp": "الطابع الزمني",
+      "date": "التاريخ",
+      "time": "الوقت",
+      "device": "الجهاز",
+      "browser": "المتصفح"
+    },
+    "actions": {
+      "created": "إنشاء",
+      "updated": "تعديل",
+      "deleted": "حذف",
+      "login": "تسجيل دخول",
+      "logout": "تسجيل خروج"
+    },
+    "modules": {
+      "customer": "عميل",
+      "product": "منتج",
+      "user": "مستخدم",
+      "auth": "مصادقة",
+      "order": "طلب",
+      "inventory": "مخزون"
     }
   },
   "settings": {
@@ -2082,6 +2101,31 @@
     "changePassword": "تغيير كلمة المرور",
     "preferences": "التفضيلات",
     "activity": "النشاط",
+    "recentActivity": "النشاط الأخير",
+    "viewAll": "عرض الكل",
+    "accountSecurity": "أمان الحساب",
+    "twoFactorAuth": "المصادقة الثنائية (2FA)",
+    "logoutTitle": "تسجيل الخروج",
+    "logoutSubtitle": "إنهاء الجلسة الحالية",
+    "logoutAction": "تسجيل الخروج",
+    "confirmLogout": "هل أنت متأكد من تسجيل الخروج؟",
+    "unknownDevice": "جهاز غير معروف",
+    "currentSession": "الجلسة الحالية",
+    "compactMode": "الوضع المضغوط",
+    "animations": "الرسوم المتحركة",
+    "exportRecentActivities": "الأنشطة الأخيرة",
+    "exportRecentActivitiesSubtitle": "{{count}} نشاط - {{name}}",
+    "stats": {
+      "orders": "الطلبات",
+      "clients": "العملاء",
+      "products": "المنتجات",
+      "avgTime": "متوسط الوقت",
+      "validated": "تم التحقق"
+    },
+    "permissionsTable": {
+      "module": "الوحدة",
+      "view": "عرض"
+    },
     "fields": {
       "language": "اللغة",
       "timezone": "المنطقة الزمنية",
