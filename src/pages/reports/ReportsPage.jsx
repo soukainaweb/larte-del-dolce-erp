@@ -1,5 +1,6 @@
 // src/pages/Reports/ReportsPage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart3,
@@ -119,6 +120,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
+import { useExport } from '../../hooks/useExport';
 import {
   getSalesOverview,
   getOrdersReport,
@@ -144,6 +146,7 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // CONSTANTS
@@ -161,7 +164,7 @@ const formatPercentage = (value) => {
 // ==========================================
 // COMPOSANT: CONFIRM DIALOG
 // ==========================================
-const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirmText = 'Confirmer', cancelText = 'Annuler' }) => {
+const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirmText = tc('confirm'), cancelText = tc('cancel') }) => {
   if (!isOpen) return null;
 
   return (
@@ -202,6 +205,7 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirm
 // COMPOSANT: TOAST
 // ==========================================
 const Toast = ({ message, type = 'success', onClose }) => {
+  const { t, tc } = usePageI18n('reports');
   const typeConfig = {
     success: 'bg-emerald-50 border-emerald-200 text-emerald-700',
     error: 'bg-rose-50 border-rose-200 text-rose-700',
@@ -241,6 +245,7 @@ const Toast = ({ message, type = 'success', onClose }) => {
 // COMPOSANT: PRODUCTION DETAIL MODAL
 // ==========================================
 const ProductionDetailModal = ({ isOpen, onClose, order }) => {
+  const { t, tc } = usePageI18n('reports');
   if (!isOpen || !order) return null;
 
   const productionDetails = {
@@ -250,30 +255,30 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
     remaining: 55,
     assignedTo: order.salesRep || 'Ahmed Benjelloun',
     startDate: order.date || '08/05/2025',
-    status: order.status || 'En production',
+    status: order.status || 'in_production',
     notes: 'Suspendue pour maintenance',
     productName: order.productName || 'Éclair Vanille',
     orderId: order.id || 'CMD-1256'
   };
 
   const statusColors = {
-    'En production': 'bg-blue-50 text-blue-700 border-blue-200',
+    'in_production': 'bg-blue-50 text-blue-700 border-blue-200',
     'Suspendue': 'bg-amber-50 text-amber-700 border-amber-200',
     'Terminée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'En attente': 'bg-gray-50 text-gray-600 border-gray-200',
-    'Prête': 'bg-teal-50 text-teal-700 border-teal-200',
-    'Livrée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'Validée': 'bg-purple-50 text-purple-700 border-purple-200'
+    'pending': 'bg-gray-50 text-gray-600 border-gray-200',
+    'ready': 'bg-teal-50 text-teal-700 border-teal-200',
+    'delivered': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    'validated': 'bg-purple-50 text-purple-700 border-purple-200'
   };
 
   const statusIcons = {
-    'En production': <Loader2 size={16} className="text-blue-500 animate-spin" />,
+    'in_production': <Loader2 size={16} className="text-blue-500 animate-spin" />,
     'Suspendue': <PauseCircle size={16} className="text-amber-500" />,
     'Terminée': <CheckCircle size={16} className="text-emerald-500" />,
-    'En attente': <Clock size={16} className="text-gray-500" />,
-    'Prête': <CheckCircle size={16} className="text-teal-500" />,
-    'Livrée': <CheckCircle size={16} className="text-emerald-500" />,
-    'Validée': <CheckCircle size={16} className="text-purple-500" />
+    'pending': <Clock size={16} className="text-gray-500" />,
+    'ready': <CheckCircle size={16} className="text-teal-500" />,
+    'delivered': <CheckCircle size={16} className="text-emerald-500" />,
+    'validated': <CheckCircle size={16} className="text-purple-500" />
   };
 
   return (
@@ -303,8 +308,8 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
           </div>
 
           <div className="absolute -bottom-4 left-6 right-6 flex items-center gap-3 flex-wrap">
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border shadow-sm bg-white ${statusColors[productionDetails.status] || statusColors['En attente']}`}>
-              {statusIcons[productionDetails.status] || statusIcons['En attente']}
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border shadow-sm bg-white ${statusColors[productionDetails.status] || statusColors[t('common.pending')]}`}>
+              {statusIcons[productionDetails.status] || statusIcons[t('common.pending')]}
               <span className="text-sm font-semibold">{productionDetails.status}</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl border shadow-sm bg-white border-[#ECE8E1]">
@@ -334,7 +339,7 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
               />
             </div>
             <div className="flex items-center justify-between text-xs text-[#6D6D6D] mt-1.5">
-              <span>{productionDetails.produced} produits</span>
+              <span>{productionDetails.produced} {t('orders.table.products')}</span>
               <span>Objectif: {productionDetails.quantity}</span>
               <span>Restant: {productionDetails.remaining}</span>
             </div>
@@ -406,17 +411,18 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
 // COMPOSANT: DELIVERY DETAIL MODAL
 // ==========================================
 const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
+  const { t, tc } = usePageI18n('reports');
   if (!isOpen || !delivery) return null;
 
   const statusColors = {
     'Effectuée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'En attente': 'bg-amber-50 text-amber-700 border-amber-200',
+    'pending': 'bg-amber-50 text-amber-700 border-amber-200',
     'Retard': 'bg-rose-50 text-rose-700 border-rose-200'
   };
 
   const statusIcons = {
     'Effectuée': <CheckCircle size={18} className="text-emerald-500" />,
-    'En attente': <Clock size={18} className="text-amber-500" />,
+    'pending': <Clock size={18} className="text-amber-500" />,
     'Retard': <XCircle size={18} className="text-rose-500" />
   };
 
@@ -448,14 +454,14 @@ const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
         </div>
 
         <div className="p-6">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${statusColors[delivery.status] || statusColors['En attente']} mb-6`}>
-            {statusIcons[delivery.status] || statusIcons['En attente']}
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${statusColors[delivery.status] || statusColors[t('common.pending')]} mb-6`}>
+            {statusIcons[delivery.status] || statusIcons[t('common.pending')]}
             <span className="text-sm font-semibold">{delivery.status}</span>
           </div>
 
           <div className="space-y-4">
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Client</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('customer')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <User size={14} className="text-[#6D6D6D]" />
                 {delivery.client}
@@ -471,7 +477,7 @@ const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
             </div>
 
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Date</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('date')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <Calendar size={14} className="text-[#6D6D6D]" />
                 {delivery.date}
@@ -487,7 +493,7 @@ const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
             </div>
 
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Notes</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('notes')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <FileText size={14} className="text-[#6D6D6D]" />
                 {delivery.notes || 'Aucune note'}
@@ -527,18 +533,19 @@ const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
 // COMPOSANT: INVOICE DETAIL MODAL
 // ==========================================
 const InvoiceDetailModal = ({ isOpen, onClose, invoice }) => {
+  const { t, tc } = usePageI18n('reports');
   if (!isOpen || !invoice) return null;
 
   const statusColors = {
-    'Payée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    'paid': 'bg-emerald-50 text-emerald-700 border-emerald-200',
     'Impayée': 'bg-rose-50 text-rose-700 border-rose-200',
-    'En attente': 'bg-amber-50 text-amber-700 border-amber-200'
+    'pending': 'bg-amber-50 text-amber-700 border-amber-200'
   };
 
   const statusIcons = {
-    'Payée': <CheckCircle size={18} className="text-emerald-500" />,
+    'paid': <CheckCircle size={18} className="text-emerald-500" />,
     'Impayée': <XCircle size={18} className="text-rose-500" />,
-    'En attente': <Clock size={18} className="text-amber-500" />
+    'pending': <Clock size={18} className="text-amber-500" />
   };
 
   return (
@@ -569,14 +576,14 @@ const InvoiceDetailModal = ({ isOpen, onClose, invoice }) => {
         </div>
 
         <div className="p-6">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${statusColors[invoice.status] || statusColors['En attente']} mb-6`}>
-            {statusIcons[invoice.status] || statusIcons['En attente']}
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${statusColors[invoice.status] || statusColors[t('common.pending')]} mb-6`}>
+            {statusIcons[invoice.status] || statusIcons[t('common.pending')]}
             <span className="text-sm font-semibold">{invoice.status}</span>
           </div>
 
           <div className="space-y-4">
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Client</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('customer')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <User size={14} className="text-[#6D6D6D]" />
                 {invoice.client}
@@ -584,7 +591,7 @@ const InvoiceDetailModal = ({ isOpen, onClose, invoice }) => {
             </div>
 
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Date</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('date')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <Calendar size={14} className="text-[#6D6D6D]" />
                 {invoice.date}
@@ -592,7 +599,7 @@ const InvoiceDetailModal = ({ isOpen, onClose, invoice }) => {
             </div>
 
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Montant</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('amount')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <DollarSign size={14} className="text-[#6D6D6D]" />
                 {invoice.amount.toLocaleString()} {CURRENCY}
@@ -700,13 +707,14 @@ const KPICard = ({ icon: Icon, title, value, change, color, isCurrency, subtitle
 // COMPOSANT: ORDER CARD
 // ==========================================
 const OrderCard = ({ order, onView, onDelete, onExport }) => {
+  const { t, tc, actions } = usePageI18n('reports');
   const statusColors = {
-    'Livrée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'En production': 'bg-blue-50 text-blue-700 border-blue-200',
-    'Validée': 'bg-purple-50 text-purple-700 border-purple-200',
-    'En attente': 'bg-amber-50 text-amber-700 border-amber-200',
-    'Prête': 'bg-teal-50 text-teal-700 border-teal-200',
-    'Annulée': 'bg-rose-50 text-rose-700 border-rose-200'
+    'delivered': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    'in_production': 'bg-blue-50 text-blue-700 border-blue-200',
+    'validated': 'bg-purple-50 text-purple-700 border-purple-200',
+    'pending': 'bg-amber-50 text-amber-700 border-amber-200',
+    'ready': 'bg-teal-50 text-teal-700 border-teal-200',
+    'cancelled': 'bg-rose-50 text-rose-700 border-rose-200'
   };
 
   return (
@@ -719,21 +727,21 @@ const OrderCard = ({ order, onView, onDelete, onExport }) => {
           <p className="text-sm font-semibold text-[#3D2F24]">{order.id}</p>
           <p className="text-xs text-[#6D6D6D]">{order.client}</p>
         </div>
-        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[order.status] || statusColors['En attente']}`}>
+        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[order.status] || statusColors[t('common.pending')]}`}>
           {order.status}
         </span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
         <div>
-          <p className="text-[#6D6D6D]">Commercial</p>
+          <p className="text-[#6D6D6D]">{t('orders.table.rep')}</p>
           <p className="font-medium text-[#3D2F24]">{order.salesRep}</p>
         </div>
         <div>
-          <p className="text-[#6D6D6D]">Date</p>
+          <p className="text-[#6D6D6D]">{tc('date')}</p>
           <p className="font-medium text-[#3D2F24]">{order.date}</p>
         </div>
         <div>
-          <p className="text-[#6D6D6D]">Montant</p>
+          <p className="text-[#6D6D6D]">{tc('amount')}</p>
           <p className="font-medium text-[#3D2F24]">{order.amount.toLocaleString()} {CURRENCY}</p>
         </div>
         <div>
@@ -745,7 +753,7 @@ const OrderCard = ({ order, onView, onDelete, onExport }) => {
         <button
           onClick={() => onView && onView(order)}
           className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-          title="Voir"
+          title={actions.view}
         >
           <Eye size={15} className="text-[#6D6D6D]" />
         </button>
@@ -759,7 +767,7 @@ const OrderCard = ({ order, onView, onDelete, onExport }) => {
         <button
           onClick={() => onDelete && onDelete(order)}
           className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-          title="Supprimer"
+          title={actions.delete}
         >
           <Trash2 size={15} className="text-rose-500" />
         </button>
@@ -772,10 +780,11 @@ const OrderCard = ({ order, onView, onDelete, onExport }) => {
 // COMPOSANT: INVOICE CARD
 // ==========================================
 const InvoiceCard = ({ invoice, onView, onDelete, onExport }) => {
+  const { t, tc, actions } = usePageI18n('reports');
   const statusColors = {
-    'Payée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    'paid': 'bg-emerald-50 text-emerald-700 border-emerald-200',
     'Impayée': 'bg-rose-50 text-rose-700 border-rose-200',
-    'En attente': 'bg-amber-50 text-amber-700 border-amber-200'
+    'pending': 'bg-amber-50 text-amber-700 border-amber-200'
   };
 
   return (
@@ -788,17 +797,17 @@ const InvoiceCard = ({ invoice, onView, onDelete, onExport }) => {
           <p className="text-sm font-semibold text-[#3D2F24]">{invoice.id}</p>
           <p className="text-xs text-[#6D6D6D]">{invoice.client}</p>
         </div>
-        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[invoice.status] || statusColors['En attente']}`}>
+        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[invoice.status] || statusColors[t('common.pending')]}`}>
           {invoice.status}
         </span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
         <div>
-          <p className="text-[#6D6D6D]">Date</p>
+          <p className="text-[#6D6D6D]">{tc('date')}</p>
           <p className="font-medium text-[#3D2F24]">{invoice.date}</p>
         </div>
         <div>
-          <p className="text-[#6D6D6D]">Montant</p>
+          <p className="text-[#6D6D6D]">{tc('amount')}</p>
           <p className="font-medium text-[#3D2F24]">{invoice.amount.toLocaleString()} {CURRENCY}</p>
         </div>
       </div>
@@ -806,7 +815,7 @@ const InvoiceCard = ({ invoice, onView, onDelete, onExport }) => {
         <button
           onClick={() => onView && onView(invoice)}
           className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-          title="Voir"
+          title={actions.view}
         >
           <Eye size={15} className="text-[#6D6D6D]" />
         </button>
@@ -820,7 +829,7 @@ const InvoiceCard = ({ invoice, onView, onDelete, onExport }) => {
         <button
           onClick={() => onDelete && onDelete(invoice)}
           className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-          title="Supprimer"
+          title={actions.delete}
         >
           <Trash2 size={15} className="text-rose-500" />
         </button>
@@ -833,9 +842,10 @@ const InvoiceCard = ({ invoice, onView, onDelete, onExport }) => {
 // COMPOSANT: DELIVERY CARD
 // ==========================================
 const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
+  const { t, tc, actions } = usePageI18n('reports');
   const statusColors = {
     'Effectuée': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'En attente': 'bg-amber-50 text-amber-700 border-amber-200',
+    'pending': 'bg-amber-50 text-amber-700 border-amber-200',
     'Retard': 'bg-rose-50 text-rose-700 border-rose-200'
   };
 
@@ -849,7 +859,7 @@ const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
           <p className="text-sm font-semibold text-[#3D2F24]">{delivery.id}</p>
           <p className="text-xs text-[#6D6D6D]">{delivery.client}</p>
         </div>
-        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[delivery.status] || statusColors['En attente']}`}>
+        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[delivery.status] || statusColors[t('common.pending')]}`}>
           {delivery.status}
         </span>
       </div>
@@ -859,7 +869,7 @@ const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
           <p className="font-medium text-[#3D2F24] truncate">{delivery.address}</p>
         </div>
         <div>
-          <p className="text-[#6D6D6D]">Date</p>
+          <p className="text-[#6D6D6D]">{tc('date')}</p>
           <p className="font-medium text-[#3D2F24]">{delivery.date}</p>
         </div>
       </div>
@@ -867,7 +877,7 @@ const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
         <button
           onClick={() => onView && onView(delivery)}
           className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-          title="Voir"
+          title={actions.view}
         >
           <Eye size={15} className="text-[#6D6D6D]" />
         </button>
@@ -881,7 +891,7 @@ const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
         <button
           onClick={() => onDelete && onDelete(delivery)}
           className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-          title="Supprimer"
+          title={actions.delete}
         >
           <Trash2 size={15} className="text-rose-500" />
         </button>
@@ -894,6 +904,7 @@ const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
 // COMPOSANT: REPORT CARD
 // ==========================================
 const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) => {
+  const { t, tc, actions } = usePageI18n('reports');
   const typeColors = {
     Ventes: 'bg-blue-50 text-blue-700 border-blue-200',
     Commandes: 'bg-purple-50 text-purple-700 border-purple-200',
@@ -906,7 +917,7 @@ const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) 
   const statusColors = {
     'Généré': 'bg-emerald-50 text-emerald-700 border-emerald-200',
     'En cours': 'bg-amber-50 text-amber-700 border-amber-200',
-    'En attente': 'bg-gray-50 text-gray-600 border-gray-200',
+    'pending': 'bg-gray-50 text-gray-600 border-gray-200',
     'Erreur': 'bg-red-50 text-red-700 border-red-200'
   };
 
@@ -924,7 +935,7 @@ const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) 
             <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${typeColors[report.type] || typeColors.Ventes}`}>
               {report.type}
             </span>
-            <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[report.status] || statusColors['En attente']}`}>
+            <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusColors[report.status] || statusColors[t('common.pending')]}`}>
               {report.status}
             </span>
           </div>
@@ -943,7 +954,7 @@ const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) 
           <button
             onClick={() => onView && onView(report)}
             className="p-2 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
@@ -971,7 +982,7 @@ const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) 
           <button
             onClick={() => onDelete && onDelete(report)}
             className="p-2 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -1089,13 +1100,14 @@ const TopListCard = ({ title, items, valueLabel, icon: Icon, valueKey, nameKey }
 // COMPOSANT: ADVANCED FILTERS
 // ==========================================
 const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onApply }) => {
+  const { t, tc } = usePageI18n('reports');
   const [localFilters, setLocalFilters] = useState(filters);
 
   const filterGroups = [
     {
       title: 'Période',
       fields: [
-        { key: 'period', type: 'select', options: ['Aujourd\'hui', 'Cette semaine', 'Ce mois', 'Cette année', 'Période personnalisée'] }
+        { key: 'period', type: 'select', options: [tc('today'), 'Cette semaine', 'Ce mois', 'Cette année', 'Période personnalisée'] }
       ]
     },
     {
@@ -1113,7 +1125,7 @@ const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onAppl
     {
       title: 'Statut',
       fields: [
-        { key: 'status', type: 'select', options: ['Tous', 'En attente', 'Validée', 'En production', 'Prête', 'Livrée', 'Annulée'] }
+        { key: 'status', type: 'select', options: ['Tous', t('common.pending'), t('orders.status.validated'), t('orders.status.in_production'), t('orders.status.ready'), t('orders.status.delivered'), t('common.cancelled')] }
       ]
     }
   ];
@@ -1214,6 +1226,7 @@ const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onAppl
 // ==========================================
 
 const SalesChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -1271,6 +1284,7 @@ const SalesChart = ({ data }) => {
 };
 
 const OrderStatusChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Répartition des commandes</h3>
@@ -1317,6 +1331,7 @@ const OrderStatusChart = ({ data }) => {
 };
 
 const TopProductsChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   const top10 = data.slice(0, 10);
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
@@ -1344,6 +1359,7 @@ const TopProductsChart = ({ data }) => {
 };
 
 const MonthlyRevenueChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Chiffre d'affaires mensuel</h3>
@@ -1382,6 +1398,7 @@ const MonthlyRevenueChart = ({ data }) => {
 };
 
 const ProductionChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Production Journalière</h3>
@@ -1410,6 +1427,7 @@ const ProductionChart = ({ data }) => {
 };
 
 const DeliveryChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Livraisons</h3>
@@ -1437,6 +1455,7 @@ const DeliveryChart = ({ data }) => {
 };
 
 const SalesRepChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Performance Commerciaux</h3>
@@ -1463,6 +1482,7 @@ const SalesRepChart = ({ data }) => {
 };
 
 const YearlyComparisonChart = ({ data }) => {
+  const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Comparaison Annuelle</h3>
@@ -1504,14 +1524,16 @@ const YearlyComparisonChart = ({ data }) => {
 // ==========================================
 const ReportsPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('reports');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('reports');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { exportPDF, exportExcel } = useExport({ userName: user?.firstName || 'Utilisateur' });
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState('month');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({});
-  const [isExporting, setIsExporting] = useState(false);
   
   // États pour les données dynamiques
   const [ordersData, setOrdersData] = useState([]);
@@ -1663,6 +1685,12 @@ const ReportsPage = () => {
     loadAllData();
   }, [dateRange, searchTerm]);
 
+  useEffect(() => {
+    if (!location.state?.openReportsTab && !location.state?.openAddModal) return;
+    setActiveTab('reports');
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state?.openReportsTab, location.state?.openAddModal, navigate, location.pathname]);
+
   // ==========================================
   // KPI CALCULATIONS
   // ==========================================
@@ -1681,8 +1709,8 @@ const ReportsPage = () => {
     
     const totalInvoices = invoicesList.length;
     const totalDeliveries = deliveriesList.length;
-    const inProduction = ordersData.filter(o => o.status === 'En production').length;
-    const pendingOrders = ordersData.filter(o => o.status === 'En attente').length;
+    const inProduction = ordersData.filter(o => o.status === t('orders.status.in_production')).length;
+    const pendingOrders = ordersData.filter(o => o.status === t('common.pending')).length;
     const totalCustomers = topCustomers.reduce((sum, c) => sum + (c.orders || 0), 0);
 
     const revenueTrend = salesData.map(d => ({ value: d.revenue || 0 }));
@@ -1717,7 +1745,7 @@ const ReportsPage = () => {
     { label: 'Montant', accessor: 'amount', width: 15 },
     { label: 'Statut', accessor: 'status', width: 12 },
     { label: 'Production', accessor: 'production', width: 14 },
-    { label: 'Livraison', accessor: 'delivery', width: 14 }
+    { label: t('common.delivery'), accessor: 'delivery', width: 14 }
   ];
 
   const exportRowFormatter = (item) => ({
@@ -1732,32 +1760,50 @@ const ReportsPage = () => {
   });
 
   const exportSummary = [
-    { label: 'Total commandes', value: ordersData.length },
+    { label: t('orders.kpi.total'), value: ordersData.length },
     { label: 'Montant total', value: `${ordersData.reduce((sum, o) => sum + o.amount, 0).toLocaleString()} ${CURRENCY}` },
-    { label: 'Statut : Livrées', value: ordersData.filter(o => o.status === 'Livrée').length },
-    { label: 'Statut : En production', value: ordersData.filter(o => o.status === 'En production').length },
-    { label: 'Statut : En attente', value: ordersData.filter(o => o.status === 'En attente').length }
+    { label: 'Statut : Livrées', value: ordersData.filter(o => o.status === t('orders.status.delivered')).length },
+    { label: 'Statut : En production', value: ordersData.filter(o => o.status === t('orders.status.in_production')).length },
+    { label: 'Statut : En attente', value: ordersData.filter(o => o.status === t('common.pending')).length }
   ];
 
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    showToast('Export réalisé avec succès', 'success');
+    showToast(tc('exportSuccess', { type: t('common.pdf'), count: 0 }), 'success');
   };
 
   const handleExportError = () => {
-    showToast('Erreur lors de l\'export', 'error');
+    showToast(t('common.exportError'), 'error');
+  };
+
+  const exportSingleRow = async (item, exportTitle, filename) => {
+    try {
+      await exportPDF({
+        title: exportTitle,
+        subtitle: item.id,
+        columns: exportColumns,
+        data: [item],
+        filename: `${filename}.pdf`,
+        rowFormatter: exportRowFormatter,
+      });
+      showToast(t('common.exportSuccess', { type: t('common.pdf'), count: 1 }), 'success');
+    } catch {
+      showToast(t('common.exportError'), 'error');
+    }
   };
 
   // ==========================================
   // HANDLERS - TOAST
   // ==========================================
   const showToast = (message, type = 'success') => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     setToast({ isOpen: true, message, type });
   };
 
   const hideToast = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     setToast({ isOpen: false, message: '', type: 'success' });
   };
 
@@ -1765,27 +1811,53 @@ const ReportsPage = () => {
   // HANDLERS - CONFIRM DIALOG
   // ==========================================
   const showConfirm = (title, description, onConfirm) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     setConfirmDialog({ isOpen: true, title, description, onConfirm });
   };
 
   const hideConfirm = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     setConfirmDialog({ isOpen: false, title: '', description: '', onConfirm: null });
   };
 
   // ==========================================
   // HANDLERS - ACTIONS GÉNÉRALES
   // ==========================================
-  const handleExportPDF = () => {
-    showToast('📄 Rapport exporté en PDF avec succès', 'success');
+  const handleExportPDF = async () => {
+    try {
+      await exportPDF({
+        title: t('reports.title'),
+        columns: exportColumns,
+        data: ordersData,
+        filename: `reports_${new Date().toISOString().split('T')[0]}.pdf`,
+        rowFormatter: exportRowFormatter,
+        summary: exportSummary,
+      });
+      showToast(t('reports.export.pdfSuccess'), 'success');
+    } catch {
+      showToast(t('common.exportError'), 'error');
+    }
   };
 
-  const handleExportExcel = () => {
-    showToast('📊 Rapport exporté en Excel avec succès', 'success');
+  const handleExportExcel = async () => {
+    try {
+      await exportExcel({
+        title: t('reports.title'),
+        columns: exportColumns,
+        data: ordersData,
+        filename: `reports_${new Date().toISOString().split('T')[0]}.xlsx`,
+        rowFormatter: exportRowFormatter,
+        summary: exportSummary,
+      });
+      showToast(t('reports.export.excelSuccess'), 'success');
+    } catch {
+      showToast(t('common.exportError'), 'error');
+    }
   };
 
   const handlePrint = () => {
     window.print();
-    showToast('🖨️ Impression en cours...', 'info');
+    showToast(t('reports.export.printStarted'), 'info');
   };
 
   const handleRefresh = async () => {
@@ -1798,17 +1870,38 @@ const ReportsPage = () => {
         loadDeliveriesData(),
         loadReportsData()
       ]);
-      showToast('🔄 Données actualisées avec succès', 'success');
+      showToast(t('reports.messages.refreshed'), 'success');
     } catch (error) {
       console.error('Error refreshing data:', error);
-      showToast('Erreur lors de l\'actualisation', 'error');
+      showToast(t('reports.messages.refreshError'), 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const copyPageLink = async (label) => {
+    try {
+      const url = window.location.href;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      showToast(label || t('common.linkCopied'), 'success');
+    } catch {
+      showToast(t('common.copyFailed'), 'error');
+    }
+  };
+
   const handleShare = () => {
-    showToast('🔗 Lien de partage copié dans le presse-papier', 'success');
+    copyPageLink(t('common.linkCopied'));
   };
 
   // ==========================================
@@ -1817,13 +1910,11 @@ const ReportsPage = () => {
   
   const handleDeleteOrder = (order) => {
     showConfirm(
-      'Supprimer la commande',
-      `Êtes-vous sûr de vouloir supprimer la commande ${order.id} ? Cette action est irréversible.`,
+      t('reports.confirm.deleteOrder'),
+      t('reports.confirm.deleteOrderMessage', { id: order.id }),
       () => {
-        // Dans un vrai back-end, vous appelleriez une API
-        // await deleteOrder(order.id);
         setOrdersData(prev => prev.filter(item => item.id !== order.id));
-        showToast(`🗑️ Commande ${order.id} supprimée avec succès`, 'success');
+        showToast(t('reports.messages.orderDeleted', { id: order.id }), 'success');
         hideConfirm();
       }
     );
@@ -1831,11 +1922,11 @@ const ReportsPage = () => {
 
   const handleDeleteInvoice = (invoice) => {
     showConfirm(
-      'Supprimer la facture',
-      `Êtes-vous sûr de vouloir supprimer la facture ${invoice.id} ? Cette action est irréversible.`,
+      t('reports.confirm.deleteInvoice'),
+      t('reports.confirm.deleteInvoiceMessage', { id: invoice.id }),
       () => {
         setInvoicesList(prev => prev.filter(item => item.id !== invoice.id));
-        showToast(`🗑️ Facture ${invoice.id} supprimée avec succès`, 'success');
+        showToast(t('reports.messages.invoiceDeleted', { id: invoice.id }), 'success');
         hideConfirm();
       }
     );
@@ -1843,11 +1934,11 @@ const ReportsPage = () => {
 
   const handleDeleteDelivery = (delivery) => {
     showConfirm(
-      'Supprimer la livraison',
-      `Êtes-vous sûr de vouloir supprimer la livraison ${delivery.id} ? Cette action est irréversible.`,
+      t('reports.confirm.deleteDelivery'),
+      t('reports.confirm.deleteDeliveryMessage', { id: delivery.id }),
       () => {
         setDeliveriesList(prev => prev.filter(item => item.id !== delivery.id));
-        showToast(`🗑️ Livraison ${delivery.id} supprimée avec succès`, 'success');
+        showToast(t('reports.messages.deliveryDeleted', { id: delivery.id }), 'success');
         hideConfirm();
       }
     );
@@ -1855,17 +1946,17 @@ const ReportsPage = () => {
 
   const handleDeleteReport = async (report) => {
     showConfirm(
-      'Supprimer le rapport',
-      `Êtes-vous sûr de vouloir supprimer le rapport "${report.name}" ? Cette action est irréversible.`,
+      t('reports.confirm.deleteReport'),
+      t('reports.confirm.deleteReportMessage', { name: report.name }),
       async () => {
         try {
           await deleteGeneratedReport(report.id);
           const res = await getGeneratedReports();
           setGeneratedReports(res.data.data || []);
-          showToast(`🗑️ Rapport "${report.name}" supprimé avec succès`, 'success');
+          showToast(t('reports.messages.reportDeleted', { name: report.name }), 'success');
         } catch (error) {
           console.error('Error deleting report:', error);
-          showToast('Erreur lors de la suppression', 'error');
+          showToast(t('reports.messages.deleteError'), 'error');
         }
         hideConfirm();
       }
@@ -1893,7 +1984,7 @@ const ReportsPage = () => {
 
   const handleViewReport = (report) => {
     setSelectedReport(report);
-    showToast(`👁️ Consultation du rapport "${report.name}"`, 'info');
+    setIsReportModalOpen(true);
   };
 
   // ==========================================
@@ -1901,15 +1992,15 @@ const ReportsPage = () => {
   // ==========================================
   
   const handleExportOrder = (order) => {
-    showToast(`📄 Commande ${order.id} exportée avec succès`, 'success');
+    exportSingleRow(order, t('reports.export.orderTitle'), `order_${order.id}`);
   };
 
   const handleExportInvoice = (invoice) => {
-    showToast(`📄 Facture ${invoice.id} exportée avec succès`, 'success');
+    exportSingleRow(invoice, t('reports.export.invoiceTitle'), `invoice_${invoice.id}`);
   };
 
   const handleExportDelivery = (delivery) => {
-    showToast(`📄 Livraison ${delivery.id} exportée avec succès`, 'success');
+    exportSingleRow(delivery, t('reports.export.deliveryTitle'), `delivery_${delivery.id}`);
   };
 
   const handleDownloadReport = async (report) => {
@@ -1922,10 +2013,10 @@ const ReportsPage = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      showToast(`📥 Rapport "${report.name}" téléchargé avec succès`, 'success');
+      showToast(t('reports.export.reportDownloaded', { name: report.name }), 'success');
     } catch (error) {
       console.error('Error downloading report:', error);
-      showToast('Erreur lors du téléchargement', 'error');
+      showToast(t('reports.export.downloadError'), 'error');
     }
   };
 
@@ -1938,23 +2029,24 @@ const ReportsPage = () => {
   };
 
   const handleShareReport = (report) => {
-    showToast(`🔗 Rapport "${report.name}" partagé avec succès`, 'success');
+    copyPageLink(t('common.linkCopied'));
   };
 
   const handleDismissAlert = (alertId) => {
-    showToast(`🔔 Alerte ${alertId} marquée comme lue`, 'info');
+    setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
+    showToast(t('common.alertDismissed'), 'info');
   };
 
   const handleResetFilters = () => {
     setSearchTerm('');
     setDateRange('month');
     setFilters({});
-    showToast('🔄 Filtres réinitialisés avec succès', 'success');
+    showToast(t('reports.messages.filtersReset'), 'success');
   };
 
   const handleDateRangeChange = (e) => {
     setDateRange(e.target.value);
-    showToast(`📅 Période changée : ${e.target.options[e.target.selectedIndex].text}`, 'info');
+    showToast(t('reports.messages.dateRangeChanged', { range: e.target.options[e.target.selectedIndex].text }), 'info');
   };
 
   // ==========================================
@@ -2087,8 +2179,9 @@ const ReportsPage = () => {
   );
 
   const renderOrders = () => {
-    const paidCount = ordersData.filter(o => o.status === 'Livrée').length;
-    const pending = ordersData.filter(o => o.status === 'En attente').length;
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
+    const paidCount = ordersData.filter(o => o.status === t('orders.status.delivered')).length;
+    const pending = ordersData.filter(o => o.status === t('common.pending')).length;
 
     return (
       <div>
@@ -2181,6 +2274,7 @@ const ReportsPage = () => {
   );
 
   const renderProducts = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     return (
       <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -2258,6 +2352,7 @@ const ReportsPage = () => {
   };
 
   const renderCustomers = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     return (
       <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -2320,9 +2415,10 @@ const ReportsPage = () => {
   };
 
   const renderInvoices = () => {
-    const paidCount = invoicesList.filter(i => i.status === 'Payée').length;
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
+    const paidCount = invoicesList.filter(i => i.status === t('common.paymentStatus.paid')).length;
     const unpaidCount = invoicesList.filter(i => i.status === 'Impayée').length;
-    const pendingCount = invoicesList.filter(i => i.status === 'En attente').length;
+    const pendingCount = invoicesList.filter(i => i.status === t('common.pending')).length;
 
     return (
       <div>
@@ -2356,8 +2452,9 @@ const ReportsPage = () => {
   };
 
   const renderDeliveries = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     const deliveredCount = deliveriesList.filter(d => d.status === 'Effectuée').length;
-    const pendingCount = deliveriesList.filter(d => d.status === 'En attente').length;
+    const pendingCount = deliveriesList.filter(d => d.status === t('common.pending')).length;
     const delayedCount = deliveriesList.filter(d => d.status === 'Retard').length;
 
     return (
@@ -2444,6 +2541,7 @@ const ReportsPage = () => {
   );
 
   const renderGeneratedReports = () => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     return (
       <div>
         <div className="flex items-center gap-3 mb-6 flex-wrap">
@@ -2457,7 +2555,7 @@ const ReportsPage = () => {
           </div>
           <div className="flex items-center gap-2 bg-white border border-[#ECE8E1] rounded-lg px-3 py-2">
             <Clock size={16} className="text-amber-500" />
-            <span className="text-sm text-[#3D2F24]">{generatedReports.filter(r => r.status === 'En cours' || r.status === 'En attente').length} En cours</span>
+            <span className="text-sm text-[#3D2F24]">{generatedReports.filter(r => r.status === 'En cours' || r.status === t('common.pending')).length} En cours</span>
           </div>
         </div>
         {generatedReports.length === 0 ? (
@@ -2561,6 +2659,41 @@ const ReportsPage = () => {
         invoice={selectedInvoice}
       />
 
+      {/* Report Detail Modal */}
+      {isReportModalOpen && selectedReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full"
+          >
+            <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
+                {t('common.details')}
+              </h3>
+              <button type="button" onClick={() => { setIsReportModalOpen(false); setSelectedReport(null); }} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg">
+                <X size={20} className="text-[#6D6D6D]" />
+              </button>
+            </div>
+            <div className="p-6 space-y-3 text-sm">
+              <p className="font-semibold text-[#3D2F24]">{selectedReport.name}</p>
+              {selectedReport.type && <p className="text-[#6D6D6D]">{selectedReport.type}</p>}
+              {selectedReport.date && <p className="text-[#6D6D6D]">{selectedReport.date}</p>}
+              {selectedReport.description && <p className="text-[#3D2F24]">{selectedReport.description}</p>}
+            </div>
+            <div className="p-6 pt-0 flex gap-3">
+              <button type="button" onClick={() => handleDownloadReport(selectedReport)} className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg">
+                {t('common.download')}
+              </button>
+              <button type="button" onClick={() => { setIsReportModalOpen(false); setSelectedReport(null); }} className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg">
+                {t('common.close')}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* ===== HEADER ===== */}
       <div className="mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -2621,7 +2754,7 @@ const ReportsPage = () => {
             <button
               onClick={handleRefresh}
               className="p-2 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-              title="Actualiser"
+              title={actions.refresh}
             >
               <RefreshCw size={18} className="text-[#6D6D6D]" />
             </button>

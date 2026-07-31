@@ -12,8 +12,9 @@ return new class extends Migration
         Schema::create('activity_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')
+                ->nullable()
                 ->constrained('users')
-                ->cascadeOnDelete();
+                ->nullOnDelete();
             $table->string('action', 100);
             $table->text('description')->nullable();
             $table->string('ip_address', 45)->nullable();

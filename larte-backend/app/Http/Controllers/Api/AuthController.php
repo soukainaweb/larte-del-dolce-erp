@@ -16,14 +16,17 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    private const INVALID_CREDENTIALS_MESSAGE = 'بيانات الاعتماد غير صحيحة';
+
+    private const BLOCKED_ACCOUNT_MESSAGE = 'حسابك معطل أو موقوف. يرجى التواصل مع المسؤول.';
+
     public function login(LoginRequest $request)
     {
         $credentials = $request->validated();
         $user = User::where('email', $credentials['email'])->first();
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
-            ActivityLogger::log(
-                module: 'auth',
+            $this->logAuthEvent(
                 action: 'login_failed',
                 description: 'Failed login attempt for ' . ($credentials['email'] ?? 'unknown'),
                 level: 'warning',
@@ -33,13 +36,12 @@ class AuthController extends Controller
             );
 
             throw ValidationException::withMessages([
-                'email' => ['Les identifiants sont incorrects.'],
+                'email' => [self::INVALID_CREDENTIALS_MESSAGE],
             ]);
         }
 
         if (!UserStatus::canAuthenticate($user->status)) {
-            ActivityLogger::log(
-                module: 'auth',
+            $this->logAuthEvent(
                 action: 'login_blocked',
                 description: 'Blocked login for user #' . $user->id . ' (status: ' . $user->status . ')',
                 level: 'warning',
@@ -49,7 +51,7 @@ class AuthController extends Controller
             );
 
             throw ValidationException::withMessages([
-                'email' => ['Ce compte est désactivé ou suspendu. Contactez un administrateur.'],
+                'email' => [self::BLOCKED_ACCOUNT_MESSAGE],
             ]);
         }
 
@@ -57,8 +59,7 @@ class AuthController extends Controller
 
         $user->markOnline($request->ip());
 
-        ActivityLogger::log(
-            module: 'auth',
+        $this->logAuthEvent(
             action: 'login',
             description: 'User logged in successfully',
             level: 'info',
@@ -77,8 +78,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        ActivityLogger::log(
-            module: 'auth',
+        $this->logAuthEvent(
             action: 'logout',
             description: 'User logged out',
             level: 'info',
@@ -108,8 +108,7 @@ class AuthController extends Controller
             return $this->error(__($status), [], 422);
         }
 
-        ActivityLogger::log(
-            module: 'auth',
+        $this->logAuthEvent(
             action: 'password_reset_requested',
             description: 'Password reset link requested for ' . $request->input('email'),
             level: 'info',
@@ -134,15 +133,37 @@ class AuthController extends Controller
             return $this->error(__($status), [], 422);
         }
 
-        ActivityLogger::log(
-            module: 'auth',
+        $this->logAuthEvent(
             action: 'password_reset',
             description: 'Password reset completed for ' . $request->input('email'),
             level: 'info',
             status: 'success',
+            userId: User::where('email', $request->input('email'))->value('id'),
             ip: $request->ip(),
         );
 
         return $this->success(null, 'Password reset successfully');
+    }
+
+    /**
+     * Log auth events without interrupting the auth response flow.
+     */
+    private function logAuthEvent(
+        string $action,
+        string $description,
+        string $level,
+        string $status,
+        ?int $userId,
+        ?string $ip,
+    ): void {
+        ActivityLogger::log(
+            module: 'auth',
+            action: $action,
+            description: $description,
+            level: $level,
+            status: $status,
+            userId: $userId,
+            ip: $ip,
+        );
     }
 }

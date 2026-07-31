@@ -396,6 +396,54 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         ]);
 
 
+        Route::get('/users', [
+            ActivityLogController::class,
+            'users'
+        ]);
+
+
+        Route::get('/modules', [
+            ActivityLogController::class,
+            'modules'
+        ]);
+
+
+        Route::get('/actions', [
+            ActivityLogController::class,
+            'actions'
+        ]);
+
+
+        Route::get('/levels', [
+            ActivityLogController::class,
+            'levels'
+        ]);
+
+
+        Route::get('/chart-data', [
+            ActivityLogController::class,
+            'chartData'
+        ]);
+
+
+        Route::get('/charts', [
+            ActivityLogController::class,
+            'chartData'
+        ]);
+
+
+        Route::get('/logins', [
+            ActivityLogController::class,
+            'logins'
+        ]);
+
+
+        Route::get('/critical', [
+            ActivityLogController::class,
+            'critical'
+        ]);
+
+
         Route::get('/errors', [
             ActivityLogController::class,
             'errors'

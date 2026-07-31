@@ -1,5 +1,6 @@
 // src/pages/Inventory/InventoryPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package,
@@ -44,6 +45,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
+import { useToast } from '../../contexts/ToastContext';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getInventory,
@@ -66,11 +68,13 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('inventory');
   const statusConfig = {
     available: { label: 'Disponible', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
     low_stock: { label: 'Stock faible', class: 'bg-amber-50 text-amber-700 border-amber-200' },
@@ -91,6 +95,7 @@ const StatusBadge = ({ status }) => {
 // PRODUCT TYPE BADGE
 // ==========================================
 const ProductTypeBadge = ({ type }) => {
+  const { t, tc } = usePageI18n('inventory');
   const typeConfig = {
     finished: { label: 'Produit fini', class: 'bg-blue-50 text-blue-700 border-blue-200' },
     raw: { label: 'Matière première', class: 'bg-purple-50 text-purple-700 border-purple-200' },
@@ -179,7 +184,7 @@ const InventoryCard = ({ item, onView, onEdit, onDelete }) => {
         </div>
         <div className="flex items-center gap-1">
           <Calendar size={12} />
-          {new Date(item.lastUpdated).toLocaleDateString('fr-FR')}
+          {new Date(item.lastUpdated).toLocaleDateString(DATE_LOCALE)}
         </div>
         <div className="flex items-center gap-1">
           <AlertCircle size={12} />
@@ -190,7 +195,7 @@ const InventoryCard = ({ item, onView, onEdit, onDelete }) => {
         <div className="flex items-center gap-1">
           {item.expiryDate && (
             <span className="text-[10px] text-[#6D6D6D]">
-              Exp: {new Date(item.expiryDate).toLocaleDateString('fr-FR')}
+              Exp: {new Date(item.expiryDate).toLocaleDateString(DATE_LOCALE)}
             </span>
           )}
         </div>
@@ -214,6 +219,7 @@ const InventoryCard = ({ item, onView, onEdit, onDelete }) => {
 // INVENTORY TABLE ROW (Desktop)
 // ==========================================
 const InventoryTableRow = ({ item, onView, onEdit, onDelete, index }) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('inventory');
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -247,28 +253,28 @@ const InventoryTableRow = ({ item, onView, onEdit, onDelete, index }) => {
         <StatusBadge status={item.status} />
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {new Date(item.lastUpdated).toLocaleDateString('fr-FR')}
+        {new Date(item.lastUpdated).toLocaleDateString(DATE_LOCALE)}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1">
           <button
             onClick={() => onView(item)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(item)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={actions.edit}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onDelete(item)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -282,6 +288,7 @@ const InventoryTableRow = ({ item, onView, onEdit, onDelete, index }) => {
 // ADD STOCK MOVEMENT MODAL
 // ==========================================
 const StockMovementModal = ({ isOpen, onClose, onSave, isLoading }) => {
+  const { t, tc } = usePageI18n('inventory');
   const [formData, setFormData] = useState({
     productId: '',
     type: 'in',
@@ -448,7 +455,7 @@ const StockMovementModal = ({ isOpen, onClose, onSave, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Notes</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
@@ -472,7 +479,7 @@ const StockMovementModal = ({ isOpen, onClose, onSave, isLoading }) => {
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : 'Ajouter'}
+              {isLoading ? tc('saving') : tc('add')}
             </button>
           </div>
         </form>
@@ -485,6 +492,7 @@ const StockMovementModal = ({ isOpen, onClose, onSave, isLoading }) => {
 // VIEW INVENTORY DETAILS MODAL
 // ==========================================
 const ViewInventoryModal = ({ isOpen, onClose, item }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('inventory');
   if (!isOpen || !item) return null;
 
   return (
@@ -549,12 +557,12 @@ const ViewInventoryModal = ({ isOpen, onClose, item }) => {
             {item.expiryDate && (
               <div className="flex items-center gap-2">
                 <Calendar size={16} className="text-[#6D6D6D]" />
-                <span className="text-[#3D2F24]">Date d'expiration: {new Date(item.expiryDate).toLocaleDateString('fr-FR')}</span>
+                <span className="text-[#3D2F24]">Date d'expiration: {new Date(item.expiryDate).toLocaleDateString(DATE_LOCALE)}</span>
               </div>
             )}
             <div className="flex items-center gap-2">
               <Clock size={16} className="text-[#6D6D6D]" />
-              <span className="text-[#3D2F24]">Dernière mise à jour: {new Date(item.lastUpdated).toLocaleString('fr-FR')}</span>
+              <span className="text-[#3D2F24]">Dernière mise à jour: {new Date(item.lastUpdated).toLocaleString(DATE_LOCALE)}</span>
             </div>
             {item.batchNumber && (
               <div className="flex items-center gap-2">
@@ -583,7 +591,7 @@ const ViewInventoryModal = ({ isOpen, onClose, item }) => {
                   </div>
                   <div className="flex items-center gap-4 text-[#6D6D6D]">
                     <span>{movement.reason}</span>
-                    <span>{new Date(movement.date).toLocaleDateString('fr-FR')}</span>
+                    <span>{new Date(movement.date).toLocaleDateString(DATE_LOCALE)}</span>
                   </div>
                 </div>
               ))}
@@ -603,11 +611,58 @@ const ViewInventoryModal = ({ isOpen, onClose, item }) => {
 };
 
 // ==========================================
+// DELETE MODAL
+// ==========================================
+const DeleteModal = ({ isOpen, onClose, onConfirm, item, isLoading }) => {
+  const { t, tc } = usePageI18n('inventory');
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6"
+      >
+        <div className="flex items-center justify-center w-14 h-14 mx-auto bg-rose-50 rounded-full mb-4">
+          <Trash2 size={28} className="text-rose-500" />
+        </div>
+        <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
+          {t('inventory.modals.deleteTitle')}
+        </h3>
+        <p className="text-sm text-[#6D6D6D] text-center mt-2">
+          {t('inventory.modals.deleteMessage', { name: item?.name })}{' '}
+          {tc('irreversibleAction')}
+        </p>
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
+          >
+            {tc('cancel')}
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
+          >
+            {isLoading ? tc('deleting') : tc('delete')}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// ==========================================
 // MAIN INVENTORY PAGE
 // ==========================================
 const InventoryPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('inventory');
+  const navigate = useNavigate();
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('inventory');
+  const { showToast } = useToast();
 
   const [inventory, setInventory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -619,8 +674,11 @@ const InventoryPage = () => {
 
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -723,11 +781,11 @@ const InventoryPage = () => {
     type: item.type === 'finished' ? 'Produit fini' : item.type === 'raw' ? 'Matière première' : 'Emballage',
     status: item.status === 'available' ? 'Disponible' : item.status === 'low_stock' ? 'Stock faible' : item.status === 'out_of_stock' ? 'Rupture' : 'Expiré',
     stockValue: `${item.stockValue.toLocaleString()} DH`,
-    lastUpdated: new Date(item.lastUpdated).toLocaleDateString('fr-FR')
+    lastUpdated: new Date(item.lastUpdated).toLocaleDateString(DATE_LOCALE)
   });
 
   const summary = [
-    { label: 'Total produits', value: kpis.totalProducts },
+    { label: t('inventory.kpi.totalItems'), value: kpis.totalProducts },
     { label: 'Stock total', value: kpis.totalStock },
     { label: 'Stock faible', value: kpis.lowStock },
     { label: 'Rupture', value: kpis.outOfStock },
@@ -778,15 +836,26 @@ const InventoryPage = () => {
     handleViewItem(item);
   };
 
-  const handleDeleteItem = async (item) => {
-    if (window.confirm(`Supprimer l'article "${item.name}" ? Cette action est irréversible.`)) {
-      try {
-        await deleteInventoryItem(item.id);
-        await fetchInventory();
-        await fetchStatistics();
-      } catch (error) {
-        console.error('Error deleting item:', error);
-      }
+  const handleDeleteItem = (item) => {
+    setItemToDelete(item);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteInventoryItem(itemToDelete.id);
+      await fetchInventory();
+      await fetchStatistics();
+      showToast(t('inventory.messages.deleted'), 'success');
+      setIsDeleteModalOpen(false);
+      setItemToDelete(null);
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      showToast(t('inventory.messages.deleteError'), 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -814,8 +883,8 @@ const InventoryPage = () => {
           <ExportButtons
             data={filteredInventory}
             columns={columns}
-            title="Liste des produits en stock"
-            subtitle={`${filteredInventory.length} produits - Valeur totale: ${kpis.totalValue.toLocaleString()} DH`}
+            title="Liste des {t('orders.table.products')} en stock"
+            subtitle={`${filteredInventory.length} {t('orders.table.products')} - Valeur totale: ${kpis.totalValue.toLocaleString()} DH`}
             filename={`inventaire_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -834,14 +903,14 @@ const InventoryPage = () => {
             <button
               onClick={() => setViewMode('table')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue tableau"
+              title={tc('tableView')}
             >
               <List size={18} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue grille"
+              title={tc('gridView')}
             >
               <Grid size={18} />
             </button>
@@ -849,7 +918,7 @@ const InventoryPage = () => {
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -858,7 +927,7 @@ const InventoryPage = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-        <KPICard icon={Package} title="Total produits" value={kpis.totalProducts} color="blue" />
+        <KPICard icon={Package} title={t('inventory.kpi.totalItems')} value={kpis.totalProducts} color="blue" />
         <KPICard icon={Box} title="Stock total" value={kpis.totalStock} color="indigo" />
         <KPICard icon={AlertTriangle} title="Stock faible" value={kpis.lowStock} color="amber" />
         <KPICard icon={AlertCircle} title="Rupture" value={kpis.outOfStock} color="rose" />
@@ -926,9 +995,9 @@ const InventoryPage = () => {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Min</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Unité</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Mise à jour</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -948,6 +1017,8 @@ const InventoryPage = () => {
                         <Package size={40} className="text-[#ECE8E1]" />
                         <p className="text-sm text-[#6D6D6D]">Aucun produit trouvé</p>
                         <button
+                          type="button"
+                          onClick={() => navigate('/dashboard/products')}
                           className="text-sm text-[#B8863B] font-medium hover:underline"
                         >
                           Ajouter un produit
@@ -1030,7 +1101,7 @@ const InventoryPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
             Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} produits
+            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} {t('orders.table.products')}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -1088,6 +1159,20 @@ const InventoryPage = () => {
               setSelectedItem(null);
             }}
             item={selectedItem}
+          />
+        )}
+
+        {isDeleteModalOpen && itemToDelete && (
+          <DeleteModal
+            key="delete-modal"
+            isOpen={isDeleteModalOpen}
+            onClose={() => {
+              setIsDeleteModalOpen(false);
+              setItemToDelete(null);
+            }}
+            onConfirm={confirmDeleteItem}
+            item={itemToDelete}
+            isLoading={isDeleting}
           />
         )}
       </AnimatePresence>

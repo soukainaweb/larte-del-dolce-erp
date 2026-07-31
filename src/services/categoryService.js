@@ -5,6 +5,66 @@ import api from "./api";
 // Category API Service
 // ==========================================
 
+const toBoolean = (value, defaultValue = false) => {
+  if (value === undefined || value === null || value === '') return defaultValue;
+  if (typeof value === 'boolean') return value;
+  if (value === 1 || value === '1' || value === 'true') return true;
+  if (value === 0 || value === '0' || value === 'false') return false;
+  return !!value;
+};
+
+const normalizeParentId = (value) => {
+  if (value === undefined || value === null || value === '') return null;
+  return value;
+};
+
+/**
+ * Map frontend category form data to Laravel-validated snake_case payload.
+ */
+export const buildCategoryPayload = (data = {}) => {
+  const payload = {
+    name: data.name,
+    name_ar: data.nameAr ?? data.name_ar ?? null,
+    code: data.code,
+    description: data.description ?? null,
+    icon: data.icon ?? null,
+    color: data.color ?? null,
+    status: data.status ?? 'active',
+    visible: toBoolean(data.visible, true),
+    featured: toBoolean(data.featured, false),
+    display_order: Number(data.displayOrder ?? data.display_order ?? 0),
+    parent_id: normalizeParentId(data.parentId ?? data.parentCategory ?? data.parent_id),
+    show_on_pos: toBoolean(data.showOnPOS ?? data.show_on_pos, true),
+    available_online: toBoolean(data.availableOnline ?? data.available_online, true),
+  };
+
+  if (data.image instanceof File) {
+    payload.image = data.image;
+  }
+
+  return payload;
+};
+
+const appendCategoryFormData = (formData, payload) => {
+  Object.entries(payload).forEach(([key, value]) => {
+    if (key === 'image') {
+      if (value instanceof File) {
+        formData.append('image', value);
+      }
+      return;
+    }
+
+    if (value === null || value === undefined) return;
+
+    if (typeof value === 'boolean') {
+      formData.append(key, value ? '1' : '0');
+      return;
+    }
+
+    formData.append(key, value);
+  });
+};
+
 /**
  * Fetch all categories with optional filters, sorting, and pagination
  * @param {Object} params - Query parameters (page, per_page, search, status, sort_by, sort_order)
@@ -52,21 +112,17 @@ export const getCategoryBySlug = (slug) => {
  * @returns {Promise} - Axios response
  */
 export const createCategory = (data) => {
-  // Handle file upload with FormData
-  if (data.image && data.image instanceof File) {
+  const payload = buildCategoryPayload(data);
+
+  if (payload.image instanceof File) {
     const formData = new FormData();
-    Object.keys(data).forEach(key => {
-      if (key === 'image' && data.image instanceof File) {
-        formData.append('image', data.image);
-      } else {
-        formData.append(key, data[key]);
-      }
-    });
+    appendCategoryFormData(formData, payload);
     return api.post("/categories", formData, {
       headers: { "Content-Type": "multipart/form-data" }
     });
   }
-  return api.post("/categories", data);
+
+  return api.post("/categories", payload);
 };
 
 /**
@@ -76,22 +132,18 @@ export const createCategory = (data) => {
  * @returns {Promise} - Axios response
  */
 export const updateCategory = (id, data) => {
-  // Handle file upload with FormData
-  if (data.image && data.image instanceof File) {
+  const payload = buildCategoryPayload(data);
+
+  if (payload.image instanceof File) {
     const formData = new FormData();
-    Object.keys(data).forEach(key => {
-      if (key === 'image' && data.image instanceof File) {
-        formData.append('image', data.image);
-      } else {
-        formData.append(key, data[key]);
-      }
-    });
+    appendCategoryFormData(formData, payload);
     formData.append("_method", "PUT");
     return api.post(`/categories/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" }
     });
   }
-  return api.put(`/categories/${id}`, data);
+
+  return api.put(`/categories/${id}`, payload);
 };
 
 /**

@@ -59,9 +59,11 @@ const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
 const FONT_NUMBER = "'Inter', sans-serif";
 
+const LOCALE = 'ar-SA';
+
 const formatLocaleNumber = (value, fallback = 0) => {
   const num = Number(value ?? fallback);
-  return (Number.isFinite(num) ? num : fallback).toLocaleString();
+  return (Number.isFinite(num) ? num : fallback).toLocaleString(LOCALE);
 };
 
 
@@ -226,7 +228,7 @@ const AnimatedNumber = ({ value, isCurrency }) => {
 
   return (
     <span style={{ fontFamily: FONT_NUMBER, fontWeight: 600 }}>
-      {isCurrency ? `SAR ${display.toLocaleString()}` : display.toLocaleString()}
+      {isCurrency ? `SAR ${display.toLocaleString(LOCALE)}` : display.toLocaleString(LOCALE)}
     </span>
   );
 };
@@ -305,6 +307,7 @@ const MicroChart = ({ data, isPositive }) => {
 // Activity Tooltip
 // ==========================================
 const ActivityTooltip = ({ active, payload, label }) => {
+  const { t } = useTranslation();
   if (!active || !payload || !payload.length) return null;
   const row = payload[0]?.payload || {};
   return (
@@ -315,19 +318,19 @@ const ActivityTooltip = ({ active, payload, label }) => {
       <span className="text-[11px] font-bold text-[#202020] block mb-2">{label}</span>
       <div className="space-y-1 text-[11px]">
         <div className="flex justify-between gap-4">
-          <span className="text-[#707070]">Chiffre d'affaires</span>
-          <span className="font-semibold text-[#C6923B]">SAR {(row.revenue ?? 0).toLocaleString()}</span>
+          <span className="text-[#707070]">{t('dashboard.kpiRevenue')}</span>
+          <span className="font-semibold text-[#C6923B]">SAR {(row.revenue ?? 0).toLocaleString(LOCALE)}</span>
         </div>
         <div className="flex justify-between gap-4">
-          <span className="text-[#707070]">Commandes</span>
+          <span className="text-[#707070]">{t('dashboard.kpiOrders')}</span>
           <span className="font-semibold text-[#202020]">{row.orders ?? 0}</span>
         </div>
         <div className="flex justify-between gap-4">
-          <span className="text-[#707070]">Production</span>
+          <span className="text-[#707070]">{t('dashboard.kpiProduction')}</span>
           <span className="font-semibold text-[#202020]">{row.production ?? 0}</span>
         </div>
         <div className="flex justify-between gap-4">
-          <span className="text-[#707070]">Factures</span>
+          <span className="text-[#707070]">{t('dashboard.kpiInvoices')}</span>
           <span className="font-semibold text-[#202020]">{row.invoices ?? 0}</span>
         </div>
       </div>
@@ -381,12 +384,13 @@ const AnalyticsChart = ({ labels, series1, series2, series3, series4 }) => {
 // Distribution Tooltip
 // ==========================================
 const DistributionTooltip = ({ active, payload }) => {
+  const { t } = useTranslation();
   if (!active || !payload || !payload.length) return null;
   const item = payload[0];
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-lg shadow-lg px-3 py-2" style={{ fontFamily: FONT_BODY }}>
       <span className="text-[11px] font-semibold" style={{ color: item.payload.color }}>{item.name}</span>
-      <span className="block text-xs font-bold text-[#202020]">{item.value} commandes</span>
+      <span className="block text-xs font-bold text-[#202020]">{t('dashboard.distributionOrders', { count: item.value })}</span>
     </div>
   );
 };
@@ -404,13 +408,13 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
   fullName:
     user?.name ||
     `${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
-    'Utilisateur',
+    t('dashboard.defaultUser'),
 
   role:
     user?.role?.display_name ||
     user?.role?.name ||
     user?.role?.frontendKey ||
-    'Utilisateur',
+    t('dashboard.defaultUser'),
 
   status:
     user?.status || 'Offline',
@@ -494,8 +498,8 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
       const firstReason = failures[0]?.reason;
       const isForbidden = firstReason?.response?.status === 403;
       const message = isForbidden
-        ? 'Accès au tableau de bord refusé. Demandez à un administrateur la permission « dashboard.view ».'
-        : getApiErrorMessage(firstReason, 'Impossible de joindre le serveur. Vérifiez que l\'API Laravel est démarrée.');
+        ? t('dashboard.accessDenied')
+        : getApiErrorMessage(firstReason, t('dashboard.serverUnreachable'));
       setError(message);
       if (!isForbidden) {
         showToast(message, 'error');
@@ -504,13 +508,13 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
     } else if (failures.length > 0) {
       const timedOut = failures.some((failure) => failure.reason?.code === 'ECONNABORTED');
       const message = timedOut
-        ? 'Certaines sections du tableau de bord ont expiré. Les données disponibles sont affichées.'
-        : 'Certaines sections du tableau de bord n\'ont pas pu être chargées.';
+        ? t('dashboard.partialLoadTimeout')
+        : t('dashboard.partialLoadFailed');
       showToast(message, 'info');
     }
 
     setLoading(false);
-  }, [showToast]);
+  }, [showToast, t]);
 
   // ===== INITIAL LOAD =====
   useEffect(() => {
@@ -549,9 +553,29 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
     : (Array.isArray(FALLBACK_DATA.notifications) ? FALLBACK_DATA.notifications : []);
 
   // ===== HANDLERS =====
-  const handleQuickAction = (route, callback) => {
-    if (callback) callback();
-    navigate(route);
+  const handleQuickAction = (action) => {
+    switch (action) {
+      case 'newOrder':
+        navigate('/dashboard/orders', { state: { openAddModal: true } });
+        break;
+      case 'newCustomer':
+        navigate('/dashboard/customers', { state: { openAddModal: true } });
+        break;
+      case 'newInvoice':
+        navigate('/dashboard/invoices', { state: { openAddModal: true } });
+        break;
+      case 'startProduction':
+        navigate('/dashboard/production', { state: { openAddModal: true } });
+        break;
+      case 'warehouse':
+        navigate('/dashboard/warehouse');
+        break;
+      case 'generateReport':
+        navigate('/dashboard/reports', { state: { openReportsTab: true } });
+        break;
+      default:
+        break;
+    }
   };
 
   const handlePeriodChange = (period) => {
@@ -574,6 +598,14 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
     window.print();
   };
 
+  const handleViewOrder = (order) => {
+    navigate('/dashboard/orders', { state: { viewOrderId: order.id } });
+  };
+
+  const handleEditOrder = (order) => {
+    navigate('/dashboard/orders', { state: { editOrderId: order.id } });
+  };
+
   const confirmDeleteOrder = async () => {
     if (!orderPendingDelete?.id) {
       setOrderPendingDelete(null);
@@ -592,11 +624,29 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
 
   // ===== DISTRIBUTION DATA =====
   const distributionData = distribution ? [
-    { name: 'En attente', value: distribution.enAttente || 0, color: '#F59E0B' },
-    { name: 'En production', value: distribution.enProduction || 0, color: '#F97316' },
-    { name: 'Prêtes', value: distribution.pretes || 0, color: '#C6923B' },
-    { name: 'Livrées', value: distribution.livrees || 0, color: '#22C55E' },
+    { name: t('dashboard.distributionPending'), value: distribution.enAttente || 0, color: '#F59E0B' },
+    { name: t('dashboard.distributionInProduction'), value: distribution.enProduction || 0, color: '#F97316' },
+    { name: t('dashboard.distributionReady'), value: distribution.pretes || 0, color: '#C6923B' },
+    { name: t('dashboard.distributionDelivered'), value: distribution.livrees || 0, color: '#22C55E' },
   ] : [];
+
+  const kpiCards = [
+    { key: 'orders', title: t('dashboard.kpiTodayOrders'), icon: ShoppingBag, color: 'bg-amber-500', isCurrency: false },
+    { key: 'production', title: t('dashboard.kpiPendingOrders'), icon: Layers, color: 'bg-orange-500', isCurrency: false },
+    { key: 'deliveries', title: t('dashboard.kpiCompletedOrders'), icon: Truck, color: 'bg-emerald-500', isCurrency: false },
+    { key: 'revenue', title: t('dashboard.kpiRevenue'), icon: DollarSign, color: 'bg-[#C6923B]', isCurrency: true },
+    { key: 'customers', title: t('dashboard.kpiActiveCustomers'), icon: Users, color: 'bg-blue-500', isCurrency: false },
+    { key: 'invoices', title: t('dashboard.kpiPendingInvoices'), icon: FileText, color: 'bg-rose-500', isCurrency: false },
+  ];
+
+  const quickActions = [
+    { label: t('dashboard.quickActions.newOrder'), icon: PlusCircle, action: 'newOrder' },
+    { label: t('dashboard.quickActions.newCustomer'), icon: UserPlus, action: 'newCustomer' },
+    { label: t('dashboard.quickActions.newInvoice'), icon: FilePlus, action: 'newInvoice' },
+    { label: t('dashboard.quickActions.startProduction'), icon: Layers, action: 'startProduction' },
+    { label: t('dashboard.quickActions.warehouse'), icon: Package, action: 'warehouse' },
+    { label: t('dashboard.quickActions.generateReport'), icon: BarChart3, action: 'generateReport' },
+  ];
 
   // ===== LOADING STATE =====
   if (loading) {
@@ -624,7 +674,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
               onClick={handleRefresh}
               className="px-4 py-2 text-sm font-semibold text-white bg-[#C6923B] rounded-lg hover:bg-[#B8863B] transition-colors"
             >
-              Réessayer
+              {t('dashboard.retry')}
             </button>
           </div>
         </div>
@@ -640,9 +690,9 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
           ========================================== */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white border border-[#ECE8E1] p-6 rounded-[18px] shadow-sm">
         <div>
-          <span className="text-xs font-semibold tracking-wider uppercase text-[#C6923B]">Système ERP L'arte</span>
+          <span className="text-xs font-semibold tracking-wider uppercase text-[#C6923B]">{t('dashboard.systemLabel')}</span>
           <h1 className="text-2xl font-bold tracking-tight text-[#202020] mt-0.5" style={{ fontFamily: FONT_HEADING }}>
-            Bienvenue, {activeUser.fullName || 'Utilisateur'}
+            {t('dashboard.welcome', { name: activeUser.fullName || t('dashboard.defaultUser') })}
           </h1>
           <div className="flex items-center gap-2 mt-1.5 text-sm text-[#707070]">
             <span className="font-medium">
@@ -650,7 +700,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
             </span>
             <span className={`inline-block w-1.5 h-1.5 rounded-full ${activeUser.status === 'Online' ? 'bg-[#22C55E]' : 'bg-[#B9B4AC]'}`} />
             <span className={`text-[12px] font-medium ${activeUser.status === 'Online' ? 'text-[#22C55E]' : 'text-[#B9B4AC]'}`}>
-              {activeUser.status === 'Online' ? 'En ligne' : activeUser.status || 'Déconnecté'}
+              {activeUser.status === 'Online' ? t('common.online') : t('common.offline')}
             </span>
           </div>
         </div>
@@ -661,10 +711,10 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
           </div>
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-[#707070] uppercase tracking-wide">
-              {currentDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+              {currentDate.toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'short' })}
             </span>
             <span className="text-lg font-bold tracking-tight text-[#202020]" style={{ fontFamily: FONT_NUMBER }}>
-              {currentDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              {currentDate.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </span>
           </div>
         </div>
@@ -685,7 +735,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                   : 'text-[#707070] hover:text-[#202020] hover:bg-[#F8F7F4]'
               }`}
             >
-              {period === 'Today' ? "Aujourd'hui" : period === 'Week' ? 'Cette semaine' : period === 'Month' ? 'Ce mois' : period === 'Quarter' ? 'Ce trimestre' : 'Cette année'}
+              {t(`dashboard.periodLabels.${period}`, period)}
             </button>
           ))}
         </div>
@@ -693,12 +743,12 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
           <button
             onClick={handleRefresh}
             className="p-2 text-[#707070] hover:text-[#202020] hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Actualiser"
+            title={t('common.refresh')}
           >
             <RefreshCw className="w-4 h-4" />
           </button>
           <span className="text-xs text-[#707070] font-medium px-3">
-            Scope actuel: <span className="text-[#C6923B] font-bold">{selectedPeriod}</span>
+            {t('dashboard.currentScope')}: <span className="text-[#C6923B] font-bold">{t(`dashboard.periodLabels.${selectedPeriod}`, selectedPeriod)}</span>
           </span>
         </div>
       </div>
@@ -707,14 +757,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
           KPI GRID (6 CARDS)
           ========================================== */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {[
-          { key: 'orders', title: 'Commandes du jour', icon: ShoppingBag, color: 'bg-amber-500', isCurrency: false },
-          { key: 'production', title: 'Commandes en attente', icon: Layers, color: 'bg-orange-500', isCurrency: false },
-          { key: 'deliveries', title: 'Commandes terminées', icon: Truck, color: 'bg-emerald-500', isCurrency: false },
-          { key: 'revenue', title: "Chiffre d'affaires", icon: DollarSign, color: 'bg-[#C6923B]', isCurrency: true },
-          { key: 'customers', title: 'Clients actifs', icon: Users, color: 'bg-blue-500', isCurrency: false },
-          { key: 'invoices', title: 'Factures en attente', icon: FileText, color: 'bg-rose-500', isCurrency: false }
-        ].map((card, idx) => {
+        {kpiCards.map((card, idx) => {
           const item = kpi?.[card.key];
 
           return (
@@ -750,7 +793,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                 {item?.trend?.length ? (
                   <MicroChart data={item.trend} isPositive={item.isPositive} />
                 ) : (
-                  <span className="text-[10px] text-[#B9B4AC] italic">Aucune donnée</span>
+                  <span className="text-[10px] text-[#B9B4AC] italic">{t('dashboard.noDataAvailable')}</span>
                 )}
               </div>
             </motion.div>
@@ -765,13 +808,13 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
         <div className="lg:col-span-2 bg-white border border-[#ECE8E1] p-6 rounded-[18px] shadow-sm">
           <div className="flex justify-between items-center border-b border-[#ECE8E1] pb-4">
             <div>
-              <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>Analyse d'activité</h3>
-              <p className="text-xs text-[#707070]">Suivi financier et volume de production</p>
+              <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>{t('dashboard.activityAnalysis')}</h3>
+              <p className="text-xs text-[#707070]">{t('dashboard.activityAnalysisSubtitle')}</p>
             </div>
             <div className="flex gap-4 text-xs font-semibold">
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#C6923B]" />
-                <span>Chiffre d'affaires (SAR)</span>
+                <span>{t('dashboard.revenueLabel')}</span>
               </div>
             </div>
           </div>
@@ -786,8 +829,8 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
 
         <div className="bg-white border border-[#ECE8E1] p-6 rounded-[18px] shadow-sm flex flex-col justify-between">
           <div>
-            <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>Répartition des commandes</h3>
-            <p className="text-xs text-[#707070]">Statut opérationnel en temps réel</p>
+            <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>{t('dashboard.orderDistribution')}</h3>
+            <p className="text-xs text-[#707070]">{t('dashboard.orderDistributionSubtitle')}</p>
           </div>
 
           <div className="relative flex justify-center items-center my-2 h-[160px]">
@@ -812,7 +855,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
             </ResponsiveContainer>
             <div className="absolute text-center pointer-events-none">
               <span className="text-2xl font-bold text-[#202020] block" style={{ fontFamily: FONT_NUMBER }}>{distribution?.total || 0}</span>
-              <span className="text-[10px] font-semibold text-[#707070] uppercase tracking-wider">Total</span>
+              <span className="text-[10px] font-semibold text-[#707070] uppercase tracking-wider">{t('common.total')}</span>
             </div>
           </div>
 
@@ -834,20 +877,14 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
           QUICK ACTIONS
           ========================================== */}
       <div className="bg-white border border-[#ECE8E1] p-4 rounded-[18px] shadow-sm">
-        <span className="text-xs font-bold text-[#707070] uppercase tracking-wider block mb-3">Actions rapides</span>
+        <span className="text-xs font-bold text-[#707070] uppercase tracking-wider block mb-3">{t('dashboard.quickActions.title')}</span>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { label: "Nouvelle commande", icon: PlusCircle, path: "/commandes/nouvelle" },
-            { label: "Nouveau client", icon: UserPlus, path: "/clients/nouveau" },
-            { label: "Nouvelle facture", icon: FilePlus, path: "/factures/nouvelle" },
-            { label: "Lancer Production", icon: Layers, path: "/production/lancer" },
-            { label: "Logistique / Entrepôt", icon: Package, path: "/entrepot" },
-            { label: "Générer Rapport", icon: BarChart3, path: "/rapports/generer" }
-          ].map((action, idx) => (
+          {quickActions.map((action, idx) => (
             <button
               key={idx}
-              onClick={() => handleQuickAction(action.path)}
-              className="flex flex-col items-center justify-center p-4 border border-[#ECE8E1] rounded-xl hover:border-[#C6923B] bg-[#F8F7F4] hover:bg-white transition-all group"
+              type="button"
+              onClick={() => handleQuickAction(action.action)}
+              className="flex flex-col items-center justify-center p-4 border border-[#ECE8E1] rounded-xl hover:border-[#C6923B] bg-[#F8F7F4] hover:bg-white hover:shadow-sm transition-all group cursor-pointer"
             >
               <action.icon className="w-5 h-5 text-[#707070] group-hover:text-[#C6923B] stroke-[1.5] transition-colors mb-2" />
               <span className="text-xs font-semibold text-[#202020] text-center line-clamp-1">{action.label}</span>
@@ -864,22 +901,22 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
           <div>
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>Dernières commandes</h3>
-                <p className="text-xs text-[#707070]">Flux transactionnel direct</p>
+                <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>{t('dashboard.recentOrders')}</h3>
+                <p className="text-xs text-[#707070]">{t('dashboard.recentOrdersSubtitle')}</p>
               </div>
-              <button onClick={() => navigate('/orders')} className="text-xs font-bold text-[#C6923B] hover:underline">Voir tout</button>
+              <button onClick={() => navigate('/orders')} className="text-xs font-bold text-[#C6923B] hover:underline">{t('dashboard.viewAll')}</button>
             </div>
 
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-[#ECE8E1] text-[#707070] font-semibold bg-[#F8F7F4]">
-                    <th className="p-3">N° Commande</th>
-                    <th className="p-3">Client</th>
-                    <th className="p-3">Représentant</th>
-                    <th className="p-3">Statut</th>
-                    <th className="p-3 text-right">Montant</th>
-                    <th className="p-3 text-center">Actions</th>
+                    <th className="p-3">{t('dashboard.table.orderId')}</th>
+                    <th className="p-3">{t('dashboard.table.customer')}</th>
+                    <th className="p-3">{t('dashboard.representative')}</th>
+                    <th className="p-3">{t('dashboard.table.status')}</th>
+                    <th className="p-3 text-right">{t('dashboard.table.amount')}</th>
+                    <th className="p-3 text-center">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#ECE8E1]">
@@ -901,11 +938,11 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                       <td className="p-3 text-right font-bold" style={{ fontFamily: FONT_NUMBER }}>SAR {formatLocaleNumber(order.amount)}</td>
                       <td className="p-3">
                         <div className="flex items-center justify-center gap-2">
-                          <button className="p-1 hover:text-[#C6923B]" title="Voir"><Eye className="w-3.5 h-3.5" /></button>
-                          <button className="p-1 hover:text-[#C6923B]" title="Modifier"><Edit2 className="w-3.5 h-3.5" /></button>
+                          <button type="button" onClick={() => handleViewOrder(order)} className="p-1 hover:text-[#C6923B]" title={t('common.view')}><Eye className="w-3.5 h-3.5" /></button>
+                          <button type="button" onClick={() => handleEditOrder(order)} className="p-1 hover:text-[#C6923B]" title={t('common.edit')}><Edit2 className="w-3.5 h-3.5" /></button>
                           <button
                             className="p-1 hover:text-[#EF4444]"
-                            title="Supprimer"
+                            title={t('common.delete')}
                             onClick={() => setOrderPendingDelete(order)}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -937,9 +974,9 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                   <div className="flex justify-between items-center mt-2 pt-2 border-t border-[#ECE8E1]">
                     <span className="font-bold text-sm" style={{ fontFamily: FONT_NUMBER }}>SAR {formatLocaleNumber(order.amount)}</span>
                     <div className="flex items-center gap-3">
-                      <button className="p-1 hover:text-[#C6923B]" title="Voir"><Eye className="w-4 h-4" /></button>
-                      <button className="p-1 hover:text-[#C6923B]" title="Modifier"><Edit2 className="w-4 h-4" /></button>
-                      <button className="p-1 hover:text-[#EF4444]" title="Supprimer" onClick={() => setOrderPendingDelete(order)}>
+                      <button type="button" onClick={() => handleViewOrder(order)} className="p-1 hover:text-[#C6923B]" title={t('common.view')}><Eye className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => handleEditOrder(order)} className="p-1 hover:text-[#C6923B]" title={t('common.edit')}><Edit2 className="w-4 h-4" /></button>
+                      <button className="p-1 hover:text-[#EF4444]" title={t('common.delete')} onClick={() => setOrderPendingDelete(order)}>
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -954,8 +991,8 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
           <div>
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>Notifications récentes</h3>
-                <p className="text-xs text-[#707070]">Journal système en direct</p>
+                <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>{t('dashboard.notifications')}</h3>
+                <p className="text-xs text-[#707070]">{t('dashboard.notificationsSubtitle')}</p>
               </div>
               <Bell className="w-4 h-4 text-[#707070]" />
             </div>
@@ -993,8 +1030,8 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div className="bg-white border border-[#ECE8E1] p-6 rounded-[18px] shadow-sm">
           <div className="mb-4">
-            <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>Production aujourd'hui</h3>
-            <p className="text-xs text-[#707070]">Suivi d'avancement des ateliers</p>
+            <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>{t('dashboard.productionToday')}</h3>
+            <p className="text-xs text-[#707070]">{t('dashboard.productionTodaySubtitle')}</p>
           </div>
           <div className="space-y-4">
             {displayProduction.map((prod, idx) => (
@@ -1008,7 +1045,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-1">
-                    <span className="text-xs font-bold text-[#202020] block truncate">{prod.name ?? 'Production'}</span>
+                    <span className="text-xs font-bold text-[#202020] block truncate">{prod.name ?? t('dashboard.kpiProduction')}</span>
                     <span className="text-xs font-bold text-[#C6923B]" style={{ fontFamily: FONT_NUMBER }}>{prod.progress ?? 0}%</span>
                   </div>
                   <div className="w-full bg-[#F8F7F4] h-1.5 rounded-full overflow-hidden border border-[#ECE8E1]/40">
@@ -1028,8 +1065,8 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
 
         <div className="bg-white border border-[#ECE8E1] p-6 rounded-[18px] shadow-sm">
           <div className="mb-4">
-            <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>Top produits</h3>
-            <p className="text-xs text-[#707070]">Performances des ventes</p>
+            <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>{t('dashboard.topProducts')}</h3>
+            <p className="text-xs text-[#707070]">{t('dashboard.topProductsSubtitle')}</p>
           </div>
           <div className="space-y-3">
             {displayTopProducts.map((item, idx) => (
@@ -1040,9 +1077,9 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                 onMouseLeave={() => setHoveredProduct(null)}
               >
                 <div className="flex justify-between text-xs">
-                  <span className="font-bold text-[#202020]">{idx + 1}. {item.name ?? 'Produit'}</span>
+                  <span className="font-bold text-[#202020]">{idx + 1}. {item.name ?? t('dashboard.table.product')}</span>
                   <span className="text-[#707070]" style={{ fontFamily: FONT_NUMBER }}>
-                    {item.units ?? 0} u. <span className="font-bold text-[#202020]">({formatLocaleNumber(item.amount)} SAR)</span>
+                    {item.units ?? 0} {t('dashboard.unitsAbbrev')} <span className="font-bold text-[#202020]">({formatLocaleNumber(item.amount)} SAR)</span>
                   </span>
                 </div>
                 <div className="w-full bg-[#F8F7F4] h-1.5 rounded-full overflow-hidden">
@@ -1062,7 +1099,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                       transition={{ duration: 0.15 }}
                       className="absolute -top-9 left-0 z-10 bg-[#202020] text-white text-[11px] rounded-lg px-2.5 py-1.5 shadow-lg whitespace-nowrap"
                     >
-                      {item.progress ?? 0}% du volume total · {item.units ?? 0} unités
+                      {t('dashboard.volumeShare', { percent: item.progress ?? 0, units: item.units ?? 0 })}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -1101,25 +1138,26 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
                 </button>
               </div>
               <h3 className="text-lg font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING }}>
-                Supprimer la commande ?
+                {t('dashboard.deleteOrderTitle')}
               </h3>
               <p className="text-sm text-[#707070] mt-1.5">
-                Vous êtes sur le point de supprimer la commande{' '}
-                <span className="font-semibold text-[#202020]">{orderPendingDelete.id}</span> de{' '}
-                <span className="font-semibold text-[#202020]">{orderPendingDelete.customer}</span>. Cette action est irréversible.
+                {t('dashboard.deleteOrderMessage', {
+                  id: orderPendingDelete.id,
+                  customer: orderPendingDelete.customer,
+                })}
               </p>
               <div className="flex gap-3 mt-5">
                 <button
                   onClick={() => setOrderPendingDelete(null)}
                   className="flex-1 py-2.5 rounded-xl border border-[#ECE8E1] text-sm font-semibold text-[#202020] hover:bg-[#F8F7F4] transition-colors"
                 >
-                  Annuler
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={confirmDeleteOrder}
                   className="flex-1 py-2.5 rounded-xl bg-rose-500 text-sm font-semibold text-white hover:bg-rose-600 transition-colors"
                 >
-                  Supprimer
+                  {t('common.delete')}
                 </button>
               </div>
             </motion.div>

@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { forgotPassword } from '../../services/authService';
 import { getApiErrorMessage } from '../../utils/apiHelpers';
 import AuthBrandPanel from '../../components/auth/AuthBrandPanel';
-import brandLogo from '../../constants/brandAssets';
+import AuthLogoMark from '../../components/auth/AuthLogoMark';
 
 const ForgotPassword = () => {
   const { t } = useTranslation();
@@ -47,7 +47,7 @@ const ForgotPassword = () => {
         <div className="flex-1 p-8 sm:p-10 lg:p-12 xl:p-16 flex flex-col justify-center">
           <div className="w-full max-w-md mx-auto">
             <div className="lg:hidden flex flex-col items-center gap-3 mb-10">
-              <img src={brandLogo} alt={t('common.appName')} className="w-20 h-20 object-contain" />
+              <AuthLogoMark size="mobile" alt={t('common.appName')} />
             </div>
 
             {!isSubmitted ? (

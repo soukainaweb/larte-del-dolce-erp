@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ActivityLog;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class ActivityLogger
@@ -21,15 +22,26 @@ class ActivityLogger
             return null;
         }
 
-        return ActivityLog::create([
-            'user_id' => $userId ?? auth()->id(),
-            'module' => $module,
-            'action' => $action,
-            'description' => $description,
-            'level' => $level,
-            'status' => $status,
-            'ip_address' => $ip ?? request()?->ip(),
-        ]);
+        try {
+            return ActivityLog::create([
+                'user_id' => $userId ?? auth()->id(),
+                'module' => $module,
+                'action' => $action,
+                'description' => $description,
+                'level' => $level,
+                'status' => $status,
+                'ip_address' => $ip ?? request()?->ip(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Activity log write failed', [
+                'module' => $module,
+                'action' => $action,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     public static function logModelEvent(

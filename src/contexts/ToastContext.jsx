@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Info, X } from 'lucide-react';
 
@@ -16,6 +16,18 @@ export const ToastProvider = ({ children }) => {
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => removeToast(id), duration);
   }, [removeToast]);
+
+  useEffect(() => {
+    const handleGlobalToast = (event) => {
+      const { message, type = 'error' } = event.detail || {};
+      if (message) {
+        showToast(message, type);
+      }
+    };
+
+    window.addEventListener('app:toast', handleGlobalToast);
+    return () => window.removeEventListener('app:toast', handleGlobalToast);
+  }, [showToast]);
 
   const icons = {
     success: CheckCircle,

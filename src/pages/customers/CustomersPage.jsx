@@ -1,5 +1,6 @@
 // src/pages/Customers/CustomersPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
+import { useTranslation } from 'react-i18next';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getCustomers,
@@ -37,22 +39,25 @@ import {
   getCustomerStatuses,
   getCustomerOrders
 } from '../../services/customerService';
-import { unwrapData, normalizeCustomerList, normalizeCustomerRecord } from '../../utils/apiHelpers';
+import { unwrapData, normalizeCustomerList, normalizeCustomerRecord, getApiErrorMessage } from '../../utils/apiHelpers';
+import { useToast } from '../../contexts/ToastContext';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
+  const { t } = useTranslation();
   const statusConfig = {
-    active: { label: 'Actif', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    inactive: { label: 'Inactif', class: 'bg-gray-50 text-gray-600 border-gray-200' },
-    suspended: { label: 'Suspendu', class: 'bg-amber-50 text-amber-700 border-amber-200' }
+    active: { label: t('common.active'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    inactive: { label: t('common.inactive'), class: 'bg-gray-50 text-gray-600 border-gray-200' },
+    suspended: { label: t('common.statuses.suspended'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
   };
 
   const key = String(status ?? 'inactive').toLowerCase();
@@ -69,9 +74,10 @@ const StatusBadge = ({ status }) => {
 // TYPE BADGE
 // ==========================================
 const TypeBadge = ({ type }) => {
+  const { t } = useTranslation();
   const typeConfig = {
-    enterprise: { label: 'Entreprise', class: 'bg-blue-50 text-blue-700 border-blue-200' },
-    individual: { label: 'Particulier', class: 'bg-purple-50 text-purple-700 border-purple-200' }
+    enterprise: { label: t('customers.types.enterprise'), class: 'bg-blue-50 text-blue-700 border-blue-200' },
+    individual: { label: t('customers.types.individual'), class: 'bg-purple-50 text-purple-700 border-purple-200' }
   };
 
   const config = typeConfig[type] || typeConfig.individual;
@@ -87,6 +93,7 @@ const TypeBadge = ({ type }) => {
 // CLIENT CARD (Mobile)
 // ==========================================
 const ClientCard = ({ client, onEdit, onDelete, onView }) => {
+  const { tc } = usePageI18n('customers');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
@@ -107,18 +114,18 @@ const ClientCard = ({ client, onEdit, onDelete, onView }) => {
       <div className="grid grid-cols-2 gap-2 text-xs text-[#6D6D6D]">
         <div className="flex items-center gap-1">
           <Phone size={12} />
-          {client.phone || 'Non renseigné'}
+          {client.phone || tc('notProvided')}
         </div>
         <div className="flex items-center gap-1">
           <MapPin size={12} />
-          {client.city || 'Non renseigné'}
+          {client.city || tc('notProvided')}
         </div>
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#ECE8E1]">
         <div className="text-xs text-[#6D6D6D]">
           <span className="flex items-center gap-1">
             <Calendar size={12} />
-            {client.createdAt ? new Date(client.createdAt).toLocaleDateString('fr-FR') : '—'}
+            {client.createdAt ? new Date(client.createdAt).toLocaleDateString(DATE_LOCALE) : '—'}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -141,6 +148,7 @@ const ClientCard = ({ client, onEdit, onDelete, onView }) => {
 // CLIENT TABLE ROW (Desktop)
 // ==========================================
 const ClientTableRow = ({ client, onEdit, onDelete, onView, index }) => {
+  const { t } = useTranslation();
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -167,28 +175,28 @@ const ClientTableRow = ({ client, onEdit, onDelete, onView, index }) => {
         <StatusBadge status={client.status} />
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {client.createdAt ? new Date(client.createdAt).toLocaleDateString('fr-FR') : '—'}
+        {client.createdAt ? new Date(client.createdAt).toLocaleDateString(DATE_LOCALE) : '—'}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1">
           <button
             onClick={() => onView(client)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={t('common.view')}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(client)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={t('common.edit')}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onDelete(client)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={t('common.delete')}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -202,6 +210,7 @@ const ClientTableRow = ({ client, onEdit, onDelete, onView, index }) => {
 // CLIENT MODAL
 // ==========================================
 const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -261,9 +270,9 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.name) newErrors.name = 'Le nom est requis';
-    if (!formData.email) newErrors.email = 'L\'email est requis';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email invalide';
+    if (!formData.name) newErrors.name = t('customers.validation.nameRequired');
+    if (!formData.email) newErrors.email = t('customers.validation.emailRequired');
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = t('common.emailInvalid');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -285,7 +294,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            {client ? 'Modifier le client' : 'Ajouter un client'}
+            {client ? t('customers.modals.editTitle') : t('customers.modals.addTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -298,7 +307,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Nom *</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.name')} *</label>
               <input
                 type="text"
                 name="name"
@@ -311,7 +320,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
               {errors.name && <p className="text-xs text-rose-500 mt-1">{errors.name}</p>}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Email *</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.email')} *</label>
               <input
                 type="email"
                 name="email"
@@ -327,7 +336,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Téléphone</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.phone')}</label>
               <input
                 type="tel"
                 name="phone"
@@ -337,21 +346,21 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Type</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.type')}</label>
               <select
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="individual">Particulier</option>
-                <option value="enterprise">Entreprise</option>
+                <option value="individual">{t('customers.types.individual')}</option>
+                <option value="enterprise">{t('customers.types.enterprise')}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Adresse</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.address')}</label>
             <input
               type="text"
               name="address"
@@ -363,7 +372,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Ville</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.city')}</label>
               <input
                 type="text"
                 name="city"
@@ -373,7 +382,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Pays</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.country')}</label>
               <input
                 type="text"
                 name="country"
@@ -386,7 +395,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">N° TVA</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.taxId')}</label>
               <input
                 type="text"
                 name="taxId"
@@ -396,7 +405,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Site web</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.website')}</label>
               <input
                 type="text"
                 name="website"
@@ -408,7 +417,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Notes</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
@@ -419,16 +428,16 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Statut</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.status')}</label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="suspended">Suspendu</option>
+              <option value="active">{t('common.active')}</option>
+              <option value="inactive">{t('common.inactive')}</option>
+              <option value="suspended">{t('common.statuses.suspended')}</option>
             </select>
           </div>
 
@@ -438,14 +447,14 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : client ? 'Mettre à jour' : 'Ajouter'}
+              {isLoading ? t('common.saving') : client ? t('common.update') : t('common.add')}
             </button>
           </div>
         </form>
@@ -458,6 +467,7 @@ const ClientModal = ({ isOpen, onClose, onSave, client, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, client, isLoading }) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
@@ -472,28 +482,25 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, client, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer le client ?
+          {t('customers.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
-          Vous êtes sur le point de supprimer le client{' '}
-          <span className="font-semibold text-[#3D2F24]">
-            {client?.name}
-          </span>.
-          Cette action est irréversible.
+          {t('customers.modals.deleteMessage', { name: client?.name })}{' '}
+          {t('common.irreversibleAction')}
         </p>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
           >
-            {isLoading ? 'Suppression...' : 'Supprimer'}
+            {isLoading ? t('common.deleting') : t('common.delete')}
           </button>
         </div>
       </motion.div>
@@ -505,6 +512,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, client, isLoading }) => {
 // CLIENT DETAILS MODAL
 // ==========================================
 const ClientDetailsModal = ({ isOpen, onClose, client }) => {
+  const { t } = useTranslation();
   if (!isOpen || !client) return null;
 
   return (
@@ -517,7 +525,7 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails du client
+            {t('customers.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -561,7 +569,7 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
             {client.taxId && (
               <div className="flex items-center gap-3 text-sm">
                 <Building size={18} className="text-[#6D6D6D]" />
-                <span className="text-[#3D2F24]">N° TVA: {client.taxId}</span>
+                <span className="text-[#3D2F24]">{t('common.taxId')}: {client.taxId}</span>
               </div>
             )}
             {client.website && (
@@ -572,7 +580,7 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
             )}
             <div className="flex items-center gap-3 text-sm">
               <Calendar size={18} className="text-[#6D6D6D]" />
-              <span className="text-[#3D2F24]">Créé le {client.createdAt ? new Date(client.createdAt).toLocaleDateString('fr-FR') : '—'}</span>
+              <span className="text-[#3D2F24]">{t('common.createdOn', { date: client.createdAt ? new Date(client.createdAt).toLocaleDateString(DATE_LOCALE) : '—' })}</span>
             </div>
             {client.notes && (
               <div className="flex items-start gap-3 text-sm">
@@ -586,7 +594,7 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {t('common.close')}
           </button>
         </div>
       </motion.div>
@@ -599,7 +607,10 @@ const ClientDetailsModal = ({ isOpen, onClose, client }) => {
 // ==========================================
 const CustomersPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('customers');
+  const { title, subtitle, searchPlaceholder, t, tc, commonStatus } = usePageI18n('customers');
+  const { showToast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -649,6 +660,12 @@ const CustomersPage = () => {
     fetchCustomers();
   }, [currentPage, itemsPerPage, searchTerm, typeFilter, statusFilter]);
 
+  useEffect(() => {
+    if (!location.state?.openAddModal) return;
+    setIsCreateModalOpen(true);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state?.openAddModal, navigate, location.pathname]);
+
   // Fetch KPIs from statistics API
   const [kpis, setKpis] = useState({
     total: 0,
@@ -692,38 +709,38 @@ const CustomersPage = () => {
   // EXPORT CONFIGURATION
   // ==========================================
   const columns = [
-    { label: 'Nom', accessor: 'name', width: 20 },
-    { label: 'Email', accessor: 'email', width: 20 },
-    { label: 'Téléphone', accessor: 'phone', width: 15 },
-    { label: 'Type', accessor: 'type', width: 12 },
-    { label: 'Statut', accessor: 'status', width: 12 },
-    { label: 'Ville', accessor: 'city', width: 10 },
-    { label: 'Pays', accessor: 'country', width: 6 },
-    { label: 'Date d\'inscription', accessor: 'createdAt', width: 15 }
+    { label: t('customers.table.name'), accessor: 'name', width: 20 },
+    { label: t('customers.table.email'), accessor: 'email', width: 20 },
+    { label: t('customers.table.phone'), accessor: 'phone', width: 15 },
+    { label: t('common.type'), accessor: 'type', width: 12 },
+    { label: t('customers.table.status'), accessor: 'status', width: 12 },
+    { label: t('customers.table.city'), accessor: 'city', width: 10 },
+    { label: tc('country'), accessor: 'country', width: 6 },
+    { label: t('customers.table.registrationDate'), accessor: 'createdAt', width: 15 }
   ];
 
   const rowFormatter = (item) => ({
     name: item.name,
     email: item.email,
     phone: item.phone || '—',
-    type: item.type === 'enterprise' ? 'Entreprise' : 'Particulier',
-    status: item.status === 'active' ? 'Actif' : item.status === 'inactive' ? 'Inactif' : 'Suspendu',
+    type: item.type === 'enterprise' ? t('customers.types.enterprise') : t('customers.types.individual'),
+    status: commonStatus[item.status]?.label || item.status,
     city: item.city || '—',
     country: item.country || '—',
-    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString('fr-FR') : '—'
+    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString(DATE_LOCALE) : '—'
   });
 
   // Calculate summary
   const summary = useMemo(() => {
     return [
-      { label: 'Total clients', value: kpis.total },
-      { label: 'Actifs', value: kpis.active },
-      { label: 'Inactifs', value: kpis.inactive },
-      { label: 'Suspendus', value: kpis.suspended },
-      { label: 'Entreprises', value: kpis.enterprise },
-      { label: 'Particuliers', value: kpis.individual }
+      { label: t('customers.kpi.total'), value: kpis.total },
+      { label: t('customers.kpi.active'), value: kpis.active },
+      { label: commonStatus.inactive?.label, value: kpis.inactive },
+      { label: commonStatus.suspended?.label, value: kpis.suspended },
+      { label: t('customers.types.enterprise'), value: kpis.enterprise },
+      { label: t('customers.types.individual'), value: kpis.individual }
     ];
-  }, [kpis]);
+  }, [kpis, t, commonStatus]);
 
   // ==========================================
   // EXPORT HANDLERS
@@ -751,6 +768,7 @@ const CustomersPage = () => {
       await fetchStatistics();
     } catch (error) {
       console.error('Error creating client:', error);
+      showToast(getApiErrorMessage(error, t('customers.errors.save')), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -772,6 +790,7 @@ const CustomersPage = () => {
       await fetchStatistics();
     } catch (error) {
       console.error('Error updating client:', error);
+      showToast(getApiErrorMessage(error, t('customers.errors.save')), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -825,8 +844,8 @@ const CustomersPage = () => {
           <ExportButtons
             data={filteredClients}
             columns={columns}
-            title="Liste des clients"
-            subtitle={`${filteredClients.length} clients`}
+            title={t('customers.export.title')}
+            subtitle={t('customers.export.subtitle', { count: filteredClients.length })}
             filename={`clients_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -839,12 +858,12 @@ const CustomersPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <UserPlus size={18} />
-            Ajouter un client
+            {t('customers.modals.addTitle')}
           </button>
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={t('common.refresh')}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -870,10 +889,10 @@ const CustomersPage = () => {
               onChange={(e) => setTypeFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les types</option>
+              <option value="all">{t('common.allTypes')}</option>
               {uniqueTypes.map(type => (
                 <option key={type} value={type}>
-                  {type === 'enterprise' ? 'Entreprise' : 'Particulier'}
+                  {type === 'enterprise' ? t('customers.types.enterprise') : t('customers.types.individual')}
                 </option>
               ))}
             </select>
@@ -882,10 +901,10 @@ const CustomersPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="suspended">Suspendu</option>
+              <option value="all">{t('common.allStatuses')}</option>
+              <option value="active">{commonStatus.active?.label}</option>
+              <option value="inactive">{commonStatus.inactive?.label}</option>
+              <option value="suspended">{commonStatus.suspended?.label}</option>
             </select>
           </div>
         </div>
@@ -912,7 +931,7 @@ const CustomersPage = () => {
                   <td colSpan="7" className="text-center py-8">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                      <p className="text-sm text-[#6D6D6D]">Chargement des clients...</p>
+                      <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.customers') })}</p>
                     </div>
                   </td>
                 </tr>
@@ -921,12 +940,12 @@ const CustomersPage = () => {
                   <td colSpan="7" className="text-center py-8">
                     <div className="flex flex-col items-center gap-2">
                       <Users size={40} className="text-[#ECE8E1]" />
-                      <p className="text-sm text-[#6D6D6D]">Aucun client trouvé</p>
-                      <button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="text-sm text-[#B8863B] font-medium hover:underline"
-                      >
-                        Ajouter un client
+                      <p className="text-sm text-[#6D6D6D]">{t('customers.empty')}</p>
+                        <button
+                          onClick={() => setIsCreateModalOpen(true)}
+                          className="text-sm text-[#B8863B] font-medium hover:underline"
+                        >
+                          {t('customers.modals.addTitle')}
                       </button>
                     </div>
                   </td>
@@ -962,12 +981,12 @@ const CustomersPage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des clients...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.customers') })}</p>
           </div>
         ) : paginatedClients.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Users size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucun client trouvé</p>
+            <p className="text-sm text-[#6D6D6D]">{t('customers.empty')}</p>
           </div>
         ) : (
           paginatedClients.map((client) => (

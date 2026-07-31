@@ -90,6 +90,18 @@ const FONT_BODY = "'Inter', sans-serif";
 // CONSTANTS
 // ==========================================
 const CURRENCY = 'SAR';
+const LOCALE = 'ar-SA';
+
+const formatNumber = (value) => Number(value ?? 0).toLocaleString(LOCALE);
+
+const getFinanceStatusLabel = (status, t) => {
+  const statusMap = {
+    Paid: t('common.statuses.paid'),
+    Pending: t('common.pending'),
+    Overdue: t('common.statuses.overdue'),
+  };
+  return statusMap[status] || status;
+};
 
 // ==========================================
 // KPI CARD
@@ -123,7 +135,7 @@ const KPICard = ({ icon: Icon, title, value, change, subtitle, color, isCurrency
         )}
       </div>
       <p className="text-2xl font-bold text-[#3D2F24] mt-2">
-        {isCurrency ? `${value.toLocaleString()} ${CURRENCY}` : value}
+        {isCurrency ? `${formatNumber(value)} ${CURRENCY}` : formatNumber(value)}
       </p>
       <p className="text-xs text-[#6D6D6D]">{title}</p>
       {subtitle && <p className="text-[10px] text-[#6D6D6D] mt-1">{subtitle}</p>}
@@ -134,22 +146,22 @@ const KPICard = ({ icon: Icon, title, value, change, subtitle, color, isCurrency
 // ==========================================
 // FINANCIAL CHART
 // ==========================================
-const FinancialChart = ({ data }) => {
+const FinancialChart = ({ data, t }) => {
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-bold text-[#3D2F24]">Revenue vs Expenses</h3>
-          <p className="text-xs text-[#6D6D6D]">12 derniers mois</p>
+          <h3 className="text-sm font-bold text-[#3D2F24]">{t('finance.revenueVsExpenses')}</h3>
+          <p className="text-xs text-[#6D6D6D]">{t('finance.last12Months')}</p>
         </div>
         <div className="flex items-center gap-4 text-xs">
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full bg-[#B8863B]" />
-            Revenue
+            {t('finance.revenue')}
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full bg-rose-400" />
-            Expenses
+            {t('finance.expenses')}
           </span>
         </div>
       </div>
@@ -166,7 +178,7 @@ const FinancialChart = ({ data }) => {
                 borderRadius: '8px',
                 boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
               }}
-              formatter={(value) => [`${value.toLocaleString()} ${CURRENCY}`, '']}
+              formatter={(value) => [`${formatNumber(value)} ${CURRENCY}`, '']}
             />
             <Legend />
             <Line
@@ -176,7 +188,7 @@ const FinancialChart = ({ data }) => {
               strokeWidth={2.5}
               dot={{ fill: '#B8863B', strokeWidth: 2 }}
               activeDot={{ r: 6 }}
-              name="Revenue"
+              name={t('finance.revenue')}
             />
             <Line
               type="monotone"
@@ -185,7 +197,7 @@ const FinancialChart = ({ data }) => {
               strokeWidth={2.5}
               dot={{ fill: '#F43F5E', strokeWidth: 2 }}
               activeDot={{ r: 6 }}
-              name="Expenses"
+              name={t('finance.expenses')}
             />
           </ReLineChart>
         </ResponsiveContainer>
@@ -197,10 +209,10 @@ const FinancialChart = ({ data }) => {
 // ==========================================
 // EXPENSE PIE CHART
 // ==========================================
-const ExpensePieChart = ({ data }) => {
+const ExpensePieChart = ({ data, t }) => {
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Répartition des dépenses</h3>
+      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('finance.expenseBreakdown')}</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <RePieChart>
@@ -244,9 +256,57 @@ const ExpensePieChart = ({ data }) => {
 };
 
 // ==========================================
+// TRANSACTION DETAILS MODAL
+// ==========================================
+const TransactionDetailsModal = ({ isOpen, onClose, transaction, t }) => {
+  if (!isOpen || !transaction) return null;
+
+  const isPositive = transaction.amount > 0;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
+      >
+        <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
+          <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
+            {t('common.details')}
+          </h3>
+          <button type="button" onClick={onClose} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
+            <X size={20} className="text-[#6D6D6D]" />
+          </button>
+        </div>
+        <div className="p-6 space-y-3 text-sm">
+          <div className="flex justify-between"><span className="text-[#6D6D6D]">{t('finance.table.id')}</span><span className="font-medium text-[#3D2F24]">{transaction.id}</span></div>
+          <div className="flex justify-between"><span className="text-[#6D6D6D]">{t('common.date')}</span><span className="text-[#3D2F24]">{transaction.date}</span></div>
+          <div className="flex justify-between"><span className="text-[#6D6D6D]">{t('finance.table.type')}</span><span className="text-[#3D2F24]">{transaction.type}</span></div>
+          <div className="flex justify-between"><span className="text-[#6D6D6D]">{t('finance.table.customerSupplier')}</span><span className="text-[#3D2F24]">{transaction.customer}</span></div>
+          <div className="flex justify-between"><span className="text-[#6D6D6D]">{t('finance.table.method')}</span><span className="text-[#3D2F24]">{transaction.method}</span></div>
+          <div className="flex justify-between"><span className="text-[#6D6D6D]">{t('finance.table.status')}</span><span className="text-[#3D2F24]">{getFinanceStatusLabel(transaction.status, t)}</span></div>
+          <div className="flex justify-between pt-2 border-t border-[#ECE8E1]">
+            <span className="text-[#6D6D6D]">{t('finance.table.amount')}</span>
+            <span className={`font-bold ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {isPositive ? '+' : ''}{formatNumber(transaction.amount)} {CURRENCY}
+            </span>
+          </div>
+        </div>
+        <div className="p-6 pt-0">
+          <button type="button" onClick={onClose} className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg">
+            {t('common.close')}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// ==========================================
 // TRANSACTION CARD (Mobile)
 // ==========================================
-const TransactionCard = ({ transaction }) => {
+const TransactionCard = ({ transaction, t, onView }) => {
   const isPositive = transaction.amount > 0;
 
   return (
@@ -258,19 +318,26 @@ const TransactionCard = ({ transaction }) => {
           transaction.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-200' :
           'bg-gray-50 text-gray-600 border-gray-200'
         }`}>
-          {transaction.status}
+          {getFinanceStatusLabel(transaction.status, t)}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-1 mt-2 text-xs text-[#6D6D6D]">
-        <span>Date: {transaction.date}</span>
-        <span>Type: {transaction.type}</span>
+        <span>{t('common.date')}: {transaction.date}</span>
+        <span>{t('finance.table.type')}: {transaction.type}</span>
       </div>
       <p className="text-sm font-medium text-[#3D2F24] mt-1">{transaction.customer}</p>
       <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#ECE8E1]">
         <span className="text-xs text-[#6D6D6D]">{transaction.method}</span>
-        <span className={`text-sm font-bold ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
-          {isPositive ? '+' : ''}{transaction.amount.toLocaleString()} {CURRENCY}
-        </span>
+        <div className="flex items-center gap-2">
+          {onView && (
+            <button type="button" onClick={() => onView(transaction)} className="p-1 hover:bg-white rounded-lg" title={t('common.view')}>
+              <Eye size={14} className="text-[#6D6D6D]" />
+            </button>
+          )}
+          <span className={`text-sm font-bold ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {isPositive ? '+' : ''}{formatNumber(transaction.amount)} {CURRENCY}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -279,7 +346,7 @@ const TransactionCard = ({ transaction }) => {
 // ==========================================
 // PENDING PAYMENT CARD
 // ==========================================
-const PendingPaymentCard = ({ payment, type }) => {
+const PendingPaymentCard = ({ payment, type, t }) => {
   return (
     <div className="bg-[#F8F7F4] rounded-lg p-3 border border-[#ECE8E1]">
       <div className="flex items-center justify-between">
@@ -287,13 +354,13 @@ const PendingPaymentCard = ({ payment, type }) => {
         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
           payment.status === 'Overdue' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'
         }`}>
-          {payment.status}
+          {getFinanceStatusLabel(payment.status, t)}
         </span>
       </div>
       <p className="text-sm text-[#3D2F24] mt-1">{type === 'customer' ? payment.customer : payment.supplier}</p>
       <div className="flex items-center justify-between mt-2">
-        <span className="text-xs text-[#6D6D6D]">Échéance: {payment.dueDate}</span>
-        <span className="text-sm font-bold text-[#3D2F24]">{payment.amount.toLocaleString()} {CURRENCY}</span>
+        <span className="text-xs text-[#6D6D6D]">{t('finance.dueDateLabel', { date: payment.dueDate })}</span>
+        <span className="text-sm font-bold text-[#3D2F24]">{formatNumber(payment.amount)} {CURRENCY}</span>
       </div>
     </div>
   );
@@ -329,20 +396,20 @@ const NotificationItem = ({ notification }) => {
 // ==========================================
 // TOP CUSTOMER CARD (Mobile)
 // ==========================================
-const TopCustomerCard = ({ customer }) => {
+const TopCustomerCard = ({ customer, t }) => {
   return (
     <div className="bg-[#F8F7F4] rounded-lg p-3 border border-[#ECE8E1]">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-[#3D2F24]">{customer.customer}</p>
-        <span className="text-xs font-medium text-[#6D6D6D]">{customer.orders} orders</span>
+        <span className="text-xs font-medium text-[#6D6D6D]">{t('finance.ordersCount', { count: customer.orders })}</span>
       </div>
       <div className="flex items-center justify-between mt-1 text-xs">
-        <span className="text-[#6D6D6D]">Revenue</span>
-        <span className="font-medium text-[#3D2F24]">{customer.revenue.toLocaleString()} {CURRENCY}</span>
+        <span className="text-[#6D6D6D]">{t('finance.revenue')}</span>
+        <span className="font-medium text-[#3D2F24]">{formatNumber(customer.revenue)} {CURRENCY}</span>
       </div>
       <div className="flex items-center justify-between text-xs">
-        <span className="text-[#6D6D6D]">Outstanding</span>
-        <span className="font-medium text-amber-600">{customer.outstanding.toLocaleString()} {CURRENCY}</span>
+        <span className="text-[#6D6D6D]">{t('finance.outstanding')}</span>
+        <span className="font-medium text-amber-600">{formatNumber(customer.outstanding)} {CURRENCY}</span>
       </div>
     </div>
   );
@@ -351,19 +418,19 @@ const TopCustomerCard = ({ customer }) => {
 // ==========================================
 // TOP SUPPLIER CARD (Mobile)
 // ==========================================
-const TopSupplierCard = ({ supplier }) => {
+const TopSupplierCard = ({ supplier, t }) => {
   return (
     <div className="bg-[#F8F7F4] rounded-lg p-3 border border-[#ECE8E1]">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-[#3D2F24]">{supplier.supplier}</p>
-        <span className="text-xs font-medium text-[#6D6D6D]">{supplier.purchases} purchases</span>
+        <span className="text-xs font-medium text-[#6D6D6D]">{t('finance.purchasesCount', { count: supplier.purchases })}</span>
       </div>
       <div className="flex items-center justify-between mt-1 text-xs">
-        <span className="text-[#6D6D6D]">Amount</span>
-        <span className="font-medium text-[#3D2F24]">{supplier.amount.toLocaleString()} {CURRENCY}</span>
+        <span className="text-[#6D6D6D]">{t('common.amount')}</span>
+        <span className="font-medium text-[#3D2F24]">{formatNumber(supplier.amount)} {CURRENCY}</span>
       </div>
       <div className="flex items-center justify-between text-xs">
-        <span className="text-[#6D6D6D]">Last Purchase</span>
+        <span className="text-[#6D6D6D]">{t('finance.lastPurchase')}</span>
         <span className="font-medium text-[#6D6D6D]">{supplier.lastPurchase}</span>
       </div>
     </div>
@@ -403,6 +470,8 @@ const FinancePage = () => {
   const [topCustomers, setTopCustomers] = useState([]);
   const [topSuppliers, setTopSuppliers] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 
   // Load all finance data
   const loadFinanceData = async () => {
@@ -449,36 +518,53 @@ const FinancePage = () => {
   // ==========================================
   // EXPORT CONFIGURATION
   // ==========================================
-  const columns = [
-    { label: 'ID', accessor: 'id', width: 10 },
-    { label: 'Date', accessor: 'date', width: 12 },
-    { label: 'Type', accessor: 'type', width: 12 },
-    { label: 'Client/Fournisseur', accessor: 'customer', width: 20 },
-    { label: 'Montant', accessor: 'amount', width: 15 },
-    { label: 'Méthode', accessor: 'method', width: 12 },
-    { label: 'Statut', accessor: 'status', width: 12 }
-  ];
+  const dateRangeLabels = useMemo(() => ({
+    today: t('common.periods.today'),
+    week: t('common.periods.week'),
+    month: t('common.periods.month'),
+    quarter: t('common.periods.quarter'),
+    year: t('common.periods.year'),
+  }), [t]);
+
+  const columns = useMemo(() => [
+    { label: t('finance.table.id'), accessor: 'id', width: 10 },
+    { label: t('finance.table.date'), accessor: 'date', width: 12 },
+    { label: t('finance.table.type'), accessor: 'type', width: 12 },
+    { label: t('finance.table.customerSupplier'), accessor: 'customer', width: 20 },
+    { label: t('finance.table.amount'), accessor: 'amount', width: 15 },
+    { label: t('finance.table.method'), accessor: 'method', width: 12 },
+    { label: t('finance.table.status'), accessor: 'status', width: 12 }
+  ], [t]);
 
   const rowFormatter = (item) => ({
     id: item.id,
     date: item.date,
     type: item.type,
     customer: item.customer,
-    amount: `${item.amount.toLocaleString()} ${CURRENCY}`,
+    amount: `${formatNumber(item.amount)} ${CURRENCY}`,
     method: item.method,
-    status: item.status
+    status: getFinanceStatusLabel(item.status, t)
   });
 
-  const summary = [
-    { label: 'Total Revenue', value: `${metrics.totalRevenue.toLocaleString()} ${CURRENCY}` },
-    { label: 'Total Expenses', value: `${metrics.totalExpenses.toLocaleString()} ${CURRENCY}` },
-    { label: 'Net Profit', value: `${metrics.netProfit.toLocaleString()} ${CURRENCY}` },
-    { label: 'Cash Balance', value: `${metrics.cashBalance.toLocaleString()} ${CURRENCY}` },
-    { label: 'Outstanding Payments', value: `${metrics.outstandingPayments.toLocaleString()} ${CURRENCY}` },
-    { label: 'Supplier Payments Due', value: `${metrics.supplierPaymentsDue.toLocaleString()} ${CURRENCY}` },
-    { label: "Today's Revenue", value: `${metrics.todayRevenue.toLocaleString()} ${CURRENCY}` },
-    { label: 'Monthly Revenue', value: `${metrics.monthlyRevenue.toLocaleString()} ${CURRENCY}` }
-  ];
+  const summary = useMemo(() => [
+    { label: t('finance.kpi.totalRevenue'), value: `${formatNumber(metrics.totalRevenue)} ${CURRENCY}` },
+    { label: t('finance.kpi.totalExpenses'), value: `${formatNumber(metrics.totalExpenses)} ${CURRENCY}` },
+    { label: t('finance.kpi.netProfit'), value: `${formatNumber(metrics.netProfit)} ${CURRENCY}` },
+    { label: t('finance.kpi.cashBalance'), value: `${formatNumber(metrics.cashBalance)} ${CURRENCY}` },
+    { label: t('finance.kpi.outstandingPayments'), value: `${formatNumber(metrics.outstandingPayments)} ${CURRENCY}` },
+    { label: t('finance.kpi.supplierPaymentsDue'), value: `${formatNumber(metrics.supplierPaymentsDue)} ${CURRENCY}` },
+    { label: t('finance.kpi.todayRevenue'), value: `${formatNumber(metrics.todayRevenue)} ${CURRENCY}` },
+    { label: t('finance.kpi.monthlyRevenue'), value: `${formatNumber(metrics.monthlyRevenue)} ${CURRENCY}` }
+  ], [metrics, t]);
+
+  const quickActions = useMemo(() => [
+    { label: t('finance.quickActions.createInvoice'), action: 'create_invoice', icon: FileText, color: '#B8863B' },
+    { label: t('finance.quickActions.receivePayment'), action: 'receive_payment', icon: CreditCard, color: '#22C55E' },
+    { label: t('finance.quickActions.addExpense'), action: 'add_expense', icon: Wallet, color: '#EF4444' },
+    { label: t('finance.quickActions.purchaseOrder'), action: 'purchase_order', icon: Package, color: '#3B82F6' },
+    { label: t('finance.quickActions.financialReports'), action: 'financial_reports', icon: BarChart3, color: '#8B5CF6' },
+    { label: t('finance.quickActions.accounting'), action: 'accounting', icon: Settings, color: '#F59E0B' }
+  ], [t]);
 
   // ==========================================
   // EXPORT HANDLERS
@@ -520,6 +606,11 @@ const FinancePage = () => {
     navigate(routes[action] || '/dashboard/finance');
   };
 
+  const handleViewTransaction = (transaction) => {
+    setSelectedTransaction(transaction);
+    setIsTransactionModalOpen(true);
+  };
+
   return (
     <div className="w-full min-h-screen bg-[#F8F7F4] text-[#202020] p-4 md:p-6" style={{ fontFamily: FONT_BODY }}>
       {/* Page Header */}
@@ -536,18 +627,20 @@ const FinancePage = () => {
             onChange={(e) => setDateRange(e.target.value)}
             className="px-3 py-2 text-sm border border-[#ECE8E1] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30"
           >
-            <option value="today">Aujourd'hui</option>
-            <option value="week">Cette semaine</option>
-            <option value="month">Ce mois</option>
-            <option value="quarter">Ce trimestre</option>
-            <option value="year">Cette année</option>
+            <option value="today">{t('common.periods.today')}</option>
+            <option value="week">{t('common.periods.week')}</option>
+            <option value="month">{t('common.periods.month')}</option>
+            <option value="quarter">{t('common.periods.quarter')}</option>
+            <option value="year">{t('common.periods.year')}</option>
           </select>
-          {/* Export Buttons */}
           <ExportButtons
             data={transactions}
             columns={columns}
-            title="Rapport financier"
-            subtitle={`Période: ${dateRange} - ${new Date().toLocaleDateString('fr-FR')}`}
+            title={t('finance.financialReport')}
+            subtitle={t('finance.periodLabel', {
+              period: dateRangeLabels[dateRange] || dateRange,
+              date: new Date().toLocaleDateString(LOCALE),
+            })}
             filename={`finance_report_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -558,60 +651,49 @@ const FinancePage = () => {
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={t('common.refresh')}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
-        <KPICard icon={TrendingUp} title="Total Revenue" value={metrics.totalRevenue} change={12} color="green" isCurrency />
-        <KPICard icon={Wallet} title="Total Expenses" value={metrics.totalExpenses} change={-3} color="rose" isCurrency />
-        <KPICard icon={DollarSign} title="Net Profit" value={metrics.netProfit} change={18} color="gold" isCurrency />
-        <KPICard icon={CreditCard} title="Cash Balance" value={metrics.cashBalance} color="teal" isCurrency />
-        <KPICard icon={Clock} title="Outstanding Payments" value={metrics.outstandingPayments} change={5} color="amber" isCurrency />
-        <KPICard icon={Building} title="Supplier Payments Due" value={metrics.supplierPaymentsDue} change={8} color="purple" isCurrency />
-        <KPICard icon={Calendar} title="Today's Revenue" value={metrics.todayRevenue} change={15} color="blue" isCurrency />
-        <KPICard icon={TrendingUp} title="Monthly Revenue" value={metrics.monthlyRevenue} change={22} color="emerald" isCurrency />
+        <KPICard icon={TrendingUp} title={t('finance.kpi.totalRevenue')} value={metrics.totalRevenue} change={12} color="green" isCurrency />
+        <KPICard icon={Wallet} title={t('finance.kpi.totalExpenses')} value={metrics.totalExpenses} change={-3} color="rose" isCurrency />
+        <KPICard icon={DollarSign} title={t('finance.kpi.netProfit')} value={metrics.netProfit} change={18} color="gold" isCurrency />
+        <KPICard icon={CreditCard} title={t('finance.kpi.cashBalance')} value={metrics.cashBalance} color="teal" isCurrency />
+        <KPICard icon={Clock} title={t('finance.kpi.outstandingPayments')} value={metrics.outstandingPayments} change={5} color="amber" isCurrency />
+        <KPICard icon={Building} title={t('finance.kpi.supplierPaymentsDue')} value={metrics.supplierPaymentsDue} change={8} color="purple" isCurrency />
+        <KPICard icon={Calendar} title={t('finance.kpi.todayRevenue')} value={metrics.todayRevenue} change={15} color="blue" isCurrency />
+        <KPICard icon={TrendingUp} title={t('finance.kpi.monthlyRevenue')} value={metrics.monthlyRevenue} change={22} color="emerald" isCurrency />
       </div>
 
-      {/* Financial Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-xl p-6 text-white shadow-lg">
-          <p className="text-sm font-medium text-white/80">Total Revenue</p>
-          <p className="text-2xl md:text-3xl font-bold mt-1">{metrics.totalRevenue.toLocaleString()} {CURRENCY}</p>
-          <p className="text-xs text-white/70 mt-2">↑ 12% from last month</p>
+          <p className="text-sm font-medium text-white/80">{t('finance.kpi.totalRevenue')}</p>
+          <p className="text-2xl md:text-3xl font-bold mt-1">{formatNumber(metrics.totalRevenue)} {CURRENCY}</p>
+          <p className="text-xs text-white/70 mt-2">{t('finance.fromLastMonth', { percent: 12 })}</p>
         </div>
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-6 shadow-sm">
-          <p className="text-sm font-medium text-[#6D6D6D]">Total Expenses</p>
-          <p className="text-2xl md:text-3xl font-bold text-[#3D2F24] mt-1">{metrics.totalExpenses.toLocaleString()} {CURRENCY}</p>
-          <p className="text-xs text-rose-500 mt-2">↑ 3% from last month</p>
+          <p className="text-sm font-medium text-[#6D6D6D]">{t('finance.kpi.totalExpenses')}</p>
+          <p className="text-2xl md:text-3xl font-bold text-[#3D2F24] mt-1">{formatNumber(metrics.totalExpenses)} {CURRENCY}</p>
+          <p className="text-xs text-rose-500 mt-2">{t('finance.fromLastMonth', { percent: 3 })}</p>
         </div>
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-6 shadow-sm">
-          <p className="text-sm font-medium text-[#6D6D6D]">Net Profit</p>
-          <p className="text-2xl md:text-3xl font-bold text-emerald-600 mt-1">{metrics.netProfit.toLocaleString()} {CURRENCY}</p>
-          <p className="text-xs text-emerald-500 mt-2">↑ 18% from last month</p>
+          <p className="text-sm font-medium text-[#6D6D6D]">{t('finance.kpi.netProfit')}</p>
+          <p className="text-2xl md:text-3xl font-bold text-emerald-600 mt-1">{formatNumber(metrics.netProfit)} {CURRENCY}</p>
+          <p className="text-xs text-emerald-500 mt-2">{t('finance.fromLastMonth', { percent: 18 })}</p>
         </div>
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <FinancialChart data={monthlyData} />
-        <ExpensePieChart data={expenseCategories} />
+        <FinancialChart data={monthlyData} t={t} />
+        <ExpensePieChart data={expenseCategories} t={t} />
       </div>
 
-      {/* Quick Actions */}
       <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
-        {[
-          { label: 'Create Invoice', action: 'create_invoice', icon: FileText, color: '#B8863B' },
-          { label: 'Receive Payment', action: 'receive_payment', icon: CreditCard, color: '#22C55E' },
-          { label: 'Add Expense', action: 'add_expense', icon: Wallet, color: '#EF4444' },
-          { label: 'Purchase Order', action: 'purchase_order', icon: Package, color: '#3B82F6' },
-          { label: 'Financial Reports', action: 'financial_reports', icon: BarChart3, color: '#8B5CF6' },
-          { label: 'Accounting', action: 'accounting', icon: Settings, color: '#F59E0B' }
-        ].map((action, idx) => (
+        {quickActions.map((action, idx) => (
           <motion.button
             key={idx}
             whileHover={{ scale: 1.02, y: -2 }}
@@ -626,45 +708,43 @@ const FinancePage = () => {
         ))}
       </div>
 
-      {/* Recent Transactions - Table (Desktop) / Cards (Mobile) */}
       <div className="bg-white border border-[#ECE8E1] rounded-xl overflow-hidden shadow-sm mb-6">
         <div className="p-4 border-b border-[#ECE8E1] flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-[#3D2F24]">Recent Transactions</h3>
-            <p className="text-xs text-[#6D6D6D]">Dernières transactions financières</p>
+            <h3 className="text-sm font-bold text-[#3D2F24]">{t('finance.recentTransactions')}</h3>
+            <p className="text-xs text-[#6D6D6D]">{t('finance.recentTransactionsSubtitle')}</p>
           </div>
           <button
             onClick={handleViewAllTransactions}
             className="text-xs font-medium text-[#B8863B] hover:underline"
           >
-            View All
+            {t('finance.viewAll')}
           </button>
         </div>
 
-        {/* Desktop Table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Customer / Supplier</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Method</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Action</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.table.id')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.table.date')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.table.type')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.table.customerSupplier')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.table.amount')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.table.method')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.table.status')}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
-              {transactions.map((transaction, index) => (
+              {transactions.map((transaction) => (
                 <tr key={transaction.id} className="hover:bg-[#F8F7F4] transition-colors border-b border-[#ECE8E1]">
                   <td className="px-4 py-3 text-sm font-medium text-[#3D2F24]">{transaction.id}</td>
                   <td className="px-4 py-3 text-sm text-[#6D6D6D]">{transaction.date}</td>
                   <td className="px-4 py-3 text-sm text-[#6D6D6D]">{transaction.type}</td>
                   <td className="px-4 py-3 text-sm text-[#3D2F24]">{transaction.customer}</td>
                   <td className={`px-4 py-3 text-sm font-bold ${transaction.amount > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {transaction.amount > 0 ? '+' : ''}{transaction.amount.toLocaleString()} {CURRENCY}
+                    {transaction.amount > 0 ? '+' : ''}{formatNumber(transaction.amount)} {CURRENCY}
                   </td>
                   <td className="px-4 py-3 text-sm text-[#6D6D6D]">{transaction.method}</td>
                   <td className="px-4 py-3">
@@ -673,11 +753,11 @@ const FinancePage = () => {
                       transaction.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                       'bg-gray-50 text-gray-600 border-gray-200'
                     }`}>
-                      {transaction.status}
+                      {getFinanceStatusLabel(transaction.status, t)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
+                    <button type="button" onClick={() => handleViewTransaction(transaction)} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors" title={t('common.view')}>
                       <Eye size={16} className="text-[#6D6D6D]" />
                     </button>
                   </td>
@@ -687,59 +767,54 @@ const FinancePage = () => {
           </table>
         </div>
 
-        {/* Mobile Cards */}
         <div className="md:hidden p-4 space-y-3">
           {transactions.map((transaction) => (
-            <TransactionCard key={transaction.id} transaction={transaction} />
+            <TransactionCard key={transaction.id} transaction={transaction} t={t} onView={handleViewTransaction} />
           ))}
         </div>
       </div>
 
-      {/* Pending Payments & Notifications */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pending Customer Payments */}
         <div className="bg-white border border-[#ECE8E1] rounded-xl overflow-hidden shadow-sm">
           <div className="p-4 border-b border-[#ECE8E1]">
-            <h3 className="text-sm font-bold text-[#3D2F24]">Pending Customer Payments</h3>
-            <p className="text-xs text-[#6D6D6D]">Paiements clients en attente</p>
+            <h3 className="text-sm font-bold text-[#3D2F24]">{t('finance.pendingCustomerPayments')}</h3>
+            <p className="text-xs text-[#6D6D6D]">{t('finance.pendingCustomerPaymentsSubtitle')}</p>
           </div>
           <div className="p-4 space-y-3">
             {customerPayments.map((payment, idx) => (
-              <PendingPaymentCard key={idx} payment={payment} type="customer" />
+              <PendingPaymentCard key={idx} payment={payment} type="customer" t={t} />
             ))}
             <button
               onClick={handleViewAllPayments}
               className="w-full py-2 text-xs font-medium text-[#B8863B] border border-[#B8863B] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              View All Payments
+              {t('finance.viewPayments')}
             </button>
           </div>
         </div>
 
-        {/* Pending Supplier Payments */}
         <div className="bg-white border border-[#ECE8E1] rounded-xl overflow-hidden shadow-sm">
           <div className="p-4 border-b border-[#ECE8E1]">
-            <h3 className="text-sm font-bold text-[#3D2F24]">Pending Supplier Payments</h3>
-            <p className="text-xs text-[#6D6D6D]">Paiements fournisseurs en attente</p>
+            <h3 className="text-sm font-bold text-[#3D2F24]">{t('finance.pendingSupplierPayments')}</h3>
+            <p className="text-xs text-[#6D6D6D]">{t('finance.pendingSupplierPaymentsSubtitle')}</p>
           </div>
           <div className="p-4 space-y-3">
             {supplierPayments.map((payment, idx) => (
-              <PendingPaymentCard key={idx} payment={payment} type="supplier" />
+              <PendingPaymentCard key={idx} payment={payment} type="supplier" t={t} />
             ))}
             <button
               onClick={handleViewAllSuppliers}
               className="w-full py-2 text-xs font-medium text-[#B8863B] border border-[#B8863B] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              View All Suppliers
+              {t('finance.viewSuppliers')}
             </button>
           </div>
         </div>
 
-        {/* Notifications */}
         <div className="bg-white border border-[#ECE8E1] rounded-xl overflow-hidden shadow-sm">
           <div className="p-4 border-b border-[#ECE8E1]">
-            <h3 className="text-sm font-bold text-[#3D2F24]">Notifications</h3>
-            <p className="text-xs text-[#6D6D6D]">Alertes financières</p>
+            <h3 className="text-sm font-bold text-[#3D2F24]">{t('notifications.title')}</h3>
+            <p className="text-xs text-[#6D6D6D]">{t('finance.financeNotificationsSubtitle')}</p>
           </div>
           <div className="p-4 space-y-2 max-h-[280px] overflow-y-auto">
             {notifications.map((notification) => (
@@ -749,23 +824,20 @@ const FinancePage = () => {
         </div>
       </div>
 
-      {/* Top Customers & Suppliers */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        {/* Top Customers */}
         <div className="bg-white border border-[#ECE8E1] rounded-xl overflow-hidden shadow-sm">
           <div className="p-4 border-b border-[#ECE8E1]">
-            <h3 className="text-sm font-bold text-[#3D2F24]">Top Customers</h3>
-            <p className="text-xs text-[#6D6D6D]">Clients avec le plus de revenus</p>
+            <h3 className="text-sm font-bold text-[#3D2F24]">{t('finance.topCustomers')}</h3>
+            <p className="text-xs text-[#6D6D6D]">{t('finance.topCustomersSubtitle')}</p>
           </div>
-          {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
-                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Customer</th>
-                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Orders</th>
-                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Revenue</th>
-                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Outstanding</th>
+                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.customerLabel')}</th>
+                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('customers.table.orders')}</th>
+                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.revenue')}</th>
+                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.outstanding')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -773,36 +845,33 @@ const FinancePage = () => {
                   <tr key={idx} className="border-b border-[#ECE8E1] last:border-0">
                     <td className="px-4 py-2 text-sm text-[#3D2F24]">{customer.customer}</td>
                     <td className="px-4 py-2 text-sm text-[#6D6D6D]">{customer.orders}</td>
-                    <td className="px-4 py-2 text-sm font-medium text-[#3D2F24]">{customer.revenue.toLocaleString()} {CURRENCY}</td>
-                    <td className="px-4 py-2 text-sm font-medium text-amber-600">{customer.outstanding.toLocaleString()} {CURRENCY}</td>
+                    <td className="px-4 py-2 text-sm font-medium text-[#3D2F24]">{formatNumber(customer.revenue)} {CURRENCY}</td>
+                    <td className="px-4 py-2 text-sm font-medium text-amber-600">{formatNumber(customer.outstanding)} {CURRENCY}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {/* Mobile Cards */}
           <div className="md:hidden p-4 space-y-3">
             {topCustomers.map((customer, idx) => (
-              <TopCustomerCard key={idx} customer={customer} />
+              <TopCustomerCard key={idx} customer={customer} t={t} />
             ))}
           </div>
         </div>
 
-        {/* Top Suppliers */}
         <div className="bg-white border border-[#ECE8E1] rounded-xl overflow-hidden shadow-sm">
           <div className="p-4 border-b border-[#ECE8E1]">
-            <h3 className="text-sm font-bold text-[#3D2F24]">Top Suppliers</h3>
-            <p className="text-xs text-[#6D6D6D]">Fournisseurs avec le plus d'achats</p>
+            <h3 className="text-sm font-bold text-[#3D2F24]">{t('finance.topSuppliers')}</h3>
+            <p className="text-xs text-[#6D6D6D]">{t('finance.topSuppliersSubtitle')}</p>
           </div>
-          {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
-                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Supplier</th>
-                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Purchases</th>
-                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Amount</th>
-                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Last Purchase</th>
+                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.supplier')}</th>
+                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.purchases')}</th>
+                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.amount')}</th>
+                  <th className="px-4 py-2 text-left text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('finance.lastPurchase')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -810,21 +879,34 @@ const FinancePage = () => {
                   <tr key={idx} className="border-b border-[#ECE8E1] last:border-0">
                     <td className="px-4 py-2 text-sm text-[#3D2F24]">{supplier.supplier}</td>
                     <td className="px-4 py-2 text-sm text-[#6D6D6D]">{supplier.purchases}</td>
-                    <td className="px-4 py-2 text-sm font-medium text-[#3D2F24]">{supplier.amount.toLocaleString()} {CURRENCY}</td>
+                    <td className="px-4 py-2 text-sm font-medium text-[#3D2F24]">{formatNumber(supplier.amount)} {CURRENCY}</td>
                     <td className="px-4 py-2 text-sm text-[#6D6D6D]">{supplier.lastPurchase}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {/* Mobile Cards */}
           <div className="md:hidden p-4 space-y-3">
             {topSuppliers.map((supplier, idx) => (
-              <TopSupplierCard key={idx} supplier={supplier} />
+              <TopSupplierCard key={idx} supplier={supplier} t={t} />
             ))}
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {isTransactionModalOpen && selectedTransaction && (
+          <TransactionDetailsModal
+            isOpen={isTransactionModalOpen}
+            transaction={selectedTransaction}
+            t={t}
+            onClose={() => {
+              setIsTransactionModalOpen(false);
+              setSelectedTransaction(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -40,7 +40,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
-import { unwrapPaginated, unwrapData } from '../../utils/apiHelpers';
+import { unwrapPaginated, unwrapData, getApiErrorMessage } from '../../utils/apiHelpers';
+import { useToast } from '../../contexts/ToastContext';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getCategories,
@@ -60,15 +61,17 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
+  const { commonStatus } = usePageI18n('categories');
+
   const statusConfig = {
-    active: { label: 'Actif', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    inactive: { label: 'Inactif', class: 'bg-gray-50 text-gray-600 border-gray-200' },
-    archived: { label: 'Archivé', class: 'bg-gray-50 text-gray-500 border-gray-200' }
+    ...commonStatus,
+    archived: { label: commonStatus.archived?.label || status, class: 'bg-gray-50 text-gray-500 border-gray-200' }
   };
 
   const config = statusConfig[status] || statusConfig.inactive;
@@ -84,11 +87,13 @@ const StatusBadge = ({ status }) => {
 // VISIBILITY BADGE
 // ==========================================
 const VisibilityBadge = ({ visible }) => {
+  const { tc } = usePageI18n('categories');
+
   return (
     <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${
       visible ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200'
     }`}>
-      {visible ? 'Visible' : 'Masqué'}
+      {visible ? tc('visible') : tc('hidden')}
     </span>
   );
 };
@@ -131,6 +136,8 @@ const KPICard = ({ icon: Icon, title, value, color, subtitle }) => {
 // CATEGORY CARD (Mobile)
 // ==========================================
 const CategoryCard = ({ category, onView, onEdit, onDelete, onToggleStatus }) => {
+  const { actions, t, tc } = usePageI18n('categories');
+
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
@@ -158,41 +165,41 @@ const CategoryCard = ({ category, onView, onEdit, onDelete, onToggleStatus }) =>
         <VisibilityBadge visible={category.visible} />
         <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full border bg-[#F8F7F4] text-[#6D6D6D] border-[#ECE8E1]">
           <Package size={10} className="inline mr-1" />
-          {category.productCount || 0} produits
+          {category.productCount || 0} {t('categories.table.products')}
         </span>
         {category.featured && (
           <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-200">
             <Star size={10} className="inline mr-1" />
-            En vedette
+            {tc('featured')}
           </span>
         )}
       </div>
       <div className="grid grid-cols-2 gap-2 text-xs text-[#6D6D6D]">
         <div className="flex items-center gap-1">
           <Calendar size={12} />
-          {new Date(category.createdAt).toLocaleDateString('fr-FR')}
+          {new Date(category.createdAt).toLocaleDateString(DATE_LOCALE)}
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-[#6D6D6D]">Ordre: {category.displayOrder || 0}</span>
+          <span className="text-[#6D6D6D]">{t('categories.labels.order')}: {category.displayOrder || 0}</span>
         </div>
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#ECE8E1]">
         <div className="flex items-center gap-1">
           {category.parent && (
-            <span className="text-[10px] text-[#6D6D6D]">Parent: {category.parent}</span>
+            <span className="text-[10px] text-[#6D6D6D]">{t('categories.labels.parent')}: {category.parent}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => onView(category)} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
+          <button onClick={() => onView(category)} title={actions.view} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
-          <button onClick={() => onEdit(category)} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
+          <button onClick={() => onEdit(category)} title={actions.edit} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button onClick={() => onToggleStatus(category)} className="p-1.5 hover:bg-amber-50 rounded-lg transition-colors">
             {category.status === 'active' ? <Lock size={16} className="text-amber-500" /> : <Unlock size={16} className="text-emerald-500" />}
           </button>
-          <button onClick={() => onDelete(category)} className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors">
+          <button onClick={() => onDelete(category)} title={actions.delete} className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors">
             <Trash2 size={16} className="text-rose-500" />
           </button>
         </div>
@@ -205,6 +212,7 @@ const CategoryCard = ({ category, onView, onEdit, onDelete, onToggleStatus }) =>
 // CATEGORY TABLE ROW (Desktop)
 // ==========================================
 const CategoryTableRow = ({ category, onView, onEdit, onDelete, onToggleStatus, index }) => {
+  const { actions, tc } = usePageI18n('categories');
   const [showActions, setShowActions] = useState(false);
 
   return (
@@ -241,35 +249,35 @@ const CategoryTableRow = ({ category, onView, onEdit, onDelete, onToggleStatus, 
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{category.displayOrder || 0}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {new Date(category.updatedAt || category.createdAt).toLocaleDateString('fr-FR')}
+        {new Date(category.updatedAt || category.createdAt).toLocaleDateString(DATE_LOCALE)}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-1">
           <button
             onClick={() => onView(category)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(category)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={actions.edit}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onToggleStatus(category)}
             className="p-1.5 hover:bg-amber-50 rounded-lg transition-colors"
-            title={category.status === 'active' ? 'Désactiver' : 'Activer'}
+            title={category.status === 'active' ? tc('deactivate') : tc('activate')}
           >
             {category.status === 'active' ? <Lock size={16} className="text-amber-500" /> : <Unlock size={16} className="text-emerald-500" />}
           </button>
           <button
             onClick={() => onDelete(category)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -283,6 +291,8 @@ const CategoryTableRow = ({ category, onView, onEdit, onDelete, onToggleStatus, 
 // CATEGORY MODAL (Add/Edit)
 // ==========================================
 const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
+  const { t, commonStatus, tc } = usePageI18n('categories');
+
   const [formData, setFormData] = useState({
     name: '',
     nameAr: '',
@@ -384,8 +394,8 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.name) newErrors.name = 'Le nom est requis';
-    if (!formData.code) newErrors.code = 'Le code est requis';
+    if (!formData.name) newErrors.name = tc('required');
+    if (!formData.code) newErrors.code = tc('required');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -416,7 +426,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            {category ? 'Modifier la catégorie' : 'Ajouter une catégorie'}
+            {category ? t('categories.modals.editTitle') : t('categories.modals.addTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -434,11 +444,11 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
               onClick={() => document.getElementById('category-image').click()}
             >
               {formData.imagePreview ? (
-                <img src={formData.imagePreview} alt="Aperçu" className="w-full h-full object-cover" />
+                <img src={formData.imagePreview} alt={tc('preview')} className="w-full h-full object-cover" />
               ) : (
                 <div className="text-center">
                   <ImageIcon size={24} className="text-[#6D6D6D] mx-auto" />
-                  <span className="text-[10px] text-[#6D6D6D] block mt-1">Image</span>
+                  <span className="text-[10px] text-[#6D6D6D] block mt-1">{tc('image')}</span>
                 </div>
               )}
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -453,16 +463,16 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
               />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-[#3D2F24]">Image de la catégorie</p>
-              <p className="text-xs text-[#6D6D6D]">Cliquez sur l'icône pour télécharger une image</p>
-              <p className="text-[10px] text-[#6D6D6D] mt-1">Formats: JPG, PNG, SVG • Max: 2MB</p>
+              <p className="text-sm font-medium text-[#3D2F24]">{t('categories.form.categoryImage')}</p>
+              <p className="text-xs text-[#6D6D6D]">{t('categories.form.uploadHint')}</p>
+              <p className="text-[10px] text-[#6D6D6D] mt-1">{t('categories.form.formats')}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">
-                Nom (Anglais) *
+                {t('categories.form.nameEn')} *
               </label>
               <input
                 type="text"
@@ -472,13 +482,13 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
                 className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all ${
                   errors.name ? 'border-rose-500' : 'border-[#ECE8E1]'
                 }`}
-                placeholder="Category name"
+                placeholder={t('common.placeholders.categoryName')}
               />
               {errors.name && <p className="text-xs text-rose-500 mt-1">{errors.name}</p>}
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">
-                Nom (Arabe)
+                {t('categories.form.nameAr')}
               </label>
               <input
                 type="text"
@@ -495,7 +505,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">
-                Code *
+                {tc('code')} *
               </label>
               <input
                 type="text"
@@ -511,7 +521,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">
-                Icône
+                {t('categories.form.icon')}
               </label>
               <input
                 type="text"
@@ -527,7 +537,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">
-                Couleur
+                {t('categories.form.color')}
               </label>
               <div className="flex items-center gap-3">
                 <input
@@ -548,7 +558,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">
-                Catégorie Parente
+                {t('categories.form.parentCategory')}
               </label>
               <select
                 name="parentCategory"
@@ -556,7 +566,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="">Aucune</option>
+                <option value="">{tc('none')}</option>
                 {parentCategories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
@@ -566,7 +576,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
 
           <div>
             <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">
-              Description
+              {tc('description')}
             </label>
             <textarea
               name="description"
@@ -574,14 +584,14 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
               onChange={handleChange}
               rows={3}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all resize-none"
-              placeholder="Description de la catégorie..."
+              placeholder={t('common.placeholders.categoryDescription')}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">
-                Statut
+                {tc('status')}
               </label>
               <select
                 name="status"
@@ -589,14 +599,14 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="active">Actif</option>
-                <option value="inactive">Inactif</option>
-                <option value="archived">Archivé</option>
+                <option value="active">{commonStatus.active.label}</option>
+                <option value="inactive">{commonStatus.inactive.label}</option>
+                <option value="archived">{commonStatus.archived.label}</option>
               </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">
-                Ordre d'affichage
+                {t('categories.form.displayOrder')}
               </label>
               <input
                 type="number"
@@ -618,7 +628,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
                 onChange={handleChange}
                 className="w-4 h-4 rounded border-[#ECE8E1] text-[#B8863B] focus:ring-[#B8863B]/30 focus:ring-offset-0"
               />
-              <span className="text-sm font-medium text-[#3D2F24]">Visible</span>
+              <span className="text-sm font-medium text-[#3D2F24]">{tc('visible')}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -628,7 +638,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
                 onChange={handleChange}
                 className="w-4 h-4 rounded border-[#ECE8E1] text-[#B8863B] focus:ring-[#B8863B]/30 focus:ring-offset-0"
               />
-              <span className="text-sm font-medium text-[#3D2F24]">Afficher sur POS</span>
+              <span className="text-sm font-medium text-[#3D2F24]">{t('categories.form.showOnPOS')}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -638,7 +648,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
                 onChange={handleChange}
                 className="w-4 h-4 rounded border-[#ECE8E1] text-[#B8863B] focus:ring-[#B8863B]/30 focus:ring-offset-0"
               />
-              <span className="text-sm font-medium text-[#3D2F24]">Commandes en ligne</span>
+              <span className="text-sm font-medium text-[#3D2F24]">{t('categories.form.availableOnline')}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -650,7 +660,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
               />
               <span className="text-sm font-medium text-[#3D2F24]">
                 <Star size={14} className="inline mr-1 text-amber-500" />
-                En vedette
+                {tc('featured')}
               </span>
             </label>
           </div>
@@ -661,14 +671,14 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : category ? 'Mettre à jour' : 'Ajouter'}
+              {isLoading ? tc('saving') : category ? tc('update') : tc('add')}
             </button>
           </div>
         </form>
@@ -681,6 +691,8 @@ const CategoryModal = ({ isOpen, onClose, onSave, category, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, category, isLoading }) => {
+  const { t, tc } = usePageI18n('categories');
+
   if (!isOpen) return null;
 
   const hasProducts = category?.productCount > 0;
@@ -697,22 +709,18 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, category, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer la catégorie ?
+          {t('categories.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
           {hasProducts ? (
             <>
-              <span className="text-rose-500 font-semibold">⚠️ Attention :</span><br />
-              Cette catégorie contient <span className="font-semibold">{category.productCount}</span> produits.
-              Vous ne pouvez pas la supprimer tant qu'elle contient des produits.
+              <span className="text-rose-500 font-semibold">⚠️ {t('categories.modals.warning')}</span><br />
+              {t('categories.modals.deleteBlocked', { count: category.productCount })}
             </>
           ) : (
             <>
-              Vous êtes sur le point de supprimer la catégorie{' '}
-              <span className="font-semibold text-[#3D2F24]">
-                {category?.name}
-              </span>.
-              Cette action est irréversible.
+              {t('categories.modals.deleteMessage', { name: category?.name })}{' '}
+              {tc('irreversibleAction')}
             </>
           )}
         </p>
@@ -721,7 +729,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, category, isLoading }) => {
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -730,7 +738,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, category, isLoading }) => {
               hasProducts ? 'bg-gray-400 cursor-not-allowed' : 'bg-rose-500 hover:bg-rose-600'
             }`}
           >
-            {hasProducts ? 'Impossible' : isLoading ? 'Suppression...' : 'Supprimer'}
+            {hasProducts ? tc('impossible') : isLoading ? tc('deleting') : tc('delete')}
           </button>
         </div>
       </motion.div>
@@ -742,6 +750,8 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, category, isLoading }) => {
 // VIEW CATEGORY MODAL
 // ==========================================
 const ViewCategoryModal = ({ isOpen, onClose, category }) => {
+  const { t, tc } = usePageI18n('categories');
+
   if (!isOpen || !category) return null;
 
   return (
@@ -754,7 +764,7 @@ const ViewCategoryModal = ({ isOpen, onClose, category }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails de la catégorie
+            {t('categories.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -792,46 +802,46 @@ const ViewCategoryModal = ({ isOpen, onClose, category }) => {
             {category.nameAr && (
               <div className="flex items-center gap-2">
                 <Globe size={16} className="text-[#6D6D6D]" />
-                <span className="text-[#3D2F24]">Arabe: {category.nameAr}</span>
+                <span className="text-[#3D2F24]">{t('categories.labels.arabic')}: {category.nameAr}</span>
               </div>
             )}
             {category.description && (
               <div className="p-3 bg-[#F8F7F4] rounded-lg">
-                <p className="text-xs text-[#6D6D6D] mb-1">Description</p>
+                <p className="text-xs text-[#6D6D6D] mb-1">{tc('description')}</p>
                 <p className="text-[#3D2F24]">{category.description}</p>
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-[#F8F7F4] rounded-lg p-3">
-                <p className="text-xs text-[#6D6D6D]">Produits</p>
+                <p className="text-xs text-[#6D6D6D]">{t('categories.table.products')}</p>
                 <p className="text-lg font-bold text-[#3D2F24]">{category.productCount || 0}</p>
               </div>
               <div className="bg-[#F8F7F4] rounded-lg p-3">
-                <p className="text-xs text-[#6D6D6D]">Ordre d'affichage</p>
+                <p className="text-xs text-[#6D6D6D]">{t('categories.form.displayOrder')}</p>
                 <p className="text-lg font-bold text-[#3D2F24]">{category.displayOrder || 0}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Calendar size={16} className="text-[#6D6D6D]" />
-              <span className="text-[#3D2F24]">Créé le {new Date(category.createdAt).toLocaleDateString('fr-FR')}</span>
+              <span className="text-[#3D2F24]">{tc('createdOn', { date: new Date(category.createdAt).toLocaleDateString(DATE_LOCALE) })}</span>
             </div>
             {category.updatedAt && (
               <div className="flex items-center gap-2">
                 <Calendar size={16} className="text-[#6D6D6D]" />
-                <span className="text-[#3D2F24]">Modifié le {new Date(category.updatedAt).toLocaleDateString('fr-FR')}</span>
+                <span className="text-[#3D2F24]">{tc('updatedOn', { date: new Date(category.updatedAt).toLocaleDateString(DATE_LOCALE) })}</span>
               </div>
             )}
             {category.parent && (
               <div className="flex items-center gap-2">
                 <FolderTree size={16} className="text-[#6D6D6D]" />
-                <span className="text-[#3D2F24]">Parent: {category.parent}</span>
+                <span className="text-[#3D2F24]">{t('categories.labels.parent')}: {category.parent}</span>
               </div>
             )}
             <div className="flex flex-wrap gap-2 pt-2">
               {category.featured && (
                 <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-200">
                   <Star size={12} className="inline mr-1" />
-                  En vedette
+                  {tc('featured')}
                 </span>
               )}
               {category.showOnPOS && (
@@ -843,7 +853,7 @@ const ViewCategoryModal = ({ isOpen, onClose, category }) => {
               {category.availableOnline && (
                 <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full border bg-green-50 text-green-700 border-green-200">
                   <Globe size={12} className="inline mr-1" />
-                  En ligne
+                  {t('categories.form.online')}
                 </span>
               )}
             </div>
@@ -853,7 +863,7 @@ const ViewCategoryModal = ({ isOpen, onClose, category }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>
@@ -866,7 +876,8 @@ const ViewCategoryModal = ({ isOpen, onClose, category }) => {
 // ==========================================
 const CategoriesPage = () => {
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('categories');
+  const { title, subtitle, searchPlaceholder, t, commonStatus, actions, tc } = usePageI18n('categories');
+  const { showToast } = useToast();
 
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -974,15 +985,20 @@ const CategoriesPage = () => {
   // ==========================================
   // EXPORT CONFIGURATION
   // ==========================================
+  const formatStatus = (status) => {
+    const key = String(status ?? 'inactive').toLowerCase();
+    return commonStatus[key]?.label || status || '—';
+  };
+
   const columns = [
-    { label: 'Catégorie', accessor: 'name', width: 25 },
-    { label: 'Nom Arabe', accessor: 'nameAr', width: 15 },
-    { label: 'Code', accessor: 'code', width: 12 },
-    { label: 'Produits', accessor: 'productCount', width: 10 },
-    { label: 'Statut', accessor: 'status', width: 12 },
-    { label: 'Ordre', accessor: 'displayOrder', width: 8 },
-    { label: 'Visible', accessor: 'visible', width: 8 },
-    { label: 'Mise à jour', accessor: 'updatedAt', width: 10 }
+    { label: t('categories.table.category'), accessor: 'name', width: 25 },
+    { label: t('categories.table.nameAr'), accessor: 'nameAr', width: 15 },
+    { label: tc('code'), accessor: 'code', width: 12 },
+    { label: t('categories.table.products'), accessor: 'productCount', width: 10 },
+    { label: t('categories.table.status'), accessor: 'status', width: 12 },
+    { label: t('categories.table.order'), accessor: 'displayOrder', width: 8 },
+    { label: t('categories.table.visible'), accessor: 'visible', width: 8 },
+    { label: t('categories.table.updatedAt'), accessor: 'updatedAt', width: 10 }
   ];
 
   const rowFormatter = (item) => ({
@@ -990,17 +1006,17 @@ const CategoriesPage = () => {
     nameAr: item.nameAr || '—',
     code: item.code,
     productCount: item.productCount || 0,
-    status: item.status === 'active' ? 'Actif' : item.status === 'inactive' ? 'Inactif' : 'Archivé',
+    status: formatStatus(item.status),
     displayOrder: item.displayOrder || 0,
-    visible: item.visible ? 'Oui' : 'Non',
-    updatedAt: new Date(item.updatedAt || item.createdAt).toLocaleDateString('fr-FR')
+    visible: item.visible ? tc('yes') : tc('no'),
+    updatedAt: new Date(item.updatedAt || item.createdAt).toLocaleDateString(DATE_LOCALE)
   });
 
   const summary = [
-    { label: 'Total catégories', value: kpis.total },
-    { label: 'Actives', value: kpis.active },
-    { label: 'Inactives', value: kpis.inactive },
-    { label: 'Total produits', value: kpis.totalProducts }
+    { label: t('categories.kpi.total'), value: kpis.total },
+    { label: t('categories.kpi.active'), value: kpis.active },
+    { label: commonStatus.inactive.label, value: kpis.inactive },
+    { label: t('categories.kpi.products'), value: kpis.totalProducts }
   ];
 
   // ==========================================
@@ -1025,6 +1041,7 @@ const CategoriesPage = () => {
       await fetchStatistics();
     } catch (error) {
       console.error('Error creating category:', error);
+      showToast(getApiErrorMessage(error, t('categories.errors.save')), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -1043,6 +1060,7 @@ const CategoriesPage = () => {
       await fetchStatistics();
     } catch (error) {
       console.error('Error updating category:', error);
+      showToast(getApiErrorMessage(error, t('categories.errors.save')), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -1101,8 +1119,8 @@ const CategoriesPage = () => {
           <ExportButtons
             data={filteredCategories}
             columns={columns}
-            title="Liste des catégories"
-            subtitle={`${filteredCategories.length} catégories`}
+            title={t('categories.export.title')}
+            subtitle={t('categories.export.subtitle', { count: filteredCategories.length })}
             filename={`categories_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -1115,20 +1133,20 @@ const CategoriesPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <Plus size={18} />
-            Ajouter une catégorie
+            {t('categories.addCategory')}
           </button>
           <div className="flex items-center gap-1 border border-[#ECE8E1] rounded-xl bg-white p-1">
             <button
               onClick={() => setViewMode('table')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue tableau"
+              title={tc('tableView')}
             >
               <List size={18} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-[#B8863B] text-white' : 'text-[#6D6D6D] hover:bg-[#F8F7F4]'}`}
-              title="Vue grille"
+              title={tc('gridView')}
             >
               <Grid size={18} />
             </button>
@@ -1136,7 +1154,7 @@ const CategoriesPage = () => {
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1145,11 +1163,11 @@ const CategoriesPage = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-        <KPICard icon={FolderTree} title="Total catégories" value={kpis.total} color="blue" />
-        <KPICard icon={CheckCircle} title="Catégories actives" value={kpis.active} color="emerald" />
-        <KPICard icon={Archive} title="Catégories inactives" value={kpis.inactive} color="rose" />
-        <KPICard icon={Package} title="Total produits" value={kpis.totalProducts} color="purple" />
-        <KPICard icon={Tag} title="Plus utilisée" value={kpis.mostUsed?.name || '—'} color="gold" />
+        <KPICard icon={FolderTree} title={t('categories.kpi.total')} value={kpis.total} color="blue" />
+        <KPICard icon={CheckCircle} title={t('categories.kpi.active')} value={kpis.active} color="emerald" />
+        <KPICard icon={Archive} title={commonStatus.inactive.label} value={kpis.inactive} color="rose" />
+        <KPICard icon={Package} title={t('categories.kpi.products')} value={kpis.totalProducts} color="purple" />
+        <KPICard icon={Tag} title={t('categories.kpiExtra.mostUsed')} value={kpis.mostUsed?.name || '—'} color="gold" />
       </div>
 
       {/* Filters */}
@@ -1171,10 +1189,10 @@ const CategoriesPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="archived">Archivé</option>
+              <option value="all">{tc('allStatuses')}</option>
+              <option value="active">{commonStatus.active.label}</option>
+              <option value="inactive">{commonStatus.inactive.label}</option>
+              <option value="archived">{commonStatus.archived.label}</option>
             </select>
           </div>
         </div>
@@ -1187,13 +1205,13 @@ const CategoriesPage = () => {
             <table className="w-full">
               <thead>
                 <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Catégorie</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Nom Arabe</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Produits</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Ordre</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Mise à jour</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('categories.table.category')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('categories.table.nameAr')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('categories.table.products')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('categories.table.status')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('categories.table.order')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('categories.table.updatedAt')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1202,7 +1220,7 @@ const CategoriesPage = () => {
                     <td colSpan="7" className="text-center py-8">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm text-[#6D6D6D]">Chargement des catégories...</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('common.table.loadingItems', { entity: t('nav.categories') })}</p>
                       </div>
                     </td>
                   </tr>
@@ -1211,12 +1229,12 @@ const CategoriesPage = () => {
                     <td colSpan="7" className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <FolderTree size={40} className="text-[#ECE8E1]" />
-                        <p className="text-sm text-[#6D6D6D]">Aucune catégorie trouvée</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('common.table.noItemsFound')}</p>
                         <button
                           onClick={() => setIsCreateModalOpen(true)}
                           className="text-sm text-[#B8863B] font-medium hover:underline"
                         >
-                          Créer une catégorie
+                          {t('categories.addCategory')}
                         </button>
                       </div>
                     </td>
@@ -1255,12 +1273,12 @@ const CategoriesPage = () => {
           {isLoading ? (
             <div className="col-span-full flex flex-col items-center justify-center py-8 gap-3">
               <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-[#6D6D6D]">Chargement des catégories...</p>
+              <p className="text-sm text-[#6D6D6D]">{t('common.table.loadingItems', { entity: t('nav.categories') })}</p>
             </div>
           ) : paginatedCategories.length === 0 ? (
             <div className="col-span-full bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
               <FolderTree size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-              <p className="text-sm text-[#6D6D6D]">Aucune catégorie trouvée</p>
+              <p className="text-sm text-[#6D6D6D]">{t('common.table.noItemsFound')}</p>
             </div>
           ) : (
             paginatedCategories.map((category) => (
@@ -1291,12 +1309,12 @@ const CategoriesPage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des catégories...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.table.loadingItems', { entity: t('nav.categories') })}</p>
           </div>
         ) : paginatedCategories.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <FolderTree size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucune catégorie trouvée</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.table.noItemsFound')}</p>
           </div>
         ) : (
           paginatedCategories.map((category) => (
@@ -1325,8 +1343,11 @@ const CategoriesPage = () => {
       {filteredCategories.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
-            Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} catégories
+            {tc('showingRange', {
+              from: ((currentPage - 1) * itemsPerPage) + 1,
+              to: Math.min(currentPage * itemsPerPage, totalCount),
+              total: totalCount
+            })}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -1337,7 +1358,7 @@ const CategoriesPage = () => {
               <ChevronLeft size={16} className="text-[#6D6D6D]" />
             </button>
             <span className="text-sm font-medium text-[#3D2F24]">
-              Page {currentPage} sur {totalPages}
+              {tc('pageOf', { current: currentPage, total: totalPages })}
             </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}

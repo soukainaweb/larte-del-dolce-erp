@@ -1,5 +1,6 @@
 // src/pages/RolesPermissions/RolesPermissionsPage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield,
@@ -142,8 +143,9 @@ const SkeletonLoader = ({ className = '' }) => (
 // PAGE PRINCIPALE
 // ==========================================
 const RolesPermissionsPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('roles');
+  const { title, subtitle, searchPlaceholder, t, tc } = usePageI18n('roles');
 
   // States
   const [isLoading, setIsLoading] = useState(false);
@@ -201,7 +203,7 @@ const RolesPermissionsPage = () => {
       setTotalCount(response.data.meta?.total || data.length);
     } catch (error) {
       console.error('Error fetching roles:', error);
-      showToast('Erreur lors du chargement des rôles', 'error');
+      showToast(t('errors.loadFailed'), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -267,33 +269,33 @@ const RolesPermissionsPage = () => {
   // ==========================================
   // EXPORT CONFIGURATION
   // ==========================================
-  const columns = [
-    { label: 'Nom', accessor: 'name', width: 20 },
-    { label: 'Description', accessor: 'description', width: 25 },
-    { label: 'Utilisateurs', accessor: 'users', width: 12 },
-    { label: 'Permissions', accessor: 'permissions', width: 12 },
-    { label: 'Statut', accessor: 'status', width: 12 },
-    { label: 'Créé par', accessor: 'createdBy', width: 15 },
-    { label: 'Dernière mise à jour', accessor: 'updatedAt', width: 15 }
-  ];
+  const columns = useMemo(() => [
+    { label: t('roles.table.name'), accessor: 'name', width: 20 },
+    { label: t('roles.table.description'), accessor: 'description', width: 25 },
+    { label: t('roles.table.users'), accessor: 'users', width: 12 },
+    { label: t('roles.table.permissions'), accessor: 'permissions', width: 12 },
+    { label: t('roles.table.status'), accessor: 'status', width: 12 },
+    { label: tc('createdBy'), accessor: 'createdBy', width: 15 },
+    { label: tc('table.columns.updatedAt'), accessor: 'updatedAt', width: 15 }
+  ], [t, tc]);
 
-  const rowFormatter = (item) => ({
+  const rowFormatter = useCallback((item) => ({
     name: item.name,
     description: item.description,
     users: item.users,
     permissions: item.permissions,
-    status: item.status === 'active' ? 'Actif' : 'Inactif',
+    status: item.status === 'active' ? tc('active') : tc('inactive'),
     createdBy: item.createdBy,
     updatedAt: item.updatedAt
-  });
+  }), [tc]);
 
-  const summary = [
-    { label: 'Total des rôles', value: stats.totalRoles },
-    { label: 'Permissions disponibles', value: stats.totalPermissions },
-    { label: 'Utilisateurs affectés', value: stats.totalUsers },
-    { label: 'Permissions actives', value: stats.activePermissions },
-    { label: 'Demandes d\'accès en attente', value: stats.pendingRequests }
-  ];
+  const summary = useMemo(() => [
+    { label: t('roles.kpi.totalRoles'), value: stats.totalRoles },
+    { label: t('roles.kpi.permissions'), value: stats.totalPermissions },
+    { label: t('roles.kpi.totalUsers'), value: stats.totalUsers },
+    { label: t('roles.kpi.permissions'), value: stats.activePermissions },
+    { label: tc('pending'), value: stats.pendingRequests }
+  ], [t, tc, stats]);
 
   // ==========================================
   // EXPORT HANDLERS
@@ -333,10 +335,10 @@ const RolesPermissionsPage = () => {
       setIsEditModalOpen(false);
       setSelectedRole(null);
       await fetchStats();
-      showToast('✅ Rôle modifié avec succès', 'success');
+      showToast(t('success.updated'), 'success');
     } catch (error) {
       console.error('Error updating role:', error);
-      showToast('Erreur lors de la modification du rôle', 'error');
+      showToast(t('errors.saveFailed'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -351,10 +353,10 @@ const RolesPermissionsPage = () => {
       setRoles(prev => [newRole, ...prev]);
       setIsCreateModalOpen(false);
       await fetchStats();
-      showToast('✅ Rôle créé avec succès', 'success');
+      showToast(t('success.created'), 'success');
     } catch (error) {
       console.error('Error creating role:', error);
-      showToast('Erreur lors de la création du rôle', 'error');
+      showToast(t('errors.saveFailed'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -370,10 +372,10 @@ const RolesPermissionsPage = () => {
       setIsDuplicateModalOpen(false);
       setSelectedRole(null);
       await fetchStats();
-      showToast('📋 Rôle dupliqué avec succès', 'success');
+      showToast(t('success.created'), 'success');
     } catch (error) {
       console.error('Error duplicating role:', error);
-      showToast('Erreur lors de la duplication du rôle', 'error');
+      showToast(t('errors.saveFailed'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -388,10 +390,10 @@ const RolesPermissionsPage = () => {
       setIsDeleteModalOpen(false);
       setSelectedRole(null);
       await fetchStats();
-      showToast('🗑️ Rôle supprimé avec succès', 'success');
+      showToast(t('success.deleted'), 'success');
     } catch (error) {
       console.error('Error deleting role:', error);
-      showToast('Erreur lors de la suppression du rôle', 'error');
+      showToast(t('errors.deleteFailed'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -410,10 +412,10 @@ const RolesPermissionsPage = () => {
       await fetchUsersForRole(selectedRole.id);
       await fetchRoles();
       await fetchStats();
-      showToast('✅ Utilisateur ajouté au rôle', 'success');
+      showToast(t('roles.usersManagement.userAdded'), 'success');
     } catch (error) {
       console.error('Error adding user to role:', error);
-      showToast('Erreur lors de l\'ajout de l\'utilisateur', 'error');
+      showToast(t('errors.saveFailed'), 'error');
     }
   };
 
@@ -423,15 +425,15 @@ const RolesPermissionsPage = () => {
       await fetchUsersForRole(selectedRole.id);
       await fetchRoles();
       await fetchStats();
-      showToast('👤 Utilisateur retiré du rôle', 'info');
+      showToast(t('roles.usersManagement.userRemoved'), 'info');
     } catch (error) {
       console.error('Error removing user from role:', error);
-      showToast('Erreur lors du retrait de l\'utilisateur', 'error');
+      showToast(t('errors.deleteFailed'), 'error');
     }
   };
 
   const handleEditUser = (user) => {
-    showToast('✏️ Modifier l\'utilisateur', 'info');
+    navigate('/dashboard/users', { state: { editUserId: user.id, userName: user.name } });
   };
 
   // Permissions Management
@@ -443,7 +445,7 @@ const RolesPermissionsPage = () => {
       setIsPermissionsModalOpen(true);
     } catch (error) {
       console.error('Error fetching role permissions:', error);
-      showToast('Erreur lors du chargement des permissions', 'error');
+      showToast(t('errors.loadFailed'), 'error');
     }
   };
 
@@ -458,10 +460,10 @@ const RolesPermissionsPage = () => {
       setIsPermissionsModalOpen(false);
       setSelectedRole(null);
       await fetchStats();
-      showToast('✅ Permissions mises à jour avec succès', 'success');
+      showToast(t('success.updated'), 'success');
     } catch (error) {
       console.error('Error updating permissions:', error);
-      showToast('Erreur lors de la mise à jour des permissions', 'error');
+      showToast(t('errors.saveFailed'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -471,15 +473,15 @@ const RolesPermissionsPage = () => {
   const handleRefresh = async () => {
     await fetchRoles();
     await fetchStats();
-    showToast('🔄 Données actualisées', 'success');
+    showToast(tc('dataRefreshed'), 'success');
   };
 
   const handleHistory = () => {
-    showToast('📋 Historique des modifications', 'info');
+    navigate('/dashboard/activity-logs');
   };
 
   const handleSettings = () => {
-    showToast('⚙️ Paramètres des rôles', 'info');
+    navigate('/dashboard/settings');
   };
 
   const handleResetFilters = () => {
@@ -521,8 +523,8 @@ const RolesPermissionsPage = () => {
           <ExportButtons
             data={filteredRoles}
             columns={columns}
-            title="Liste des rôles et permissions"
-            subtitle={`${filteredRoles.length} rôles - ${stats.totalPermissions} permissions totales`}
+            title={t('roles.title')}
+            subtitle={t('roles.usersManagement.userCount', { count: filteredRoles.length })}
             filename={`roles_permissions_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -535,26 +537,26 @@ const RolesPermissionsPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] text-white font-medium hover:shadow-lg transition-all"
           >
             <Plus size={18} />
-            Nouveau rôle
+            {t('roles.addRole')}
           </button>
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#EAE6DF] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={tc('refresh')}
           >
             <RefreshCw size={18} className="text-[#7A7A7A]" />
           </button>
           <button
             onClick={handleHistory}
             className="p-2.5 rounded-xl border border-[#EAE6DF] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Historique"
+            title={t('activityLog.title')}
           >
             <History size={18} className="text-[#7A7A7A]" />
           </button>
           <button
             onClick={handleSettings}
             className="p-2.5 rounded-xl border border-[#EAE6DF] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Paramètres"
+            title={t('settings.title')}
           >
             <Settings size={18} className="text-[#7A7A7A]" />
           </button>
@@ -565,35 +567,35 @@ const RolesPermissionsPage = () => {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         <StatCard
           icon={Users}
-          title="Total des rôles"
+          title={t('roles.kpi.totalRoles')}
           value={stats.totalRoles}
           color="blue"
-          subtitle={`${roles.filter(r => r.status === 'active').length} actifs`}
+          subtitle={`${roles.filter(r => r.status === 'active').length} ${tc('active')}`}
         />
         <StatCard
           icon={Shield}
-          title="Permissions disponibles"
+          title={t('roles.kpi.permissions')}
           value={stats.totalPermissions}
           color="purple"
         />
         <StatCard
           icon={Users}
-          title="Utilisateurs affectés"
+          title={t('roles.kpi.totalUsers')}
           value={stats.totalUsers}
           color="green"
         />
         <StatCard
           icon={Shield}
-          title="Permissions actives"
+          title={t('roles.kpi.permissions')}
           value={stats.activePermissions}
           color="gold"
         />
         <StatCard
           icon={AlertCircle}
-          title="Demandes d'accès"
+          title={tc('pending')}
           value={stats.pendingRequests}
           color="amber"
-          subtitle="En attente"
+          subtitle={tc('pending')}
         />
       </div>
 
@@ -616,15 +618,15 @@ const RolesPermissionsPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#EAE6DF] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C8A45D]/30 focus:border-[#C8A45D] transition-all"
             >
-              <option value="all">Tous</option>
-              <option value="active">Actifs</option>
-              <option value="inactive">Inactifs</option>
+              <option value="all">{tc('all')}</option>
+              <option value="active">{tc('active')}</option>
+              <option value="inactive">{tc('inactive')}</option>
             </select>
             <button
               onClick={handleResetFilters}
               className="px-4 py-2.5 text-sm font-medium text-[#7A7A7A] border border-[#EAE6DF] rounded-xl hover:bg-[#F8F7F4] transition-colors"
             >
-              Réinitialiser
+              {tc('resetFilters')}
             </button>
           </div>
         </div>
@@ -639,13 +641,13 @@ const RolesPermissionsPage = () => {
         ) : paginatedRoles.length === 0 ? (
           <div className="col-span-full bg-white border border-[#EAE6DF] rounded-2xl p-12 text-center">
             <Shield size={48} className="text-[#D1CBC0] mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-[#2B2B2B]">Aucun rôle trouvé</h3>
-            <p className="text-sm text-[#7A7A7A]">Aucun rôle ne correspond à vos critères</p>
+            <h3 className="text-lg font-bold text-[#2B2B2B]">{tc('noResultsFound')}</h3>
+            <p className="text-sm text-[#7A7A7A]">{tc('table.noItemsFound')}</p>
             <button
               onClick={() => setIsCreateModalOpen(true)}
               className="mt-4 text-sm text-[#C8A45D] font-medium hover:underline"
             >
-              Créer un rôle
+              {t('roles.addRole')}
             </button>
           </div>
         ) : (
@@ -674,8 +676,8 @@ const RolesPermissionsPage = () => {
       {filteredRoles.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
           <p className="text-sm text-[#7A7A7A]">
-            Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} rôles
+            {tc('showing')} {((currentPage - 1) * itemsPerPage) + 1} {tc('of')}{' '}
+            {Math.min(currentPage * itemsPerPage, totalCount)} {tc('of')} {totalCount}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -686,7 +688,7 @@ const RolesPermissionsPage = () => {
               <ChevronLeft size={16} className="text-[#7A7A7A]" />
             </button>
             <span className="text-sm font-medium text-[#2B2B2B]">
-              Page {currentPage} sur {totalPages}
+              {tc('showing')} {currentPage} {tc('of')} {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}

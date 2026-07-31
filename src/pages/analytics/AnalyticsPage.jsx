@@ -140,6 +140,7 @@ import {
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // CONSTANTS
@@ -209,6 +210,7 @@ const Toast = ({ message, type = 'success', onClose }) => {
 // KPI CARD
 // ==========================================
 const KPICard = ({ icon: Icon, title, value, change, color, isCurrency, subtitle, miniData, miniColor, compareText }) => {
+  const { t, tc } = usePageI18n('analytics');
   const isPositive = change > 0;
   const colorClasses = {
     blue: 'bg-blue-50 text-blue-600 border-blue-100',
@@ -275,11 +277,12 @@ const KPICard = ({ icon: Icon, title, value, change, color, isCurrency, subtitle
 // COMPOSANT: FILTRES AVANCÉS
 // ==========================================
 const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onApply }) => {
+  const { t, tc } = usePageI18n('analytics');
   const [localFilters, setLocalFilters] = useState(filters);
   const [selectedPeriod, setSelectedPeriod] = useState('month');
 
   const quickPeriods = [
-    { id: 'today', label: "Aujourd'hui" },
+    { id: 'today', label: tc('today') },
     { id: 'yesterday', label: 'Hier' },
     { id: 'week', label: 'Cette semaine' },
     { id: 'month', label: 'Ce mois' },
@@ -322,13 +325,13 @@ const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onAppl
     {
       title: 'Statut',
       fields: [
-        { key: 'status', type: 'select', options: ['Tous', 'En attente', 'Validée', 'En production', 'Prête', 'Livrée', 'Annulée'] }
+        { key: 'status', type: 'select', options: ['Tous', t('common.pending'), t('orders.status.validated'), t('orders.status.in_production'), t('orders.status.ready'), t('orders.status.delivered'), t('common.cancelled')] }
       ]
     },
     {
       title: 'Paiement',
       fields: [
-        { key: 'payment', type: 'select', options: ['Tous', 'Payé', 'Impayé', 'En attente'] }
+        { key: 'payment', type: 'select', options: ['Tous', t('common.labels.paidAmount'), 'Impayé', t('common.pending')] }
       ]
     },
     {
@@ -458,6 +461,7 @@ const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onAppl
 // COMPOSANT: COMPARAISON CARD
 // ==========================================
 const ComparisonCard = ({ title, current, previous, change, icon: Icon, color }) => {
+  const { t, tc } = usePageI18n('analytics');
   const isPositive = change > 0;
   const colorClasses = {
     blue: 'bg-blue-50 text-blue-600',
@@ -502,6 +506,7 @@ const ComparisonCard = ({ title, current, previous, change, icon: Icon, color })
 
 // Line Chart
 const CustomLineChart = ({ data, lines, xKey, title, subtitle, height = 300 }) => {
+  const { t, tc } = usePageI18n('analytics');
   const colors = ['#B8863B', '#3B82F6', '#22C55E', '#EF4444', '#8B5CF6', '#F59E0B'];
 
   return (
@@ -548,6 +553,7 @@ const CustomLineChart = ({ data, lines, xKey, title, subtitle, height = 300 }) =
 
 // Area Chart
 const CustomAreaChart = ({ data, areas, xKey, title, subtitle, height = 300 }) => {
+  const { t, tc } = usePageI18n('analytics');
   const colors = ['#B8863B', '#3B82F6', '#22C55E', '#EF4444', '#8B5CF6', '#F59E0B'];
 
   return (
@@ -592,6 +598,7 @@ const CustomAreaChart = ({ data, areas, xKey, title, subtitle, height = 300 }) =
 
 // Bar Chart
 const CustomBarChart = ({ data, bars, xKey, title, subtitle, horizontal = false, height = 300 }) => {
+  const { t, tc } = usePageI18n('analytics');
   const colors = ['#B8863B', '#3B82F6', '#22C55E', '#EF4444', '#8B5CF6', '#F59E0B'];
 
   return (
@@ -726,6 +733,7 @@ const CustomRadarChart = ({ data, title, subtitle, height = 300 }) => {
 // COMPOSANT: ACTIVITY ITEM
 // ==========================================
 const ActivityItem = ({ activity }) => {
+  const { t, tc } = usePageI18n('analytics');
   const typeConfig = {
     order: { icon: <ShoppingBag size={14} />, color: 'bg-blue-50 text-blue-600' },
     validate: { icon: <CheckCircle size={14} />, color: 'bg-emerald-50 text-emerald-600' },
@@ -828,7 +836,7 @@ const TopListCard = ({ title, items, valueLabel, icon: Icon, valueKey, nameKey, 
 // ==========================================
 const AnalyticsPage = () => {
   const { user: currentUser } = useAuth();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('analytics');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('analytics');
 
   // States
   const [isLoading, setIsLoading] = useState(false);
@@ -866,10 +874,12 @@ const AnalyticsPage = () => {
 
   // Toast
   const showToast = (message, type = 'success') => {
+  const { t, tc, actions } = usePageI18n('analytics');
     setToast({ isOpen: true, message, type });
   };
 
   const hideToast = () => {
+  const { t, tc, actions } = usePageI18n('analytics');
     setToast({ isOpen: false, message: '', type: 'success' });
   };
 
@@ -936,7 +946,7 @@ const AnalyticsPage = () => {
     const totalProfit = financialData.reduce((sum, d) => sum + d.profit, 0);
     const totalOrders = salesData.reduce((sum, d) => sum + d.orders, 0);
     const completedOrders = orderData.find(d => d.name === 'Terminées')?.value || 0;
-    const pendingOrders = orderData.find(d => d.name === 'En attente')?.value || 0;
+    const pendingOrders = orderData.find(d => d.name === t('common.pending'))?.value || 0;
     const totalCustomers = metrics.totalCustomers || 0;
     const newCustomers = metrics.newCustomers || 0;
     const totalProductsSold = productData.reduce((sum, d) => sum + d.sales, 0);
@@ -1044,8 +1054,24 @@ const AnalyticsPage = () => {
     showToast('🔄 Données actualisées avec succès', 'success');
   };
 
-  const handleShare = () => {
-    showToast('🔗 Lien de partage copié dans le presse-papier', 'success');
+  const handleShare = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(window.location.href);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = window.location.href;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      showToast(t('common.linkCopied'), 'success');
+    } catch {
+      showToast(t('common.copyFailed'), 'error');
+    }
   };
 
   const handleResetFilters = () => {
@@ -1061,7 +1087,38 @@ const AnalyticsPage = () => {
   };
 
   const handleDismissAlert = (alertId) => {
-    showToast(`🔔 Alerte ${alertId} marquée comme lue`, 'info');
+    setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
+    showToast(t('common.alertDismissed'), 'info');
+  };
+
+  const handleKpiSearchFocus = () => {
+    const searchInput = document.getElementById('analytics-search-input');
+    if (searchInput) {
+      searchInput.focus();
+      showToast(t('common.searchFocused'), 'info');
+    }
+  };
+
+  const handleKpiTableDownload = () => {
+    if (!kpiComparison.length) {
+      showToast(t('common.noData'), 'info');
+      return;
+    }
+    const headers = ['indicator', 'current', 'previous', 'growth', 'target'];
+    const rows = kpiComparison.map((item) =>
+      [item.indicator, item.current, item.previous, item.growth, item.target]
+        .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
+        .join(',')
+    );
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `analytics-kpi-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast(t('common.exportSuccess', { type: 'CSV', count: kpiComparison.length }), 'success');
   };
 
   // ==========================================
@@ -1472,7 +1529,7 @@ const AnalyticsPage = () => {
         <CustomBarChart
           data={deliveryData.slice(0, 6)}
           bars={[
-            { key: 'delivered', label: 'Livrées', color: '#22C55E' },
+            { key: 'delivered', label: t('orders.kpi.delivered'), color: '#22C55E' },
             { key: 'delayed', label: 'Retardées', color: '#EF4444' }
           ]}
           xKey="month"
@@ -1483,7 +1540,7 @@ const AnalyticsPage = () => {
           data={[
             { name: 'À temps', value: 75, color: '#22C55E' },
             { name: 'Retard', value: 15, color: '#EF4444' },
-            { name: 'En attente', value: 10, color: '#F59E0B' }
+            { name: t('common.pending'), value: 10, color: '#F59E0B' }
           ]}
           title="Répartition des Livraisons"
           subtitle="Statut des livraisons"
@@ -1592,10 +1649,10 @@ const AnalyticsPage = () => {
         <div className="p-4 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-sm font-bold text-[#3D2F24]">Tableau d'Analyse des KPI</h3>
           <div className="flex items-center gap-2">
-            <button className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
+            <button type="button" onClick={handleKpiSearchFocus} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors" title={t('common.search')}>
               <Search size={16} className="text-[#6D6D6D]" />
             </button>
-            <button className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
+            <button type="button" onClick={handleKpiTableDownload} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors" title={t('common.download')}>
               <Download size={16} className="text-[#6D6D6D]" />
             </button>
           </div>
@@ -1743,6 +1800,7 @@ const AnalyticsPage = () => {
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" />
               <input
+                id="analytics-search-input"
                 type="text"
                 placeholder={searchPlaceholder}
                 value={searchTerm}
@@ -1755,7 +1813,7 @@ const AnalyticsPage = () => {
             <button
               onClick={handleRefresh}
               className="p-2 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-              title="Actualiser"
+              title={actions.refresh}
             >
               <RefreshCw size={18} className="text-[#6D6D6D]" />
             </button>
@@ -1776,7 +1834,7 @@ const AnalyticsPage = () => {
               filename="analyse_kpi"
               summary={exportSummary}
               rowFormatter={rowFormatter}
-              userName={currentUser?.firstName || 'Utilisateur'}
+              userName={currentUser?.firstName || t('users.table.user')}
               onSuccess={handleExportSuccess}
               onError={handleExportError}
               variant="default"

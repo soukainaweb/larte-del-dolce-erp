@@ -1,5 +1,6 @@
 // src/pages/Orders/OrdersPage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag,
@@ -59,6 +60,7 @@ import { printData } from '../../services/export/printService';
 // ==========================================
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
+const DATE_LOCALE = 'ar-SA';
 
 // ==========================================
 // CONSTANTES - DEVISE
@@ -70,24 +72,34 @@ const CURRENCY_SYMBOL = 'ر.س';
 // STATUS BADGE
 // ==========================================
 const StatusBadge = ({ status }) => {
-  const statusConfig = {
-    draft: { label: 'Brouillon', class: 'bg-gray-50 text-gray-600 border-gray-200' },
-    pending: { label: 'En attente', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    validated: { label: 'Validée', class: 'bg-blue-50 text-blue-700 border-blue-200' },
-    in_production: { label: 'En production', class: 'bg-purple-50 text-purple-700 border-purple-200' },
-    ready: { label: 'Prête', class: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-    in_delivery: { label: 'En livraison', class: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
-    delivered: { label: 'Livrée', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    cancelled: { label: 'Annulée', class: 'bg-rose-50 text-rose-700 border-rose-200' },
-    rejected: { label: 'Refusée', class: 'bg-red-50 text-red-700 border-red-200' },
-    archived: { label: 'Archivée', class: 'bg-gray-50 text-gray-500 border-gray-200' }
+  const { statusLabel } = usePageI18n('orders');
+  const classes = {
+    draft: 'bg-gray-50 text-gray-600 border-gray-200',
+    pending: 'bg-amber-50 text-amber-700 border-amber-200',
+    validated: 'bg-blue-50 text-blue-700 border-blue-200',
+    in_production: 'bg-purple-50 text-purple-700 border-purple-200',
+    ready: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    in_delivery: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+    delivered: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    cancelled: 'bg-rose-50 text-rose-700 border-rose-200',
+    rejected: 'bg-red-50 text-red-700 border-red-200',
+    archived: 'bg-gray-50 text-gray-500 border-gray-200',
+    active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    inactive: 'bg-gray-50 text-gray-600 border-gray-200',
+    paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    unpaid: 'bg-rose-50 text-rose-700 border-rose-200',
+    partial: 'bg-amber-50 text-amber-700 border-amber-200',
+    overdue: 'bg-red-50 text-red-700 border-red-200',
+    sent: 'bg-blue-50 text-blue-700 border-blue-200',
+    failed: 'bg-rose-50 text-rose-700 border-rose-200',
+    assigned: 'bg-blue-50 text-blue-700 border-blue-200',
+    preparing: 'bg-purple-50 text-purple-700 border-purple-200',
+    out_for_delivery: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   };
-
-  const config = statusConfig[status] || statusConfig.draft;
-
+  const key = status || 'draft';
   return (
-    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${config.class}`}>
-      {config.label}
+    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${classes[key] || classes.draft}`}>
+      {statusLabel(key)}
     </span>
   );
 };
@@ -96,17 +108,17 @@ const StatusBadge = ({ status }) => {
 // PRIORITY BADGE
 // ==========================================
 const PriorityBadge = ({ priority }) => {
-  const priorityConfig = {
-    high: { label: 'Haute', class: 'bg-rose-50 text-rose-700 border-rose-200' },
-    medium: { label: 'Moyenne', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    low: { label: 'Basse', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+  const { t } = usePageI18n('orders');
+  const classes = {
+    high: 'bg-rose-50 text-rose-700 border-rose-200',
+    medium: 'bg-amber-50 text-amber-700 border-amber-200',
+    low: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   };
-
-  const config = priorityConfig[priority] || priorityConfig.medium;
-
+  const key = priority || 'medium';
+  const label = t(`orders.priority.${key}`);
   return (
-    <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${config.class}`}>
-      {config.label}
+    <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${classes[key] || classes.medium}`}>
+      {label}
     </span>
   );
 };
@@ -115,17 +127,16 @@ const PriorityBadge = ({ priority }) => {
 // PAYMENT STATUS BADGE
 // ==========================================
 const PaymentBadge = ({ status }) => {
-  const config = {
-    paid: { label: 'Payée', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    partial: { label: 'Partielle', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    unpaid: { label: 'Non payée', class: 'bg-rose-50 text-rose-700 border-rose-200' }
+  const { t } = usePageI18n('orders');
+  const classes = {
+    paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    partial: 'bg-amber-50 text-amber-700 border-amber-200',
+    unpaid: 'bg-rose-50 text-rose-700 border-rose-200',
   };
-
-  const c = config[status] || config.unpaid;
-
+  const key = status || 'unpaid';
   return (
-    <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${c.class}`}>
-      {c.label}
+    <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${classes[key] || classes.unpaid}`}>
+      {t('common.paymentStatus.' + key)}
     </span>
   );
 };
@@ -163,6 +174,7 @@ const KPICard = ({ icon: Icon, title, value, color }) => {
 // ORDER CARD (Mobile)
 // ==========================================
 const OrderCard = ({ order, onView, onEdit, onDelete }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('orders');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
@@ -179,7 +191,7 @@ const OrderCard = ({ order, onView, onEdit, onDelete }) => {
       <div className="grid grid-cols-2 gap-2 text-xs text-[#6D6D6D]">
         <div className="flex items-center gap-1">
           <Package size={12} />
-          {order.products?.length || 0} produits
+          {order.products?.length || 0} {t('orders.table.products')}
         </div>
         <div className="flex items-center gap-1">
           <DollarSign size={12} />
@@ -191,7 +203,7 @@ const OrderCard = ({ order, onView, onEdit, onDelete }) => {
         </div>
         <div className="flex items-center gap-1">
           <Calendar size={12} />
-          {new Date(order.createdAt).toLocaleDateString('fr-FR')}
+          {new Date(order.createdAt).toLocaleDateString(DATE_LOCALE)}
         </div>
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#ECE8E1]">
@@ -200,16 +212,16 @@ const OrderCard = ({ order, onView, onEdit, onDelete }) => {
           {order.status === 'pending' && <Clock size={14} className="text-amber-500" />}
           {order.status === 'cancelled' && <XCircle size={14} className="text-rose-500" />}
           <span className="text-xs text-[#6D6D6D]">
-            {order.status === 'draft' ? 'Brouillon' :
-             order.status === 'pending' ? 'En attente' :
-             order.status === 'validated' ? 'Validée' :
-             order.status === 'in_production' ? 'En production' :
-             order.status === 'ready' ? 'Prête' :
-             order.status === 'in_delivery' ? 'En livraison' :
-             order.status === 'delivered' ? 'Livrée' :
-             order.status === 'cancelled' ? 'Annulée' :
-             order.status === 'rejected' ? 'Refusée' :
-             order.status === 'archived' ? 'Archivée' : order.status}
+            {order.status === 'draft' ? t('orders.status.draft') :
+             order.status === 'pending' ? t('common.pending') :
+             order.status === 'validated' ? t('orders.status.validated') :
+             order.status === 'in_production' ? t('orders.status.in_production') :
+             order.status === 'ready' ? t('orders.status.ready') :
+             order.status === 'in_delivery' ? t('orders.status.in_delivery') :
+             order.status === 'delivered' ? t('orders.status.delivered') :
+             order.status === 'cancelled' ? t('common.cancelled') :
+             order.status === 'rejected' ? t('orders.status.rejected') :
+             order.status === 'archived' ? t('common.statuses.archived') : order.status}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -232,6 +244,7 @@ const OrderCard = ({ order, onView, onEdit, onDelete }) => {
 // ORDER TABLE ROW (Desktop)
 // ==========================================
 const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
+  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('orders');
   return (
     <motion.tr
       initial={{ opacity: 0, y: 10 }}
@@ -245,7 +258,7 @@ const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
       <td className="px-4 py-3 text-sm text-[#3D2F24]">{order.customer}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{order.rep}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {new Date(order.createdAt).toLocaleDateString('fr-FR')}
+        {new Date(order.createdAt).toLocaleDateString(DATE_LOCALE)}
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{order.products?.length || 0}</td>
       <td className="px-4 py-3 text-sm font-bold text-[#3D2F24]">
@@ -265,21 +278,21 @@ const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
           <button
             onClick={() => onView(order)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Voir"
+            title={actions.view}
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onEdit(order)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Modifier"
+            title={actions.edit}
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onDelete(order)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-            title="Supprimer"
+            title={actions.delete}
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
@@ -293,6 +306,7 @@ const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
 // ORDER MODAL (Create/Edit)
 // ==========================================
 const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('orders');
   const [formData, setFormData] = useState({
     customer: '',
     rep: '',
@@ -356,6 +370,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
   };
 
   const addProduct = () => {
+  const { t, tc } = usePageI18n('orders');
     setFormData(prev => ({
       ...prev,
       products: [...prev.products, { id: Date.now(), name: '', quantity: 1, price: 0, discount: 0, total: 0 }]
@@ -372,20 +387,22 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
   };
 
   const calculateTotal = () => {
+  const { t, tc } = usePageI18n('orders');
     return formData.products.reduce((sum, p) => sum + (p.total || 0), 0);
   };
 
   const calculateSubtotal = () => {
+  const { t, tc } = usePageI18n('orders');
     return formData.products.reduce((sum, p) => sum + (p.quantity * p.price || 0), 0);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.customer) newErrors.customer = 'Le client est requis';
-    if (!formData.rep) newErrors.rep = 'Le commercial est requis';
-    if (formData.products.length === 0) newErrors.products = 'Au moins un produit est requis';
-    if (formData.products.some(p => !p.name)) newErrors.products = 'Tous les produits doivent avoir un nom';
+    if (!formData.customer) newErrors.customer = t('orders.validation.customerRequired');
+    if (!formData.rep) newErrors.rep = t('orders.validation.repRequired');
+    if (formData.products.length === 0) newErrors.products = t('orders.validation.productsRequired');
+    if (formData.products.some(p => !p.name)) newErrors.products = t('orders.validation.productNameRequired');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -407,7 +424,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            {order ? 'Modifier la commande' : 'Nouvelle commande'}
+            {order ? t('orders.modals.editTitle') : t('orders.addOrder')}
           </h3>
           <button
             onClick={onClose}
@@ -420,10 +437,10 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Client Info */}
           <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1]">
-            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">Informations client</h4>
+            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{t('orders.sections.customerInfo')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Client *</label>
+                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('orders.table.customer')} *</label>
                 <input
                   type="text"
                   name="customer"
@@ -436,7 +453,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                 {errors.customer && <p className="text-xs text-rose-500 mt-1">{errors.customer}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Commercial *</label>
+                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('orders.table.rep')} *</label>
                 <input
                   type="text"
                   name="rep"
@@ -453,23 +470,23 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
 
           {/* Order Info */}
           <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1]">
-            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">Informations générales</h4>
+            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{t('orders.sections.generalInfo')}</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Priorité</label>
+                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('priority')}</label>
                 <select
                   name="priority"
                   value={formData.priority}
                   onChange={handleChange}
                   className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
                 >
-                  <option value="low">Basse</option>
-                  <option value="medium">Moyenne</option>
-                  <option value="high">Haute</option>
+                  <option value="low">{t('orders.priority.low')}</option>
+                  <option value="medium">{t('orders.priority.medium')}</option>
+                  <option value="high">{t('orders.priority.high')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Date livraison</label>
+                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('orders.table.deliveryDate')}</label>
                 <input
                   type="date"
                   name="deliveryDate"
@@ -479,7 +496,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Heure livraison</label>
+                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('orders.fields.deliveryTime')}</label>
                 <input
                   type="time"
                   name="deliveryTime"
@@ -489,17 +506,17 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Méthode paiement</label>
+                <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('orders.fields.paymentMethod')}</label>
                 <select
                   name="paymentMethod"
                   value={formData.paymentMethod}
                   onChange={handleChange}
                   className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
                 >
-                  <option value="cash">Espèces</option>
-                  <option value="card">Carte bancaire</option>
-                  <option value="transfer">Virement</option>
-                  <option value="credit">Crédit</option>
+                  <option value="cash">{t('common.paymentMethods.cash')}</option>
+                  <option value="card">{t('common.paymentMethods.card')}</option>
+                  <option value="transfer">{t('common.paymentMethods.transfer')}</option>
+                  <option value="credit">{t('common.paymentMethods.credit')}</option>
                 </select>
               </div>
             </div>
@@ -508,14 +525,14 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
           {/* Products */}
           <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1]">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-bold text-[#3D2F24]">Produits</h4>
+              <h4 className="text-sm font-bold text-[#3D2F24]">{tc('product')}</h4>
               <button
                 type="button"
                 onClick={addProduct}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#B8863B] rounded-lg hover:bg-[#A67937] transition-colors"
               >
                 <Plus size={14} />
-                Ajouter produit
+                {t('orders.fields.addProduct')}
               </button>
             </div>
             <div className="space-y-3">
@@ -523,7 +540,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                 <div key={index} className="bg-white rounded-lg p-3 border border-[#ECE8E1]">
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     <div className="col-span-2 md:col-span-1">
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Produit</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{tc('product')}</label>
                       <input
                         type="text"
                         value={product.name}
@@ -532,7 +549,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Qté</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{t('orders.fields.quantity')}</label>
                       <input
                         type="number"
                         value={product.quantity}
@@ -541,7 +558,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Prix ({CURRENCY_SYMBOL})</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{tc('price')} ({CURRENCY_SYMBOL})</label>
                       <input
                         type="number"
                         value={product.price}
@@ -550,7 +567,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Remise (%)</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{t('orders.fields.discount')}</label>
                       <input
                         type="number"
                         value={product.discount}
@@ -560,7 +577,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                     </div>
                     <div className="flex items-end justify-between">
                       <div>
-                        <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Total</label>
+                        <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{tc('total')}</label>
                         <p className="text-sm font-bold text-[#3D2F24]">
                           {(product.total || 0).toFixed(2)} {CURRENCY_SYMBOL}
                         </p>
@@ -583,20 +600,20 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
 
           {/* Summary */}
           <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1]">
-            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">Résumé</h4>
+            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{t('orders.summary.title')}</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-[#6D6D6D]">Sous-total</span>
+                <span className="text-[#6D6D6D]">{t('orders.summary.subtotal')}</span>
                 <span className="font-medium text-[#3D2F24]">{calculateSubtotal().toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#6D6D6D]">Remise totale</span>
+                <span className="text-[#6D6D6D]">{t('orders.summary.totalDiscount')}</span>
                 <span className="font-medium text-[#3D2F24]">
                   {(calculateSubtotal() - calculateTotal()).toFixed(2)} {CURRENCY_SYMBOL}
                 </span>
               </div>
               <div className="flex justify-between pt-2 border-t border-[#ECE8E1]">
-                <span className="font-bold text-[#3D2F24]">Total TTC</span>
+                <span className="font-bold text-[#3D2F24]">{t('orders.summary.grandTotal')}</span>
                 <span className="font-bold text-[#3D2F24] text-lg">{calculateTotal().toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
             </div>
@@ -604,7 +621,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Notes</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('notes')}</label>
             <textarea
               name="notes"
               value={formData.notes}
@@ -620,14 +637,14 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Enregistrement...' : order ? 'Mettre à jour' : 'Créer la commande'}
+              {isLoading ? tc('saving') : order ? tc('update') : t('orders.addOrder')}
             </button>
           </div>
         </form>
@@ -640,6 +657,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, order, isLoading }) => {
+  const { t, tc } = usePageI18n('orders');
   if (!isOpen) return null;
 
   return (
@@ -654,28 +672,25 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, order, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer la commande ?
+          {t('orders.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
-          Vous êtes sur le point de supprimer la commande{' '}
-          <span className="font-semibold text-[#3D2F24]">
-            {order?.orderNumber}
-          </span>.
-          Cette action est irréversible.
+          {t('orders.modals.deleteMessage', { orderNumber: order?.orderNumber })}{' '}
+          {tc('irreversibleAction')}
         </p>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
           >
-            {isLoading ? 'Suppression...' : 'Supprimer'}
+            {isLoading ? tc('deleting') : tc('delete')}
           </button>
         </div>
       </motion.div>
@@ -687,6 +702,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, order, isLoading }) => {
 // ORDER DETAILS MODAL
 // ==========================================
 const OrderDetailsModal = ({ isOpen, onClose, order }) => {
+  const { t, tc, statusLabel, commonStatus } = usePageI18n('orders');
   if (!isOpen || !order) return null;
 
   return (
@@ -727,26 +743,26 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
           {/* Info Grid */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Commercial</p>
+              <p className="text-xs text-[#6D6D6D]">{t('orders.table.rep')}</p>
               <p className="font-medium text-[#3D2F24]">{order.rep}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3">
               <p className="text-xs text-[#6D6D6D]">Date de création</p>
-              <p className="font-medium text-[#3D2F24]">{new Date(order.createdAt).toLocaleDateString('fr-FR')}</p>
+              <p className="font-medium text-[#3D2F24]">{new Date(order.createdAt).toLocaleDateString(DATE_LOCALE)}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3">
               <p className="text-xs text-[#6D6D6D]">Paiement</p>
               <PaymentBadge status={order.paymentStatus} />
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Total</p>
+              <p className="text-xs text-[#6D6D6D]">{tc('total')}</p>
               <p className="text-lg font-bold text-[#3D2F24]">{order.total.toLocaleString()} {CURRENCY_SYMBOL}</p>
             </div>
           </div>
 
           {/* Products */}
           <div className="bg-[#F8F7F4] rounded-lg p-4">
-            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">Produits</h4>
+            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{tc('product')}</h4>
             <div className="space-y-2">
               {order.products && order.products.map((p, i) => (
                 <div key={i} className="flex justify-between items-center bg-white rounded-lg p-2 border border-[#ECE8E1]">
@@ -763,7 +779,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
           {/* Notes */}
           {order.notes && (
             <div className="bg-[#F8F7F4] rounded-lg p-4">
-              <h4 className="text-sm font-bold text-[#3D2F24] mb-2">Notes</h4>
+              <h4 className="text-sm font-bold text-[#3D2F24] mb-2">{tc('notes')}</h4>
               <p className="text-sm text-[#6D6D6D]">{order.notes}</p>
             </div>
           )}
@@ -786,7 +802,9 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
 const OrdersPage = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const { title, subtitle, searchPlaceholder, t } = usePageI18n('orders');
+  const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('orders');
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -828,7 +846,7 @@ const OrdersPage = () => {
       }));
     } catch (error) {
       console.error('Error fetching orders:', error);
-      showToast(getApiErrorMessage(error, 'Erreur lors du chargement des commandes'), 'error');
+      showToast(getApiErrorMessage(error, t('orders.errors.load')), 'error');
       setOrders([]);
     } finally {
       setIsLoading(false);
@@ -841,6 +859,42 @@ const OrdersPage = () => {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  useEffect(() => {
+    if (!location.state?.openAddModal) return;
+    setIsCreateModalOpen(true);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state?.openAddModal, navigate, location.pathname]);
+
+  useEffect(() => {
+    const viewOrderId = location.state?.viewOrderId;
+    const editOrderId = location.state?.editOrderId;
+    const targetId = viewOrderId || editOrderId;
+    if (!targetId) return;
+
+    const openOrderFromNavigation = async () => {
+      let order = orders.find((o) => o.id === targetId || o.orderNumber === targetId);
+      if (!order) {
+        try {
+          const response = await orderService.getOrderById(targetId);
+          order = response.data;
+        } catch (error) {
+          console.error('Error loading order from navigation:', error);
+        }
+      }
+      if (order) {
+        setSelectedOrder(order);
+        if (editOrderId) {
+          setIsEditModalOpen(true);
+        } else {
+          setIsDetailsModalOpen(true);
+        }
+      }
+      navigate(location.pathname, { replace: true, state: {} });
+    };
+
+    openOrderFromNavigation();
+  }, [location.state?.viewOrderId, location.state?.editOrderId, orders]);
 
   // ==========================================
   // CALCULATE KPIS
@@ -894,47 +948,47 @@ const OrdersPage = () => {
   // EXPORT CONFIGURATION
   // ==========================================
   const columns = [
-    { label: 'N° Commande', accessor: 'orderNumber', width: 12 },
-    { label: 'Client', accessor: 'customer', width: 18 },
-    { label: 'Commercial', accessor: 'rep', width: 15 },
-    { label: 'Date', accessor: 'createdAt', width: 12 },
-    { label: 'Produits', accessor: 'productCount', width: 10 },
-    { label: 'Montant', accessor: 'total', width: 12 },
-    { label: 'Statut', accessor: 'status', width: 12 },
-    { label: 'Priorité', accessor: 'priority', width: 10 },
-    { label: 'Paiement', accessor: 'paymentStatus', width: 12 }
+    { label: t('orders.table.orderNumber'), accessor: 'orderNumber', width: 12 },
+    { label: t('orders.table.customer'), accessor: 'customer', width: 18 },
+    { label: t('orders.table.rep'), accessor: 'rep', width: 15 },
+    { label: t('common.date'), accessor: 'createdAt', width: 12 },
+    { label: t('orders.table.products'), accessor: 'productCount', width: 10 },
+    { label: t('orders.table.total'), accessor: 'total', width: 12 },
+    { label: t('orders.table.status'), accessor: 'status', width: 12 },
+    { label: t('orders.table.priority'), accessor: 'priority', width: 10 },
+    { label: t('orders.table.paymentStatus'), accessor: 'paymentStatus', width: 12 }
   ];
 
   const rowFormatter = (item) => ({
     orderNumber: item.orderNumber || '—',
     customer: item.customer || '—',
     rep: item.rep || '—',
-    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString('fr-FR') : '—',
+    createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString(DATE_LOCALE) : '—',
     productCount: item.products?.length || 0,
     total: `${(item.total || 0).toLocaleString()} ${CURRENCY_SYMBOL}`,
-    status: item.status === 'draft' ? 'Brouillon' :
-            item.status === 'pending' ? 'En attente' :
-            item.status === 'validated' ? 'Validée' :
-            item.status === 'in_production' ? 'En production' :
-            item.status === 'ready' ? 'Prête' :
-            item.status === 'in_delivery' ? 'En livraison' :
-            item.status === 'delivered' ? 'Livrée' :
-            item.status === 'cancelled' ? 'Annulée' :
-            item.status === 'rejected' ? 'Refusée' :
-            item.status === 'archived' ? 'Archivée' : item.status || '—',
-    priority: item.priority === 'high' ? 'Haute' :
-              item.priority === 'medium' ? 'Moyenne' : 'Basse',
-    paymentStatus: item.paymentStatus === 'paid' ? 'Payée' :
-                   item.paymentStatus === 'partial' ? 'Partielle' : 'Non payée'
+    status: item.status === 'draft' ? t('orders.status.draft') :
+            item.status === 'pending' ? t('common.pending') :
+            item.status === 'validated' ? t('orders.status.validated') :
+            item.status === 'in_production' ? t('orders.status.in_production') :
+            item.status === 'ready' ? t('orders.status.ready') :
+            item.status === 'in_delivery' ? t('orders.status.in_delivery') :
+            item.status === 'delivered' ? t('orders.status.delivered') :
+            item.status === 'cancelled' ? t('common.cancelled') :
+            item.status === 'rejected' ? t('orders.status.rejected') :
+            item.status === 'archived' ? t('common.statuses.archived') : item.status || '—',
+    priority: item.priority === 'high' ? t('orders.priority.high') :
+              item.priority === 'medium' ? t('orders.priority.medium') : t('orders.priority.low'),
+    paymentStatus: item.paymentStatus === 'paid' ? t('common.paymentStatus.paid') :
+                   item.paymentStatus === 'partial' ? t('common.paymentStatus.partial') : t('common.paymentStatus.unpaid')
   });
 
   const summary = [
-    { label: 'Total commandes', value: kpis.total },
-    { label: 'En attente', value: kpis.pending },
-    { label: 'En production', value: kpis.inProduction },
-    { label: 'Livrées', value: kpis.delivered },
-    { label: 'Annulées', value: kpis.cancelled },
-    { label: 'CA', value: `${kpis.revenue.toLocaleString()} ${CURRENCY_SYMBOL}` }
+    { label: t('orders.kpi.total'), value: kpis.total },
+    { label: t('common.pending'), value: kpis.pending },
+    { label: t('orders.status.in_production'), value: kpis.inProduction },
+    { label: t('orders.kpi.delivered'), value: kpis.delivered },
+    { label: t('orders.kpi.cancelled'), value: kpis.cancelled },
+    { label: t('orders.kpi.revenue'), value: `${kpis.revenue.toLocaleString()} ${CURRENCY_SYMBOL}` }
   ];
 
   // ==========================================
@@ -956,11 +1010,11 @@ const OrdersPage = () => {
       switch (type) {
         case 'pdf':
           await exportPDF({
-            title: 'Liste des commandes',
+            title: t('orders.export.title'),
             data: exportData,
             columns: columns,
             filename: `${filename}.pdf`,
-            userName: user?.firstName || 'Utilisateur',
+            userName: user?.firstName || t('users.table.user'),
             summary: summary.reduce((acc, item) => {
               acc[item.label] = item.value;
               return acc;
@@ -969,28 +1023,28 @@ const OrdersPage = () => {
           break;
         case 'excel':
           await exportExcel({
-            title: 'Liste des commandes',
+            title: t('orders.export.title'),
             data: exportData,
             columns: columns,
             filename: `${filename}.xlsx`,
-            userName: user?.firstName || 'Utilisateur'
+            userName: user?.firstName || t('users.table.user')
           });
           break;
         case 'csv':
           await exportCSV({
-            title: 'Liste des commandes',
+            title: t('orders.export.title'),
             data: exportData,
             columns: columns,
             filename: `${filename}.csv`,
-            userName: user?.firstName || 'Utilisateur'
+            userName: user?.firstName || t('users.table.user')
           });
           break;
         case 'print':
           await printData({
-            title: 'Liste des commandes',
+            title: t('orders.export.title'),
             data: exportData,
             columns: columns,
-            userName: user?.firstName || 'Utilisateur'
+            userName: user?.firstName || t('users.table.user')
           });
           break;
         default:
@@ -1095,8 +1149,12 @@ const OrdersPage = () => {
           <ExportButtons
             data={filteredOrders}
             columns={columns}
-            title="Liste des commandes"
-            subtitle={`${filteredOrders.length} commandes - CA: ${kpis.revenue.toLocaleString()} ${CURRENCY_SYMBOL}`}
+            title={t('orders.export.title')}
+            subtitle={t('orders.export.subtitle', {
+              count: filteredOrders.length,
+              revenue: kpis.revenue.toLocaleString(),
+              currency: CURRENCY_SYMBOL
+            })}
             filename={`commandes_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -1109,12 +1167,12 @@ const OrdersPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <Plus size={18} />
-            Nouvelle commande
+            {t('orders.addOrder')}
           </button>
           <button
             onClick={fetchOrders}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
-            title="Actualiser"
+            title={actions.refresh}
           >
             <RefreshCw size={18} className="text-[#6D6D6D]" />
           </button>
@@ -1123,14 +1181,14 @@ const OrdersPage = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
-        <KPICard icon={ShoppingBag} title="Total commandes" value={kpis.total} color="blue" />
-        <KPICard icon={Clock} title="En attente" value={kpis.pending} color="amber" />
-        <KPICard icon={CheckCircle} title="Validées" value={kpis.validated} color="indigo" />
-        <KPICard icon={Factory} title="En production" value={kpis.inProduction} color="purple" />
-        <KPICard icon={Package} title="Prêtes" value={kpis.ready} color="teal" />
-        <KPICard icon={Truck} title="Livrées" value={kpis.delivered} color="emerald" />
-        <KPICard icon={XCircle} title="Annulées" value={kpis.cancelled} color="rose" />
-        <KPICard icon={DollarSign} title={`CA (${CURRENCY_SYMBOL})`} value={kpis.revenue.toLocaleString()} color="gold" />
+        <KPICard icon={ShoppingBag} title={t('orders.kpi.total')} value={kpis.total} color="blue" />
+        <KPICard icon={Clock} title={t('orders.kpi.pending')} value={kpis.pending} color="amber" />
+        <KPICard icon={CheckCircle} title={t('orders.kpi.validated')} value={kpis.validated} color="indigo" />
+        <KPICard icon={Factory} title={t('orders.kpi.inProduction')} value={kpis.inProduction} color="purple" />
+        <KPICard icon={Package} title={t('orders.kpi.ready')} value={kpis.ready} color="teal" />
+        <KPICard icon={Truck} title={t('orders.kpi.delivered')} value={kpis.delivered} color="emerald" />
+        <KPICard icon={XCircle} title={t('orders.kpi.cancelled')} value={kpis.cancelled} color="rose" />
+        <KPICard icon={DollarSign} title={`${t('orders.kpi.revenue')} (${CURRENCY_SYMBOL})`} value={kpis.revenue.toLocaleString()} color="gold" />
       </div>
 
       {/* Filters */}
@@ -1152,19 +1210,19 @@ const OrdersPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
+              <option value="all">{t('common.allStatuses')}</option>
               {uniqueStatuses.map(status => (
                 <option key={status} value={status}>
-                  {status === 'draft' ? 'Brouillon' :
-                   status === 'pending' ? 'En attente' :
-                   status === 'validated' ? 'Validée' :
-                   status === 'in_production' ? 'En production' :
-                   status === 'ready' ? 'Prête' :
-                   status === 'in_delivery' ? 'En livraison' :
-                   status === 'delivered' ? 'Livrée' :
-                   status === 'cancelled' ? 'Annulée' :
-                   status === 'rejected' ? 'Refusée' :
-                   status === 'archived' ? 'Archivée' : status}
+                  {status === 'draft' ? t('orders.status.draft') :
+                   status === 'pending' ? t('common.pending') :
+                   status === 'validated' ? t('orders.status.validated') :
+                   status === 'in_production' ? t('orders.status.in_production') :
+                   status === 'ready' ? t('orders.status.ready') :
+                   status === 'in_delivery' ? t('orders.status.in_delivery') :
+                   status === 'delivered' ? t('orders.status.delivered') :
+                   status === 'cancelled' ? t('common.cancelled') :
+                   status === 'rejected' ? t('orders.status.rejected') :
+                   status === 'archived' ? t('common.statuses.archived') : status}
                 </option>
               ))}
             </select>
@@ -1177,7 +1235,7 @@ const OrdersPage = () => {
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des commandes...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('orders.loading')}</p>
           </div>
         </div>
       ) : (
@@ -1188,15 +1246,15 @@ const OrdersPage = () => {
                 <thead>
                   <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">N° Commande</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Client</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Commercial</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Produits</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Montant</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Statut</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Priorité</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('customer')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('orders.table.rep')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('date')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('product')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('amount')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('priority')}</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Paiement</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Actions</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1205,7 +1263,7 @@ const OrdersPage = () => {
                       <td colSpan="10" className="text-center py-8">
                         <div className="flex flex-col items-center gap-2">
                           <ShoppingBag size={40} className="text-[#ECE8E1]" />
-                          <p className="text-sm text-[#6D6D6D]">Aucune commande trouvée</p>
+                          <p className="text-sm text-[#6D6D6D]">{t('orders.empty')}</p>
                           <button
                             onClick={() => setIsCreateModalOpen(true)}
                             className="text-sm text-[#B8863B] font-medium hover:underline"
@@ -1246,7 +1304,7 @@ const OrdersPage = () => {
             {paginatedOrders.length === 0 ? (
               <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
                 <ShoppingBag size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-                <p className="text-sm text-[#6D6D6D]">Aucune commande trouvée</p>
+                <p className="text-sm text-[#6D6D6D]">{t('orders.empty')}</p>
               </div>
             ) : (
               paginatedOrders.map((order) => (

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import AuthLoadingScreen from '../components/auth/AuthLoadingScreen';
 
 // Layouts
 import DashboardLayout from '../components/layout/DashboardLayout/DashboardLayout';
@@ -43,24 +44,48 @@ import ModuleFallback from '../components/ModuleFallback';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <AuthLoadingScreen />;
+  }
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  
+
+  return children;
+};
+
+const PublicAuthRoute = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <AuthLoadingScreen />;
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return children;
 };
 
 // App Routes
 const AppRoutes = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <AuthLoadingScreen />;
+  }
 
   return (
     <Routes>
       {/* Public Routes */}
       <Route path="/login" element={
-        isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+        <PublicAuthRoute>
+          <Login />
+        </PublicAuthRoute>
       } />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
