@@ -227,7 +227,7 @@ const DashboardLayout = () => {
       />
 
       <div className="flex-1 flex flex-col min-h-screen overflow-hidden min-w-0 relative">
-        <div className="relative z-[60] flex-shrink-0">
+        <div className="relative z-[60] flex-shrink-0 overflow-visible">
           <Header
           onMenuClick={toggleSidebar}
           onToggleSidebar={handleToggleCollapse}
