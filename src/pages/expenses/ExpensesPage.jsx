@@ -1089,7 +1089,7 @@ const ExpensesPage = () => {
           <ExportButtons
             data={filteredExpenses}
             columns={columns}
-            title="Liste des dépenses"
+            title="{t('expenses.export.title')}"
             subtitle={`${filteredExpenses.length} dépenses - Total: ${kpis.total.toLocaleString()} ${CURRENCY}`}
             filename={`depenses_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
@@ -1103,7 +1103,7 @@ const ExpensesPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <Plus size={18} />
-            Nouvelle dépense
+            {t('expenses.addExpense')}
           </button>
           <div className="flex items-center gap-1 border border-[#ECE8E1] rounded-xl bg-white p-1">
             <button
@@ -1136,7 +1136,7 @@ const ExpensesPage = () => {
         <KPICard icon={Wallet} title="Total dépenses" value={kpis.total} color="blue" isCurrency />
         <KPICard icon={Calendar} title={tc('today')} value={kpis.today} color="emerald" isCurrency />
         <KPICard icon={TrendingUp} title="Ce mois" value={kpis.month} color="purple" isCurrency />
-        <KPICard icon={Clock} title="En attente" value={kpis.pending} color="amber" isCurrency />
+        <KPICard icon={Clock} title={t('common.pending')} value={kpis.pending} color="amber" isCurrency />
         <KPICard icon={FolderTree} title="Catégorie la plus élevée" value={kpis.highestCategory} color="gold" />
         <KPICard icon={FileText} title="Nombre de dépenses" value={kpis.count} color="indigo" />
       </div>
@@ -1160,7 +1160,7 @@ const ExpensesPage = () => {
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Toutes les catégories</option>
+              <option value="all">{t('common.allCategories')}</option>
               {expenseCategoryOptions.map(c => (
                 <option key={c.value} value={c.value}>{c.label}</option>
               ))}
@@ -1170,7 +1170,7 @@ const ExpensesPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
+              <option value="all">{t('common.allStatuses')}</option>
               {paymentStatusOptions.map(s => (
                 <option key={s.value} value={s.value}>{s.label}</option>
               ))}
@@ -1211,7 +1211,7 @@ const ExpensesPage = () => {
                     <td colSpan="11" className="text-center py-8">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm text-[#6D6D6D]">Chargement des dépenses...</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.expenses') })}</p>
                       </div>
                     </td>
                   </tr>
@@ -1220,12 +1220,12 @@ const ExpensesPage = () => {
                     <td colSpan="11" className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <Wallet size={40} className="text-[#ECE8E1]" />
-                        <p className="text-sm text-[#6D6D6D]">Aucune dépense trouvée</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('expenses.empty')}</p>
                         <button
                           onClick={handleAddExpense}
                           className="text-sm text-[#B8863B] font-medium hover:underline"
                         >
-                          Ajouter une dépense
+                          {t('expenses.addExpense')}
                         </button>
                       </div>
                     </td>
@@ -1263,12 +1263,12 @@ const ExpensesPage = () => {
           {isLoading ? (
             <div className="col-span-full flex flex-col items-center justify-center py-8 gap-3">
               <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-[#6D6D6D]">Chargement des dépenses...</p>
+              <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.expenses') })}</p>
             </div>
           ) : paginatedExpenses.length === 0 ? (
             <div className="col-span-full bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
               <Wallet size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-              <p className="text-sm text-[#6D6D6D]">Aucune dépense trouvée</p>
+              <p className="text-sm text-[#6D6D6D]">{t('expenses.empty')}</p>
             </div>
           ) : (
             paginatedExpenses.map((expense) => (
@@ -1298,12 +1298,12 @@ const ExpensesPage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des dépenses...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.expenses') })}</p>
           </div>
         ) : paginatedExpenses.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Wallet size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucune dépense trouvée</p>
+            <p className="text-sm text-[#6D6D6D]">{t('expenses.empty')}</p>
           </div>
         ) : (
           paginatedExpenses.map((expense) => (

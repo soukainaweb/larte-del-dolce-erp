@@ -442,7 +442,7 @@ const NotificationDetailModal = ({ isOpen, onClose, notification, onMarkRead }) 
                   <Icon size={20} className="md:w-6 md:h-6 text-[#B8863B]" />
                 </div>
                 <div>
-                  <h2 className="text-base md:text-xl font-bold text-[#3D2F24]">Détails de la notification</h2>
+                  <h2 className="text-base md:text-xl font-bold text-[#3D2F24]">{t('notifications.modals.detailsTitle')}</h2>
                   <p className="text-xs md:text-sm text-[#6D6D6D]">{notification.title}</p>
                 </div>
               </div>
@@ -543,7 +543,7 @@ const NotificationDetailModal = ({ isOpen, onClose, notification, onMarkRead }) 
               onClick={onClose}
               className="w-full sm:w-auto px-3 md:px-4 py-2 md:py-2.5 border border-[#ECE8E1] text-[#6D6D6D] rounded-xl hover:bg-[#F8F7F4] transition-colors text-xs md:text-sm font-medium"
             >
-              Fermer
+              {tc('close')}
             </button>
           </div>
 
@@ -640,7 +640,7 @@ const NotificationFilters = ({
                 onClick={handleReset}
                 className="px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs text-[#6D6D6D] hover:text-[#3D2F24] transition-colors border border-[#ECE8E1] rounded-lg"
               >
-                Réinitialiser
+                {tc('resetFilters')}
               </button>
               <button
                 onClick={handleApply}
@@ -851,12 +851,10 @@ const NotificationsPage = () => {
   // ==========================================
 
   const showToast = (message, type = 'success') => {
-  const { t, tc, actions } = usePageI18n('notifications');
     setToast({ isOpen: true, message, type });
   };
 
   const hideToast = () => {
-  const { t, tc, actions } = usePageI18n('notifications');
     setToast({ isOpen: false, message: '', type: 'success' });
   };
 
@@ -884,7 +882,7 @@ const NotificationsPage = () => {
   };
 
   const handleDelete = async (notification) => {
-    if (window.confirm(`Supprimer la notification "${notification.title}" ?`)) {
+    if (window.confirm(t('notifications.modals.deleteConfirm', { title: notification.title }))) {
       try {
         await deleteNotification(notification.id);
         setNotifications(prev => prev.filter(n => n.id !== notification.id));
@@ -913,7 +911,7 @@ const NotificationsPage = () => {
   };
 
   const handleDeleteRead = async () => {
-    if (window.confirm('Supprimer toutes les notifications lues ?')) {
+    if (window.confirm(t('notifications.modals.deleteReadConfirm'))) {
       try {
         await deleteAllReadNotifications();
         setNotifications(prev => prev.filter(n => !n.isRead));
@@ -928,7 +926,7 @@ const NotificationsPage = () => {
 
   const handleDeleteSelected = async () => {
     if (selectedIds.length === 0) return;
-    if (window.confirm(`Supprimer ${selectedIds.length} notification(s) sélectionnée(s) ?`)) {
+    if (window.confirm(t('notifications.modals.deleteSelectedConfirm', { count: selectedIds.length }))) {
       try {
         await deleteMultipleNotifications({ ids: selectedIds });
         setNotifications(prev => prev.filter(n => !selectedIds.includes(n.id)));
@@ -1093,7 +1091,7 @@ const NotificationsPage = () => {
             <ExportButtons
               data={notifications}
               columns={columns}
-              title="Liste des notifications"
+              title="{t('notifications.export.title')}"
               subtitle={`${notifications.length} notifications`}
               filename={`notifications_${new Date().toISOString().split('T')[0]}`}
               summary={summary}
@@ -1150,7 +1148,7 @@ const NotificationsPage = () => {
               <button
                 onClick={handleDeleteRead}
                 className="p-1.5 md:p-2 hover:bg-[#F8F7F4] rounded-lg transition-colors hidden lg:block"
-                title="Supprimer les notifications lues"
+                title={t('notifications.actions.deleteRead')}
               >
                 <Trash2 size={15} className="md:w-[18px] md:h-[18px] text-[#6D6D6D]" />
               </button>
@@ -1187,7 +1185,7 @@ const NotificationsPage = () => {
           title={tc('today')}
           value={stats.today}
           color="green"
-          subtitle="Nouvelles"
+          subtitle={t('notifications.kpi.new')}
         />
       </div>
 
@@ -1223,7 +1221,7 @@ const NotificationsPage = () => {
                 onClick={handleDeleteSelected}
                 className="text-[10px] md:text-xs text-rose-500 hover:text-rose-600 font-medium"
               >
-                Supprimer ({selectedIds.length})
+                {t('notifications.actions.deleteSelected', { count: selectedIds.length })}
               </button>
             )}
           </div>
@@ -1238,11 +1236,11 @@ const NotificationsPage = () => {
           {notifications.length === 0 ? (
             <div className="p-8 md:p-12 text-center">
               <BellOff size={36} className="md:w-12 md:h-12 text-[#D1CBC0] mx-auto mb-2 md:mb-3" />
-              <h3 className="text-base md:text-lg font-bold text-[#3D2F24]">Aucune notification</h3>
+              <h3 className="text-base md:text-lg font-bold text-[#3D2F24]">{t('notifications.noNotifications')}</h3>
               <p className="text-xs md:text-sm text-[#6D6D6D]">
                 {searchTerm || filters.module !== 'Tous' || filters.priority !== 'all' 
-                  ? 'Aucune notification ne correspond à vos filtres'
-                  : 'Vous êtes à jour ! Toutes vos notifications sont lues'}
+                  ? t('notifications.emptyFiltered')
+                  : t('notifications.allRead')}
               </p>
             </div>
           ) : (

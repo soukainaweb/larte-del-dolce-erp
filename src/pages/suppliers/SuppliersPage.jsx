@@ -338,10 +338,10 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.name) newErrors.name = 'Le nom est requis';
-    if (!formData.phone) newErrors.phone = 'Le téléphone est requis';
-    if (!formData.email) newErrors.email = 'L\'email est requis';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email invalide';
+    if (!formData.name) newErrors.name = t('common.validation.nameRequired');
+    if (!formData.phone) newErrors.phone = t('common.validation.phoneRequired');
+    if (!formData.email) newErrors.email = t('common.validation.emailRequired');
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = tc('emailInvalid');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -363,7 +363,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            {supplier ? 'Modifier le fournisseur' : 'Ajouter un fournisseur'}
+            {supplier ? t('suppliers.modals.editTitle') : t('suppliers.addSupplier')}
           </h3>
           <button
             onClick={onClose}
@@ -375,7 +375,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Nom *</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('name')} *</label>
             <input
               type="text"
               name="name"
@@ -390,7 +390,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Entreprise</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('company')}</label>
               <input
                 type="text"
                 name="company"
@@ -400,24 +400,24 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Type</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('type')}</label>
               <select
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="raw">Matières premières</option>
-                <option value="packaging">Emballages</option>
-                <option value="equipment">Équipements</option>
-                <option value="services">Services</option>
-                <option value="other">Autre</option>
+                <option value="raw">{t('suppliers.types.raw')}</option>
+                <option value="packaging">{t('suppliers.types.packaging')}</option>
+                <option value="equipment">{t('suppliers.types.equipment')}</option>
+                <option value="services">{t('suppliers.types.services')}</option>
+                <option value="other">{t('suppliers.types.other')}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Personne de contact</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('contactPerson')}</label>
             <input
               type="text"
               name="contactPerson"
@@ -429,7 +429,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Téléphone *</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('phone')} *</label>
               <input
                 type="tel"
                 name="phone"
@@ -442,7 +442,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
               {errors.phone && <p className="text-xs text-rose-500 mt-1">{errors.phone}</p>}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Email *</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('email')} *</label>
               <input
                 type="email"
                 name="email"
@@ -457,20 +457,20 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Adresse</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('address')}</label>
             <textarea
               name="address"
               value={formData.address}
               onChange={handleChange}
               rows={2}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all resize-none"
-              placeholder="Adresse complète du fournisseur..."
+              placeholder={t('common.placeholders.supplierAddress')}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">N° Fiscal</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('taxId')}</label>
               <input
                 type="text"
                 name="taxId"
@@ -480,16 +480,16 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Conditions de paiement</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('paymentTermsLabel')}</label>
               <select
                 name="paymentTerms"
                 value={formData.paymentTerms}
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="cash">Comptant</option>
-                <option value="credit">Crédit</option>
-                <option value="monthly">Mensuel</option>
+                <option value="cash">{t('common.paymentMethods.cash')}</option>
+                <option value="credit">{t('common.paymentMethods.credit')}</option>
+                <option value="monthly">{t('common.paymentTerms.monthly')}</option>
               </select>
             </div>
           </div>
@@ -502,7 +502,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
               onChange={handleChange}
               rows={2}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all resize-none"
-              placeholder="Informations supplémentaires..."
+              placeholder={t('common.placeholders.additionalInfo')}
             />
           </div>
 
@@ -514,9 +514,9 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="pending">En attente</option>
+              <option value="active">{t('common.active')}</option>
+              <option value="inactive">{t('common.inactive')}</option>
+              <option value="pending">{t('common.pending')}</option>
             </select>
           </div>
 
@@ -526,7 +526,7 @@ const SupplierModal = ({ isOpen, onClose, onSave, supplier, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
@@ -563,22 +563,18 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, supplier, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer le fournisseur ?
+          {t('suppliers.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
           {hasPurchases ? (
             <>
-              <span className="text-rose-500 font-semibold">⚠️ Attention :</span><br />
-              Ce fournisseur a des commandes associées ({supplier.totalPurchases.toLocaleString()} DH).
-              Vous ne pouvez pas le supprimer.
+              <span className="text-rose-500 font-semibold">⚠️ {tc('attention')}</span><br />
+              {t('suppliers.modals.deleteWarning', { amount: `${supplier.totalPurchases.toLocaleString()} DH` })}
             </>
           ) : (
             <>
-              Vous êtes sur le point de supprimer le fournisseur{' '}
-              <span className="font-semibold text-[#3D2F24]">
-                {supplier?.name}
-              </span>.
-              Cette action est irréversible.
+              {t('suppliers.modals.deleteMessage', { name: supplier?.name })}{' '}
+              {tc('irreversibleAction')}
             </>
           )}
         </p>
@@ -587,7 +583,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, supplier, isLoading }) => {
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -621,7 +617,7 @@ const ViewSupplierModal = ({ isOpen, onClose, supplier }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails du fournisseur
+            {t('suppliers.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -649,11 +645,11 @@ const ViewSupplierModal = ({ isOpen, onClose, supplier }) => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Total commandes</p>
+              <p className="text-xs text-[#6D6D6D]">{t('suppliers.fields.totalOrders')}</p>
               <p className="text-lg font-bold text-[#3D2F24]">{supplier.totalOrders || 0}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Montant total</p>
+              <p className="text-xs text-[#6D6D6D]">{t('suppliers.fields.totalAmount')}</p>
               <p className="text-lg font-bold text-[#3D2F24]">{supplier.totalPurchases.toLocaleString()} DH</p>
             </div>
           </div>
@@ -661,11 +657,11 @@ const ViewSupplierModal = ({ isOpen, onClose, supplier }) => {
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
               <Building2 size={16} className="text-[#6D6D6D]" />
-              <span className="text-[#3D2F24]">Entreprise: {supplier.company || '—'}</span>
+              <span className="text-[#3D2F24]">{t('suppliers.fields.companyLabel')} {supplier.company || '—'}</span>
             </div>
             <div className="flex items-center gap-2">
               <User size={16} className="text-[#6D6D6D]" />
-              <span className="text-[#3D2F24]">Contact: {supplier.contactPerson || '—'}</span>
+              <span className="text-[#3D2F24]">{tc('contact')}: {supplier.contactPerson || '—'}</span>
             </div>
             <div className="flex items-center gap-2">
               <Phone size={16} className="text-[#6D6D6D]" />
@@ -693,7 +689,7 @@ const ViewSupplierModal = ({ isOpen, onClose, supplier }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>
@@ -798,15 +794,15 @@ const SuppliersPage = () => {
   // EXPORT CONFIGURATION
   // ==========================================
   const columns = [
-    { label: 'Nom', accessor: 'name', width: 18 },
+    { label: t('suppliers.table.name'), accessor: 'name', width: 18 },
     { label: 'ID', accessor: 'supplierId', width: 10 },
-    { label: 'Entreprise', accessor: 'company', width: 18 },
-    { label: 'Type', accessor: 'type', width: 14 },
-    { label: 'Contact', accessor: 'contactPerson', width: 14 },
+    { label: t('suppliers.table.company'), accessor: 'company', width: 18 },
+    { label: tc('type'), accessor: 'type', width: 14 },
+    { label: t('suppliers.table.contact'), accessor: 'contactPerson', width: 14 },
     { label: tc('phone'), accessor: 'phone', width: 14 },
-    { label: 'Email', accessor: 'email', width: 20 },
-    { label: 'Total achats', accessor: 'totalPurchases', width: 14 },
-    { label: 'Statut', accessor: 'status', width: 10 }
+    { label: tc('email'), accessor: 'email', width: 20 },
+    { label: t('suppliers.table.totalPurchases'), accessor: 'totalPurchases', width: 14 },
+    { label: tc('status'), accessor: 'status', width: 10 }
   ];
 
   const rowFormatter = (item) => ({
@@ -826,8 +822,8 @@ const SuppliersPage = () => {
   });
 
   const summary = [
-    { label: 'Total fournisseurs', value: kpis.total },
-    { label: 'Fournisseurs actifs', value: kpis.active },
+    { label: t('suppliers.kpi.total'), value: kpis.total },
+    { label: t('suppliers.kpi.active'), value: kpis.active },
     { label: t('suppliers.types.raw'), value: kpis.raw },
     { label: t('suppliers.types.packaging'), value: kpis.packaging }
   ];
@@ -936,8 +932,8 @@ const SuppliersPage = () => {
           <ExportButtons
             data={filteredSuppliers}
             columns={columns}
-            title="Liste des fournisseurs"
-            subtitle={`${filteredSuppliers.length} fournisseurs`}
+            title={t('suppliers.export.title')}
+            subtitle={t('suppliers.export.subtitle', { count: filteredSuppliers.length })}
             filename={`fournisseurs_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -950,7 +946,7 @@ const SuppliersPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <Plus size={18} />
-            Ajouter un fournisseur
+            {t('suppliers.addSupplier')}
           </button>
           <div className="flex items-center gap-1 border border-[#ECE8E1] rounded-xl bg-white p-1">
             <button
@@ -980,10 +976,10 @@ const SuppliersPage = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={Users} title="Total fournisseurs" value={kpis.total} color="blue" />
-        <KPICard icon={CheckCircle} title="Fournisseurs actifs" value={kpis.active} color="emerald" />
-        <KPICard icon={Package} title="Matières premières" value={kpis.raw} color="purple" />
-        <KPICard icon={ShoppingBag} title="Emballages" value={kpis.packaging} color="teal" />
+        <KPICard icon={Users} title={t('suppliers.kpi.total')} value={kpis.total} color="blue" />
+        <KPICard icon={CheckCircle} title={t('suppliers.kpi.active')} value={kpis.active} color="emerald" />
+        <KPICard icon={Package} title={t('suppliers.types.raw')} value={kpis.raw} color="purple" />
+        <KPICard icon={ShoppingBag} title={t('suppliers.types.packaging')} value={kpis.packaging} color="teal" />
       </div>
 
       {/* Filters */}
@@ -1005,7 +1001,7 @@ const SuppliersPage = () => {
               onChange={(e) => setTypeFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les types</option>
+              <option value="all">{t('common.allTypes')}</option>
               {uniqueTypes.map(type => (
                 <option key={type} value={type}>
                   {type === 'raw' ? t('suppliers.types.raw') :
@@ -1020,10 +1016,10 @@ const SuppliersPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="pending">En attente</option>
+              <option value="all">{t('common.allStatuses')}</option>
+              <option value="active">{t('common.active')}</option>
+              <option value="inactive">{t('common.inactive')}</option>
+              <option value="pending">{t('common.pending')}</option>
             </select>
           </div>
         </div>
@@ -1036,12 +1032,12 @@ const SuppliersPage = () => {
             <table className="w-full">
               <thead>
                 <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Fournisseur</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Contact</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Téléphone</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Achats</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('suppliers.table.supplier')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('type')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('suppliers.table.contact')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('phone')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('email')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('suppliers.table.purchases')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                 </tr>
@@ -1052,7 +1048,7 @@ const SuppliersPage = () => {
                     <td colSpan="8" className="text-center py-8">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm text-[#6D6D6D]">Chargement des fournisseurs...</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.suppliers') })}</p>
                       </div>
                     </td>
                   </tr>
@@ -1061,12 +1057,12 @@ const SuppliersPage = () => {
                     <td colSpan="8" className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <Users size={40} className="text-[#ECE8E1]" />
-                        <p className="text-sm text-[#6D6D6D]">Aucun fournisseur trouvé</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('suppliers.empty')}</p>
                         <button
                           onClick={() => setIsCreateModalOpen(true)}
                           className="text-sm text-[#B8863B] font-medium hover:underline"
                         >
-                          Ajouter un fournisseur
+                          {t('suppliers.addSupplier')}
                         </button>
                       </div>
                     </td>
@@ -1105,12 +1101,12 @@ const SuppliersPage = () => {
           {isLoading ? (
             <div className="col-span-full flex flex-col items-center justify-center py-8 gap-3">
               <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-[#6D6D6D]">Chargement des fournisseurs...</p>
+              <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.suppliers') })}</p>
             </div>
           ) : paginatedSuppliers.length === 0 ? (
             <div className="col-span-full bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
               <Users size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-              <p className="text-sm text-[#6D6D6D]">Aucun fournisseur trouvé</p>
+              <p className="text-sm text-[#6D6D6D]">{t('suppliers.empty')}</p>
             </div>
           ) : (
             paginatedSuppliers.map((supplier) => (
@@ -1141,12 +1137,12 @@ const SuppliersPage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des fournisseurs...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.suppliers') })}</p>
           </div>
         ) : paginatedSuppliers.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Users size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucun fournisseur trouvé</p>
+            <p className="text-sm text-[#6D6D6D]">{t('suppliers.empty')}</p>
           </div>
         ) : (
           paginatedSuppliers.map((supplier) => (
@@ -1175,8 +1171,11 @@ const SuppliersPage = () => {
       {filteredSuppliers.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
-            Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} fournisseurs
+            {tc('showingRange', {
+              from: ((currentPage - 1) * itemsPerPage) + 1,
+              to: Math.min(currentPage * itemsPerPage, totalCount),
+              total: totalCount
+            })}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -1187,7 +1186,7 @@ const SuppliersPage = () => {
               <ChevronLeft size={16} className="text-[#6D6D6D]" />
             </button>
             <span className="text-sm font-medium text-[#3D2F24]">
-              Page {currentPage} sur {totalPages}
+              {tc('pageOf', { current: currentPage, total: totalPages })}
             </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}

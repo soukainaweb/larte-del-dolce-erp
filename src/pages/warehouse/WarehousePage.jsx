@@ -63,7 +63,7 @@ const StatusBadge = ({ status }) => {
   const statusConfig = {
     active: { label: tc('active'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
     inactive: { label: tc('inactive'), class: 'bg-gray-50 text-gray-600 border-gray-200' },
-    maintenance: { label: 'Maintenance', class: 'bg-amber-50 text-amber-700 border-amber-200' }
+    maintenance: { label: t('warehouse.status.maintenance'), class: 'bg-amber-50 text-amber-700 border-amber-200' }
   };
 
   const config = statusConfig[status] || statusConfig.inactive;
@@ -82,7 +82,7 @@ const WarehouseTypeBadge = ({ type }) => {
   const { t, tc } = usePageI18n('warehouse');
   const typeConfig = {
     raw: { label: t('suppliers.types.raw'), class: 'bg-purple-50 text-purple-700 border-purple-200' },
-    finished: { label: 'Produits finis', class: 'bg-blue-50 text-blue-700 border-blue-200' },
+    finished: { label: t('warehouse.types.finished'), class: 'bg-blue-50 text-blue-700 border-blue-200' },
     packaging: { label: t('suppliers.types.packaging'), class: 'bg-teal-50 text-teal-700 border-teal-200' },
     other: { label: t('suppliers.types.other'), class: 'bg-gray-50 text-gray-700 border-gray-200' }
   };
@@ -154,7 +154,7 @@ const WarehouseCard = ({ warehouse, onView, onEdit, onDelete, onToggleStatus }) 
         {warehouse.isDefault && (
           <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-200">
             <Star size={10} className="inline mr-1" />
-            Principal
+            {t('warehouse.fields.primary')}
           </span>
         )}
       </div>
@@ -356,7 +356,7 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            {warehouse ? 'Modifier l\'entrepôt' : 'Ajouter un entrepôt'}
+            {warehouse ? t('warehouse.modals.editTitle') : t('warehouse.addWarehouse')}
           </h3>
           <button
             onClick={onClose}
@@ -403,9 +403,9 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="raw">Matières premières</option>
-                <option value="finished">Produits finis</option>
-                <option value="packaging">Emballages</option>
+                <option value="raw">{t('warehouse.types.raw')}</option>
+                <option value="finished">{t('warehouse.types.finished')}</option>
+                <option value="packaging">{t('warehouse.types.packaging')}</option>
                 <option value="other">Autre</option>
               </select>
             </div>
@@ -461,7 +461,7 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
               />
               <span className="text-sm font-medium text-[#3D2F24]">
                 <Star size={14} className="inline mr-1 text-amber-500" />
-                Entrepôt principal
+                {t('warehouse.fields.defaultWarehouse')}
               </span>
             </label>
           </div>
@@ -474,9 +474,9 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="maintenance">Maintenance</option>
+              <option value="active">{t('common.active')}</option>
+              <option value="inactive">{t('common.inactive')}</option>
+              <option value="maintenance">{t('warehouse.status.maintenance')}</option>
             </select>
           </div>
 
@@ -486,7 +486,7 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
@@ -523,22 +523,18 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, warehouse, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer l'entrepôt ?
+          {t('warehouse.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
           {hasProducts ? (
             <>
-              <span className="text-rose-500 font-semibold">⚠️ Attention :</span><br />
-              Cet entrepôt contient <span className="font-semibold">{warehouse.productCount}</span> {t('orders.table.products')}.
-              Vous ne pouvez pas le supprimer tant qu'il contient des {t('orders.table.products')}.
+              <span className="text-rose-500 font-semibold">⚠️ {tc('attention')}</span><br />
+              {t('warehouse.modals.deleteWarning', { count: warehouse.productCount })}
             </>
           ) : (
             <>
-              Vous êtes sur le point de supprimer l'entrepôt{' '}
-              <span className="font-semibold text-[#3D2F24]">
-                {warehouse?.name}
-              </span>.
-              Cette action est irréversible.
+              {t('warehouse.modals.deleteMessage', { name: warehouse?.name })}{' '}
+              {tc('irreversibleAction')}
             </>
           )}
         </p>
@@ -547,7 +543,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, warehouse, isLoading }) => {
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -581,7 +577,7 @@ const ViewWarehouseModal = ({ isOpen, onClose, warehouse }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails de l'entrepôt
+            {t('warehouse.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -605,7 +601,7 @@ const ViewWarehouseModal = ({ isOpen, onClose, warehouse }) => {
                 {warehouse.isDefault && (
                   <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-200">
                     <Star size={12} className="inline mr-1" />
-                    Principal
+                    {t('warehouse.fields.primary')}
                   </span>
                 )}
               </div>
@@ -618,12 +614,12 @@ const ViewWarehouseModal = ({ isOpen, onClose, warehouse }) => {
               <p className="text-xl font-bold text-[#3D2F24]">{warehouse.productCount || 0}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Valeur du stock</p>
+              <p className="text-xs text-[#6D6D6D]">{t('warehouse.fields.stockValue')}</p>
               <p className="text-xl font-bold text-[#3D2F24]">{warehouse.stockValue.toLocaleString()} DH</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Responsable</p>
-              <p className="text-sm font-medium text-[#3D2F24]">{warehouse.manager || 'Non assigné'}</p>
+              <p className="text-xs text-[#6D6D6D]">{t('warehouse.fields.manager')}</p>
+              <p className="text-sm font-medium text-[#3D2F24]">{warehouse.manager || t('warehouse.fields.notAssigned')}</p>
             </div>
           </div>
 
@@ -636,7 +632,7 @@ const ViewWarehouseModal = ({ isOpen, onClose, warehouse }) => {
 
           {warehouse.description && (
             <div className="p-3 bg-[#F8F7F4] rounded-lg">
-              <p className="text-xs text-[#6D6D6D] mb-1">Description</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{tc('description')}</p>
               <p className="text-sm text-[#3D2F24]">{warehouse.description}</p>
             </div>
           )}
@@ -645,7 +641,7 @@ const ViewWarehouseModal = ({ isOpen, onClose, warehouse }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>
@@ -752,7 +748,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Produit</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.product')}</label>
             <select
               name="product"
               value={formData.product}
@@ -799,14 +795,14 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Transfert...' : 'Transférer'}
+              {isLoading ? tc('saving') : tc('update')}
             </button>
           </div>
         </form>
@@ -929,14 +925,14 @@ const WarehousePage = () => {
     name: item.name,
     code: item.code,
     type: item.type === 'raw' ? t('suppliers.types.raw') :
-          item.type === 'finished' ? 'Produits finis' :
+          item.type === 'finished' ? t('warehouse.types.finished') :
           item.type === 'packaging' ? t('suppliers.types.packaging') : t('suppliers.types.other'),
     location: item.location || '—',
     manager: item.manager || '—',
     productCount: item.productCount || 0,
     stockValue: `${item.stockValue.toLocaleString()} DH`,
     status: item.status === 'active' ? tc('active') :
-            item.status === 'inactive' ? tc('inactive') : 'Maintenance'
+            item.status === 'inactive' ? tc('inactive') : t('warehouse.status.maintenance')
   });
 
   const summary = [
@@ -1063,8 +1059,8 @@ const WarehousePage = () => {
           <ExportButtons
             data={filteredWarehouses}
             columns={columns}
-            title="Liste des entrepôts"
-            subtitle={`${filteredWarehouses.length} entrepôts - Valeur totale: ${kpis.totalValue.toLocaleString()} DH`}
+            title={t('warehouse.export.title')}
+            subtitle={t('warehouse.export.subtitle', { count: filteredWarehouses.length, value: `${kpis.totalValue.toLocaleString()} DH` })}
             filename={`entrepots_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -1077,7 +1073,7 @@ const WarehousePage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <Plus size={18} />
-            Ajouter un entrepôt
+            {t('warehouse.addWarehouse')}
           </button>
           <button
             onClick={() => setIsTransferModalOpen(true)}
@@ -1114,10 +1110,10 @@ const WarehousePage = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={Building} title="Total entrepôts" value={kpis.total} color="blue" />
-        <KPICard icon={CheckCircle} title="Entrepôts actifs" value={kpis.active} color="emerald" />
-        <KPICard icon={Package} title="Produits stockés" value={kpis.totalProducts} color="purple" />
-        <KPICard icon={DollarSign} title="Valeur du stock" value={`${kpis.totalValue.toLocaleString()} DH`} color="gold" />
+        <KPICard icon={Building} title={t('warehouse.kpi.totalWarehouses')} value={kpis.total} color="blue" />
+        <KPICard icon={CheckCircle} title={t('warehouse.kpi.active')} value={kpis.active} color="emerald" />
+        <KPICard icon={Package} title={t('warehouse.table.items')} value={kpis.totalProducts} color="purple" />
+        <KPICard icon={DollarSign} title={t('warehouse.fields.stockValue')} value={`${kpis.totalValue.toLocaleString()} DH`} color="gold" />
       </div>
 
       {/* Filters */}
@@ -1139,7 +1135,7 @@ const WarehousePage = () => {
               onChange={(e) => setTypeFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les types</option>
+              <option value="all">{t('common.allTypes')}</option>
               {uniqueTypes.map(type => (
                 <option key={type} value={type}>
                   {type === 'raw' ? t('suppliers.types.raw') :
@@ -1153,10 +1149,10 @@ const WarehousePage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="maintenance">Maintenance</option>
+              <option value="all">{t('common.allStatuses')}</option>
+              <option value="active">{t('common.active')}</option>
+              <option value="inactive">{t('common.inactive')}</option>
+              <option value="maintenance">{t('warehouse.status.maintenance')}</option>
             </select>
           </div>
         </div>
@@ -1185,7 +1181,7 @@ const WarehousePage = () => {
                     <td colSpan="8" className="text-center py-8">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm text-[#6D6D6D]">Chargement des entrepôts...</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.warehouse') })}</p>
                       </div>
                     </td>
                   </tr>
@@ -1194,12 +1190,12 @@ const WarehousePage = () => {
                     <td colSpan="8" className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <Building size={40} className="text-[#ECE8E1]" />
-                        <p className="text-sm text-[#6D6D6D]">Aucun entrepôt trouvé</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('warehouse.empty')}</p>
                         <button
                           onClick={() => setIsCreateModalOpen(true)}
                           className="text-sm text-[#B8863B] font-medium hover:underline"
                         >
-                          Ajouter un entrepôt
+                          {t('warehouse.addWarehouse')}
                         </button>
                       </div>
                     </td>
@@ -1238,12 +1234,12 @@ const WarehousePage = () => {
           {isLoading ? (
             <div className="col-span-full flex flex-col items-center justify-center py-8 gap-3">
               <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-[#6D6D6D]">Chargement des entrepôts...</p>
+              <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.warehouse') })}</p>
             </div>
           ) : paginatedWarehouses.length === 0 ? (
             <div className="col-span-full bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
               <Building size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-              <p className="text-sm text-[#6D6D6D]">Aucun entrepôt trouvé</p>
+              <p className="text-sm text-[#6D6D6D]">{t('warehouse.empty')}</p>
             </div>
           ) : (
             paginatedWarehouses.map((warehouse) => (
@@ -1274,12 +1270,12 @@ const WarehousePage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des entrepôts...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.warehouse') })}</p>
           </div>
         ) : paginatedWarehouses.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Building size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucun entrepôt trouvé</p>
+            <p className="text-sm text-[#6D6D6D]">{t('warehouse.empty')}</p>
           </div>
         ) : (
           paginatedWarehouses.map((warehouse) => (

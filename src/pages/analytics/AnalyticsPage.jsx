@@ -283,61 +283,61 @@ const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onAppl
 
   const quickPeriods = [
     { id: 'today', label: tc('today') },
-    { id: 'yesterday', label: 'Hier' },
-    { id: 'week', label: 'Cette semaine' },
-    { id: 'month', label: 'Ce mois' },
-    { id: 'quarter', label: 'Ce trimestre' },
-    { id: 'year', label: 'Cette année' },
-    { id: 'custom', label: 'Personnalisé' }
+    { id: 'yesterday', label: tc('yesterday') },
+    { id: 'week', label: tc('thisWeek') },
+    { id: 'month', label: tc('thisMonth') },
+    { id: 'quarter', label: tc('thisQuarter') },
+    { id: 'year', label: tc('thisYear') },
+    { id: 'custom', label: tc('custom') }
   ];
 
   const filterGroups = [
     {
-      title: 'Client',
+      title: t('analytics.filters.client'),
       fields: [
-        { key: 'client', type: 'text', placeholder: 'Rechercher un client...' }
+        { key: 'client', type: 'text', placeholder: t('analytics.filters.searchClient') }
       ]
     },
     {
-      title: 'Commercial',
+      title: t('analytics.filters.salesRep'),
       fields: [
         { key: 'salesRep', type: 'select', options: ['Tous', 'Ahmed Benjelloun', 'Sara El Idrissi', 'Mohamed Amine', 'Karim Lahlou', 'Nadia Fassi'] }
       ]
     },
     {
-      title: 'Produit',
+      title: tc('product'),
       fields: [
-        { key: 'product', type: 'text', placeholder: 'Rechercher un produit...' }
+        { key: 'product', type: 'text', placeholder: t('analytics.filters.searchProduct') }
       ]
     },
     {
-      title: 'Catégorie',
+      title: tc('category'),
       fields: [
-        { key: 'category', type: 'select', options: ['Toutes', 'Pâtisserie', 'Boulangerie', 'Viennoiserie', 'Confiserie', 'Boissons'] }
+        { key: 'category', type: 'select', options: [tc('allCategories'), t('analytics.filters.categories.pastry'), t('analytics.filters.categories.bakery'), t('analytics.filters.categories.viennoiserie'), t('analytics.filters.categories.confectionery'), t('analytics.filters.categories.beverages')] }
       ]
     },
     {
-      title: 'Ville',
+      title: tc('city'),
       fields: [
-        { key: 'city', type: 'select', options: ['Toutes', 'Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fès'] }
+        { key: 'city', type: 'select', options: [t('analytics.filters.allCities'), 'Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fès'] }
       ]
     },
     {
-      title: 'Statut',
+      title: tc('status'),
       fields: [
-        { key: 'status', type: 'select', options: ['Tous', t('common.pending'), t('orders.status.validated'), t('orders.status.in_production'), t('orders.status.ready'), t('orders.status.delivered'), t('common.cancelled')] }
+        { key: 'status', type: 'select', options: [tc('all'), t('common.pending'), t('orders.status.validated'), t('orders.status.in_production'), t('orders.status.ready'), t('orders.status.delivered'), t('common.cancelled')] }
       ]
     },
     {
-      title: 'Paiement',
+      title: t('analytics.filters.payment'),
       fields: [
-        { key: 'payment', type: 'select', options: ['Tous', t('common.labels.paidAmount'), 'Impayé', t('common.pending')] }
+        { key: 'payment', type: 'select', options: [tc('all'), t('common.labels.paidAmount'), t('analytics.filters.unpaid'), tc('pending')] }
       ]
     },
     {
-      title: 'Production',
+      title: t('nav.production'),
       fields: [
-        { key: 'production', type: 'select', options: ['Toutes', 'Terminée', 'En cours', 'Non démarrée'] }
+        { key: 'production', type: 'select', options: [tc('allCategories'), t('analytics.filters.finished'), t('analytics.filters.inProgress'), t('analytics.filters.notStarted')] }
       ]
     }
   ];
@@ -379,20 +379,20 @@ const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onAppl
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-[#3D2F24] flex items-center gap-2">
               <FilterIcon size={18} className="text-[#B8863B]" />
-              Filtres avancés
+              {t('analytics.filters.title')}
             </h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleReset}
                 className="px-3 py-1.5 text-xs text-[#6D6D6D] hover:text-[#3D2F24] transition-colors border border-[#ECE8E1] rounded-lg"
               >
-                Réinitialiser
+                {tc('resetFilters')}
               </button>
               <button
                 onClick={handleApply}
                 className="px-3 py-1.5 text-xs bg-[#B8863B] text-white rounded-lg hover:bg-[#A07532] transition-colors"
               >
-                Appliquer
+                {tc('apply')}
               </button>
               <button
                 onClick={onClose}
@@ -482,11 +482,11 @@ const ComparisonCard = ({ title, current, previous, change, icon: Icon, color })
           <p className="text-sm font-medium text-[#3D2F24]">{title}</p>
           <div className="flex items-center gap-4 mt-1">
             <div>
-              <p className="text-xs text-[#6D6D6D]">Actuel</p>
+              <p className="text-xs text-[#6D6D6D]">{t('analytics.comparison.current')}</p>
               <p className="text-sm font-bold text-[#3D2F24]">{current}</p>
             </div>
             <div>
-              <p className="text-xs text-[#6D6D6D]">Précédent</p>
+              <p className="text-xs text-[#6D6D6D]">{t('analytics.comparison.previous')}</p>
               <p className="text-sm font-bold text-[#6D6D6D]">{previous}</p>
             </div>
             <div className={`flex items-center gap-1 text-sm font-bold ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
@@ -700,6 +700,7 @@ const CustomPieChart = ({ data, title, subtitle, height = 300, innerRadius = 60,
 
 // Radar Chart
 const CustomRadarChart = ({ data, title, subtitle, height = 300 }) => {
+  const { t } = usePageI18n('analytics');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <div className="mb-4">
@@ -712,8 +713,8 @@ const CustomRadarChart = ({ data, title, subtitle, height = 300 }) => {
             <PolarGrid stroke="#ECE8E1" />
             <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#6D6D6D' }} />
             <PolarRadiusAxis angle={30} domain={[0, 150]} tick={{ fontSize: 10, fill: '#6D6D6D' }} />
-            <Radar name="2024" dataKey="A" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} />
-            <Radar name="2025" dataKey="B" stroke="#B8863B" fill="#B8863B" fillOpacity={0.3} />
+            <Radar name={t('analytics.charts.legend.year2024')} dataKey="A" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} />
+            <Radar name={t('analytics.charts.legend.year2025')} dataKey="B" stroke="#B8863B" fill="#B8863B" fillOpacity={0.3} />
             <Tooltip
               contentStyle={{
                 backgroundColor: 'white',
@@ -928,7 +929,7 @@ const AnalyticsPage = () => {
       setAlerts(alertsRes.data.data || []);
     } catch (error) {
       console.error('Error loading analytics data:', error);
-      showToast('Erreur lors du chargement des données', 'error');
+      showToast(t('analytics.messages.loadError'), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -945,7 +946,7 @@ const AnalyticsPage = () => {
     const totalRevenue = financialData.reduce((sum, d) => sum + d.revenue, 0);
     const totalProfit = financialData.reduce((sum, d) => sum + d.profit, 0);
     const totalOrders = salesData.reduce((sum, d) => sum + d.orders, 0);
-    const completedOrders = orderData.find(d => d.name === 'Terminées')?.value || 0;
+    const completedOrders = orderData.find(d => d.name === t('analytics.kpi.completedOrders') || d.name === 'Terminées')?.value || 0;
     const pendingOrders = orderData.find(d => d.name === t('common.pending'))?.value || 0;
     const totalCustomers = metrics.totalCustomers || 0;
     const newCustomers = metrics.newCustomers || 0;
@@ -990,12 +991,12 @@ const AnalyticsPage = () => {
   // ⭐ COLONNES POUR L'EXPORT
   // ==========================================
   const exportColumns = [
-    { label: 'Indicateur', accessor: 'indicator', width: 30 },
-    { label: 'Valeur actuelle', accessor: 'current', width: 25 },
-    { label: 'Valeur précédente', accessor: 'previous', width: 25 },
-    { label: 'Évolution', accessor: 'growth', width: 20 },
-    { label: 'Objectif', accessor: 'target', width: 25 },
-    { label: 'Performance', accessor: 'performance', width: 20 }
+    { label: t('analytics.export.indicator'), accessor: 'indicator', width: 30 },
+    { label: t('analytics.export.currentValue'), accessor: 'current', width: 25 },
+    { label: t('analytics.export.previousValue'), accessor: 'previous', width: 25 },
+    { label: t('analytics.export.evolution'), accessor: 'growth', width: 20 },
+    { label: t('analytics.export.target'), accessor: 'target', width: 25 },
+    { label: t('analytics.export.performance'), accessor: 'performance', width: 20 }
   ];
 
   // ==========================================
@@ -1015,14 +1016,14 @@ const AnalyticsPage = () => {
   // ==========================================
   const exportSummary = useMemo(() => {
     const summaryObject = {
-      'Total Revenus': formatCurrency(kpis.totalRevenue),
-      'Total Profit': formatCurrency(kpis.totalProfit),
-      'Total Commandes': kpis.totalOrders,
-      'Clients Actifs': kpis.totalCustomers,
-      'Produits Vendus': kpis.totalProductsSold,
-      'Factures Payées': kpis.paidInvoices,
-      'Livraisons': kpis.totalDeliveries,
-      'Croissance': formatPercentage(kpis.monthlyGrowth)
+      [t('analytics.export.summary.totalRevenue')]: formatCurrency(kpis.totalRevenue),
+      [t('analytics.export.summary.totalProfit')]: formatCurrency(kpis.totalProfit),
+      [t('analytics.export.summary.totalOrders')]: kpis.totalOrders,
+      [t('analytics.export.summary.activeClients')]: kpis.totalCustomers,
+      [t('analytics.export.summary.productsSold')]: kpis.totalProductsSold,
+      [t('analytics.export.summary.paidInvoices')]: kpis.paidInvoices,
+      [t('analytics.export.summary.deliveries')]: kpis.totalDeliveries,
+      [t('analytics.export.summary.growth')]: formatPercentage(kpis.monthlyGrowth)
     };
     
     // Return as an array of {label, value} objects
@@ -1036,14 +1037,14 @@ const AnalyticsPage = () => {
   // HANDLER SUCCÈS EXPORT
   // ==========================================
   const handleExportSuccess = (result) => {
-    showToast(`✅ ${result.filename} exporté avec succès (${result.rowCount || kpiComparison.length} lignes)`, 'success');
+    showToast(t('analytics.messages.exportSuccess', { filename: result.filename, count: result.rowCount || kpiComparison.length }), 'success');
   };
 
   // ==========================================
   // HANDLER ERREUR EXPORT
   // ==========================================
   const handleExportError = (error) => {
-    showToast(`❌ Erreur lors de l'export : ${error.message || 'Erreur inconnue'}`, 'error');
+    showToast(t('analytics.messages.exportError', { message: error.message || tc('unknownError') }), 'error');
   };
 
   // ==========================================
@@ -1051,7 +1052,7 @@ const AnalyticsPage = () => {
   // ==========================================
   const handleRefresh = async () => {
     await loadAllData();
-    showToast('🔄 Données actualisées avec succès', 'success');
+    showToast(t('analytics.messages.refreshed'), 'success');
   };
 
   const handleShare = async () => {
@@ -1078,12 +1079,12 @@ const AnalyticsPage = () => {
     setSearchTerm('');
     setDateRange('month');
     setFilters({});
-    showToast('🔄 Filtres réinitialisés avec succès', 'success');
+    showToast(t('analytics.messages.filtersReset'), 'success');
   };
 
   const handleDateRangeChange = (e) => {
     setDateRange(e.target.value);
-    showToast(`📅 Période changée : ${e.target.options[e.target.selectedIndex].text}`, 'info');
+    showToast(t('analytics.messages.periodChanged', { period: e.target.options[e.target.selectedIndex].text }), 'info');
   };
 
   const handleDismissAlert = (alertId) => {
@@ -1125,16 +1126,16 @@ const AnalyticsPage = () => {
   // TABS
   // ==========================================
   const tabs = [
-    { id: 'overview', label: 'Vue Générale', icon: LayoutDashboard },
-    { id: 'sales', label: 'Ventes', icon: TrendingUp },
-    { id: 'orders', label: 'Commandes', icon: ClipboardList },
-    { id: 'production', label: 'Production', icon: FactoryIcon },
-    { id: 'financial', label: 'Finances', icon: DollarSign },
-    { id: 'customers', label: 'Clients', icon: Users },
-    { id: 'products', label: 'Produits', icon: Package },
-    { id: 'deliveries', label: 'Livraisons', icon: TruckIcon },
-    { id: 'comparisons', label: 'Comparaisons', icon: ArrowUpDown },
-    { id: 'forecast', label: 'Prévisions', icon: Target }
+    { id: 'overview', label: t('analytics.tabs.overview'), icon: LayoutDashboard },
+    { id: 'sales', label: t('analytics.tabs.sales'), icon: TrendingUp },
+    { id: 'orders', label: t('analytics.tabs.orders'), icon: ClipboardList },
+    { id: 'production', label: t('analytics.tabs.production'), icon: FactoryIcon },
+    { id: 'financial', label: t('analytics.tabs.financial'), icon: DollarSign },
+    { id: 'customers', label: t('analytics.tabs.customers'), icon: Users },
+    { id: 'products', label: t('analytics.tabs.products'), icon: Package },
+    { id: 'deliveries', label: t('analytics.tabs.deliveries'), icon: TruckIcon },
+    { id: 'comparisons', label: t('analytics.tabs.comparisons'), icon: ArrowUpDown },
+    { id: 'forecast', label: t('analytics.tabs.forecast'), icon: Target }
   ];
 
   // ==========================================
@@ -1146,133 +1147,133 @@ const AnalyticsPage = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
         <KPICard 
           icon={DollarSign} 
-          title="Chiffre d'affaires" 
+          title={t('analytics.kpi.revenue')} 
           value={kpis.totalRevenue} 
           change={kpis.monthlyGrowth} 
           color="gold" 
           isCurrency 
           miniData={kpis.revenueTrend}
           miniColor="#B8863B"
-          compareText="VS mois précédent"
+          compareText={tc('vsPreviousMonth')}
         />
         <KPICard 
           icon={TrendingUp} 
-          title="Profit" 
+          title={t('analytics.kpi.profit')} 
           value={kpis.totalProfit} 
           change={12.8} 
           color="green" 
           isCurrency 
           miniData={kpis.profitTrend}
           miniColor="#22C55E"
-          compareText="VS mois précédent"
+          compareText={tc('vsPreviousMonth')}
         />
         <KPICard 
           icon={ShoppingBag} 
-          title="Commandes" 
+          title={t('analytics.kpi.orders')} 
           value={kpis.totalOrders} 
           change={7.2} 
           color="blue"
           miniData={kpis.orderTrend}
           miniColor="#3B82F6"
-          compareText="VS mois précédent"
+          compareText={tc('vsPreviousMonth')}
         />
         <KPICard 
           icon={CheckCircle} 
-          title="Commandes terminées" 
+          title={t('analytics.kpi.completedOrders')} 
           value={kpis.completedOrders} 
           change={5.1} 
           color="emerald"
-          compareText="VS mois précédent"
+          compareText={tc('vsPreviousMonth')}
         />
         <KPICard 
           icon={Clock} 
-          title="Commandes en attente" 
+          title={t('analytics.kpi.pendingOrders')} 
           value={kpis.pendingOrders} 
           change={-3.8} 
           color="amber"
-          compareText="VS mois précédent"
+          compareText={tc('vsPreviousMonth')}
         />
         <KPICard 
           icon={Users} 
-          title="Clients actifs" 
+          title={t('analytics.kpi.activeCustomers')} 
           value={kpis.totalCustomers} 
           change={9.4} 
           color="purple"
-          compareText="VS mois précédent"
+          compareText={tc('vsPreviousMonth')}
         />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
-        <KPICard icon={UserPlus} title="Nouveaux clients" value={kpis.newCustomers} change={15.2} color="blue" />
-        <KPICard icon={Package} title="Produits vendus" value={kpis.totalProductsSold} change={8.7} color="purple" />
-        <KPICard icon={CreditCard} title="Factures payées" value={kpis.paidInvoices} change={6.3} color="green" />
-        <KPICard icon={XCircle} title="Factures impayées" value={kpis.unpaidInvoices} change={-4.2} color="rose" />
-        <KPICard icon={TruckIcon} title="Livraisons réalisées" value={kpis.totalDeliveries} change={10.1} color="cyan" />
-        <KPICard icon={FactoryIcon} title="Production réalisée" value={kpis.totalProduction} change={12.5} color="amber" />
+        <KPICard icon={UserPlus} title={t('analytics.kpi.newCustomers')} value={kpis.newCustomers} change={15.2} color="blue" />
+        <KPICard icon={Package} title={t('analytics.kpi.productsSold')} value={kpis.totalProductsSold} change={8.7} color="purple" />
+        <KPICard icon={CreditCard} title={t('analytics.kpi.paidInvoices')} value={kpis.paidInvoices} change={6.3} color="green" />
+        <KPICard icon={XCircle} title={t('analytics.kpi.unpaidInvoices')} value={kpis.unpaidInvoices} change={-4.2} color="rose" />
+        <KPICard icon={TruckIcon} title={t('analytics.kpi.deliveriesDone')} value={kpis.totalDeliveries} change={10.1} color="cyan" />
+        <KPICard icon={FactoryIcon} title={t('analytics.kpi.productionDone')} value={kpis.totalProduction} change={12.5} color="amber" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <CustomAreaChart
           data={financialData}
           areas={[
-            { key: 'revenue', label: 'Revenus', color: '#B8863B' },
-            { key: 'profit', label: 'Profit', color: '#22C55E' }
+            { key: 'revenue', label: t('analytics.charts.legend.revenue'), color: '#B8863B' },
+            { key: 'profit', label: t('analytics.charts.legend.profit'), color: '#22C55E' }
           ]}
           xKey="month"
-          title="Évolution des Revenus & Profit"
-          subtitle="Comparaison mensuelle des revenus et profits"
+          title={t('analytics.charts.revenueProfitEvolution')}
+          subtitle={t('analytics.charts.revenueProfitSub')}
         />
         <CustomPieChart
           data={orderData}
-          title="Répartition des Commandes"
-          subtitle="Distribution par statut"
+          title={t('analytics.charts.orderDistribution')}
+          subtitle={t('analytics.charts.orderDistributionSub')}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <CustomBarChart
           data={regionData}
-          bars={[{ key: 'revenue', label: 'Revenus', color: '#B8863B' }]}
+          bars={[{ key: 'revenue', label: t('analytics.charts.legend.revenue'), color: '#B8863B' }]}
           xKey="region"
-          title="Ventes par Région"
-          subtitle="Répartition géographique des revenus"
+          title={t('analytics.charts.salesByRegion')}
+          subtitle={t('analytics.charts.salesByRegionSub')}
         />
         <CustomRadarChart
           data={radarData}
-          title="Performance Globale"
-          subtitle="Comparaison 2024 vs 2025"
+          title={t('analytics.charts.globalPerformance')}
+          subtitle={t('analytics.charts.globalPerformanceSub')}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <TopListCard 
-          title="Top Produits" 
+          title={t('analytics.top.products')} 
           items={productData.map(c => ({ ...c, value: c.sales }))} 
-          valueLabel="Ventes" 
+          valueLabel={t('common.sales')} 
           icon={Package} 
           valueKey="sales"
           limit={5}
         />
         <TopListCard 
-          title="Top Clients" 
+          title={t('analytics.top.clients')} 
           items={customerData.map(c => ({ ...c, value: c.revenue }))} 
-          valueLabel="Revenu" 
+          valueLabel={t('analytics.kpi.revenue')} 
           icon={Users} 
           valueKey="revenue"
           limit={5}
         />
         <TopListCard 
-          title="Top Catégories" 
+          title={t('analytics.top.categories')} 
           items={metrics.topCategories || []} 
-          valueLabel="Ventes" 
+          valueLabel={t('common.sales')} 
           icon={Layers} 
           valueKey="sales"
           limit={5}
         />
         <TopListCard 
-          title="Top Commerciaux" 
+          title={t('analytics.top.salesReps')} 
           items={salesRepsData.map(c => ({ ...c, value: c.revenue }))} 
-          valueLabel="Revenu" 
+          valueLabel={t('analytics.kpi.revenue')} 
           icon={User} 
           valueKey="revenue"
           limit={5}
@@ -1281,7 +1282,7 @@ const AnalyticsPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Activité Récente</h3>
+          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('analytics.sections.recentActivity')}</h3>
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {activities.map((activity) => (
               <ActivityItem key={activity.id} activity={activity} />
@@ -1289,7 +1290,7 @@ const AnalyticsPage = () => {
           </div>
         </div>
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Alertes</h3>
+          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('analytics.sections.alerts')}</h3>
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {alerts.map((alert) => (
               <AlertItem key={alert.id} alert={alert} onDismiss={handleDismissAlert} />
@@ -1303,45 +1304,45 @@ const AnalyticsPage = () => {
   const renderSales = () => (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={DollarSign} title="Chiffre d'affaires" value={kpis.totalRevenue} change={kpis.monthlyGrowth} color="gold" isCurrency />
-        <KPICard icon={TrendingUp} title="Croissance" value={formatPercentage(kpis.monthlyGrowth)} change={kpis.monthlyGrowth} color="indigo" />
-        <KPICard icon={ShoppingBag} title="Commandes" value={kpis.totalOrders} change={7.2} color="blue" />
-        <KPICard icon={Users} title="Clients" value={kpis.totalCustomers} change={9.4} color="green" />
+        <KPICard icon={DollarSign} title={t('analytics.kpi.revenue')} value={kpis.totalRevenue} change={kpis.monthlyGrowth} color="gold" isCurrency />
+        <KPICard icon={TrendingUp} title={t('analytics.kpi.growth')} value={formatPercentage(kpis.monthlyGrowth)} change={kpis.monthlyGrowth} color="indigo" />
+        <KPICard icon={ShoppingBag} title={t('analytics.kpi.orders')} value={kpis.totalOrders} change={7.2} color="blue" />
+        <KPICard icon={Users} title={t('analytics.kpi.customers')} value={kpis.totalCustomers} change={9.4} color="green" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <CustomLineChart
           data={salesData}
           lines={[
-            { key: 'revenue', label: 'Revenus', color: '#B8863B' },
-            { key: 'profit', label: 'Profit', color: '#22C55E' },
-            { key: 'target', label: 'Objectif', color: '#EF4444' }
+            { key: 'revenue', label: t('analytics.charts.legend.revenue'), color: '#B8863B' },
+            { key: 'profit', label: t('analytics.charts.legend.profit'), color: '#22C55E' },
+            { key: 'target', label: t('analytics.charts.legend.target'), color: '#EF4444' }
           ]}
           xKey="month"
-          title="Évolution des Ventes"
-          subtitle="Revenus, Profit et Objectifs"
+          title={t('analytics.charts.salesEvolution')}
+          subtitle={t('analytics.charts.salesEvolutionSub')}
         />
         <CustomBarChart
           data={salesRepsData}
-          bars={[{ key: 'revenue', label: 'Revenus', color: '#8B5CF6' }]}
+          bars={[{ key: 'revenue', label: t('analytics.charts.legend.revenue'), color: '#8B5CF6' }]}
           xKey="name"
-          title="Performance des Commerciaux"
-          subtitle="Revenus par commercial"
+          title={t('analytics.charts.salesRepPerformance')}
+          subtitle={t('analytics.charts.salesRepPerformanceSub')}
         />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomBarChart
           data={regionData}
-          bars={[{ key: 'revenue', label: 'Revenus', color: '#B8863B' }]}
+          bars={[{ key: 'revenue', label: t('analytics.charts.legend.revenue'), color: '#B8863B' }]}
           xKey="region"
-          title="Ventes par Région"
-          subtitle="Répartition géographique"
+          title={t('analytics.charts.salesByRegion')}
+          subtitle={t('analytics.charts.salesByRegionSub')}
         />
         <CustomBarChart
           data={metrics.topCategories || []}
-          bars={[{ key: 'sales', label: 'Ventes', color: '#3B82F6' }]}
+          bars={[{ key: 'sales', label: t('common.sales'), color: '#3B82F6' }]}
           xKey="name"
-          title="Ventes par Catégorie"
-          subtitle="Performance des catégories"
+          title={t('analytics.charts.salesByCategory')}
+          subtitle={t('analytics.charts.salesByCategorySub')}
         />
       </div>
     </div>
@@ -1350,25 +1351,25 @@ const AnalyticsPage = () => {
   const renderOrders = () => (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={ShoppingBag} title="Commandes créées" value={kpis.totalOrders} change={7.2} color="blue" />
-        <KPICard icon={CheckCircle} title="Commandes validées" value={kpis.completedOrders} change={5.1} color="green" />
-        <KPICard icon={XCircle} title="Commandes annulées" value={8} change={-2.3} color="rose" />
-        <KPICard icon={Clock} title="Temps moyen" value="2.4h" change={-1.8} color="amber" />
+        <KPICard icon={ShoppingBag} title={t('analytics.kpi.ordersCreated')} value={kpis.totalOrders} change={7.2} color="blue" />
+        <KPICard icon={CheckCircle} title={t('analytics.kpi.ordersValidated')} value={kpis.completedOrders} change={5.1} color="green" />
+        <KPICard icon={XCircle} title={t('analytics.kpi.ordersCancelled')} value={8} change={-2.3} color="rose" />
+        <KPICard icon={Clock} title={t('analytics.kpi.avgTime')} value="2.4h" change={-1.8} color="amber" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomLineChart
           data={salesData}
           lines={[
-            { key: 'orders', label: 'Commandes', color: '#3B82F6' }
+            { key: 'orders', label: t('analytics.charts.legend.orders'), color: '#3B82F6' }
           ]}
           xKey="month"
-          title="Évolution des Commandes"
-          subtitle="Nombre de commandes par mois"
+          title={t('analytics.charts.ordersEvolution')}
+          subtitle={t('analytics.charts.ordersEvolutionSub')}
         />
         <CustomPieChart
           data={orderData}
-          title="Répartition des Commandes"
-          subtitle="Distribution par statut"
+          title={t('analytics.charts.orderDistribution')}
+          subtitle={t('analytics.charts.orderDistributionSub')}
         />
       </div>
     </div>
@@ -1377,31 +1378,31 @@ const AnalyticsPage = () => {
   const renderProduction = () => (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={FactoryIcon} title="Production quotidienne" value={productionData.reduce((s, d) => s + d.produced, 0)} change={12.5} color="amber" />
-        <KPICard icon={CheckCircle} title="Produits terminés" value={kpis.totalProduction} change={10.2} color="green" />
-        <KPICard icon={Timer} title="Temps moyen" value="4.5h" change={-3.1} color="blue" />
-        <KPICard icon={Award} title="Rendement" value="94%" change={2.8} color="purple" />
+        <KPICard icon={FactoryIcon} title={t('analytics.kpi.dailyProduction')} value={productionData.reduce((s, d) => s + d.produced, 0)} change={12.5} color="amber" />
+        <KPICard icon={CheckCircle} title={t('analytics.kpi.finishedProducts')} value={kpis.totalProduction} change={10.2} color="green" />
+        <KPICard icon={Timer} title={t('analytics.kpi.avgTime')} value="4.5h" change={-3.1} color="blue" />
+        <KPICard icon={Award} title={t('analytics.kpi.yield')} value="94%" change={2.8} color="purple" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomBarChart
           data={productionData}
           bars={[
-            { key: 'produced', label: 'Produits', color: '#22C55E' },
-            { key: 'target', label: 'Objectif', color: '#EF4444' }
+            { key: 'produced', label: t('analytics.charts.legend.products'), color: '#22C55E' },
+            { key: 'target', label: t('analytics.charts.legend.target'), color: '#EF4444' }
           ]}
           xKey="day"
-          title="Production Journalière"
-          subtitle="Production vs Objectif"
+          title={t('analytics.charts.dailyProduction')}
+          subtitle={t('analytics.charts.dailyProductionSub')}
         />
         <CustomLineChart
           data={productionData}
           lines={[
-            { key: 'produced', label: 'Produits', color: '#22C55E' },
-            { key: 'target', label: 'Objectif', color: '#EF4444' }
+            { key: 'produced', label: t('analytics.charts.legend.products'), color: '#22C55E' },
+            { key: 'target', label: t('analytics.charts.legend.target'), color: '#EF4444' }
           ]}
           xKey="day"
-          title="Tendance de Production"
-          subtitle="Évolution quotidienne"
+          title={t('analytics.charts.productionTrend')}
+          subtitle={t('analytics.charts.productionTrendSub')}
         />
       </div>
     </div>
@@ -1410,32 +1411,32 @@ const AnalyticsPage = () => {
   const renderFinancial = () => (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={DollarSign} title="Revenus" value={kpis.totalRevenue} change={kpis.monthlyGrowth} color="gold" isCurrency />
-        <KPICard icon={CreditCard} title="Dépenses" value={financialData.reduce((s, d) => s + d.expenses, 0)} change={5.3} color="rose" isCurrency />
-        <KPICard icon={TrendingUp} title="Profit net" value={kpis.totalProfit} change={12.8} color="green" isCurrency />
-        <KPICard icon={CheckCircle} title="Paiements reçus" value={kpis.paidInvoices} change={6.3} color="emerald" />
+        <KPICard icon={DollarSign} title={t('analytics.kpi.revenue')} value={kpis.totalRevenue} change={kpis.monthlyGrowth} color="gold" isCurrency />
+        <KPICard icon={CreditCard} title={t('analytics.kpi.expenses')} value={financialData.reduce((s, d) => s + d.expenses, 0)} change={5.3} color="rose" isCurrency />
+        <KPICard icon={TrendingUp} title={t('analytics.kpi.netProfit')} value={kpis.totalProfit} change={12.8} color="green" isCurrency />
+        <KPICard icon={CheckCircle} title={t('analytics.kpi.paymentsReceived')} value={kpis.paidInvoices} change={6.3} color="emerald" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <CustomAreaChart
           data={financialData}
           areas={[
-            { key: 'revenue', label: 'Revenus', color: '#B8863B' },
-            { key: 'expenses', label: 'Dépenses', color: '#EF4444' },
-            { key: 'profit', label: 'Profit', color: '#22C55E' }
+            { key: 'revenue', label: t('analytics.charts.legend.revenue'), color: '#B8863B' },
+            { key: 'expenses', label: t('analytics.charts.legend.expenses'), color: '#EF4444' },
+            { key: 'profit', label: t('analytics.charts.legend.profit'), color: '#22C55E' }
           ]}
           xKey="month"
-          title="Analyse Financière"
-          subtitle="Revenus, Dépenses et Profit"
+          title={t('analytics.charts.financialAnalysis')}
+          subtitle={t('analytics.charts.financialAnalysisSub')}
         />
         <CustomBarChart
           data={financialData.slice(-6)}
           bars={[
-            { key: 'revenue', label: 'Revenus', color: '#B8863B' },
-            { key: 'profit', label: 'Profit', color: '#22C55E' }
+            { key: 'revenue', label: t('analytics.charts.legend.revenue'), color: '#B8863B' },
+            { key: 'profit', label: t('analytics.charts.legend.profit'), color: '#22C55E' }
           ]}
           xKey="month"
-          title="Performance Financière (6 mois)"
-          subtitle="Derniers mois"
+          title={t('analytics.charts.financialPerformance')}
+          subtitle={t('analytics.charts.financialPerformanceSub')}
         />
       </div>
     </div>
@@ -1444,36 +1445,36 @@ const AnalyticsPage = () => {
   const renderCustomers = () => (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={Users} title="Clients actifs" value={kpis.totalCustomers} change={9.4} color="green" />
-        <KPICard icon={UserPlus} title="Nouveaux clients" value={kpis.newCustomers} change={15.2} color="blue" />
-        <KPICard icon={UserX} title="Clients inactifs" value={124} change={-2.1} color="rose" />
-        <KPICard icon={Award} title="Clients fidèles" value={345} change={12.8} color="purple" />
+        <KPICard icon={Users} title={t('analytics.kpi.activeCustomers')} value={kpis.totalCustomers} change={9.4} color="green" />
+        <KPICard icon={UserPlus} title={t('analytics.kpi.newCustomers')} value={kpis.newCustomers} change={15.2} color="blue" />
+        <KPICard icon={UserX} title={t('analytics.kpi.inactiveCustomers')} value={124} change={-2.1} color="rose" />
+        <KPICard icon={Award} title={t('analytics.kpi.loyalCustomers')} value={345} change={12.8} color="purple" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomLineChart
           data={salesData}
           lines={[
-            { key: 'orders', label: 'Clients actifs', color: '#3B82F6' }
+            { key: 'orders', label: t('analytics.kpi.activeCustomers'), color: '#3B82F6' }
           ]}
           xKey="month"
-          title="Croissance des Clients"
-          subtitle="Évolution du nombre de clients"
+          title={t('analytics.charts.customerGrowth')}
+          subtitle={t('analytics.charts.customerGrowthSub')}
         />
         <CustomPieChart
           data={[
-            { name: 'Actifs', value: 65, color: '#22C55E' },
-            { name: 'Inactifs', value: 20, color: '#EF4444' },
-            { name: 'Nouveaux', value: 15, color: '#3B82F6' }
+            { name: t('analytics.charts.legend.active'), value: 65, color: '#22C55E' },
+            { name: t('analytics.charts.legend.inactive'), value: 20, color: '#EF4444' },
+            { name: t('analytics.charts.legend.new'), value: 15, color: '#3B82F6' }
           ]}
-          title="Répartition des Clients"
-          subtitle="Distribution par statut"
+          title={t('analytics.charts.customerDistribution')}
+          subtitle={t('analytics.charts.orderDistributionSub')}
         />
       </div>
       <div className="mt-6">
         <TopListCard 
-          title="Top 10 Clients" 
+          title={t('analytics.top.top10Clients')} 
           items={customerData.map(c => ({ ...c, value: c.revenue }))} 
-          valueLabel="Revenu" 
+          valueLabel={t('analytics.kpi.revenue')} 
           icon={Users} 
           valueKey="revenue"
           limit={10}
@@ -1485,30 +1486,30 @@ const AnalyticsPage = () => {
   const renderProducts = () => (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={Package} title="Produits vendus" value={kpis.totalProductsSold} change={8.7} color="purple" />
-        <KPICard icon={TrendingUp} title="Top produit" value={productData[0]?.name || '-'} change={0} color="gold" />
-        <KPICard icon={AlertCircle} title="En rupture" value="5" change={-10.4} color="rose" />
-        <KPICard icon={CheckCircle} title="Disponibles" value="52" change={8.9} color="green" />
+        <KPICard icon={Package} title={t('analytics.kpi.productsSold')} value={kpis.totalProductsSold} change={8.7} color="purple" />
+        <KPICard icon={TrendingUp} title={t('analytics.kpi.topProduct')} value={productData[0]?.name || '-'} change={0} color="gold" />
+        <KPICard icon={AlertCircle} title={t('analytics.kpi.outOfStock')} value="5" change={-10.4} color="rose" />
+        <KPICard icon={CheckCircle} title={t('analytics.kpi.available')} value="52" change={8.9} color="green" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomBarChart
           data={productData.slice(0, 5)}
-          bars={[{ key: 'sales', label: 'Ventes', color: '#B8863B' }]}
+          bars={[{ key: 'sales', label: t('common.sales'), color: '#B8863B' }]}
           xKey="name"
-          title="Top Produits"
-          subtitle="Les plus vendus"
+          title={t('analytics.top.products')}
+          subtitle={t('analytics.charts.topProductsSub')}
         />
         <CustomPieChart
           data={metrics.topCategories || []}
-          title="Produits par Catégorie"
-          subtitle="Distribution par catégorie"
+          title={t('analytics.charts.productsByCategory')}
+          subtitle={t('analytics.charts.productsByCategorySub')}
         />
       </div>
       <div className="mt-6">
         <TopListCard 
-          title="Top 10 Produits" 
+          title={t('analytics.top.top10Products')} 
           items={productData.map(c => ({ ...c, value: c.sales }))} 
-          valueLabel="Ventes" 
+          valueLabel={t('common.sales')} 
           icon={Package} 
           valueKey="sales"
           limit={10}
@@ -1520,30 +1521,30 @@ const AnalyticsPage = () => {
   const renderDeliveries = () => (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={TruckIcon} title="Livraisons terminées" value={kpis.totalDeliveries} change={10.1} color="green" />
-        <KPICard icon={Clock} title="En retard" value={15} change={-2.4} color="rose" />
-        <KPICard icon={Timer} title="Temps moyen" value="2.5h" change={-5.3} color="blue" />
-        <KPICard icon={CheckCircle} title="Taux de réussite" value="94.2%" change={2.8} color="emerald" />
+        <KPICard icon={TruckIcon} title={t('analytics.kpi.completedDeliveries')} value={kpis.totalDeliveries} change={10.1} color="green" />
+        <KPICard icon={Clock} title={t('analytics.kpi.late')} value={15} change={-2.4} color="rose" />
+        <KPICard icon={Timer} title={t('analytics.kpi.avgTime')} value="2.5h" change={-5.3} color="blue" />
+        <KPICard icon={CheckCircle} title={t('analytics.kpi.successRate')} value="94.2%" change={2.8} color="emerald" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomBarChart
           data={deliveryData.slice(0, 6)}
           bars={[
             { key: 'delivered', label: t('orders.kpi.delivered'), color: '#22C55E' },
-            { key: 'delayed', label: 'Retardées', color: '#EF4444' }
+            { key: 'delayed', label: t('analytics.charts.legend.delayed'), color: '#EF4444' }
           ]}
           xKey="month"
-          title="Livraisons Mensuelles"
-          subtitle="Livrées vs Retardées"
+          title={t('analytics.charts.monthlyDeliveries')}
+          subtitle={t('analytics.charts.monthlyDeliveriesSub')}
         />
         <CustomPieChart
           data={[
-            { name: 'À temps', value: 75, color: '#22C55E' },
-            { name: 'Retard', value: 15, color: '#EF4444' },
+            { name: t('common.onTime'), value: 75, color: '#22C55E' },
+            { name: t('analytics.kpi.late'), value: 15, color: '#EF4444' },
             { name: t('common.pending'), value: 10, color: '#F59E0B' }
           ]}
-          title="Répartition des Livraisons"
-          subtitle="Statut des livraisons"
+          title={t('analytics.charts.deliveryDistribution')}
+          subtitle={t('analytics.charts.deliveryDistributionSub')}
         />
       </div>
     </div>
@@ -1553,7 +1554,7 @@ const AnalyticsPage = () => {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <ComparisonCard
-          title="Aujourd'hui vs Hier"
+          title={t('analytics.comparison.todayVsYesterday')}
           current="18 500 SAR"
           previous="16 200 SAR"
           change={14.2}
@@ -1561,7 +1562,7 @@ const AnalyticsPage = () => {
           color="gold"
         />
         <ComparisonCard
-          title="Cette semaine vs Semaine précédente"
+          title={t('analytics.comparison.weekVsPrevious')}
           current="125 000 SAR"
           previous="112 000 SAR"
           change={11.6}
@@ -1569,7 +1570,7 @@ const AnalyticsPage = () => {
           color="blue"
         />
         <ComparisonCard
-          title="Ce mois vs Mois précédent"
+          title={t('analytics.comparison.monthVsPrevious')}
           current={formatCurrency(kpis.totalRevenue)}
           previous={formatCurrency(kpis.totalRevenue * 0.92)}
           change={kpis.monthlyGrowth}
@@ -1577,7 +1578,7 @@ const AnalyticsPage = () => {
           color="green"
         />
         <ComparisonCard
-          title="Cette année vs Année précédente"
+          title={t('analytics.comparison.yearVsPrevious')}
           current="1 475 000 SAR"
           previous="1 280 000 SAR"
           change={15.2}
@@ -1589,22 +1590,22 @@ const AnalyticsPage = () => {
         <CustomBarChart
           data={yearlyData}
           bars={[
-            { key: 'year2024', label: '2024', color: '#3B82F6' },
-            { key: 'year2025', label: '2025', color: '#B8863B' }
+            { key: 'year2024', label: t('analytics.charts.legend.year2024'), color: '#3B82F6' },
+            { key: 'year2025', label: t('analytics.charts.legend.year2025'), color: '#B8863B' }
           ]}
           xKey="month"
-          title="Comparaison Annuelle"
-          subtitle="2024 vs 2025"
+          title={t('analytics.charts.yearlyComparison')}
+          subtitle={t('analytics.charts.yearlyComparisonSub')}
         />
         <CustomLineChart
           data={yearlyData}
           lines={[
-            { key: 'year2024', label: '2024', color: '#3B82F6' },
-            { key: 'year2025', label: '2025', color: '#B8863B' }
+            { key: 'year2024', label: t('analytics.charts.legend.year2024'), color: '#3B82F6' },
+            { key: 'year2025', label: t('analytics.charts.legend.year2025'), color: '#B8863B' }
           ]}
           xKey="month"
-          title="Tendance Annuelle"
-          subtitle="Évolution comparée"
+          title={t('analytics.charts.yearlyTrend')}
+          subtitle={t('analytics.charts.yearlyTrendSub')}
         />
       </div>
     </div>
@@ -1613,31 +1614,31 @@ const AnalyticsPage = () => {
   const renderForecast = () => (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={Target} title="CA Prévisionnel" value="175 000 SAR" change={8.5} color="gold" isCurrency />
-        <KPICard icon={TrendingUp} title="Ventes Prévisionnelles" value="245" change={6.2} color="blue" />
-        <KPICard icon={FactoryIcon} title="Production Prévisionnelle" value="650" change={10.1} color="green" />
-        <KPICard icon={ShoppingBag} title="Commandes Prévisionnelles" value="220" change={4.8} color="purple" />
+        <KPICard icon={Target} title={t('analytics.kpi.forecastRevenue')} value="175 000 SAR" change={8.5} color="gold" isCurrency />
+        <KPICard icon={TrendingUp} title={t('analytics.kpi.forecastSales')} value="245" change={6.2} color="blue" />
+        <KPICard icon={FactoryIcon} title={t('analytics.kpi.forecastProduction')} value="650" change={10.1} color="green" />
+        <KPICard icon={ShoppingBag} title={t('analytics.kpi.forecastOrders')} value="220" change={4.8} color="purple" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CustomLineChart
           data={forecastData}
           lines={[
-            { key: 'actual', label: 'Réel', color: '#B8863B' },
-            { key: 'forecast', label: 'Prévision', color: '#3B82F6' }
+            { key: 'actual', label: t('analytics.charts.legend.actual'), color: '#B8863B' },
+            { key: 'forecast', label: t('analytics.charts.legend.forecast'), color: '#3B82F6' }
           ]}
           xKey="month"
-          title="Prévision vs Réel"
-          subtitle="Comparaison mensuelle"
+          title={t('analytics.charts.forecastVsActual')}
+          subtitle={t('analytics.charts.forecastVsActualSub')}
         />
         <CustomAreaChart
           data={forecastData.slice(6)}
           areas={[
-            { key: 'actual', label: 'Réel', color: '#B8863B' },
-            { key: 'forecast', label: 'Prévision', color: '#3B82F6' }
+            { key: 'actual', label: t('analytics.charts.legend.actual'), color: '#B8863B' },
+            { key: 'forecast', label: t('analytics.charts.legend.forecast'), color: '#3B82F6' }
           ]}
           xKey="month"
-          title="Projection 6 mois"
-          subtitle="Tendance prévisionnelle"
+          title={t('analytics.charts.projection6Months')}
+          subtitle={t('analytics.charts.projection6MonthsSub')}
         />
       </div>
     </div>
@@ -1647,7 +1648,7 @@ const AnalyticsPage = () => {
     return (
       <div className="bg-white border border-[#ECE8E1] rounded-xl overflow-hidden">
         <div className="p-4 border-b border-[#ECE8E1] flex items-center justify-between">
-          <h3 className="text-sm font-bold text-[#3D2F24]">Tableau d'Analyse des KPI</h3>
+          <h3 className="text-sm font-bold text-[#3D2F24]">{t('analytics.sections.kpiTable')}</h3>
           <div className="flex items-center gap-2">
             <button type="button" onClick={handleKpiSearchFocus} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors" title={t('common.search')}>
               <Search size={16} className="text-[#6D6D6D]" />
@@ -1661,12 +1662,12 @@ const AnalyticsPage = () => {
           <table className="w-full text-sm">
             <thead className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Indicateur</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Valeur actuelle</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Valeur précédente</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Évolution</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Objectif</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Performance</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('analytics.table.indicator')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('analytics.table.currentValue')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('analytics.table.previousValue')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('analytics.table.evolution')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('analytics.table.target')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('analytics.table.performance')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#ECE8E1]">
@@ -1755,7 +1756,7 @@ const AnalyticsPage = () => {
             <nav className="flex items-center gap-2 text-sm text-[#6D6D6D] mb-1">
               <Home size={14} className="text-[#B8863B]" />
               <span className="text-[#B8863B]">/</span>
-              <span>Analytics</span>
+              <span>{t('analytics.breadcrumb')}</span>
             </nav>
             <h1 className="text-2xl font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
               {title}
@@ -1769,11 +1770,11 @@ const AnalyticsPage = () => {
             {/* Date et Heure */}
             <div className="flex items-center gap-3 px-3 py-1.5 bg-white border border-[#ECE8E1] rounded-lg">
               <span className="text-xs text-[#6D6D6D]">
-                {currentTime.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                {currentTime.toLocaleDateString(DATE_LOCALE, { day: '2-digit', month: '2-digit', year: 'numeric' })}
               </span>
               <span className="w-px h-4 bg-[#ECE8E1]" />
               <span className="text-xs font-medium text-[#3D2F24]">
-                {currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                {currentTime.toLocaleTimeString(DATE_LOCALE, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             </div>
 
@@ -1784,13 +1785,13 @@ const AnalyticsPage = () => {
                 onChange={handleDateRangeChange}
                 className="pl-9 pr-8 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B] focus:border-transparent bg-white appearance-none"
               >
-                <option value="today">Aujourd'hui</option>
-                <option value="yesterday">Hier</option>
-                <option value="week">Cette semaine</option>
-                <option value="month">Ce mois</option>
-                <option value="quarter">Ce trimestre</option>
-                <option value="year">Cette année</option>
-                <option value="custom">Personnalisé</option>
+                <option value="today">{t('analytics.periods.today')}</option>
+                <option value="yesterday">{t('analytics.periods.yesterday')}</option>
+                <option value="week">{t('analytics.periods.week')}</option>
+                <option value="month">{t('analytics.periods.month')}</option>
+                <option value="quarter">{t('analytics.periods.quarter')}</option>
+                <option value="year">{t('analytics.periods.year')}</option>
+                <option value="custom">{t('analytics.periods.custom')}</option>
               </select>
               <CalendarIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" />
               <ChevronDownIcon size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" />
@@ -1820,7 +1821,7 @@ const AnalyticsPage = () => {
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className={`p-2 rounded-lg transition-colors ${isFilterOpen ? 'bg-[#B8863B]/10 text-[#B8863B]' : 'hover:bg-[#F8F7F4] text-[#6D6D6D]'}`}
-              title="Filtres"
+              title={tc('filters')}
             >
               <Filter size={18} />
             </button>
@@ -1829,8 +1830,8 @@ const AnalyticsPage = () => {
             <ExportButtons
               data={kpiComparison}
               columns={exportColumns}
-              title="Tableau d'Analyse des KPI"
-              subtitle="Analyse complète des indicateurs de performance"
+              title={t('analytics.charts.kpiAnalysisTable')}
+              subtitle={t('analytics.charts.kpiAnalysisSub')}
               filename="analyse_kpi"
               summary={exportSummary}
               rowFormatter={rowFormatter}
@@ -1847,7 +1848,7 @@ const AnalyticsPage = () => {
             <button
               onClick={handleShare}
               className="p-2 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-              title="Partager"
+              title={tc('share')}
             >
               <Share2 size={18} className="text-[#6D6D6D]" />
             </button>

@@ -182,7 +182,7 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirm
 // ==========================================
 // MODAL COMPONENT
 // ==========================================
-const Modal = ({ isOpen, onClose, onSave, title, description, children, isLoading = false, saveText = 'Sauvegarder' }) => {
+const Modal = ({ isOpen, onClose, onSave, title, description, children, isLoading = false, saveText }) => {
   const { t, tc } = usePageI18n('settings');
   if (!isOpen) return null;
 
@@ -214,7 +214,7 @@ const Modal = ({ isOpen, onClose, onSave, title, description, children, isLoadin
             disabled={isLoading}
             className="px-4 py-2 text-sm text-[#6D6D6D] hover:text-[#2B2B2B] hover:bg-[#F8F7F4] rounded-lg transition-colors disabled:opacity-50"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onSave}
@@ -222,7 +222,7 @@ const Modal = ({ isOpen, onClose, onSave, title, description, children, isLoadin
             className="px-4 py-2 text-sm bg-[#B8863B] text-white rounded-lg hover:bg-[#A07532] transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {isLoading && <Loader2 size={16} className="animate-spin" />}
-            {saveText}
+            {saveText ?? tc('save')}
           </button>
         </div>
       </motion.div>
@@ -262,10 +262,10 @@ const TestModal = ({ isOpen, onClose, onTest, title, description, isLoading = fa
                 <Zap size={32} className="text-[#B8863B]" />
               </div>
               <p className="text-center text-[#6D6D6D]">
-                Le test va simuler une production avec les paramètres actuels.
+                {t('settings.modals.simulateProduction')}
               </p>
               <div className="flex items-center gap-4 text-xs text-[#6D6D6D]">
-                <span>⏱️ Durée estimée: 2-5 secondes</span>
+                <span>⏱️ {t('settings.modals.estimatedDuration')}</span>
                 <span>📊 Données: 50 {t('orders.table.products')}</span>
               </div>
             </div>
@@ -277,7 +277,7 @@ const TestModal = ({ isOpen, onClose, onTest, title, description, isLoading = fa
             onClick={onClose}
             className="px-4 py-2 text-sm text-[#6D6D6D] hover:text-[#2B2B2B] hover:bg-[#F8F7F4] rounded-lg transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onTest}
@@ -286,7 +286,7 @@ const TestModal = ({ isOpen, onClose, onTest, title, description, isLoading = fa
           >
             {isLoading && <Loader2 size={16} className="animate-spin" />}
             <Play size={16} />
-            Lancer le test
+            {t('settings.modals.runTest')}
           </button>
         </div>
       </motion.div>
@@ -366,7 +366,7 @@ const InvoicePreviewModal = ({ isOpen, onClose, data, invoiceConfig, onExportPDF
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-[#F8F7F4] border-b border-[#EAE6DF]">
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Produit</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.product')}</th>
                   <th className="px-3 py-2 text-center text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Qté</th>
                   <th className="px-3 py-2 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Prix</th>
                   <th className="px-3 py-2 text-center text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">TVA</th>
@@ -386,7 +386,7 @@ const InvoicePreviewModal = ({ isOpen, onClose, data, invoiceConfig, onExportPDF
               </tbody>
               <tfoot>
                 <tr className="border-t border-[#EAE6DF]">
-                  <td colSpan="4" className="px-3 py-2 text-right font-semibold text-[#2B2B2B]">Sous-total</td>
+                  <td colSpan="4" className="px-3 py-2 text-right font-semibold text-[#2B2B2B]">{t('orders.summary.subtotal')}</td>
                   <td className="px-3 py-2 text-right font-semibold text-[#2B2B2B]">{totalItems.toFixed(2)} {currencySymbol}</td>
                 </tr>
                 <tr>
@@ -394,7 +394,7 @@ const InvoicePreviewModal = ({ isOpen, onClose, data, invoiceConfig, onExportPDF
                   <td className="px-3 py-2 text-right text-[#6D6D6D]">{vatTotal.toFixed(2)} {currencySymbol}</td>
                 </tr>
                 <tr className="border-t-2 border-[#B8863B] bg-[#FDFBF7]">
-                  <td colSpan="4" className="px-3 py-3 text-right font-bold text-[#2B2B2B] text-lg">Total TTC</td>
+                  <td colSpan="4" className="px-3 py-3 text-right font-bold text-[#2B2B2B] text-lg">{t('orders.summary.grandTotal')}</td>
                   <td className="px-3 py-3 text-right font-bold text-[#B8863B] text-lg">{grandTotal.toFixed(2)} {currencySymbol}</td>
                 </tr>
               </tfoot>
@@ -420,12 +420,12 @@ const InvoicePreviewModal = ({ isOpen, onClose, data, invoiceConfig, onExportPDF
             className="px-4 py-2 text-sm bg-[#B8863B] text-white rounded-lg hover:bg-[#A07532] transition-colors flex items-center gap-2"
           >
             <Download size={16} />
-            Exporter en PDF
+            {tc('export')} PDF
           </button>
           <button
             onClick={() => {
               window.print();
-              showToast('🖨️ Impression en cours...', 'info');
+              showToast(t('settings.messages.printing'), 'info');
             }}
             className="px-4 py-2 text-sm text-[#6D6D6D] border border-[#EAE6DF] rounded-lg hover:bg-[#F8F7F4] transition-colors flex items-center gap-2"
           >
@@ -588,15 +588,15 @@ const SettingsPage = () => {
 
   // ===== TABS =====
   const tabs = [
-    { id: 'company', label: 'Entreprise', icon: Building },
-    { id: 'production', label: 'Production', icon: Factory },
-    { id: 'orders', label: 'Commandes', icon: ShoppingBag },
-    { id: 'invoices', label: 'Facturation', icon: FileText },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'security', label: 'Sécurité', icon: Shield },
-    { id: 'backup', label: 'Sauvegardes', icon: Database },
-    { id: 'export', label: 'Export', icon: Download },
-    { id: 'history', label: 'Journal', icon: History }
+    { id: 'company', label: t('settings.tabs.company'), icon: Building },
+    { id: 'production', label: t('settings.tabs.production'), icon: Factory },
+    { id: 'orders', label: t('settings.tabs.orders'), icon: ShoppingBag },
+    { id: 'invoices', label: t('settings.tabs.invoices'), icon: FileText },
+    { id: 'notifications', label: t('settings.tabs.notifications'), icon: Bell },
+    { id: 'security', label: t('settings.tabs.security'), icon: Shield },
+    { id: 'backup', label: t('settings.tabs.backup'), icon: Database },
+    { id: 'export', label: t('settings.tabs.export'), icon: Download },
+    { id: 'history', label: t('settings.tabs.history'), icon: History }
   ];
 
   // ===== TOAST =====
@@ -637,7 +637,7 @@ const SettingsPage = () => {
       type,
       data,
       title: title || tc('edit'),
-      description: description || 'Mettez à jour les informations',
+      description: description || t('settings.modals.updateInfo'),
       onSave: onSave || (() => {})
     });
   };
@@ -659,8 +659,8 @@ const SettingsPage = () => {
     setTestModalConfig({
       isOpen: true,
       type,
-      title: title || 'Test de simulation',
-      description: description || 'Vérifiez les paramètres avant de lancer le test',
+      title: title || t('settings.modals.testSimulation'),
+      description: description || t('settings.modals.verifyBeforeTest'),
       onTest: onTest || (() => {})
     });
   };
@@ -681,7 +681,7 @@ const SettingsPage = () => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      showToast('🔄 Données actualisées avec succès', 'success');
+      showToast(t('settings.messages.refreshed'), 'success');
     }, 800);
   };
 
@@ -689,20 +689,20 @@ const SettingsPage = () => {
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
-      showToast('✅ Tous les paramètres ont été sauvegardés avec succès', 'success');
+      showToast(t('settings.messages.allSaved'), 'success');
     }, 1200);
   };
 
   const handleResetAll = () => {
     showConfirm(
-      'Restaurer les paramètres',
+      t('settings.modals.restoreSettings'),
       'Êtes-vous sûr de vouloir restaurer tous les paramètres par défaut ? Cette action est irréversible.',
       () => {
         setIsLoading(true);
         setTimeout(() => {
           setIsLoading(false);
           hideConfirm();
-          showToast('🔄 Paramètres restaurés avec succès', 'success');
+          showToast(t('settings.messages.restored'), 'success');
         }, 800);
       }
     );
@@ -719,8 +719,8 @@ const SettingsPage = () => {
 
       const columns = [
         { label: 'ID', accessor: 'id' },
-        { label: 'Nom', accessor: 'name' },
-        { label: 'Valeur', accessor: 'value' }
+        { label: tc('name'), accessor: 'name' },
+        { label: tc('value'), accessor: 'value' }
       ];
 
       const filename = `parametres_${new Date().toISOString().split('T')[0]}`;
@@ -728,49 +728,49 @@ const SettingsPage = () => {
       switch (type) {
         case 'pdf':
           await exportPDF({
-            title: 'Export des paramètres',
+            title: t('settings.modals.settingsExport'),
             data: exportData,
             columns: columns,
             filename: `${filename}.pdf`,
             userName: user?.firstName || t('users.table.user')
           });
-          showToast('✅ PDF exporté avec succès', 'success');
+          showToast(t('settings.messages.pdfExported'), 'success');
           break;
         case 'excel':
           await exportExcel({
-            title: 'Export des paramètres',
+            title: t('settings.modals.settingsExport'),
             data: exportData,
             columns: columns,
             filename: `${filename}.xlsx`,
             userName: user?.firstName || t('users.table.user')
           });
-          showToast('✅ Excel exporté avec succès', 'success');
+          showToast(t('settings.messages.excelExported'), 'success');
           break;
         case 'csv':
           await exportCSV({
-            title: 'Export des paramètres',
+            title: t('settings.modals.settingsExport'),
             data: exportData,
             columns: columns,
             filename: `${filename}.csv`,
             userName: user?.firstName || t('users.table.user')
           });
-          showToast('✅ CSV exporté avec succès', 'success');
+          showToast(t('settings.messages.csvExported'), 'success');
           break;
         case 'print':
           await printData({
-            title: 'Export des paramètres',
+            title: t('settings.modals.settingsExport'),
             data: exportData,
             columns: columns,
             userName: user?.firstName || t('users.table.user')
           });
-          showToast('🖨️ Impression lancée', 'success');
+          showToast(t('settings.messages.printStarted'), 'success');
           break;
         default:
-          showToast(`📄 Export ${type} en cours...`, 'info');
+          showToast(t('settings.messages.exportInProgress', { type }), 'info');
       }
     } catch (error) {
       console.error('Export error:', error);
-      showToast(`❌ Erreur lors de l'export ${type}`, 'error');
+      showToast(t('settings.messages.exportError', { type }), 'error');
     }
   };
 
@@ -779,15 +779,15 @@ const SettingsPage = () => {
     openModal(
       'company',
       company,
-      'Modifier les informations de l\'entreprise',
-      'Mettez à jour les informations de votre entreprise',
+      t('settings.modals.editCompany'),
+      t('settings.modals.updateCompany'),
       (data) => {
         setIsSaving(true);
         setTimeout(() => {
           setCompany(prev => ({ ...prev, ...data }));
           setIsSaving(false);
           closeModal();
-          showToast('✅ Informations mises à jour avec succès', 'success');
+          showToast(t('settings.messages.companyUpdated'), 'success');
         }, 800);
       }
     );
@@ -796,13 +796,13 @@ const SettingsPage = () => {
   const handleExportCompany = (format) => {
     const data = [company];
     const columns = [
-      { label: 'Nom', accessor: 'name' },
-      { label: 'Site web', accessor: 'website' },
-      { label: 'Adresse', accessor: 'address' },
-      { label: 'Ville', accessor: 'city' },
-      { label: 'Pays', accessor: 'country' },
+      { label: tc('name'), accessor: 'name' },
+      { label: tc('website'), accessor: 'website' },
+      { label: tc('address'), accessor: 'address' },
+      { label: tc('city'), accessor: 'city' },
+      { label: tc('country'), accessor: 'country' },
       { label: tc('phone'), accessor: 'phone' },
-      { label: 'Email', accessor: 'email' },
+      { label: tc('email'), accessor: 'email' },
       { label: 'ICE', accessor: 'ice' }
     ];
     
@@ -810,12 +810,12 @@ const SettingsPage = () => {
     
     switch (format) {
       case 'PDF':
-        exportPDF({ title: 'Informations entreprise', data, columns, filename: `${filename}.pdf`, userName: user?.firstName });
-        showToast('✅ PDF exporté avec succès', 'success');
+        exportPDF({ title: t('settings.company.infoTitle'), data, columns, filename: `${filename}.pdf`, userName: user?.firstName });
+        showToast(t('settings.messages.pdfExported'), 'success');
         break;
       case 'Excel':
-        exportExcel({ title: 'Informations entreprise', data, columns, filename: `${filename}.xlsx`, userName: user?.firstName });
-        showToast('✅ Excel exporté avec succès', 'success');
+        exportExcel({ title: t('settings.company.infoTitle'), data, columns, filename: `${filename}.xlsx`, userName: user?.firstName });
+        showToast(t('settings.messages.excelExported'), 'success');
         break;
       case 'JSON':
         const jsonStr = JSON.stringify(data, null, 2);
@@ -835,7 +835,7 @@ const SettingsPage = () => {
 
   const handlePrintCompany = () => {
     window.print();
-    showToast('🖨️ Impression en cours...', 'info');
+    showToast(t('settings.messages.printing'), 'info');
   };
 
   // ===== PRODUCTION HANDLERS =====
@@ -843,15 +843,15 @@ const SettingsPage = () => {
     openModal(
       'production',
       production,
-      'Modifier les paramètres de production',
-      'Configurez les paramètres de production',
+      t('settings.modals.editProduction'),
+      t('settings.modals.configureProduction'),
       (data) => {
         setIsSaving(true);
         setTimeout(() => {
           setProduction(prev => ({ ...prev, ...data }));
           setIsSaving(false);
           closeModal();
-          showToast('✅ Paramètres de production mis à jour', 'success');
+          showToast(t('settings.messages.productionUpdated'), 'success');
         }, 800);
       }
     );
@@ -860,14 +860,14 @@ const SettingsPage = () => {
   const handleTestProduction = () => {
     openTestModal(
       'production',
-      'Test de production',
-      'Simulez la production avec les paramètres actuels',
+      t('settings.modals.productionTest'),
+      t('settings.modals.simulateProduction'),
       () => {
         setIsTesting(true);
         setTimeout(() => {
           setIsTesting(false);
           closeTestModal();
-          showToast('🧪 Test de production terminé avec succès! Résultats: 500 unités en 4.5h', 'success');
+          showToast(t('settings.messages.productionTestDone'), 'success');
         }, 3000);
       }
     );
@@ -878,15 +878,15 @@ const SettingsPage = () => {
     openModal(
       'orders',
       ordersConfig,
-      'Modifier les paramètres des commandes',
-      'Configurez les paramètres des commandes',
+      t('settings.modals.editOrders'),
+      t('settings.modals.configureOrders'),
       (data) => {
         setIsSaving(true);
         setTimeout(() => {
           setOrdersConfig(prev => ({ ...prev, ...data }));
           setIsSaving(false);
           closeModal();
-          showToast('✅ Paramètres des commandes mis à jour', 'success');
+          showToast(t('settings.messages.ordersUpdated'), 'success');
         }, 800);
       }
     );
@@ -897,15 +897,15 @@ const SettingsPage = () => {
     openModal(
       'invoices',
       invoiceConfig,
-      'Modifier les paramètres de facturation',
-      'Configurez les paramètres de facturation',
+      t('settings.modals.editBilling'),
+      t('settings.modals.configureBilling'),
       (data) => {
         setIsSaving(true);
         setTimeout(() => {
           setInvoiceConfig(prev => ({ ...prev, ...data }));
           setIsSaving(false);
           closeModal();
-          showToast('✅ Paramètres de facturation mis à jour', 'success');
+          showToast(t('settings.messages.billingUpdated'), 'success');
         }, 800);
       }
     );
@@ -950,19 +950,19 @@ const SettingsPage = () => {
     }];
     const columns = [
       { label: t('invoices.table.invoiceNumber'), accessor: 'id' },
-      { label: 'Client', accessor: 'client' },
-      { label: 'Total', accessor: 'total' },
-      { label: 'Devise', accessor: 'currency' },
-      { label: 'Date', accessor: 'date' }
+      { label: tc('customer'), accessor: 'client' },
+      { label: tc('total'), accessor: 'total' },
+      { label: tc('currency'), accessor: 'currency' },
+      { label: tc('date'), accessor: 'date' }
     ];
     exportPDF({
-      title: 'Facture',
+      title: tc('invoice'),
       data: exportData,
       columns: columns,
       filename: `facture_${data.id}.pdf`,
       userName: user?.firstName || t('users.table.user')
     });
-    showToast('📄 Facture exportée en PDF avec succès', 'success');
+    showToast(t('settings.messages.invoiceExported'), 'success');
   };
 
   // ===== NOTIFICATIONS HANDLERS =====
@@ -970,15 +970,15 @@ const SettingsPage = () => {
     openModal(
       'notifications',
       notifications,
-      'Modifier les paramètres de notification',
-      'Configurez les canaux et préférences de notification',
+      t('settings.modals.editNotifications'),
+      t('settings.modals.configureNotifications'),
       (data) => {
         setIsSaving(true);
         setTimeout(() => {
           setNotifications(prev => ({ ...prev, ...data }));
           setIsSaving(false);
           closeModal();
-          showToast('✅ Préférences de notifications sauvegardées', 'success');
+          showToast(t('settings.messages.notificationsSaved'), 'success');
         }, 800);
       }
     );
@@ -989,15 +989,15 @@ const SettingsPage = () => {
     openModal(
       'security',
       security,
-      'Modifier les paramètres de sécurité',
-      'Configurez les paramètres de sécurité du système',
+      t('settings.modals.editSecurity'),
+      t('settings.modals.configureSecurity'),
       (data) => {
         setIsSaving(true);
         setTimeout(() => {
           setSecurity(prev => ({ ...prev, ...data }));
           setIsSaving(false);
           closeModal();
-          showToast('✅ Paramètres de sécurité mis à jour', 'success');
+          showToast(t('settings.messages.securityUpdated'), 'success');
         }, 800);
       }
     );
@@ -1380,7 +1380,7 @@ const SettingsPage = () => {
       default:
         return (
           <div className="text-center py-8 text-[#6D6D6D]">
-            <p>Aucun formulaire disponible pour cette section</p>
+            <p>{t('settings.noForm')}</p>
           </div>
         );
     }
@@ -1473,26 +1473,26 @@ const SettingsPage = () => {
 
   const handleToggle2FA = () => {
     setSecurity(prev => ({ ...prev, twoFactorAuth: !prev.twoFactorAuth }));
-    showToast(security.twoFactorAuth ? '🔐 2FA désactivée' : '🔐 2FA activée avec succès', 'success');
+    showToast(security.twoFactorAuth ? t('settings.messages.twoFactorDisabled') : t('settings.messages.twoFactorEnabled'), 'success');
   };
 
   const handleDisconnectAll = () => {
     showConfirm(
-      'Déconnecter tous les utilisateurs',
+      t('settings.modals.disconnectAllUsers'),
       'Cette action déconnectera tous les utilisateurs actifs du système. Êtes-vous sûr ?',
       () => {
         setIsLoading(true);
         setTimeout(() => {
           setIsLoading(false);
           hideConfirm();
-          showToast('🔒 Tous les utilisateurs ont été déconnectés', 'success');
+          showToast(t('settings.messages.allUsersDisconnected'), 'success');
         }, 800);
       }
     );
   };
 
   const handleViewConnections = () => {
-    showToast('👁️ Affichage des connexions actives', 'info');
+    showToast(t('settings.messages.viewingConnections'), 'info');
   };
 
   const handleCreateBackup = () => {
@@ -1540,22 +1540,22 @@ const SettingsPage = () => {
   };
 
   const handleViewActivity = (activity) => {
-    showToast(`👁️ Consultation de l'activité #${activity.id}`, 'info');
+    showToast(t('settings.messages.viewingActivity', { id: activity.id }), 'info');
   };
 
   const handleCopyActivity = (activity) => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(`ID: ${activity.id}\nUtilisateur: ${activity.user}\nAction: ${activity.action}\nDate: ${activity.date}`);
-      showToast('📋 Informations copiées dans le presse-papier', 'success');
+      showToast(t('settings.messages.infoCopied'), 'success');
     } else {
-      showToast('📋 Informations prêtes à être copiées', 'info');
+      showToast(t('settings.messages.infoReadyToCopy'), 'info');
     }
   };
 
   const handleExportActivity = () => {
-    showToast('📄 Export du journal des activités en cours...', 'info');
+    showToast(t('settings.messages.activityExporting'), 'info');
     setTimeout(() => {
-      showToast('✅ Journal des activités exporté avec succès', 'success');
+      showToast(t('settings.messages.activityExported'), 'success');
     }, 1000);
   };
 
@@ -1572,8 +1572,8 @@ const SettingsPage = () => {
             <Building size={20} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#2B2B2B]">Informations de l'entreprise</h3>
-            <p className="text-xs text-[#6D6D6D]">Gérez les informations de votre entreprise</p>
+            <h3 className="text-sm font-bold text-[#2B2B2B]">{t('settings.company.title')}</h3>
+            <p className="text-xs text-[#6D6D6D]">{t('settings.company.description')}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -1582,7 +1582,7 @@ const SettingsPage = () => {
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#B8863B] hover:bg-[#B8863B]/10 rounded-lg transition-colors"
           >
             <Edit2 size={14} />
-            Modifier          </button>
+            {tc('edit')}          </button>
           <button
             onClick={() => handleExportCompany('PDF')}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#6D6D6D] hover:bg-[#F8F7F4] rounded-lg transition-colors"
@@ -1624,31 +1624,31 @@ const SettingsPage = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1">
             <div>
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Nom</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('name')}</p>
               <p className="text-sm font-semibold text-[#2B2B2B]">{company.name}</p>
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Site web</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('website')}</p>
               <p className="text-sm text-[#2B2B2B]">{company.website}</p>
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Adresse</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('address')}</p>
               <p className="text-sm text-[#2B2B2B]">{company.address}</p>
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Ville</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('city')}</p>
               <p className="text-sm text-[#2B2B2B]">{company.city}</p>
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Pays</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('country')}</p>
               <p className="text-sm text-[#2B2B2B]">{company.country}</p>
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Téléphone</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('phone')}</p>
               <p className="text-sm text-[#2B2B2B]">{company.phone}</p>
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Email</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('email')}</p>
               <p className="text-sm text-[#2B2B2B]">{company.email}</p>
             </div>
             <div>
@@ -1664,7 +1664,7 @@ const SettingsPage = () => {
               <p className="text-sm text-[#2B2B2B]">{company.rc}</p>
             </div>
             <div className="md:col-span-2">
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Description</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('description')}</p>
               <p className="text-sm text-[#2B2B2B]">{company.description}</p>
             </div>
           </div>
@@ -1683,8 +1683,8 @@ const SettingsPage = () => {
               <Factory size={20} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#2B2B2B]">Paramètres de production</h3>
-              <p className="text-xs text-[#6D6D6D]">Configurez les paramètres de production</p>
+              <h3 className="text-sm font-bold text-[#2B2B2B]">{t('settings.production.title')}</h3>
+              <p className="text-xs text-[#6D6D6D]">{t('settings.production.description')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -1693,14 +1693,14 @@ const SettingsPage = () => {
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#B8863B] hover:bg-[#B8863B]/10 rounded-lg transition-colors"
             >
               <Edit2 size={14} />
-              Modifier
+              {tc('edit')}
             </button>
             <button
               onClick={handleTestProduction}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#6D6D6D] hover:bg-[#F8F7F4] rounded-lg transition-colors"
             >
               <Play size={14} />
-              Tester
+              {tc('test')}
             </button>
             <button
               onClick={() => {
@@ -1712,7 +1712,7 @@ const SettingsPage = () => {
                   avgTime: 45,
                   workingDays: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
                 });
-                showToast('🔄 Paramètres de production réinitialisés', 'success');
+                showToast(t('settings.messages.productionReset'), 'success');
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
             >
@@ -1724,27 +1724,27 @@ const SettingsPage = () => {
         <div className="border-t border-[#EAE6DF] pt-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-[#F8F7F4] rounded-xl p-4 text-center">
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Début</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('start')}</p>
               <p className="text-lg font-bold text-[#2B2B2B]">{production.startTime}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-4 text-center">
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Fin</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('end')}</p>
               <p className="text-lg font-bold text-[#2B2B2B]">{production.endTime}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-4 text-center">
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Capacité</p>
-              <p className="text-lg font-bold text-[#2B2B2B]">{production.capacity} unités/jour</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('capacity')}</p>
+              <p className="text-lg font-bold text-[#2B2B2B]">{production.capacity} {tc('unitsPerDay')}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-4 text-center">
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Temps moyen</p>
-              <p className="text-lg font-bold text-[#2B2B2B]">{production.avgTime} min</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('avgTime')}</p>
+              <p className="text-lg font-bold text-[#2B2B2B]">{production.avgTime} {tc('minutes') || 'min'}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-4 text-center">
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Stock minimum</p>
-              <p className="text-lg font-bold text-[#2B2B2B]">{production.minStock} unités</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('minStock')}</p>
+              <p className="text-lg font-bold text-[#2B2B2B]">{production.minStock} {tc('units')}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-4 text-center col-span-2">
-              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Jours ouvrables</p>
+              <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('workingDays')}</p>
               <p className="text-sm font-semibold text-[#2B2B2B]">{production.workingDays.join(', ')}</p>
             </div>
           </div>
@@ -1762,8 +1762,8 @@ const SettingsPage = () => {
             <ShoppingBag size={20} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#2B2B2B]">Paramètres des commandes</h3>
-            <p className="text-xs text-[#6D6D6D]">Configurez les paramètres des commandes</p>
+            <h3 className="text-sm font-bold text-[#2B2B2B]">{t('settings.orders.title')}</h3>
+            <p className="text-xs text-[#6D6D6D]">{t('settings.orders.description')}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -1772,10 +1772,10 @@ const SettingsPage = () => {
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#B8863B] hover:bg-[#B8863B]/10 rounded-lg transition-colors"
           >
             <Edit2 size={14} />
-            Modifier
+            {tc('edit')}
           </button>
           <button
-            onClick={() => showToast('📋 Historique des modifications des commandes', 'info')}
+            onClick={() => showToast(t('settings.messages.orderHistory'), 'info')}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#6D6D6D] hover:bg-[#F8F7F4] rounded-lg transition-colors"
           >
             <History size={14} />
@@ -1792,7 +1792,7 @@ const SettingsPage = () => {
                 allowDeletion: true,
                 requireConfirmation: true
               });
-              showToast('🔄 Paramètres des commandes réinitialisés', 'success');
+              showToast(t('settings.messages.ordersReset'), 'success');
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
           >
@@ -1851,8 +1851,8 @@ const SettingsPage = () => {
               <FileText size={20} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#2B2B2B]">Paramètres de facturation</h3>
-              <p className="text-xs text-[#6D6D6D]">Configurez les paramètres de facturation</p>
+              <h3 className="text-sm font-bold text-[#2B2B2B]">{t('settings.billing.title')}</h3>
+              <p className="text-xs text-[#6D6D6D]">{t('settings.billing.description')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -1861,7 +1861,7 @@ const SettingsPage = () => {
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#B8863B] hover:bg-[#B8863B]/10 rounded-lg transition-colors"
             >
               <Edit2 size={14} />
-              Modifier
+              {tc('edit')}
             </button>
             <button
               onClick={handlePreviewInvoice}
@@ -1921,8 +1921,8 @@ const SettingsPage = () => {
             <Bell size={20} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#2B2B2B]">Paramètres de notification</h3>
-            <p className="text-xs text-[#6D6D6D]">Configurez les canaux et préférences de notification</p>
+            <h3 className="text-sm font-bold text-[#2B2B2B]">{t('settings.notifications.title')}</h3>
+            <p className="text-xs text-[#6D6D6D]">{t('settings.notifications.description')}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -1931,7 +1931,7 @@ const SettingsPage = () => {
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#B8863B] hover:bg-[#B8863B]/10 rounded-lg transition-colors"
           >
             <Edit2 size={14} />
-            Modifier
+            {tc('edit')}
           </button>
           <button
             onClick={() => toggleAllNotifications(true)}
@@ -2003,14 +2003,14 @@ const SettingsPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Object.keys(notifications.channels).map((key) => {
               const labels = {
-                orders: 'Commandes',
-                production: 'Production',
-                payments: 'Paiements',
-                reports: 'Rapports',
-                stock: 'Stock',
-                invoices: 'Factures',
-                deliveries: 'Livraisons',
-                system: 'Système'
+                orders: t('settings.notifications.channels.orders'),
+                production: t('settings.notifications.channels.production'),
+                payments: t('settings.notifications.channels.payments'),
+                reports: t('settings.notifications.channels.reports'),
+                stock: t('settings.notifications.channels.stock'),
+                invoices: t('settings.notifications.channels.invoices'),
+                deliveries: t('settings.notifications.channels.deliveries'),
+                system: t('settings.notifications.channels.system')
               };
               return (
                 <div key={key} className="flex items-center justify-between p-3 bg-[#F8F7F4] rounded-xl">
@@ -2040,8 +2040,8 @@ const SettingsPage = () => {
               <Shield size={20} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#2B2B2B]">Sécurité du système</h3>
-              <p className="text-xs text-[#6D6D6D]">Configurez les paramètres de sécurité</p>
+              <h3 className="text-sm font-bold text-[#2B2B2B]">{t('settings.security.title')}</h3>
+              <p className="text-xs text-[#6D6D6D]">{t('settings.security.description')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -2050,7 +2050,7 @@ const SettingsPage = () => {
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#B8863B] hover:bg-[#B8863B]/10 rounded-lg transition-colors"
             >
               <Edit2 size={14} />
-              Modifier
+              {tc('edit')}
             </button>
             <button
               onClick={handleViewConnections}
@@ -2085,7 +2085,7 @@ const SettingsPage = () => {
             <div className="flex items-center justify-between p-3 bg-[#F8F7F4] rounded-xl">
               <div>
                 <p className="text-[10px] font-semibold text-[#6D6D6D] uppercase tracking-wider">Expiration session</p>
-                <p className="text-sm font-bold text-[#2B2B2B]">{security.sessionTimeout} min</p>
+                <p className="text-sm font-bold text-[#2B2B2B]">{security.sessionTimeout} {tc('minutes') || 'min'}</p>
               </div>
             </div>
             <div className="flex items-center justify-between p-3 bg-[#F8F7F4] rounded-xl">
@@ -2155,7 +2155,7 @@ const SettingsPage = () => {
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
           >
             <Trash2 size={14} />
-            Supprimer
+            {tc('delete')}
           </button>
         </div>
       </div>
@@ -2299,7 +2299,7 @@ const SettingsPage = () => {
                   <td className="px-3 py-2 text-[#6D6D6D]">{item.date}</td>
                   <td className="px-3 py-2">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${item.status === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-                      {item.status === 'success' ? '✅ Succès' : '❌ Erreur'}
+                      {item.status === 'success' ? `✅ ${t('settings.history.success')}` : `❌ ${t('settings.history.error')}`}
                     </span>
                   </td>
                   <td className="px-3 py-2 text-right">
@@ -2501,8 +2501,8 @@ const SettingsPage = () => {
             onChange={(e) => setFilterType(e.target.value)}
             className="px-3 py-2 border border-[#EAE6DF] rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B]"
           >
-            <option value="all">Tous</option>
-            <option value="entreprise">Entreprise</option>
+            <option value="all">{t('common.all')}</option>
+            <option value="entreprise">{t('customers.types.enterprise')}</option>
             <option value="commandes">Commandes</option>
             <option value="production">Production</option>
             <option value="factures">Factures</option>

@@ -173,7 +173,7 @@ const AvatarUpload = ({ avatar, onUpload, onRemove, isUploading }) => {
           onClick={() => fileInputRef.current?.click()}
           className="text-xs font-medium text-[#B8863B] hover:text-[#A07532] transition-colors"
         >
-          Changer la photo
+          {t('profile.fields.changePhoto')}
         </button>
         {preview && (
           <>
@@ -185,12 +185,12 @@ const AvatarUpload = ({ avatar, onUpload, onRemove, isUploading }) => {
               }}
               className="text-xs font-medium text-rose-500 hover:text-rose-600 transition-colors"
             >
-              Supprimer
+              {tc('delete')}
             </button>
           </>
         )}
       </div>
-      <p className="text-[10px] text-[#6D6D6D] mt-1">PNG, JPG, JPEG, WEBP • Max 5 MB</p>
+      <p className="text-[10px] text-[#6D6D6D] mt-1">{t('profile.avatar.formats')}</p>
     </div>
   );
 };
@@ -331,7 +331,6 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
   const [passwordStrength, setPasswordStrength] = useState(0);
 
   const checkPasswordStrength = (password) => {
-  const { t, tc } = usePageI18n('profile');
     let score = 0;
     if (password.length >= 8) score++;
     if (password.match(/[a-z]/)) score++;
@@ -355,8 +354,8 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.currentPassword) newErrors.currentPassword = 'Mot de passe actuel requis';
-    if (!formData.newPassword) newErrors.newPassword = 'Nouveau mot de passe requis';
+    if (!formData.currentPassword) newErrors.currentPassword = t('auth.currentPasswordRequired');
+    if (!formData.newPassword) newErrors.newPassword = t('auth.newPasswordRequired');
     else if (formData.newPassword.length < 8) newErrors.newPassword = t('profile.validation.minPassword');
     if (formData.newPassword !== formData.newPassword_confirmation) {
       newErrors.newPassword_confirmation = 'Les mots de passe ne correspondent pas';
@@ -385,7 +384,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-4 md:px-6 py-3 md:py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-base md:text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Changer le mot de passe
+            {t('profile.changePassword')}
           </h3>
           <button onClick={onClose} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <X size={18} className="md:w-5 md:h-5 text-[#6D6D6D]" />
@@ -395,7 +394,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
         <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-3 md:space-y-4">
           <div>
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-1 md:mb-1.5 uppercase tracking-wide">
-              Mot de passe actuel
+              {t('auth.currentPassword')}
             </label>
             <div className="relative">
               <input
@@ -420,7 +419,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
 
           <div>
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-1 md:mb-1.5 uppercase tracking-wide">
-              Nouveau mot de passe
+              {t('auth.newPassword')}
             </label>
             <input
               type={showPassword ? 'text' : 'password'}
@@ -451,7 +450,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
 
           <div>
             <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-1 md:mb-1.5 uppercase tracking-wide">
-              Confirmer le mot de passe
+              {t('auth.confirmPassword')}
             </label>
             <input
               type={showPassword ? 'text' : 'password'}
@@ -471,14 +470,14 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? 'Changement...' : 'Changer le mot de passe'}
+              {isLoading ? t('profile.fields.changing') : t('profile.changePassword')}
             </button>
           </div>
         </form>
@@ -1015,7 +1014,7 @@ const MyProfilePage = () => {
       <div className="w-full min-h-screen bg-[#F8F7F4] p-3 md:p-6 flex items-center justify-center" style={{ fontFamily: FONT_BODY }}>
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-[#B8863B] border-t-transparent mb-3" />
-          <p className="text-sm text-[#6D6D6D]">Chargement du profil...</p>
+          <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.profile') })}</p>
         </div>
       </div>
     );
@@ -1063,7 +1062,7 @@ const MyProfilePage = () => {
               className="flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all text-xs md:text-sm"
             >
               <Edit2 size={16} className="md:w-[18px] md:h-[18px]" />
-              <span className="hidden sm:inline">Modifier le profil</span>
+              <span className="hidden sm:inline">{t('profile.editProfile')}</span>
               <span className="sm:hidden">{tc('edit')}</span>
             </button>
           ) : (
@@ -1072,7 +1071,7 @@ const MyProfilePage = () => {
                 onClick={handleCancel}
                 className="px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-xl hover:bg-[#F8F7F4] transition-colors"
               >
-                Annuler
+                {tc('cancel')}
               </button>
               <button
                 onClick={handleSave}
@@ -1122,12 +1121,12 @@ const MyProfilePage = () => {
       {/* Section 2: Informations personnelles */}
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 md:p-6 shadow-sm mb-4 md:mb-6">
         <h3 className="text-sm md:text-base font-bold text-[#3D2F24] mb-3 md:mb-4" style={{ fontFamily: FONT_HEADING }}>
-          Informations personnelles
+          {t('profile.personalInfo')}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {/* ... mêmes champs ... */}
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Prénom</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('common.firstName')}</label>
             <input
               type="text"
               name="firstName"
@@ -1140,7 +1139,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Nom</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('common.lastName')}</label>
             <input
               type="text"
               name="lastName"
@@ -1307,7 +1306,7 @@ const MyProfilePage = () => {
       {/* Section 3: Informations professionnelles */}
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 md:p-6 shadow-sm mb-4 md:mb-6">
         <h3 className="text-sm md:text-base font-bold text-[#3D2F24] mb-3 md:mb-4" style={{ fontFamily: FONT_HEADING }}>
-          Informations professionnelles
+          {t('profile.professionalInfo')}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           <div>
@@ -1356,7 +1355,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Entreprise</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.company')}</label>
             <input
               type="text"
               value={professionalData.company || "L'arte del dolce"}
@@ -1406,14 +1405,14 @@ const MyProfilePage = () => {
                 <Lock size={16} className="md:w-[18px] md:h-[18px]" />
               </div>
               <div className="flex-1">
-                <p className="text-xs md:text-sm font-medium text-[#3D2F24]">Mot de passe</p>
+                <p className="text-xs md:text-sm font-medium text-[#3D2F24]">{t('auth.password')}</p>
                 <p className="text-[10px] md:text-xs text-[#6D6D6D]">••••••••</p>
               </div>
               <button
                 onClick={() => setIsPasswordModalOpen(true)}
                 className="px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium text-[#B8863B] hover:bg-[#B8863B]/10 rounded-lg transition-colors"
               >
-                Changer
+                {t('profile.fields.changePasswordAction')}
               </button>
             </div>
           </div>
@@ -1608,7 +1607,7 @@ const MyProfilePage = () => {
         <div className="space-y-1 max-h-48 md:max-h-64 overflow-y-auto">
           {safeActivityLog.length === 0 ? (
             <div className="text-center py-4 text-[#6D6D6D] text-sm">
-              Aucune activité récente
+              {t('activityLog.empty')} récente
             </div>
           ) : (
             safeActivityLog.slice(0, 8).map((activity) => (
@@ -1635,7 +1634,7 @@ const MyProfilePage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
           {safeSessions.length === 0 ? (
             <div className="col-span-2 text-center py-4 text-[#6D6D6D] text-sm">
-              Aucune session active
+              {t('profile.noSessions')}
             </div>
           ) : (
             safeSessions.map((session) => (
@@ -1660,13 +1659,13 @@ const MyProfilePage = () => {
             className="flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs font-medium text-[#B8863B] hover:text-[#A07532] transition-colors"
           >
             <Plus size={12} className="md:w-[14px] md:h-[14px]" />
-            Ajouter
+            {t('common.add')}
           </button>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
           {safeDocuments.length === 0 ? (
             <div className="col-span-4 text-center py-4 text-[#6D6D6D] text-sm">
-              Aucun document
+              {t('profile.noDocuments')}
             </div>
           ) : (
             safeDocuments.map((doc) => (
@@ -1717,7 +1716,7 @@ const MyProfilePage = () => {
             <tbody className="divide-y divide-[#ECE8E1]">
               {safePermissionsData.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-4 text-[#6D6D6D]">Aucune permission</td>
+                  <td colSpan={5} className="text-center py-4 text-[#6D6D6D]">{t('profile.noPermissions')}</td>
                 </tr>
               ) : (
                 safePermissionsData.map((perm, idx) => (

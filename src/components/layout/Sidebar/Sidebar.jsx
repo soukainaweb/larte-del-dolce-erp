@@ -453,6 +453,7 @@ const SidebarHeader = memo(function SidebarHeader({
   onToggleCollapse,
   onCloseMobile,
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={`relative flex shrink-0 items-center border-b px-4 py-4 ${
@@ -484,7 +485,7 @@ const SidebarHeader = memo(function SidebarHeader({
         <button
           type="button"
           onClick={onCloseMobile}
-          aria-label="Fermer le menu"
+          aria-label={t('nav.closeMenu')}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
           style={{ color: COLORS.text }}
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = COLORS.hover; }}
@@ -496,7 +497,7 @@ const SidebarHeader = memo(function SidebarHeader({
         <button
           type="button"
           onClick={onToggleCollapse}
-          aria-label={isCollapsed ? 'Développer le menu' : 'Réduire le menu'}
+          aria-label={isCollapsed ? t('nav.expandMenu') : t('nav.collapseMenu')}
           className={`hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border shadow-sm transition-colors duration-200 lg:flex ${
             isCollapsed ? 'absolute -right-3.5 top-4 bg-white' : 'bg-white'
           }`}

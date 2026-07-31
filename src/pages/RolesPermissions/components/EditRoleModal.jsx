@@ -7,16 +7,17 @@ import {
   RotateCcw,
   Shield,
   Crown,
-  DollarSign, // ⭐ AJOUTÉ
-  Factory,    // ⭐ AJOUTÉ
+  DollarSign,
+  Factory,
   Users,
-  Truck,      // ⭐ AJOUTÉ
-  Briefcase,  // ⭐ AJOUTÉ
+  Truck,
+  Briefcase,
   User as UserIcon
 } from 'lucide-react';
+import { usePageI18n } from '../../../hooks/usePageI18n';
 
-// ... le reste du code
 const EditRoleModal = ({ isOpen, onClose, onSave, role, isLoading }) => {
+  const { t, tc } = usePageI18n('roles');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -57,7 +58,7 @@ const EditRoleModal = ({ isOpen, onClose, onSave, role, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.name) newErrors.name = 'Le nom est requis';
+    if (!formData.name) newErrors.name = t('roles.usersManagement.nameRequired');
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -101,7 +102,7 @@ const EditRoleModal = ({ isOpen, onClose, onSave, role, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#EAE6DF] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#2B2B2B]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-            {role ? 'Modifier le rôle' : 'Créer un rôle'}
+            {role ? t('roles.modals.editTitle') : t('roles.modals.createTitle')}
           </h3>
           <button onClick={onClose} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <X size={20} className="text-[#7A7A7A]" />
@@ -110,7 +111,7 @@ const EditRoleModal = ({ isOpen, onClose, onSave, role, isLoading }) => {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Nom *</label>
+            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{tc('name')} *</label>
             <input
               type="text"
               name="name"
@@ -124,7 +125,7 @@ const EditRoleModal = ({ isOpen, onClose, onSave, role, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Description</label>
+            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{tc('description')}</label>
             <textarea
               name="description"
               value={formData.description}
@@ -136,7 +137,7 @@ const EditRoleModal = ({ isOpen, onClose, onSave, role, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Couleur</label>
+              <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('roles.modals.color')}</label>
               <input
                 type="color"
                 name="color"
@@ -146,7 +147,7 @@ const EditRoleModal = ({ isOpen, onClose, onSave, role, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Icône</label>
+              <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{t('roles.modals.icon')}</label>
               <select
                 name="icon"
                 value={formData.icon}
@@ -166,15 +167,15 @@ const EditRoleModal = ({ isOpen, onClose, onSave, role, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">Statut</label>
+            <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">{tc('status')}</label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm border border-[#EAE6DF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A45D]/30 focus:border-[#C8A45D] transition-all"
             >
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
+              <option value="active">{tc('active')}</option>
+              <option value="inactive">{tc('inactive')}</option>
             </select>
           </div>
 
@@ -184,7 +185,7 @@ const EditRoleModal = ({ isOpen, onClose, onSave, role, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#7A7A7A] border border-[#EAE6DF] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="button"
@@ -192,7 +193,7 @@ const EditRoleModal = ({ isOpen, onClose, onSave, role, isLoading }) => {
               className="py-2.5 px-4 text-sm font-medium text-[#7A7A7A] border border-[#EAE6DF] rounded-lg hover:bg-[#F8F7F4] transition-colors flex items-center gap-2"
             >
               <RotateCcw size={14} />
-              Réinitialiser
+              {t('roles.modals.reset')}
             </button>
             <button
               type="submit"
@@ -200,7 +201,7 @@ const EditRoleModal = ({ isOpen, onClose, onSave, role, isLoading }) => {
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Save size={16} />
-              {isLoading ? 'Enregistrement...' : role ? 'Mettre à jour' : 'Créer'}
+              {isLoading ? tc('saving') : role ? tc('update') : tc('create')}
             </button>
           </div>
         </form>

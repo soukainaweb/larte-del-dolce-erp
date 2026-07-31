@@ -407,7 +407,7 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            {delivery ? 'Modifier la livraison' : 'Ajouter une livraison'}
+            {delivery ? t('deliveries.modals.editTitle') : t('deliveries.addDelivery')}
           </h3>
           <button
             onClick={onClose}
@@ -545,7 +545,7 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="pending">En attente</option>
+                <option value="pending">{t('common.pending')}</option>
                 <option value="assigned">Assignée</option>
                 <option value="preparing">Préparation</option>
                 <option value="out_for_delivery">En livraison</option>
@@ -561,7 +561,7 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="cash">Espèces</option>
+                <option value="cash">{t('common.paymentMethods.cash')}</option>
                 <option value="card">Carte bancaire</option>
                 <option value="online">En ligne</option>
               </select>
@@ -613,7 +613,7 @@ const DeliveryModal = ({ isOpen, onClose, onSave, delivery, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
@@ -648,26 +648,23 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, delivery, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer la livraison ?
+          {t('deliveries.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
           {delivery?.status === 'delivered' ? (
             <>
-              <span className="text-rose-500 font-semibold">⚠️ Attention :</span><br />
-              Cette livraison est déjà terminée. Vous ne pouvez pas la supprimer.
+              <span className="text-rose-500 font-semibold">⚠️ {tc('attention')}</span><br />
+              {t('deliveries.modals.deleteDeliveredWarning')}
             </>
           ) : delivery?.status === 'out_for_delivery' ? (
             <>
-              <span className="text-rose-500 font-semibold">⚠️ Attention :</span><br />
-              Cette livraison est en cours. Vous ne pouvez pas la supprimer.
+              <span className="text-rose-500 font-semibold">⚠️ {tc('attention')}</span><br />
+              {t('deliveries.modals.deleteInProgressWarning')}
             </>
           ) : (
             <>
-              Vous êtes sur le point de supprimer la livraison{' '}
-              <span className="font-semibold text-[#3D2F24]">
-                {delivery?.deliveryId}
-              </span>.
-              Cette action est irréversible.
+              {t('deliveries.modals.deleteMessage', { id: delivery?.deliveryId })}{' '}
+              {tc('irreversibleAction')}
             </>
           )}
         </p>
@@ -676,7 +673,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, delivery, isLoading }) => {
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -728,7 +725,7 @@ const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails de la livraison
+            {t('deliveries.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -815,7 +812,7 @@ const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
                   </div>
                   {t.completed && (
                     <span className="text-xs text-[#6D6D6D]">
-                      {new Date(t.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(t.date).toLocaleTimeString(DATE_LOCALE, { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   )}
                 </div>
@@ -827,7 +824,7 @@ const ViewDeliveryModal = ({ isOpen, onClose, delivery }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>
@@ -1092,7 +1089,7 @@ const DeliveriesPage = () => {
           <ExportButtons
             data={filteredDeliveries}
             columns={columns}
-            title="Liste des livraisons"
+            title="{t('deliveries.export.title')}"
             subtitle={`${filteredDeliveries.length} livraisons`}
             filename={`livraisons_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
@@ -1106,7 +1103,7 @@ const DeliveriesPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <Plus size={18} />
-            Ajouter une livraison
+            {t('deliveries.addDelivery')}
           </button>
           <div className="flex items-center gap-1 border border-[#ECE8E1] rounded-xl bg-white p-1">
             <button
@@ -1137,8 +1134,8 @@ const DeliveriesPage = () => {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
         <KPICard icon={Truck} title="Total livraisons" value={kpis.total} color="blue" />
-        <KPICard icon={CheckCircle} title="Livrées" value={kpis.delivered} color="emerald" />
-        <KPICard icon={Clock} title="En attente" value={kpis.pending} color="amber" />
+        <KPICard icon={CheckCircle} title={t('deliveries.kpi.delivered')} value={kpis.delivered} color="emerald" />
+        <KPICard icon={Clock} title={t('common.pending')} value={kpis.pending} color="amber" />
         <KPICard icon={TrendingUp} title="En cours" value={kpis.inProgress} color="indigo" />
         <KPICard icon={XCircle} title="Annulées" value={kpis.cancelled} color="rose" />
         <KPICard icon={Calendar} title={tc('today')} value={kpis.today} color="purple" />
@@ -1163,7 +1160,7 @@ const DeliveriesPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
+              <option value="all">{t('common.allStatuses')}</option>
               {uniqueStatuses.map(status => (
                 <option key={status} value={status}>
                   {status === 'pending' ? t('common.pending') :
@@ -1180,7 +1177,7 @@ const DeliveriesPage = () => {
               onClick={handleResetFilters}
               className="px-3 py-2 text-xs font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Réinitialiser
+              {tc('resetFilters')}
             </button>
           </div>
         </div>
@@ -1210,7 +1207,7 @@ const DeliveriesPage = () => {
                     <td colSpan="9" className="text-center py-8">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm text-[#6D6D6D]">Chargement des livraisons...</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.deliveries') })}</p>
                       </div>
                     </td>
                   </tr>
@@ -1219,12 +1216,12 @@ const DeliveriesPage = () => {
                     <td colSpan="9" className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <Truck size={40} className="text-[#ECE8E1]" />
-                        <p className="text-sm text-[#6D6D6D]">Aucune livraison trouvée</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('deliveries.empty')}</p>
                         <button
                           onClick={handleAddDelivery}
                           className="text-sm text-[#B8863B] font-medium hover:underline"
                         >
-                          Ajouter une livraison
+                          {t('deliveries.addDelivery')}
                         </button>
                       </div>
                     </td>
@@ -1262,12 +1259,12 @@ const DeliveriesPage = () => {
           {isLoading ? (
             <div className="col-span-full flex flex-col items-center justify-center py-8 gap-3">
               <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-[#6D6D6D]">Chargement des livraisons...</p>
+              <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.deliveries') })}</p>
             </div>
           ) : paginatedDeliveries.length === 0 ? (
             <div className="col-span-full bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
               <Truck size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-              <p className="text-sm text-[#6D6D6D]">Aucune livraison trouvée</p>
+              <p className="text-sm text-[#6D6D6D]">{t('deliveries.empty')}</p>
             </div>
           ) : (
             paginatedDeliveries.map((delivery) => (
@@ -1297,12 +1294,12 @@ const DeliveriesPage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des livraisons...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.deliveries') })}</p>
           </div>
         ) : paginatedDeliveries.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Truck size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucune livraison trouvée</p>
+            <p className="text-sm text-[#6D6D6D]">{t('deliveries.empty')}</p>
           </div>
         ) : (
           paginatedDeliveries.map((delivery) => (

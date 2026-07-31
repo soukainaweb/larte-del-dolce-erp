@@ -76,10 +76,10 @@ const DATE_LOCALE = 'ar-SA';
 const StatusBadge = ({ status }) => {
   const { t, tc, statusLabel, commonStatus } = usePageI18n('inventory');
   const statusConfig = {
-    available: { label: 'Disponible', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    low_stock: { label: 'Stock faible', class: 'bg-amber-50 text-amber-700 border-amber-200' },
-    out_of_stock: { label: 'Rupture', class: 'bg-rose-50 text-rose-700 border-rose-200' },
-    expired: { label: 'Expiré', class: 'bg-red-50 text-red-700 border-red-200' }
+    available: { label: t('inventory.status.available'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    low_stock: { label: t('inventory.status.low_stock'), class: 'bg-amber-50 text-amber-700 border-amber-200' },
+    out_of_stock: { label: t('inventory.status.out_of_stock'), class: 'bg-rose-50 text-rose-700 border-rose-200' },
+    expired: { label: t('inventory.status.expired'), class: 'bg-red-50 text-red-700 border-red-200' }
   };
 
   const config = statusConfig[status] || statusConfig.available;
@@ -97,9 +97,9 @@ const StatusBadge = ({ status }) => {
 const ProductTypeBadge = ({ type }) => {
   const { t, tc } = usePageI18n('inventory');
   const typeConfig = {
-    finished: { label: 'Produit fini', class: 'bg-blue-50 text-blue-700 border-blue-200' },
-    raw: { label: 'Matière première', class: 'bg-purple-50 text-purple-700 border-purple-200' },
-    packaging: { label: 'Emballage', class: 'bg-teal-50 text-teal-700 border-teal-200' }
+    finished: { label: t('inventory.types.finished'), class: 'bg-blue-50 text-blue-700 border-blue-200' },
+    raw: { label: t('inventory.types.raw'), class: 'bg-purple-50 text-purple-700 border-purple-200' },
+    packaging: { label: t('inventory.types.packaging'), class: 'bg-teal-50 text-teal-700 border-teal-200' }
   };
 
   const config = typeConfig[type] || typeConfig.finished;
@@ -348,7 +348,7 @@ const StockMovementModal = ({ isOpen, onClose, onSave, isLoading }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Ajouter un mouvement de stock
+            {t('inventory.addMovement')} de stock
           </h3>
           <button
             onClick={onClose}
@@ -389,7 +389,7 @@ const StockMovementModal = ({ isOpen, onClose, onSave, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Produit</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.product')}</label>
             <select
               name="productId"
               value={formData.productId}
@@ -462,7 +462,7 @@ const StockMovementModal = ({ isOpen, onClose, onSave, isLoading }) => {
               onChange={handleChange}
               rows={3}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all resize-none"
-              placeholder="Informations supplémentaires..."
+              placeholder={t('common.placeholders.additionalInfo')}
             />
           </div>
 
@@ -472,7 +472,7 @@ const StockMovementModal = ({ isOpen, onClose, onSave, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
@@ -505,7 +505,7 @@ const ViewInventoryModal = ({ isOpen, onClose, item }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails du stock
+            {t('inventory.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -602,7 +602,7 @@ const ViewInventoryModal = ({ isOpen, onClose, item }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>
@@ -778,7 +778,7 @@ const InventoryPage = () => {
     currentStock: item.currentStock,
     minStock: item.minStock,
     unit: item.unit,
-    type: item.type === 'finished' ? 'Produit fini' : item.type === 'raw' ? 'Matière première' : 'Emballage',
+    type: item.type === 'finished' ? t('inventory.types.finished') : item.type === 'raw' ? t('inventory.types.raw') : t('inventory.types.packaging'),
     status: item.status === 'available' ? 'Disponible' : item.status === 'low_stock' ? 'Stock faible' : item.status === 'out_of_stock' ? 'Rupture' : 'Expiré',
     stockValue: `${item.stockValue.toLocaleString()} DH`,
     lastUpdated: new Date(item.lastUpdated).toLocaleDateString(DATE_LOCALE)
@@ -883,8 +883,8 @@ const InventoryPage = () => {
           <ExportButtons
             data={filteredInventory}
             columns={columns}
-            title="Liste des {t('orders.table.products')} en stock"
-            subtitle={`${filteredInventory.length} {t('orders.table.products')} - Valeur totale: ${kpis.totalValue.toLocaleString()} DH`}
+            title={t('inventory.export.title')}
+            subtitle={t('inventory.export.subtitle', { count: filteredInventory.length, value: `${kpis.totalValue.toLocaleString()} DH` })}
             filename={`inventaire_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -897,7 +897,7 @@ const InventoryPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <Plus size={18} />
-            Ajouter un mouvement
+            {t('inventory.addMovement')}
           </button>
           <div className="flex items-center gap-1 border border-[#ECE8E1] rounded-xl bg-white p-1">
             <button
@@ -953,7 +953,7 @@ const InventoryPage = () => {
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Toutes les catégories</option>
+              <option value="all">{t('common.allCategories')}</option>
               {categories.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
@@ -963,7 +963,7 @@ const InventoryPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
+              <option value="all">{t('common.allStatuses')}</option>
               <option value="available">Disponible</option>
               <option value="low_stock">Stock faible</option>
               <option value="out_of_stock">Rupture</option>
@@ -973,10 +973,10 @@ const InventoryPage = () => {
               onChange={(e) => setTypeFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les types</option>
-              <option value="finished">Produits finis</option>
-              <option value="raw">Matières premières</option>
-              <option value="packaging">Emballages</option>
+              <option value="all">{t('common.allTypes')}</option>
+              <option value="finished">{t('inventory.types.finished')}</option>
+              <option value="raw">{t('inventory.types.raw')}</option>
+              <option value="packaging">{t('inventory.types.packaging')}</option>
             </select>
           </div>
         </div>
@@ -989,7 +989,7 @@ const InventoryPage = () => {
             <table className="w-full">
               <thead>
                 <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Produit</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.product')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Catégorie</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Stock</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Min</th>
@@ -1006,7 +1006,7 @@ const InventoryPage = () => {
                     <td colSpan="9" className="text-center py-8">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm text-[#6D6D6D]">Chargement de l'inventaire...</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.inventory') })}</p>
                       </div>
                     </td>
                   </tr>
@@ -1015,13 +1015,13 @@ const InventoryPage = () => {
                     <td colSpan="9" className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <Package size={40} className="text-[#ECE8E1]" />
-                        <p className="text-sm text-[#6D6D6D]">Aucun produit trouvé</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('products.empty')}</p>
                         <button
                           type="button"
                           onClick={() => navigate('/dashboard/products')}
                           className="text-sm text-[#B8863B] font-medium hover:underline"
                         >
-                          Ajouter un produit
+                          {t('inventory.addProduct')}
                         </button>
                       </div>
                     </td>
@@ -1050,12 +1050,12 @@ const InventoryPage = () => {
           {isLoading ? (
             <div className="col-span-full flex flex-col items-center justify-center py-8 gap-3">
               <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-[#6D6D6D]">Chargement de l'inventaire...</p>
+              <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.inventory') })}</p>
             </div>
           ) : paginatedItems.length === 0 ? (
             <div className="col-span-full bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
               <Package size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-              <p className="text-sm text-[#6D6D6D]">Aucun produit trouvé</p>
+              <p className="text-sm text-[#6D6D6D]">{t('products.empty')}</p>
             </div>
           ) : (
             paginatedItems.map((item) => (
@@ -1076,12 +1076,12 @@ const InventoryPage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement de l'inventaire...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.inventory') })}</p>
           </div>
         ) : paginatedItems.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Package size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucun produit trouvé</p>
+            <p className="text-sm text-[#6D6D6D]">{t('products.empty')}</p>
           </div>
         ) : (
           paginatedItems.map((item) => (

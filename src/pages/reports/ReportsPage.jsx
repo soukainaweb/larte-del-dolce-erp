@@ -164,7 +164,10 @@ const formatPercentage = (value) => {
 // ==========================================
 // COMPOSANT: CONFIRM DIALOG
 // ==========================================
-const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirmText = tc('confirm'), cancelText = tc('cancel') }) => {
+const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirmText, cancelText }) => {
+  const { tc } = usePageI18n('reports');
+  const resolvedConfirm = confirmText ?? tc('confirm');
+  const resolvedCancel = cancelText ?? tc('cancel');
   if (!isOpen) return null;
 
   return (
@@ -187,13 +190,13 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirm
             onClick={onClose}
             className="px-4 py-2 text-sm text-[#6D6D6D] hover:text-[#3D2F24] hover:bg-[#F8F7F4] rounded-lg transition-colors"
           >
-            {cancelText}
+            {resolvedCancel}
           </button>
           <button
             onClick={onConfirm}
             className="px-4 py-2 text-sm bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors"
           >
-            {confirmText}
+            {resolvedConfirm}
           </button>
         </div>
       </motion.div>
@@ -297,8 +300,8 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
                   <FactoryIcon size={24} className="text-[#B8863B]" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-[#3D2F24]">Détails de la production</h2>
-                  <p className="text-sm text-[#6D6D6D]">{productionDetails.productName} - Commande {productionDetails.orderId}</p>
+                  <h2 className="text-xl font-bold text-[#3D2F24]">{t('reports.modals.productionDetails')}</h2>
+                  <p className="text-sm text-[#6D6D6D]">{productionDetails.productName} - {t('reports.modals.orderLabel')} {productionDetails.orderId}</p>
                 </div>
               </div>
             </div>
@@ -314,12 +317,12 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl border shadow-sm bg-white border-[#ECE8E1]">
               <span className="text-sm font-semibold text-[#3D2F24]">{productionDetails.progress}%</span>
-              <span className="text-xs text-[#6D6D6D]">Progression</span>
+              <span className="text-xs text-[#6D6D6D]">{t('reports.modals.progress')}</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl border shadow-sm bg-white border-[#ECE8E1]">
               <Package size={16} className="text-[#B8863B]" />
               <span className="text-sm font-semibold text-[#3D2F24]">{productionDetails.quantity}</span>
-              <span className="text-xs text-[#6D6D6D]">Quantité</span>
+              <span className="text-xs text-[#6D6D6D]">{t('reports.modals.quantity')}</span>
             </div>
           </div>
         </div>
@@ -327,7 +330,7 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
         <div className="p-6 pt-8">
           <div className="mb-6">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="font-medium text-[#3D2F24]">Progression</span>
+              <span className="font-medium text-[#3D2F24]">{t('reports.modals.progress')}</span>
               <span className="font-bold text-[#B8863B]">{productionDetails.progress}%</span>
             </div>
             <div className="h-3 bg-[#F8F7F4] rounded-full overflow-hidden">
@@ -351,7 +354,7 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
               <p className="font-semibold text-[#3D2F24]">{productionDetails.orderId}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-4">
-              <p className="text-xs text-[#6D6D6D] mb-1">Produit</p>
+              <p className="text-xs text-[#6D6D6D] mb-1">{t('common.product')}</p>
               <p className="font-semibold text-[#3D2F24]">{productionDetails.productName}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-xl p-4">
@@ -387,7 +390,7 @@ const ProductionDetailModal = ({ isOpen, onClose, order }) => {
             <button
               onClick={() => {
                 onClose();
-                window.dispatchEvent(new CustomEvent('showToast', { detail: { message: '▶️ Production reprise avec succès', type: 'success' } }));
+                window.dispatchEvent(new CustomEvent('showToast', { detail: { message: t('common.productionResumed'), type: 'success' } }));
               }}
               className="w-full sm:flex-1 px-4 py-2.5 bg-[#B8863B] text-white rounded-xl hover:bg-[#A07532] transition-colors text-sm font-medium flex items-center justify-center gap-2"
             >
@@ -496,7 +499,7 @@ const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
               <p className="text-xs text-[#6D6D6D] mb-1">{tc('notes')}</p>
               <p className="font-semibold text-[#3D2F24] flex items-center gap-2">
                 <FileText size={14} className="text-[#6D6D6D]" />
-                {delivery.notes || 'Aucune note'}
+                {delivery.notes || tc('noNotes')}
               </p>
             </div>
           </div>
@@ -505,12 +508,12 @@ const DeliveryDetailModal = ({ isOpen, onClose, delivery }) => {
             <button
               onClick={() => {
                 onClose();
-                window.dispatchEvent(new CustomEvent('showToast', { detail: { message: `📄 Livraison ${delivery.id} exportée avec succès`, type: 'success' } }));
+                window.dispatchEvent(new CustomEvent('showToast', { detail: { message: t('common.deliveryExported', { id: delivery.id }), type: 'success' } }));
               }}
               className="w-full sm:flex-1 px-4 py-2.5 bg-[#B8863B] text-white rounded-xl hover:bg-[#A07532] transition-colors text-sm font-medium flex items-center justify-center gap-2"
             >
               <Download size={16} />
-              Télécharger le récépissé
+              {t('reports.export.deliveryTitle')}
             </button>
             <button
               onClick={onClose}
@@ -611,12 +614,12 @@ const InvoiceDetailModal = ({ isOpen, onClose, invoice }) => {
             <button
               onClick={() => {
                 onClose();
-                window.dispatchEvent(new CustomEvent('showToast', { detail: { message: `📄 Facture ${invoice.id} exportée avec succès`, type: 'success' } }));
+                window.dispatchEvent(new CustomEvent('showToast', { detail: { message: t('common.invoiceExported', { id: invoice.id }), type: 'success' } }));
               }}
               className="w-full sm:flex-1 px-4 py-2.5 bg-[#B8863B] text-white rounded-xl hover:bg-[#A07532] transition-colors text-sm font-medium flex items-center justify-center gap-2"
             >
               <Download size={16} />
-              Télécharger la facture
+              {t('reports.export.invoiceTitle')}
             </button>
             <button
               onClick={onClose}
@@ -760,7 +763,7 @@ const OrderCard = ({ order, onView, onDelete, onExport }) => {
         <button
           onClick={() => onExport && onExport(order)}
           className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-          title="Exporter"
+          title={tc('export')}
         >
           <Download size={15} className="text-[#6D6D6D]" />
         </button>
@@ -822,7 +825,7 @@ const InvoiceCard = ({ invoice, onView, onDelete, onExport }) => {
         <button
           onClick={() => onExport && onExport(invoice)}
           className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-          title="Exporter"
+          title={tc('export')}
         >
           <Download size={15} className="text-[#6D6D6D]" />
         </button>
@@ -884,7 +887,7 @@ const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
         <button
           onClick={() => onExport && onExport(delivery)}
           className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-          title="Exporter"
+          title={tc('export')}
         >
           <Download size={15} className="text-[#6D6D6D]" />
         </button>
@@ -906,6 +909,12 @@ const DeliveryCard = ({ delivery, onView, onDelete, onExport }) => {
 const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) => {
   const { t, tc, actions } = usePageI18n('reports');
   const typeColors = {
+    [t('reports.types.sales')]: 'bg-blue-50 text-blue-700 border-blue-200',
+    [t('reports.types.orders')]: 'bg-purple-50 text-purple-700 border-purple-200',
+    [t('reports.types.production')]: 'bg-amber-50 text-amber-700 border-amber-200',
+    [t('reports.types.financial')]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    [t('reports.types.customers')]: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    [t('reports.types.products')]: 'bg-rose-50 text-rose-700 border-rose-200',
     Ventes: 'bg-blue-50 text-blue-700 border-blue-200',
     Commandes: 'bg-purple-50 text-purple-700 border-purple-200',
     Production: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -915,10 +924,13 @@ const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) 
   };
 
   const statusColors = {
+    [t('reports.status.generated')]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    [t('reports.status.inProgress')]: 'bg-amber-50 text-amber-700 border-amber-200',
+    [t('reports.status.error')]: 'bg-red-50 text-red-700 border-red-200',
     'Généré': 'bg-emerald-50 text-emerald-700 border-emerald-200',
     'En cours': 'bg-amber-50 text-amber-700 border-amber-200',
-    'pending': 'bg-gray-50 text-gray-600 border-gray-200',
-    'Erreur': 'bg-red-50 text-red-700 border-red-200'
+    pending: 'bg-gray-50 text-gray-600 border-gray-200',
+    Erreur: 'bg-red-50 text-red-700 border-red-200'
   };
 
   return (
@@ -941,9 +953,9 @@ const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) 
           </div>
           <h4 className="text-sm font-semibold text-[#3D2F24] mt-2 truncate">{report.name}</h4>
           <div className="flex items-center gap-3 mt-1 text-xs text-[#6D6D6D] flex-wrap">
-            <span>Période: {report.period}</span>
+            <span>{t('reports.filters.period')}: {report.period}</span>
             <span>•</span>
-            <span>Créé par: {report.createdBy}</span>
+            <span>{t('reports.table.generatedBy')}: {report.createdBy}</span>
             <span>•</span>
             <span>{report.date}</span>
             <span>•</span>
@@ -961,21 +973,21 @@ const ReportCard = ({ report, onView, onDownload, onPrint, onShare, onDelete }) 
           <button
             onClick={() => onDownload && onDownload(report)}
             className="p-2 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Télécharger"
+            title={tc('download')}
           >
             <Download size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onPrint && onPrint(report)}
             className="p-2 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Imprimer"
+            title={tc('print')}
           >
             <Printer size={16} className="text-[#6D6D6D]" />
           </button>
           <button
             onClick={() => onShare && onShare(report)}
             className="p-2 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-            title="Partager"
+            title={tc('share')}
           >
             <Share2 size={16} className="text-[#6D6D6D]" />
           </button>
@@ -1105,27 +1117,27 @@ const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onAppl
 
   const filterGroups = [
     {
-      title: 'Période',
+      title: t('reports.filters.period'),
       fields: [
-        { key: 'period', type: 'select', options: [tc('today'), 'Cette semaine', 'Ce mois', 'Cette année', 'Période personnalisée'] }
+        { key: 'period', type: 'select', options: [tc('today'), tc('thisWeek'), tc('thisMonth'), tc('thisYear'), tc('customPeriod')] }
       ]
     },
     {
-      title: 'Client',
+      title: t('reports.filters.client'),
       fields: [
-        { key: 'client', type: 'text', placeholder: 'Rechercher un client...' }
+        { key: 'client', type: 'text', placeholder: tc('searchCustomer') }
       ]
     },
     {
-      title: 'Commercial',
+      title: t('reports.filters.salesRep'),
       fields: [
         { key: 'salesRep', type: 'select', options: ['Tous', 'Ahmed Benjelloun', 'Sara El Idrissi', 'Mohamed Amine', 'Karim Lahlou', 'Nadia Fassi'] }
       ]
     },
     {
-      title: 'Statut',
+      title: t('reports.filters.status'),
       fields: [
-        { key: 'status', type: 'select', options: ['Tous', t('common.pending'), t('orders.status.validated'), t('orders.status.in_production'), t('orders.status.ready'), t('orders.status.delivered'), t('common.cancelled')] }
+        { key: 'status', type: 'select', options: [tc('all'), t('common.pending'), t('orders.status.validated'), t('orders.status.in_production'), t('orders.status.ready'), t('orders.status.delivered'), t('common.cancelled')] }
       ]
     }
   ];
@@ -1161,20 +1173,20 @@ const AdvancedFilters = ({ isOpen, onClose, filters, setFilters, onReset, onAppl
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-[#3D2F24] flex items-center gap-2">
               <FilterIcon2 size={18} className="text-[#B8863B]" />
-              Filtres avancés
+              {t('common.advancedFilters')}
             </h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleReset}
                 className="px-3 py-1.5 text-xs text-[#6D6D6D] hover:text-[#3D2F24] transition-colors border border-[#ECE8E1] rounded-lg"
               >
-                Réinitialiser
+                {tc('resetFilters')}
               </button>
               <button
                 onClick={handleApply}
                 className="px-3 py-1.5 text-xs bg-[#B8863B] text-white rounded-lg hover:bg-[#A07532] transition-colors"
               >
-                Appliquer
+                {tc('apply')}
               </button>
               <button
                 onClick={onClose}
@@ -1231,8 +1243,8 @@ const SalesChart = ({ data }) => {
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-bold text-[#3D2F24]">Évolution des ventes</h3>
-          <p className="text-xs text-[#6D6D6D]">Chiffre d'affaires et nombre de commandes</p>
+          <h3 className="text-sm font-bold text-[#3D2F24]">{t('reports.charts.salesEvolution')}</h3>
+          <p className="text-xs text-[#6D6D6D]">{t('reports.charts.salesEvolutionSub')}</p>
         </div>
         <div className="flex items-center gap-4 text-xs">
           <span className="flex items-center gap-1.5">
@@ -1260,12 +1272,12 @@ const SalesChart = ({ data }) => {
                 boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
               }}
               formatter={(value, name) => {
-                if (name === 'Revenue') return [`${value.toLocaleString()} ${CURRENCY}`, name];
+                if (name === t('reports.charts.legend.revenue')) return [`${value.toLocaleString()} ${CURRENCY}`, name];
                 return [value, name];
               }}
             />
             <Legend />
-            <Bar yAxisId="left" dataKey="revenue" fill="#B8863B" fillOpacity={0.8} name="Revenue" radius={[4, 4, 0, 0]} />
+            <Bar yAxisId="left" dataKey="revenue" fill="#B8863B" fillOpacity={0.8} name={t('reports.charts.legend.revenue')} radius={[4, 4, 0, 0]} />
             <Line
               yAxisId="right"
               type="monotone"
@@ -1274,7 +1286,7 @@ const SalesChart = ({ data }) => {
               strokeWidth={2.5}
               dot={{ fill: '#3B82F6', strokeWidth: 2 }}
               activeDot={{ r: 6 }}
-              name="Orders"
+              name={t('reports.charts.legend.orders')}
             />
           </ComposedChart>
         </ResponsiveContainer>
@@ -1287,7 +1299,7 @@ const OrderStatusChart = ({ data }) => {
   const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Répartition des commandes</h3>
+      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.charts.orderDistribution')}</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <RePieChart>
@@ -1335,7 +1347,7 @@ const TopProductsChart = ({ data }) => {
   const top10 = data.slice(0, 10);
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Top Produits</h3>
+      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.charts.topProducts')}</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <ReBarChart data={top10} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
@@ -1348,7 +1360,7 @@ const TopProductsChart = ({ data }) => {
                 border: '1px solid #ECE8E1',
                 borderRadius: '8px'
               }}
-              formatter={(value) => [`${value} unités`, '']}
+              formatter={(value) => [`${value} ${tc('units')}`, '']}
             />
             <Bar dataKey="sales" fill="#B8863B" radius={[0, 4, 4, 0]} />
           </ReBarChart>
@@ -1362,7 +1374,7 @@ const MonthlyRevenueChart = ({ data }) => {
   const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Chiffre d'affaires mensuel</h3>
+      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.charts.monthlyRevenue')}</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data}>
@@ -1382,7 +1394,7 @@ const MonthlyRevenueChart = ({ data }) => {
               dataKey="revenue"
               stroke="#B8863B"
               fill="url(#revenueGradient)"
-              name="Revenue"
+              name={t('reports.charts.legend.revenue')}
             />
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
@@ -1401,7 +1413,7 @@ const ProductionChart = ({ data }) => {
   const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Production Journalière</h3>
+      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.charts.dailyProduction')}</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data}>
@@ -1417,8 +1429,8 @@ const ProductionChart = ({ data }) => {
               }}
             />
             <Legend />
-            <Bar yAxisId="left" dataKey="produced" fill="#22C55E" name="Produits" radius={[4, 4, 0, 0]} />
-            <Line yAxisId="right" type="monotone" dataKey="target" stroke="#EF4444" strokeDasharray="5 5" name="Objectif" />
+            <Bar yAxisId="left" dataKey="produced" fill="#22C55E" name={t('reports.charts.legend.products')} radius={[4, 4, 0, 0]} />
+            <Line yAxisId="right" type="monotone" dataKey="target" stroke="#EF4444" strokeDasharray="5 5" name={t('reports.charts.legend.target')} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -1430,7 +1442,7 @@ const DeliveryChart = ({ data }) => {
   const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Livraisons</h3>
+      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.charts.deliveries')}</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <ReBarChart data={data}>
@@ -1445,8 +1457,8 @@ const DeliveryChart = ({ data }) => {
               }}
             />
             <Legend />
-            <Bar dataKey="delivered" stackId="a" fill="#22C55E" name="Livrées" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="delayed" stackId="a" fill="#EF4444" name="Retardées" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="delivered" stackId="a" fill="#22C55E" name={t('reports.charts.legend.delivered')} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="delayed" stackId="a" fill="#EF4444" name={t('reports.charts.legend.delayed')} radius={[4, 4, 0, 0]} />
           </ReBarChart>
         </ResponsiveContainer>
       </div>
@@ -1458,7 +1470,7 @@ const SalesRepChart = ({ data }) => {
   const { t, tc } = usePageI18n('reports');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Performance Commerciaux</h3>
+      <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.charts.salesRepPerformance')}</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <ReBarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
@@ -1527,7 +1539,7 @@ const ReportsPage = () => {
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('reports');
   const location = useLocation();
   const navigate = useNavigate();
-  const { exportPDF, exportExcel } = useExport({ userName: user?.firstName || 'Utilisateur' });
+  const { exportPDF, exportExcel } = useExport({ userName: user?.firstName || tc('user') });
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
@@ -1739,12 +1751,12 @@ const ReportsPage = () => {
   // ==========================================
   const exportColumns = [
     { label: 'ID', accessor: 'id', width: 10 },
-    { label: 'Client', accessor: 'client', width: 20 },
-    { label: 'Commercial', accessor: 'salesRep', width: 18 },
-    { label: 'Date', accessor: 'date', width: 12 },
-    { label: 'Montant', accessor: 'amount', width: 15 },
-    { label: 'Statut', accessor: 'status', width: 12 },
-    { label: 'Production', accessor: 'production', width: 14 },
+    { label: tc('customer'), accessor: 'client', width: 20 },
+    { label: tc('salesRep'), accessor: 'salesRep', width: 18 },
+    { label: tc('date'), accessor: 'date', width: 12 },
+    { label: tc('amount'), accessor: 'amount', width: 15 },
+    { label: tc('status'), accessor: 'status', width: 12 },
+    { label: t('nav.production'), accessor: 'production', width: 14 },
     { label: t('common.delivery'), accessor: 'delivery', width: 14 }
   ];
 
@@ -1761,10 +1773,10 @@ const ReportsPage = () => {
 
   const exportSummary = [
     { label: t('orders.kpi.total'), value: ordersData.length },
-    { label: 'Montant total', value: `${ordersData.reduce((sum, o) => sum + o.amount, 0).toLocaleString()} ${CURRENCY}` },
-    { label: 'Statut : Livrées', value: ordersData.filter(o => o.status === t('orders.status.delivered')).length },
-    { label: 'Statut : En production', value: ordersData.filter(o => o.status === t('orders.status.in_production')).length },
-    { label: 'Statut : En attente', value: ordersData.filter(o => o.status === t('common.pending')).length }
+    { label: tc('totalAmount'), value: `${ordersData.reduce((sum, o) => sum + o.amount, 0).toLocaleString()} ${CURRENCY}` },
+    { label: t('reports.export.statusDelivered'), value: ordersData.filter(o => o.status === t('orders.status.delivered')).length },
+    { label: t('reports.export.statusInProduction'), value: ordersData.filter(o => o.status === t('orders.status.in_production')).length },
+    { label: t('reports.export.statusPending'), value: ordersData.filter(o => o.status === t('common.pending')).length }
   ];
 
   // ==========================================
@@ -2025,7 +2037,7 @@ const ReportsPage = () => {
   // ==========================================
   
   const handlePrintReport = (report) => {
-    showToast(`🖨️ Impression du rapport "${report.name}"...`, 'info');
+    showToast(t('common.reportPrinting', { name: report.name }), 'info');
   };
 
   const handleShareReport = (report) => {
@@ -2053,16 +2065,16 @@ const ReportsPage = () => {
   // TABS
   // ==========================================
   const tabs = [
-    { id: 'overview', label: 'Vue Générale', icon: LayoutDashboard },
-    { id: 'orders', label: 'Commandes', icon: ClipboardList },
-    { id: 'sales', label: 'Ventes', icon: TrendingUp },
-    { id: 'production', label: 'Production', icon: FactoryIcon },
-    { id: 'products', label: 'Produits', icon: Package },
-    { id: 'customers', label: 'Clients', icon: Users },
-    { id: 'invoices', label: 'Factures', icon: FileText },
-    { id: 'deliveries', label: 'Livraisons', icon: TruckIcon },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'reports', label: 'Rapports', icon: FileIcon }
+    { id: 'overview', label: t('reports.tabs.overview'), icon: LayoutDashboard },
+    { id: 'orders', label: t('reports.tabs.orders'), icon: ClipboardList },
+    { id: 'sales', label: t('reports.tabs.sales'), icon: TrendingUp },
+    { id: 'production', label: t('reports.tabs.production'), icon: FactoryIcon },
+    { id: 'products', label: t('reports.tabs.products'), icon: Package },
+    { id: 'customers', label: t('reports.tabs.customers'), icon: Users },
+    { id: 'invoices', label: t('reports.tabs.invoices'), icon: FileText },
+    { id: 'deliveries', label: t('reports.tabs.deliveries'), icon: TruckIcon },
+    { id: 'analytics', label: t('reports.tabs.analytics'), icon: BarChart3 },
+    { id: 'reports', label: t('reports.tabs.reports'), icon: FileIcon }
   ];
 
   // ==========================================
@@ -2074,7 +2086,7 @@ const ReportsPage = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
         <KPICard 
           icon={DollarSign} 
-          title="Chiffre d'affaires" 
+          title={t('reports.kpi.revenue')} 
           value={kpis.totalRevenue} 
           change={kpis.monthlyGrowth} 
           color="gold" 
@@ -2084,7 +2096,7 @@ const ReportsPage = () => {
         />
         <KPICard 
           icon={ShoppingBag} 
-          title="Total commandes" 
+          title={t('reports.kpi.totalOrders')} 
           value={kpis.totalOrders} 
           change={8.10} 
           color="blue"
@@ -2093,7 +2105,7 @@ const ReportsPage = () => {
         />
         <KPICard 
           icon={Package} 
-          title="Produits" 
+          title={t('reports.kpi.products')} 
           value={kpis.totalProducts} 
           change={5.30} 
           color="purple"
@@ -2102,14 +2114,14 @@ const ReportsPage = () => {
         />
         <KPICard 
           icon={Users} 
-          title="Clients" 
+          title={t('reports.kpi.customers')} 
           value={kpis.totalCustomers} 
           change={9.20} 
           color="green"
         />
         <KPICard 
           icon={TrendingUp} 
-          title="Croissance" 
+          title={t('reports.kpi.growth')} 
           value={formatPercentage(kpis.monthlyGrowth)} 
           change={kpis.monthlyGrowth} 
           color="indigo"
@@ -2117,10 +2129,10 @@ const ReportsPage = () => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={FileText} title="Factures" value={kpis.totalInvoices} change={4.70} color="teal" />
-        <KPICard icon={TruckIcon} title="Livraisons" value={kpis.totalDeliveries} change={6.80} color="cyan" />
-        <KPICard icon={FactoryIcon} title="En production" value={kpis.inProduction} change={-2.40} color="amber" />
-        <KPICard icon={Clock} title="En attente" value={kpis.pendingOrders} change={-5.90} color="rose" />
+        <KPICard icon={FileText} title={t('reports.kpi.invoices')} value={kpis.totalInvoices} change={4.70} color="teal" />
+        <KPICard icon={TruckIcon} title={t('reports.kpi.deliveries')} value={kpis.totalDeliveries} change={6.80} color="cyan" />
+        <KPICard icon={FactoryIcon} title={t('reports.kpi.inProduction')} value={kpis.inProduction} change={-2.40} color="amber" />
+        <KPICard icon={Clock} title={t('common.pending')} value={kpis.pendingOrders} change={-5.90} color="rose" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -2135,23 +2147,23 @@ const ReportsPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <TopListCard 
-          title="Top Clients" 
+          title={t('reports.top.clients')} 
           items={topCustomers.map(c => ({ ...c, value: c.revenue }))} 
-          valueLabel="Revenue" 
+          valueLabel={t('reports.charts.legend.revenue')} 
           icon={Users} 
           valueKey="revenue"
         />
         <TopListCard 
-          title="Top Produits" 
+          title={t('reports.top.products')} 
           items={topProducts.map(c => ({ ...c, value: c.sales }))} 
-          valueLabel="Ventes" 
+          valueLabel={t('common.sales')} 
           icon={Package} 
           valueKey="sales"
         />
         <TopListCard 
-          title="Top Catégories" 
+          title={t('reports.top.categories')} 
           items={topCategories.map(c => ({ ...c, value: c.sales }))} 
-          valueLabel="Ventes" 
+          valueLabel={t('common.sales')} 
           icon={Layers} 
           valueKey="sales"
         />
@@ -2159,7 +2171,7 @@ const ReportsPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Activité récente</h3>
+          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.sections.recentActivity')}</h3>
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {recentActivities.map((activity) => (
               <ActivityItem key={activity.id} activity={activity} />
@@ -2167,7 +2179,7 @@ const ReportsPage = () => {
           </div>
         </div>
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Alertes</h3>
+          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.sections.alerts')}</h3>
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {alerts.map((alert) => (
               <AlertItem key={alert.id} alert={alert} onDismiss={handleDismissAlert} />
@@ -2186,16 +2198,16 @@ const ReportsPage = () => {
     return (
       <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <KPICard icon={ShoppingBag} title="Total Commandes" value={ordersData.length} change={8.10} color="blue" />
-          <KPICard icon={Clock} title="En attente" value={pending} change={-5.90} color="amber" />
-          <KPICard icon={CheckCircle} title="Terminées" value={paidCount} change={5.20} color="green" />
-          <KPICard icon={DollarSign} title="Panier Moyen" value={kpis.avgOrderValue} change={3.80} color="gold" isCurrency />
+          <KPICard icon={ShoppingBag} title={t('reports.kpi.totalOrders')} value={ordersData.length} change={8.10} color="blue" />
+          <KPICard icon={Clock} title={t('common.pending')} value={pending} change={-5.90} color="amber" />
+          <KPICard icon={CheckCircle} title={t('reports.kpi.completed')} value={paidCount} change={5.20} color="green" />
+          <KPICard icon={DollarSign} title={t('reports.kpi.avgBasket')} value={kpis.avgOrderValue} change={3.80} color="gold" isCurrency />
         </div>
         {ordersData.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Package size={48} className="text-[#D1CBC0] mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-[#3D2F24]">Aucune commande</h3>
-            <p className="text-sm text-[#6D6D6D]">Toutes les commandes ont été supprimées</p>
+            <h3 className="text-lg font-bold text-[#3D2F24]">{t('orders.empty')}</h3>
+            <p className="text-sm text-[#6D6D6D]">{t('reports.allOrdersDeleted')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -2217,10 +2229,10 @@ const ReportsPage = () => {
   const renderSales = () => (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={DollarSign} title="Chiffre d'affaires" value={kpis.totalRevenue} change={kpis.monthlyGrowth} color="gold" isCurrency />
-        <KPICard icon={TrendingUp} title="Croissance" value={formatPercentage(kpis.monthlyGrowth)} change={kpis.monthlyGrowth} color="indigo" />
+        <KPICard icon={DollarSign} title={t('reports.kpi.revenue')} value={kpis.totalRevenue} change={kpis.monthlyGrowth} color="gold" isCurrency />
+        <KPICard icon={TrendingUp} title={t('reports.kpi.growth')} value={formatPercentage(kpis.monthlyGrowth)} change={kpis.monthlyGrowth} color="indigo" />
         <KPICard icon={ShoppingBag} title="Commandes" value={kpis.totalOrders} change={8.10} color="blue" />
-        <KPICard icon={Users} title="Clients" value={kpis.totalCustomers} change={9.20} color="green" />
+        <KPICard icon={Users} title={t('reports.kpi.customers')} value={kpis.totalCustomers} change={9.20} color="green" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <SalesChart data={salesData} />
@@ -2236,19 +2248,19 @@ const ReportsPage = () => {
   const renderProduction = () => (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={FactoryIcon} title="En production" value={kpis.inProduction} change={-2.40} color="amber" />
-        <KPICard icon={CheckCircle} title="Terminées" value={orderStatusData.find(d => d.name === 'Terminées')?.value || 0} change={5.20} color="green" />
-        <KPICard icon={Timer} title="Temps moyen" value="4.5h" change={-3.10} color="blue" />
-        <KPICard icon={Award} title="Rendement" value="94%" change={2.80} color="purple" />
+        <KPICard icon={FactoryIcon} title={t('reports.kpi.inProduction')} value={kpis.inProduction} change={-2.40} color="amber" />
+        <KPICard icon={CheckCircle} title={t('reports.kpi.completed')} value={orderStatusData.find(d => d.name === t('reports.kpi.completed') || d.name === 'Terminées')?.value || 0} change={5.20} color="green" />
+        <KPICard icon={Timer} title={t('reports.kpi.avgTime')} value="4.5h" change={-3.10} color="blue" />
+        <KPICard icon={Award} title={t('reports.kpi.yield')} value="94%" change={2.80} color="purple" />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <ProductionChart data={productionData} />
         <OrderStatusChart data={orderStatusData} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <TopListCard title="Top Produits" items={topProducts.map(c => ({ ...c, value: c.sales }))} valueLabel="Produits" icon={Package} valueKey="sales" />
+        <TopListCard title={t('reports.top.products')} items={topProducts.map(c => ({ ...c, value: c.sales }))} valueLabel="Produits" icon={Package} valueKey="sales" />
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Production Journalière</h3>
+          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.charts.dailyProduction')}</h3>
           <div className="space-y-2">
             {productionData.map((day, idx) => (
               <div key={idx} className="flex items-center gap-3">
@@ -2280,8 +2292,8 @@ const ReportsPage = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <KPICard icon={Package} title="Total Produits" value={topProducts.length} change={5.30} color="purple" />
           <KPICard icon={TrendingUp} title="Top Ventes" value={topProducts[0]?.sales || 0} change={15.20} color="gold" />
-          <KPICard icon={AlertCircle} title="Rupture de stock" value="5" change={-10.40} color="rose" />
-          <KPICard icon={CheckCircle} title="Disponibles" value="52" change={8.90} color="green" />
+          <KPICard icon={AlertCircle} title={t('reports.kpi.stockOut')} value="5" change={-10.40} color="rose" />
+          <KPICard icon={CheckCircle} title={t('reports.kpi.available')} value="52" change={8.90} color="green" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <TopProductsChart data={topProducts} />
@@ -2357,12 +2369,12 @@ const ReportsPage = () => {
       <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <KPICard icon={Users} title="Total Clients" value={kpis.totalCustomers} change={9.20} color="green" />
-          <KPICard icon={User} title="Nouveaux" value="24" change={15.80} color="blue" />
-          <KPICard icon={Award} title="Fidélité" value="76%" change={5.60} color="purple" />
+          <KPICard icon={User} title={t('reports.kpi.newCustomers')} value="24" change={15.80} color="blue" />
+          <KPICard icon={Award} title={t('reports.kpi.loyalty')} value="76%" change={5.60} color="purple" />
           <KPICard icon={Star} title="Top Client" value={topCustomers[0]?.name || '-'} change={0} color="gold" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <TopListCard title="Top Clients" items={topCustomers.map(c => ({ ...c, value: c.revenue }))} valueLabel="Revenue" icon={Users} valueKey="revenue" />
+          <TopListCard title={t('reports.top.clients')} items={topCustomers.map(c => ({ ...c, value: c.revenue }))} valueLabel={t('reports.charts.legend.revenue')} icon={Users} valueKey="revenue" />
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
             <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Répartition par Ville</h3>
             <div className="space-y-3">
@@ -2426,12 +2438,12 @@ const ReportsPage = () => {
           <KPICard icon={CreditCard} title="Total Factures" value={invoicesList.length} change={4.70} color="teal" />
           <KPICard icon={CheckCircle} title="Payées" value={paidCount} change={6.20} color="green" />
           <KPICard icon={XCircle} title="Impayées" value={unpaidCount} change={-3.80} color="rose" />
-          <KPICard icon={Clock} title="En attente" value={pendingCount} change={2.40} color="amber" />
+          <KPICard icon={Clock} title={t('common.pending')} value={pendingCount} change={2.40} color="amber" />
         </div>
         {invoicesList.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <FileText size={48} className="text-[#D1CBC0] mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-[#3D2F24]">Aucune facture</h3>
+            <h3 className="text-lg font-bold text-[#3D2F24]">{t('invoices.emptyShort')}</h3>
             <p className="text-sm text-[#6D6D6D]">Toutes les factures ont été supprimées</p>
           </div>
         ) : (
@@ -2462,13 +2474,13 @@ const ReportsPage = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <KPICard icon={Truck} title="Total Livraisons" value={deliveriesList.length} change={6.80} color="cyan" />
           <KPICard icon={CheckCircle} title="Effectuées" value={deliveredCount} change={8.30} color="green" />
-          <KPICard icon={Clock} title="En attente" value={pendingCount} change={-2.60} color="amber" />
+          <KPICard icon={Clock} title={t('common.pending')} value={pendingCount} change={-2.60} color="amber" />
           <KPICard icon={AlertCircle} title="Retard" value={delayedCount} change={-5.70} color="rose" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <DeliveryChart data={deliveryStats} />
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Statut des Livraisons</h3>
+            <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.charts.deliveryStatus')}</h3>
             <div className="space-y-3">
               <div>
                 <div className="flex justify-between text-xs text-[#6D6D6D] mb-1">
@@ -2481,7 +2493,7 @@ const ReportsPage = () => {
               </div>
               <div>
                 <div className="flex justify-between text-xs text-[#6D6D6D] mb-1">
-                  <span>En attente</span>
+                  <span>{t('common.pending')}</span>
                   <span>{pendingCount} ({Math.round((pendingCount / (deliveredCount + pendingCount + delayedCount)) * 100)}%)</span>
                 </div>
                 <div className="h-2 bg-[#F8F7F4] rounded-full overflow-hidden">
@@ -2503,8 +2515,8 @@ const ReportsPage = () => {
         {deliveriesList.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Truck size={48} className="text-[#D1CBC0] mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-[#3D2F24]">Aucune livraison</h3>
-            <p className="text-sm text-[#6D6D6D]">Toutes les livraisons ont été supprimées</p>
+            <h3 className="text-lg font-bold text-[#3D2F24]">{t('deliveries.emptyShort')}</h3>
+            <p className="text-sm text-[#6D6D6D]">{t('reports.allDeliveriesDeleted')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -2547,22 +2559,22 @@ const ReportsPage = () => {
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           <div className="flex items-center gap-2 bg-white border border-[#ECE8E1] rounded-lg px-3 py-2">
             <Package size={16} className="text-[#6D6D6D]" />
-            <span className="text-sm text-[#3D2F24]">{generatedReports.length} Rapports</span>
+            <span className="text-sm text-[#3D2F24]">{t('reports.reportsCount', { count: generatedReports.length })}</span>
           </div>
           <div className="flex items-center gap-2 bg-white border border-[#ECE8E1] rounded-lg px-3 py-2">
             <CheckCircle size={16} className="text-emerald-500" />
-            <span className="text-sm text-[#3D2F24]">{generatedReports.filter(r => r.status === 'Généré').length} Générés</span>
+            <span className="text-sm text-[#3D2F24]">{t('reports.generatedCount', { count: generatedReports.filter(r => r.status === t('reports.status.generated') || r.status === 'Généré').length })}</span>
           </div>
           <div className="flex items-center gap-2 bg-white border border-[#ECE8E1] rounded-lg px-3 py-2">
             <Clock size={16} className="text-amber-500" />
-            <span className="text-sm text-[#3D2F24]">{generatedReports.filter(r => r.status === 'En cours' || r.status === t('common.pending')).length} En cours</span>
+            <span className="text-sm text-[#3D2F24]">{generatedReports.filter(r => r.status === t('reports.status.inProgress') || r.status === 'En cours' || r.status === t('common.pending')).length} {t('reports.status.inProgress')}</span>
           </div>
         </div>
         {generatedReports.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <FileIcon size={48} className="text-[#D1CBC0] mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-[#3D2F24]">Aucun rapport</h3>
-            <p className="text-sm text-[#6D6D6D]">Tous les rapports ont été supprimés</p>
+            <h3 className="text-lg font-bold text-[#3D2F24]">{t('reports.empty')}</h3>
+            <p className="text-sm text-[#6D6D6D]">{t('reports.allReportsDeleted')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3">
@@ -2626,7 +2638,7 @@ const ReportsPage = () => {
         onConfirm={confirmDialog.onConfirm}
         title={confirmDialog.title}
         description={confirmDialog.description}
-        confirmText="Supprimer"
+        confirmText={tc('delete')}
       />
 
       {/* Production Detail Modal */}
@@ -2701,7 +2713,7 @@ const ReportsPage = () => {
             <nav className="flex items-center gap-2 text-sm text-[#6D6D6D] mb-1">
               <Home size={14} className="text-[#B8863B]" />
               <span className="text-[#B8863B]">/</span>
-              <span>Rapports & Statistiques</span>
+              <span>{tc('breadcrumbReports')}</span>
             </nav>
             <h1 className="text-2xl font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
               {title}
@@ -2716,11 +2728,11 @@ const ReportsPage = () => {
                 onChange={handleDateRangeChange}
                 className="pl-9 pr-8 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B] focus:border-transparent bg-white appearance-none"
               >
-                <option value="today">Aujourd'hui</option>
-                <option value="week">Cette semaine</option>
-                <option value="month">Ce mois</option>
-                <option value="year">Cette année</option>
-                <option value="custom">Personnalisé</option>
+                <option value="today">{tc('today')}</option>
+                <option value="week">{tc('thisWeek')}</option>
+                <option value="month">{tc('thisMonth')}</option>
+                <option value="year">{tc('thisYear')}</option>
+                <option value="custom">{tc('custom')}</option>
               </select>
               <CalendarIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" />
               <ChevronDownIcon size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" />
@@ -2768,7 +2780,7 @@ const ReportsPage = () => {
             <button
               onClick={handleShare}
               className="p-2 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-              title="Partager"
+              title={tc('share')}
             >
               <Share2 size={18} className="text-[#6D6D6D]" />
             </button>

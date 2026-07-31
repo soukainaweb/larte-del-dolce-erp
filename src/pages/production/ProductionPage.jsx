@@ -334,7 +334,7 @@ const ProductionModal = ({ isOpen, onClose, onSave, production, isLoading }) => 
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            {production ? 'Modifier la production' : 'Ajouter une production'}
+            {production ? t('production.modals.editTitle') : t('production.addProduction')}
           </h3>
           <button
             onClick={onClose}
@@ -374,7 +374,7 @@ const ProductionModal = ({ isOpen, onClose, onSave, production, isLoading }) => 
               {errors.orderId && <p className="text-xs text-rose-500 mt-1">{errors.orderId}</p>}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Produit</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.product')}</label>
               <input
                 type="text"
                 name="product"
@@ -417,7 +417,7 @@ const ProductionModal = ({ isOpen, onClose, onSave, production, isLoading }) => 
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="pending">En attente</option>
+                <option value="pending">{t('common.pending')}</option>
                 <option value="in_progress">En production</option>
                 <option value="paused">Suspendue</option>
                 <option value="completed">Terminée</option>
@@ -432,9 +432,9 @@ const ProductionModal = ({ isOpen, onClose, onSave, production, isLoading }) => 
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="low">Basse</option>
-                <option value="medium">Moyenne</option>
-                <option value="high">Haute</option>
+                <option value="low">{t('orders.priority.low')}</option>
+                <option value="medium">{t('orders.priority.medium')}</option>
+                <option value="high">{t('orders.priority.high')}</option>
               </select>
             </div>
           </div>
@@ -495,7 +495,7 @@ const ProductionModal = ({ isOpen, onClose, onSave, production, isLoading }) => 
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
@@ -530,21 +530,18 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, production, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer la production ?
+          {t('production.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
-          Vous êtes sur le point de supprimer la production{' '}
-          <span className="font-semibold text-[#3D2F24]">
-            {production?.name}
-          </span>.
-          Cette action est irréversible.
+          {t('production.modals.deleteMessage', { name: production?.name })}{' '}
+          {tc('irreversibleAction')}
         </p>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -576,7 +573,7 @@ const ProductionDetailsModal = ({ isOpen, onClose, production }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails de la production
+            {t('production.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -653,7 +650,7 @@ const ProductionDetailsModal = ({ isOpen, onClose, production }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>
@@ -894,7 +891,7 @@ const ProductionPage = () => {
           <ExportButtons
             data={filteredProductions}
             columns={columns}
-            title="Liste des productions"
+            title="{t('production.export.title')}"
             subtitle={`${filteredProductions.length} productions - Progression moyenne: ${kpis.avgProgress}%`}
             filename={`production_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
@@ -908,7 +905,7 @@ const ProductionPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <Plus size={18} />
-            Nouvelle production
+            {t('production.addProduction')}
           </button>
           <button
             onClick={handleRefresh}
@@ -939,7 +936,7 @@ const ProductionPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
+              <option value="all">{t('common.allStatuses')}</option>
               {uniqueStatuses.map(status => (
                 <option key={status} value={status}>
                   {status === 'pending' ? t('common.pending') :
@@ -976,7 +973,7 @@ const ProductionPage = () => {
                   <td colSpan="8" className="text-center py-8">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                      <p className="text-sm text-[#6D6D6D]">Chargement des productions...</p>
+                      <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.production') })}</p>
                     </div>
                   </td>
                 </tr>
@@ -985,7 +982,7 @@ const ProductionPage = () => {
                   <td colSpan="8" className="text-center py-8">
                     <div className="flex flex-col items-center gap-2">
                       <Factory size={40} className="text-[#ECE8E1]" />
-                      <p className="text-sm text-[#6D6D6D]">Aucune production trouvée</p>
+                      <p className="text-sm text-[#6D6D6D]">{t('production.empty')}</p>
                       <button
                         onClick={() => setIsCreateModalOpen(true)}
                         className="text-sm text-[#B8863B] font-medium hover:underline"
@@ -1026,12 +1023,12 @@ const ProductionPage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des productions...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.production') })}</p>
           </div>
         ) : paginatedProductions.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Factory size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucune production trouvée</p>
+            <p className="text-sm text-[#6D6D6D]">{t('production.empty')}</p>
           </div>
         ) : (
           paginatedProductions.map((production) => (
