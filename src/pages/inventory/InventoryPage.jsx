@@ -62,6 +62,7 @@ import {
   getInventoryStatuses,
   updateInventoryStatus
 } from '../../services/inventoryService';
+import { ensureArray } from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -700,11 +701,15 @@ const InventoryPage = () => {
         sort_order: 'asc'
       };
       const response = await getInventory(params);
-      const data = response.data.data || [];
-      setInventory(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      const res = response?.data;
+      const list = Array.isArray(res?.data)
+        ? res.data
+        : (Array.isArray(res) ? res : []);
+      setInventory(list);
+      setTotalCount(res?.meta?.total ?? list.length);
     } catch (error) {
       console.error('Error fetching inventory:', error);
+      setInventory([]);
     } finally {
       setIsLoading(false);
     }
@@ -745,12 +750,12 @@ const InventoryPage = () => {
 
   // Filter inventory (API already handles filters)
   const filteredInventory = useMemo(() => {
-    return inventory;
+    return Array.isArray(inventory) ? inventory : [];
   }, [inventory]);
 
   // Paginate
   const paginatedItems = useMemo(() => {
-    return filteredInventory;
+    return Array.isArray(filteredInventory) ? filteredInventory : [];
   }, [filteredInventory]);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
@@ -864,7 +869,7 @@ const InventoryPage = () => {
   }, [searchTerm, categoryFilter, statusFilter, typeFilter]);
 
   const categories = useMemo(() => {
-    const cats = new Set(inventory.map(i => i.category));
+    const cats = new Set(ensureArray(inventory).map(i => i.category));
     return Array.from(cats);
   }, [inventory]);
 
@@ -1027,7 +1032,7 @@ const InventoryPage = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedItems.map((item, index) => (
+                  ensureArray(paginatedItems).map((item, index) => (
                     <InventoryTableRow
                       key={item.id}
                       item={item}
@@ -1058,7 +1063,7 @@ const InventoryPage = () => {
               <p className="text-sm text-[#6D6D6D]">{t('products.empty')}</p>
             </div>
           ) : (
-            paginatedItems.map((item) => (
+            ensureArray(paginatedItems).map((item) => (
               <InventoryCard
                 key={item.id}
                 item={item}

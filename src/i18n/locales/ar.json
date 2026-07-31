@@ -270,9 +270,12 @@
     "none": "لا يوجد",
     "impossible": "غير ممكن",
     "preview": "معاينة",
-    "sku": "رمز المنتج",
+    "sku": "رمز المنتج (SKU)",
     "price": "السعر",
     "stock": "المخزون",
+    "dateAdded": "تاريخ الإضافة",
+    "selectCategory": "اختر الفئة",
+    "savedSuccessfully": "تم الحفظ بنجاح",
     "product": "المنتج",
     "customer": "العميل",
     "taxId": "الرقم الضريبي",
@@ -778,7 +781,12 @@
     "validation": {
       "nameRequired": "الاسم مطلوب",
       "priceRequired": "السعر مطلوب",
-      "stockRequired": "المخزون مطلوب"
+      "stockRequired": "المخزون مطلوب",
+      "categoryRequired": "الفئة مطلوبة"
+    },
+    "form": {
+      "chooseImage": "اختر صورة المنتج",
+      "chooseFile": "اختر ملفاً"
     }
   },
   "categories": {
