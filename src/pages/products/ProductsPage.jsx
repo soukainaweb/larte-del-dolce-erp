@@ -1,5 +1,5 @@
 // src/pages/Products/ProductsPage.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package,
@@ -26,6 +26,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../../contexts/ToastContext';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getProducts,
@@ -41,7 +42,8 @@ import {
   getProductStatuses,
   uploadProductImage
 } from '../../services/productService';
-import { unwrapPaginated, ensureArray } from '../../utils/apiHelpers';
+import { getCategories } from '../../services/categoryService';
+import { unwrapPaginated, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -204,44 +206,73 @@ const ProductTableRow = ({ product, onEdit, onDelete, onView, index }) => {
 // ==========================================
 const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
   const { t } = useTranslation();
+  const fileInputRef = useRef(null);
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [selectedFileName, setSelectedFileName] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
-    category: '',
+    category_id: '',
     price: '',
     stock: '',
     status: 'active',
     description: '',
-    image: null
   });
 
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchCategories = async () => {
+      setCategoriesLoading(true);
+      try {
+        const response = await getCategories({ per_page: 100, status: 'active' });
+        const { items } = unwrapPaginated(response);
+        setCategories(ensureArray(items));
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setCategories([]);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, [isOpen]);
 
   useEffect(() => {
     if (product) {
       setFormData({
         name: product.name || '',
         sku: product.sku || '',
-        category: product.category || '',
+        category_id: product.category_id ?? product.category?.id ?? '',
         price: product.price || '',
-        stock: product.stock || '',
+        stock: product.stock ?? product.stock_quantity ?? '',
         status: product.status || 'active',
         description: product.description || '',
-        image: product.image || null
       });
+      setImagePreview(product.image || null);
+      setImageFile(null);
+      setSelectedFileName('');
     } else {
       setFormData({
         name: '',
         sku: '',
-        category: '',
+        category_id: '',
         price: '',
         stock: '',
         status: 'active',
         description: '',
-        image: null
       });
+      setImagePreview(null);
+      setImageFile(null);
+      setSelectedFileName('');
     }
-  }, [product]);
+  }, [product, isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -251,10 +282,23 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
     }
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageFile(file);
+    setSelectedFileName(file.name);
+    setImagePreview(URL.createObjectURL(file));
+    if (errors.image) {
+      setErrors(prev => ({ ...prev, image: '' }));
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
     if (!formData.name) newErrors.name = t('products.validation.nameRequired');
+    if (!formData.category_id) newErrors.category_id = t('products.validation.categoryRequired');
     if (!formData.price) newErrors.price = t('products.validation.priceRequired');
     else if (isNaN(formData.price)) newErrors.price = t('common.mustBeNumber');
     if (!formData.stock) newErrors.stock = t('products.validation.stockRequired');
@@ -265,7 +309,13 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
       return;
     }
 
-    onSave({ ...formData, price: parseFloat(formData.price), stock: parseInt(formData.stock) });
+    onSave({
+      ...formData,
+      category_id: Number(formData.category_id),
+      price: parseFloat(formData.price),
+      stock: parseInt(formData.stock, 10),
+      image: imageFile || undefined,
+    });
   };
 
   if (!isOpen) return null;
@@ -317,14 +367,24 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.category')}</label>
-              <input
-                type="text"
-                name="category"
-                value={formData.category}
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.category')} *</label>
+              <select
+                name="category_id"
+                value={formData.category_id}
                 onChange={handleChange}
-                className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
-              />
+                disabled={categoriesLoading}
+                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all ${
+                  errors.category_id ? 'border-rose-500' : 'border-[#ECE8E1]'
+                }`}
+              >
+                <option value="">{categoriesLoading ? t('common.table.loadingItems', { entity: t('nav.categories') }) : t('common.selectCategory')}</option>
+                {ensureArray(categories).map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name_ar || cat.nameAr || cat.name}
+                  </option>
+                ))}
+              </select>
+              {errors.category_id && <p className="text-xs text-rose-500 mt-1">{errors.category_id}</p>}
             </div>
           </div>
 
@@ -386,24 +446,28 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
           <div>
             <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.image')}</label>
             <input
+              ref={fileInputRef}
               type="file"
               name="image"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    setFormData(prev => ({ ...prev, image: reader.result }));
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-              className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg bg-[#F8F7F4] focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
+              onChange={handleFileChange}
+              className="hidden"
               accept="image/*"
             />
-            {formData.image && (
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full px-4 py-2.5 text-sm font-medium text-[#3D2F24] border border-[#ECE8E1] rounded-lg bg-[#F8F7F4] hover:bg-[#ECE8E1] transition-colors text-right"
+              >
+                {t('products.form.chooseImage', 'اختر صورة المنتج')}
+              </button>
+              {selectedFileName && (
+                <p className="text-xs text-[#6D6D6D]">{selectedFileName}</p>
+              )}
+            </div>
+            {imagePreview && (
               <div className="mt-2 w-20 h-20 rounded-lg overflow-hidden border border-[#ECE8E1]">
-                <img src={formData.image} alt={t('common.preview')} className="w-full h-full object-cover" />
+                <img src={imagePreview} alt={t('common.preview')} className="w-full h-full object-cover" />
               </div>
             )}
           </div>
@@ -573,6 +637,7 @@ const ProductDetailsModal = ({ isOpen, onClose, product }) => {
 const ProductsPage = () => {
   const { user } = useAuth();
   const { title, subtitle, searchPlaceholder, t } = usePageI18n('products');
+  const { showToast } = useToast();
 
   // State
   const [products, setProducts] = useState([]);
@@ -719,11 +784,13 @@ const ProductsPage = () => {
     try {
       const response = await createProduct(formData);
       const newProduct = response.data.data;
-      setProducts(prev => [newProduct, ...prev]);
+      setProducts(prev => [newProduct, ...ensureArray(prev)]);
       setIsCreateModalOpen(false);
       await fetchStatistics();
+      showToast(t('common.savedSuccessfully', 'تم الحفظ بنجاح'), 'success');
     } catch (error) {
       console.error('Error creating product:', error);
+      showToast(getApiErrorMessage(error, t('products.errors.save')), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -740,8 +807,10 @@ const ProductsPage = () => {
       setIsEditModalOpen(false);
       setSelectedProduct(null);
       await fetchStatistics();
+      showToast(t('common.savedSuccessfully', 'تم الحفظ بنجاح'), 'success');
     } catch (error) {
       console.error('Error updating product:', error);
+      showToast(getApiErrorMessage(error, t('products.errors.save')), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -855,8 +924,8 @@ const ProductsPage = () => {
               <option value="all">{t('common.allStatuses')}</option>
               <option value="active">{t('common.active')}</option>
               <option value="inactive">{t('common.inactive')}</option>
-              <option value="out_of_stock">Rupture de stock</option>
-              <option value="low_stock">Stock faible</option>
+              <option value="out_of_stock">{t('common.statuses.outOfStock')}</option>
+              <option value="low_stock">{t('common.statuses.lowStock')}</option>
             </select>
           </div>
         </div>
@@ -870,11 +939,11 @@ const ProductsPage = () => {
               <thead>
                 <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.product')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">SKU</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Prix</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Stock</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.sku', 'رمز المنتج (SKU)')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.price', 'السعر')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.stock', 'المخزون')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.status')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Date d'ajout</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.dateAdded', 'تاريخ الإضافة')}</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.actions')}</th>
                 </tr>
               </thead>

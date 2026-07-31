@@ -6,6 +6,52 @@ import api from "./api";
 // ==========================================
 
 /**
+ * Map frontend product form data to Laravel-validated payload.
+ */
+export const buildProductPayload = (data = {}) => {
+  const categoryId = data.category_id ?? data.categoryId ?? data.category;
+  const price = Number(data.price ?? 0);
+  const stockQty = Number(data.stock ?? data.stock_quantity ?? 0);
+
+  const payload = {
+    name: data.name,
+    sku: data.sku,
+    category_id:
+      categoryId !== '' && categoryId != null && !Number.isNaN(Number(categoryId))
+        ? Number(categoryId)
+        : undefined,
+    description: data.description ?? null,
+    price,
+    cost_price: Number(data.cost_price ?? data.costPrice ?? price ?? 0),
+    stock_quantity: stockQty,
+    status: data.status ?? 'active',
+  };
+
+  if (data.image instanceof File) {
+    payload.image = data.image;
+  } else if (typeof data.image === 'string' && data.image) {
+    payload.image = data.image;
+  }
+
+  return payload;
+};
+
+const appendProductFormData = (formData, payload) => {
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+
+    if (key === 'image' && value instanceof File) {
+      formData.append('image', value);
+      return;
+    }
+
+    if (key === 'image') return;
+
+    formData.append(key, value);
+  });
+};
+
+/**
  * Fetch all products with optional filters, sorting, and pagination
  * @param {Object} params - Query parameters (page, per_page, search, status, category, sort_by, sort_order)
  * @returns {Promise} - Axios response
@@ -37,17 +83,18 @@ export const getProductById = (id) => {
  * @returns {Promise} - Axios response
  */
 export const createProduct = (data) => {
-  // If image is a File object, use FormData
-  if (data.image && data.image instanceof File) {
+  const payload = buildProductPayload(data);
+
+  if (payload.image instanceof File) {
     const formData = new FormData();
-    Object.keys(data).forEach(key => {
-      formData.append(key, data[key]);
-    });
+    appendProductFormData(formData, payload);
     return api.post("/products", formData, {
       headers: { "Content-Type": "multipart/form-data" }
     });
   }
-  return api.post("/products", data);
+
+  const { image, ...jsonPayload } = payload;
+  return api.post("/products", jsonPayload);
 };
 
 /**
@@ -57,23 +104,19 @@ export const createProduct = (data) => {
  * @returns {Promise} - Axios response
  */
 export const updateProduct = (id, data) => {
-  // Handle file upload with FormData if image is a File
-  if (data.image && data.image instanceof File) {
+  const payload = buildProductPayload(data);
+
+  if (payload.image instanceof File) {
     const formData = new FormData();
-    Object.keys(data).forEach(key => {
-      if (key === 'image' && data.image instanceof File) {
-        formData.append('image', data.image);
-      } else {
-        formData.append(key, data[key]);
-      }
-    });
-    // Use POST with _method override for Laravel
+    appendProductFormData(formData, payload);
     formData.append("_method", "PUT");
     return api.post(`/products/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" }
     });
   }
-  return api.put(`/products/${id}`, data);
+
+  const { image, ...jsonPayload } = payload;
+  return api.put(`/products/${id}`, jsonPayload);
 };
 
 /**
