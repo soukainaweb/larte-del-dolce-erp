@@ -960,7 +960,10 @@
     "purchasesCount": "{{count}} عملية شراء",
     "purchases": "المشتريات",
     "supplier": "المورد",
-    "customerLabel": "العميل"
+    "customerLabel": "العميل",
+    "errors": {
+      "load": "تعذّر تحميل البيانات المالية."
+    }
   },
   "inventory": {
     "title": "المخزون",
@@ -1149,6 +1152,11 @@
       "dueDate": "تاريخ الاستحقاق",
       "amount": "المبلغ",
       "status": "الحالة"
+    },
+    "errors": {
+      "load": "تعذّر تحميل الفواتير.",
+      "save": "تعذّر حفظ الفاتورة.",
+      "delete": "تعذّر حذف الفاتورة."
     }
   },
   "payments": {
@@ -2231,6 +2239,7 @@
     "unauthorized": "يرجى تسجيل الدخول للوصول لهذه الصفحة.",
     "forbidden": "ليس لديك الصلاحيات اللازمة.",
     "notFound": "المورد غير موجود.",
+    "methodNotAllowed": "طريقة الطلب غير مسموحة.",
     "serverError": "خطأ داخلي في الخادم.",
     "serverConnectionError": "حدث خطأ في الخادم، يرجى المحاولة لاحقاً.",
     "invalidData": "بيانات غير صالحة"

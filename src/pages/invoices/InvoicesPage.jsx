@@ -64,6 +64,8 @@ import {
   getPaymentStatuses,
   getPaymentMethods
 } from '../../services/invoiceService';
+import { useToast } from '../../contexts/ToastContext';
+import { safeArray, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -922,6 +924,7 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
 // ==========================================
 const InvoicesPage = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('invoices');
   const location = useLocation();
   const navigate = useNavigate();
@@ -959,11 +962,14 @@ const InvoicesPage = () => {
         sort_order: 'desc'
       };
       const response = await getInvoices(params);
-      const data = response.data.data || [];
+      const data = safeArray(response);
       setInvoices(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      setTotalCount(response.data?.meta?.total ?? data.length);
     } catch (error) {
       console.error('Error fetching invoices:', error);
+      setInvoices([]);
+      setTotalCount(0);
+      showToast(getApiErrorMessage(error, t('invoices.errors.load', t('errors.loadFailed'))), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -1003,6 +1009,7 @@ const InvoicesPage = () => {
       });
     } catch (error) {
       console.error('Error fetching invoice statistics:', error);
+      showToast(getApiErrorMessage(error, t('invoices.errors.load', t('errors.loadFailed'))), 'error');
     }
   };
 
@@ -1011,14 +1018,10 @@ const InvoicesPage = () => {
   }, []);
 
   // Filter invoices (API already handles filters)
-  const filteredInvoices = useMemo(() => {
-    return invoices;
-  }, [invoices]);
+  const filteredInvoices = useMemo(() => ensureArray(invoices), [invoices]);
 
   // Paginate
-  const paginatedInvoices = useMemo(() => {
-    return filteredInvoices;
-  }, [filteredInvoices]);
+  const paginatedInvoices = useMemo(() => ensureArray(filteredInvoices), [filteredInvoices]);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
@@ -1087,6 +1090,7 @@ const InvoicesPage = () => {
       await fetchStatistics();
     } catch (error) {
       console.error('Error creating invoice:', error);
+      showToast(getApiErrorMessage(error, t('invoices.errors.save', t('errors.saveFailed'))), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -1105,6 +1109,7 @@ const InvoicesPage = () => {
       await fetchStatistics();
     } catch (error) {
       console.error('Error updating invoice:', error);
+      showToast(getApiErrorMessage(error, t('invoices.errors.save', t('errors.saveFailed'))), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -1121,6 +1126,7 @@ const InvoicesPage = () => {
       await fetchStatistics();
     } catch (error) {
       console.error('Error deleting invoice:', error);
+      showToast(getApiErrorMessage(error, t('invoices.errors.delete', t('errors.deleteFailed'))), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -1136,7 +1142,7 @@ const InvoicesPage = () => {
   }, [searchTerm, paymentStatusFilter, statusFilter]);
 
   const uniquePaymentStatuses = useMemo(() => {
-    const statuses = new Set(invoices.map(i => i.paymentStatus));
+    const statuses = new Set(ensureArray(invoices).map(i => i.paymentStatus));
     return Array.from(statuses);
   }, [invoices]);
 
@@ -1296,7 +1302,7 @@ const InvoicesPage = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedInvoices.map((invoice, index) => (
+                  ensureArray(paginatedInvoices).map((invoice, index) => (
                     <InvoiceTableRow
                       key={invoice.id}
                       invoice={invoice}
@@ -1336,7 +1342,7 @@ const InvoicesPage = () => {
               <p className="text-sm text-[#6D6D6D]">{t('invoices.empty')}</p>
             </div>
           ) : (
-            paginatedInvoices.map((invoice) => (
+            ensureArray(paginatedInvoices).map((invoice) => (
               <InvoiceCard
                 key={invoice.id}
                 invoice={invoice}
@@ -1371,7 +1377,7 @@ const InvoicesPage = () => {
             <p className="text-sm text-[#6D6D6D]">{t('invoices.empty')}</p>
           </div>
         ) : (
-          paginatedInvoices.map((invoice) => (
+          ensureArray(paginatedInvoices).map((invoice) => (
             <InvoiceCard
               key={invoice.id}
               invoice={invoice}

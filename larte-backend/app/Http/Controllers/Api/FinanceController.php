@@ -73,4 +73,25 @@ class FinanceController extends Controller
 
         return $this->success(['metrics' => $this->financeService->metrics()]);
     }
+
+    public function pendingCustomerPayments(Request $request)
+    {
+        $this->authorizeFinance();
+
+        return $this->success($this->financeService->pendingCustomerPayments($request->all()));
+    }
+
+    public function pendingSupplierPayments(Request $request)
+    {
+        $this->authorizeFinance();
+
+        return $this->success($this->financeService->pendingSupplierPayments($request->all()));
+    }
+
+    public function notifications(Request $request)
+    {
+        $this->authorizeFinance();
+
+        return $this->success($this->financeService->financeNotifications($request->all()));
+    }
 }

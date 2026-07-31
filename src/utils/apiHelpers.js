@@ -302,6 +302,10 @@ export const getApiErrorMessage = (error, fallback) => {
     return translateApiErrorMessage(data?.message) || i18n.t('errors.notFound');
   }
 
+  if (status === 405) {
+    return translateApiErrorMessage(data?.message) || i18n.t('errors.methodNotAllowed');
+  }
+
   if (status === 422) {
     return extractValidationMessage(data) || translateApiErrorMessage(data?.message) || i18n.t('errors.invalidData');
   }
