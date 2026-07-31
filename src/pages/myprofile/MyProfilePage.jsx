@@ -238,7 +238,7 @@ const ActivityItem = ({ activity }) => {
     login: { icon: LogOut, color: 'bg-blue-50 text-blue-600' },
     update: { icon: Edit2, color: 'bg-amber-50 text-amber-600' },
     password: { icon: Lock, color: 'bg-rose-50 text-rose-600' },
-    photo: { icon: Image, color: 'bg-purple-50 text-purple-600' },
+    photo: { icon: Camera, color: 'bg-purple-50 text-purple-600' },
     order: { icon: ClipboardList, color: 'bg-green-50 text-green-600' },
     invoice: { icon: FileTextIcon, color: 'bg-indigo-50 text-indigo-600' },
     report: { icon: Download, color: 'bg-cyan-50 text-cyan-600' },
@@ -255,10 +255,11 @@ const ActivityItem = ({ activity }) => {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-0.5 md:gap-1">
-          <p className="text-[11px] md:text-xs font-medium text-[#3D2F24]">{activity.action}</p>
+          <p className="text-[11px] md:text-xs font-medium text-[#3D2F24]">
+            {activity.actionLabel || activity.action} • {activity.moduleLabel || activity.module}
+          </p>
           <span className="text-[9px] md:text-[10px] text-[#6D6D6D]">{activity.date} {activity.time}</span>
         </div>
-        <p className="text-[9px] md:text-[10px] text-[#6D6D6D]">{activity.module}</p>
         <div className="flex flex-wrap items-center gap-1 md:gap-2 text-[8px] md:text-[9px] text-[#6D6D6D] mt-0.5">
           <span>{activity.ip}</span>
           <span className="hidden sm:inline">•</span>
@@ -287,21 +288,21 @@ const SessionCard = ({ session, onDisconnect }) => {
             {session.device?.includes('Android') && <Smartphone size={16} className="md:w-[18px] md:h-[18px] text-[#6D6D6D]" />}
           </div>
           <div>
-            <p className="text-xs md:text-sm font-medium text-[#3D2F24]">{session.device || 'Appareil inconnu'}</p>
+            <p className="text-xs md:text-sm font-medium text-[#3D2F24]">{session.device || t('profile.unknownDevice')}</p>
             <p className="text-[10px] md:text-xs text-[#6D6D6D]">{session.browser || '—'} • {session.os || '—'}</p>
           </div>
         </div>
         <div className="flex items-center gap-1 md:gap-2">
           {session.current && (
             <span className="text-[9px] md:text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 md:px-2 py-0.5 rounded-full">
-              Actuelle
+              {t('profile.currentSession')}
             </span>
           )}
           {!session.current && (
             <button
               onClick={() => onDisconnect(session.id)}
               className="p-1 md:p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-              title="Déconnecter"
+              title={t('profile.logoutAction')}
             >
               <LogOut size={12} className="md:w-[14px] md:h-[14px] text-rose-500" />
             </button>
@@ -359,7 +360,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
     if (!formData.newPassword) newErrors.newPassword = t('auth.newPasswordRequired');
     else if (formData.newPassword.length < 8) newErrors.newPassword = t('profile.validation.minPassword');
     if (formData.newPassword !== formData.newPassword_confirmation) {
-      newErrors.newPassword_confirmation = 'Les mots de passe ne correspondent pas';
+      newErrors.newPassword_confirmation = t('auth.passwordMismatch');
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -370,7 +371,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onChangePassword, isLoading }) =
     onChangePassword(formData);
   };
 
-  const strengthLabels = ['Très faible', t('orders.priority.low'), 'Moyen', 'Fort', 'Très fort'];
+  const strengthLabels = [t('auth.strengthVeryWeak'), t('orders.priority.low'), t('auth.strengthMedium'), t('auth.strengthStrong'), t('auth.strengthVeryStrong')];
   const strengthColors = ['bg-rose-500', 'bg-amber-500', 'bg-yellow-500', 'bg-emerald-500', 'bg-emerald-600'];
 
   if (!isOpen) return null;
@@ -908,7 +909,7 @@ const MyProfilePage = () => {
   };
 
   const handleLogout = () => {
-    if (window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    if (window.confirm(t('profile.confirmLogout'))) {
       logout();
       window.location.href = '/login';
     }
@@ -918,18 +919,18 @@ const MyProfilePage = () => {
   // EXPORT CONFIGURATION
   // ==========================================
   const activityColumns = [
-    { label: 'Action', accessor: 'action', width: 20 },
-    { label: 'Module', accessor: 'module', width: 20 },
-    { label: 'Date', accessor: 'date', width: 12 },
-    { label: 'Heure', accessor: 'time', width: 10 },
+    { label: t('activityLog.table.action'), accessor: 'action', width: 20 },
+    { label: t('activityLog.table.module'), accessor: 'module', width: 20 },
+    { label: t('activityLog.table.date'), accessor: 'date', width: 12 },
+    { label: t('activityLog.table.time'), accessor: 'time', width: 10 },
     { label: 'IP', accessor: 'ip', width: 15 },
-    { label: 'Appareil', accessor: 'device', width: 15 },
-    { label: 'Navigateur', accessor: 'browser', width: 15 }
+    { label: t('activityLog.table.device'), accessor: 'device', width: 15 },
+    { label: t('activityLog.table.browser'), accessor: 'browser', width: 15 }
   ];
 
   const activityRowFormatter = (item) => ({
-    action: item.action,
-    module: item.module,
+    action: item.actionLabel || item.action,
+    module: item.moduleLabel || item.module,
     date: item.date,
     time: item.time,
     ip: item.ip,
@@ -939,13 +940,13 @@ const MyProfilePage = () => {
 
   const profileSummary = [
     { label: t('profile.fields.fullName'), value: `${profileData.firstName} ${profileData.lastName}` },
-    { label: 'Email', value: profileData.email },
+    { label: t('profile.fields.email'), value: profileData.email },
     { label: tc('phone'), value: profileData.phone },
     { label: t('profile.fields.position'), value: professionalData.position || '—' },
     { label: tc('department'), value: professionalData.department || '—' },
     { label: t('orders.kpi.total'), value: stats.orders },
-    { label: 'Clients', value: stats.clients },
-    { label: 'Produits', value: stats.products },
+    { label: t('profile.stats.clients'), value: stats.clients },
+    { label: t('profile.stats.products'), value: stats.products },
     { label: t('profile.fields.documents'), value: stats.documents }
   ];
 
@@ -1010,15 +1011,15 @@ const MyProfilePage = () => {
             {t('profile.title')}
           </h1>
           <p className="text-xs md:text-sm text-[#6D6D6D]">
-            Consultez et gérez vos informations personnelles et professionnelles
+            {t('profile.pageDescription')}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <ExportButtons
             data={safeActivityLog}
             columns={activityColumns}
-            title="Activités récentes"
-            subtitle={`${safeActivityLog.length} activités - ${profileData.firstName} ${profileData.lastName}`}
+            title={t('profile.exportRecentActivities')}
+            subtitle={t('profile.exportRecentActivitiesSubtitle', { count: safeActivityLog.length, name: `${profileData.firstName} ${profileData.lastName}` })}
             filename={`activites_${new Date().toISOString().split('T')[0]}`}
             summary={profileSummary}
             rowFormatter={activityRowFormatter}
@@ -1366,7 +1367,7 @@ const MyProfilePage = () => {
       {/* Section 4: Sécurité */}
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 md:p-6 shadow-sm mb-4 md:mb-6">
         <h3 className="text-sm md:text-base font-bold text-[#3D2F24] mb-3 md:mb-4" style={{ fontFamily: FONT_HEADING }}>
-          Sécurité du compte
+          {t('profile.accountSecurity')}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <div className="bg-[#F8F7F4] rounded-xl p-3 md:p-4">
@@ -1392,7 +1393,7 @@ const MyProfilePage = () => {
                 <ShieldCheck size={16} className="md:w-[18px] md:h-[18px]" />
               </div>
               <div className="flex-1">
-                <p className="text-xs md:text-sm font-medium text-[#3D2F24]">Authentification à deux facteurs</p>
+                <p className="text-xs md:text-sm font-medium text-[#3D2F24]">{t('profile.twoFactorAuth')}</p>
                 <p className="text-[10px] md:text-xs text-[#6D6D6D]">{twoFactorEnabled ? tc('active') : tc('inactive')}</p>
               </div>
               <button
@@ -1427,14 +1428,14 @@ const MyProfilePage = () => {
                 <LogOut size={16} className="md:w-[18px] md:h-[18px]" />
               </div>
               <div className="flex-1">
-                <p className="text-xs md:text-sm font-medium text-[#3D2F24]">Déconnexion</p>
-                <p className="text-[10px] md:text-xs text-[#6D6D6D]">Quitter votre session</p>
+                <p className="text-xs md:text-sm font-medium text-[#3D2F24]">{t('profile.logoutTitle')}</p>
+                <p className="text-[10px] md:text-xs text-[#6D6D6D]">{t('profile.logoutSubtitle')}</p>
               </div>
               <button
                 onClick={handleLogout}
                 className="px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
               >
-                Déconnecter
+                {t('profile.logoutAction')}
               </button>
             </div>
           </div>
@@ -1444,7 +1445,7 @@ const MyProfilePage = () => {
       {/* Section 5: Préférences */}
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 md:p-6 shadow-sm mb-4 md:mb-6">
         <h3 className="text-sm md:text-base font-bold text-[#3D2F24] mb-3 md:mb-4" style={{ fontFamily: FONT_HEADING }}>
-          Préférences
+          {t('profile.preferences')}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           <div>
@@ -1464,9 +1465,9 @@ const MyProfilePage = () => {
               onChange={(e) => handlePreferenceChange('theme', e.target.value)}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="Clair">Clair</option>
-              <option value="Sombre">Sombre</option>
-              <option value="Système">Système</option>
+              <option value="Clair">{t('header.themes.light')}</option>
+              <option value="Sombre">{t('header.themes.dark')}</option>
+              <option value="Système">{t('header.themes.system')}</option>
             </select>
           </div>
           <div>
@@ -1515,7 +1516,7 @@ const MyProfilePage = () => {
                   onChange={(e) => handlePreferenceChange('notifications.email', e.target.checked)}
                   className="rounded border-[#ECE8E1] text-[#B8863B] focus:ring-[#B8863B]"
                 />
-                Email
+                {t('profile.fields.email')}
               </label>
               <label className="flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs text-[#6D6D6D]">
                 <input
@@ -1545,7 +1546,7 @@ const MyProfilePage = () => {
                 onChange={(e) => handlePreferenceChange('animations', e.target.checked)}
                 className="rounded border-[#ECE8E1] text-[#B8863B] focus:ring-[#B8863B]"
               />
-              Animations
+              {t('profile.animations')}
             </label>
             <label className="flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs text-[#6D6D6D]">
               <input
@@ -1554,7 +1555,7 @@ const MyProfilePage = () => {
                 onChange={(e) => handlePreferenceChange('compactMode', e.target.checked)}
                 className="rounded border-[#ECE8E1] text-[#B8863B] focus:ring-[#B8863B]"
               />
-              Mode compact
+              {t('profile.compactMode')}
             </label>
           </div>
         </div>
@@ -1564,20 +1565,19 @@ const MyProfilePage = () => {
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 md:p-6 shadow-sm mb-4 md:mb-6">
         <div className="flex items-center justify-between mb-3 md:mb-4">
           <h3 className="text-sm md:text-base font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Activité récente
+            {t('profile.recentActivity')}
           </h3>
-          {/* ✅ Voir tout - Navigation réelle */}
           <button 
             onClick={handleViewAllActivities}
             className="text-[10px] md:text-xs font-medium text-[#B8863B] hover:text-[#A07532] transition-colors"
           >
-            Voir tout
+            {t('profile.viewAll')}
           </button>
         </div>
         <div className="space-y-1 max-h-48 md:max-h-64 overflow-y-auto">
           {safeActivityLog.length === 0 ? (
             <div className="text-center py-4 text-[#6D6D6D] text-sm">
-              {t('activityLog.empty')} récente
+              {t('profile.noActivity')}
             </div>
           ) : (
             safeActivityLog.slice(0, 8).map((activity) => (
@@ -1649,14 +1649,14 @@ const MyProfilePage = () => {
                   <button
                     onClick={() => handleDownloadDocument(doc)}
                     className="p-1 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-                    title="Télécharger"
+                    title={tc('download')}
                   >
                     <Download size={12} className="md:w-[14px] md:h-[14px] text-[#6D6D6D]" />
                   </button>
                   <button
                     onClick={() => handleDeleteDocument(doc.id)}
                     className="p-1 hover:bg-rose-50 rounded-lg transition-colors"
-                    title={actions.delete}
+                    title={tc('delete')}
                   >
                     <Trash2 size={12} className="md:w-[14px] md:h-[14px] text-rose-500" />
                   </button>
@@ -1676,8 +1676,8 @@ const MyProfilePage = () => {
           <table className="w-full text-xs md:text-sm">
             <thead className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
               <tr>
-                <th className="px-2 md:px-4 py-2 text-left text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Module</th>
-                <th className="px-2 md:px-4 py-2 text-center text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Voir</th>
+                <th className="px-2 md:px-4 py-2 text-left text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('profile.permissionsTable.module')}</th>
+                <th className="px-2 md:px-4 py-2 text-center text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('profile.permissionsTable.view')}</th>
                 <th className="px-2 md:px-4 py-2 text-center text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('create')}</th>
                 <th className="px-2 md:px-4 py-2 text-center text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('edit')}</th>
                 <th className="px-2 md:px-4 py-2 text-center text-[9px] md:text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('delete')}</th>
@@ -1714,12 +1714,12 @@ const MyProfilePage = () => {
 
       {/* Section 10: Statistiques personnelles */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 md:gap-3 mb-4 md:mb-6">
-        <StatCard icon={ClipboardList} title="Commandes" value={stats.orders} color="blue" />
-        <StatCard icon={Users} title="Clients" value={stats.clients} color="green" />
-        <StatCard icon={Package} title="Produits" value={stats.products} color="purple" />
+        <StatCard icon={ClipboardList} title={t('profile.stats.orders')} value={stats.orders} color="blue" />
+        <StatCard icon={Users} title={t('profile.stats.clients')} value={stats.clients} color="green" />
+        <StatCard icon={Package} title={t('profile.stats.products')} value={stats.products} color="purple" />
         <StatCard icon={LogOut} title={t('profile.fields.lastLogin')} value={stats.lastLogin?.split(' ')[1] || '08:30'} color="amber" subtitle={stats.lastLogin?.split(' ')[0] || '—'} />
-        <StatCard icon={Clock} title="Temps moyen" value={stats.avgTime} color="indigo" />
-        <StatCard icon={CheckCircle} title="Validées" value={stats.validatedOrders} color="emerald" />
+        <StatCard icon={Clock} title={t('profile.stats.avgTime')} value={stats.avgTime} color="indigo" />
+        <StatCard icon={CheckCircle} title={t('profile.stats.validated')} value={stats.validatedOrders} color="emerald" />
         <StatCard icon={Bell} title={t('profile.fields.notifications')} value={stats.notifications} color="rose" />
         <StatCard icon={Upload} title={t('profile.fields.documents')} value={stats.documents} color="cyan" />
       </div>

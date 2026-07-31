@@ -154,8 +154,8 @@ const Header = React.memo(({
   };
 
   return (
-    <header className="w-full h-[76px] bg-white border-b border-[#ECE5DB] px-4 lg:px-6 flex items-center justify-between sticky top-0 z-40 select-none" dir="rtl">
-      <div className="flex items-center gap-3 lg:gap-4 flex-1 max-w-xl min-w-0">
+    <header className="relative w-full h-16 sm:h-[76px] bg-white border-b border-[#ECE5DB] px-2 sm:px-4 lg:px-6 flex items-center justify-between gap-2 sticky top-0 z-[60] select-none isolate" dir="rtl">
+      <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-4 flex-1 min-w-0 overflow-hidden">
         <button
           type="button"
           onClick={handleMenuClick}
@@ -197,12 +197,12 @@ const Header = React.memo(({
         </button>
       </div>
 
-      <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
-        <div className="relative" ref={notifRef}>
+      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 ms-auto">
+        <div className="relative z-[70]" ref={notifRef}>
           <button
             type="button"
             onClick={() => toggleDropdown('notifications')}
-            className="p-2.5 rounded-xl text-[#273338] hover:bg-[#F7F5F2] border border-transparent hover:border-[#ECE5DB] transition-all relative"
+            className="p-2 sm:p-2.5 rounded-xl text-[#273338] hover:bg-[#F7F5F2] border border-transparent hover:border-[#ECE5DB] transition-all relative touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label={t('header.notifications')}
           >
             <Bell className="w-5 h-5 stroke-[1.75]" />
@@ -219,7 +219,7 @@ const Header = React.memo(({
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="absolute mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white border border-[#ECE5DB] rounded-2xl shadow-xl p-1 z-50 overflow-hidden start-0 origin-top-left"
+                className="absolute mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white border border-[#ECE5DB] rounded-2xl shadow-xl p-1 z-[80] overflow-hidden start-0 origin-top-left"
               >
                 <div className="px-4 py-3 border-b border-[#ECE5DB] flex justify-between items-center bg-[#F7F5F2]/50">
                   <span className="text-xs font-bold text-[#273338]">{t('header.notifications')}</span>
@@ -272,11 +272,11 @@ const Header = React.memo(({
 
         <div className="w-px h-6 bg-[#ECE5DB] mx-0.5 hidden sm:block" />
 
-        <div className="relative" ref={profileRef}>
+        <div className="relative z-[70]" ref={profileRef}>
           <button
             type="button"
             onClick={() => toggleDropdown('profile')}
-            className="flex items-center gap-2.5 p-1 sm:p-1.5 rounded-xl hover:bg-[#F7F5F2] transition-colors group text-start border border-transparent hover:border-[#ECE5DB] focus:outline-none"
+            className="flex items-center gap-1.5 sm:gap-2.5 p-1 sm:p-1.5 rounded-xl hover:bg-[#F7F5F2] transition-colors group text-start border border-transparent hover:border-[#ECE5DB] focus:outline-none touch-manipulation min-h-[44px]"
             aria-label={t('header.profileMenu')}
           >
             <div className="w-8 h-8 rounded-lg bg-[#D8B77A]/20 border border-[#ECE5DB] overflow-hidden flex items-center justify-center flex-shrink-0 relative">
@@ -304,7 +304,7 @@ const Header = React.memo(({
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="absolute mt-2 w-64 bg-white border border-[#ECE5DB] rounded-2xl shadow-xl p-1.5 z-50 start-0 origin-top-left"
+                className="absolute mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white border border-[#ECE5DB] rounded-2xl shadow-xl p-1.5 z-[80] start-0 origin-top-left"
               >
                 <div className="px-3.5 py-3 border-b border-[#ECE5DB] bg-[#F7F5F2]/40 rounded-t-xl mb-1.5 lg:hidden text-start">
                   <p className="text-sm font-bold text-[#273338]">
@@ -353,7 +353,7 @@ const Header = React.memo(({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="md:hidden absolute top-[76px] inset-x-0 bg-white border-b border-[#ECE5DB] p-3 shadow-md z-30"
+            className="md:hidden absolute top-16 sm:top-[76px] inset-x-0 bg-white border-b border-[#ECE5DB] p-3 shadow-md z-[55]"
             dir="rtl"
           >
             <div className="flex items-center w-full bg-[#F7F5F2] border border-[#ECE5DB] rounded-xl px-3 focus-within:border-[#B88A44] transition-all">
