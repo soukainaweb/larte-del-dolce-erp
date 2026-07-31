@@ -51,6 +51,7 @@ import {
   getSupplierStatuses,
   getSupplierPurchases
 } from '../../services/supplierService';
+import { safeArray, ensureArray } from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -58,6 +59,7 @@ import {
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
 const DATE_LOCALE = 'ar-SA';
+const CURRENCY = 'SAR';
 
 // ==========================================
 // STATUS BADGE
@@ -188,7 +190,7 @@ const SupplierCard = ({ supplier, onView, onEdit, onDelete, onToggleStatus }) =>
         </div>
         <div className="flex items-center gap-1">
           <DollarSign size={12} />
-          {supplier.totalPurchases.toLocaleString()} DH
+          {supplier.totalPurchases.toLocaleString()} ${CURRENCY}
         </div>
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#ECE8E1]">
@@ -247,7 +249,7 @@ const SupplierTableRow = ({ supplier, onView, onEdit, onDelete, onToggleStatus, 
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{supplier.phone}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{supplier.email}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {supplier.totalPurchases.toLocaleString()} DH
+        {supplier.totalPurchases.toLocaleString()} ${CURRENCY}
       </td>
       <td className="px-4 py-3">
         <StatusBadge status={supplier.status} />
@@ -569,7 +571,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, supplier, isLoading }) => {
           {hasPurchases ? (
             <>
               <span className="text-rose-500 font-semibold">⚠️ {tc('attention')}</span><br />
-              {t('suppliers.modals.deleteWarning', { amount: `${supplier.totalPurchases.toLocaleString()} DH` })}
+              {t('suppliers.modals.deleteWarning', { amount: `${supplier.totalPurchases.toLocaleString()} ${CURRENCY}` })}
             </>
           ) : (
             <>
@@ -650,7 +652,7 @@ const ViewSupplierModal = ({ isOpen, onClose, supplier }) => {
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">{t('suppliers.fields.totalAmount')}</p>
-              <p className="text-lg font-bold text-[#3D2F24]">{supplier.totalPurchases.toLocaleString()} DH</p>
+              <p className="text-lg font-bold text-[#3D2F24]">{supplier.totalPurchases.toLocaleString()} ${CURRENCY}</p>
             </div>
           </div>
 
@@ -737,11 +739,13 @@ const SuppliersPage = () => {
         sort_order: 'desc'
       };
       const response = await getSuppliers(params);
-      const data = response.data.data || [];
-      setSuppliers(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      const res = response?.data;
+      const list = safeArray(res);
+      setSuppliers(list);
+      setTotalCount(res?.meta?.total ?? list.length);
     } catch (error) {
       console.error('Error fetching suppliers:', error);
+      setSuppliers([]);
     } finally {
       setIsLoading(false);
     }
@@ -780,12 +784,12 @@ const SuppliersPage = () => {
 
   // Filter suppliers (API already handles filters)
   const filteredSuppliers = useMemo(() => {
-    return suppliers;
+    return Array.isArray(suppliers) ? suppliers : [];
   }, [suppliers]);
 
   // Paginate
   const paginatedSuppliers = useMemo(() => {
-    return filteredSuppliers;
+    return ensureArray(filteredSuppliers);
   }, [filteredSuppliers]);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
@@ -816,7 +820,7 @@ const SuppliersPage = () => {
     contactPerson: item.contactPerson || '—',
     phone: item.phone,
     email: item.email,
-    totalPurchases: `${item.totalPurchases.toLocaleString()} DH`,
+    totalPurchases: `${item.totalPurchases.toLocaleString()} ${CURRENCY}`,
     status: item.status === 'active' ? tc('active') :
             item.status === 'inactive' ? tc('inactive') : t('common.pending')
   });
@@ -913,7 +917,7 @@ const SuppliersPage = () => {
   }, [searchTerm, typeFilter, statusFilter]);
 
   const uniqueTypes = useMemo(() => {
-    const types = new Set(suppliers.map(s => s.type));
+    const types = new Set(ensureArray(suppliers).map(s => s.type));
     return Array.from(types);
   }, [suppliers]);
 
@@ -1068,7 +1072,7 @@ const SuppliersPage = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedSuppliers.map((supplier, index) => (
+                  ensureArray(paginatedSuppliers).map((supplier, index) => (
                     <SupplierTableRow
                       key={supplier.id}
                       supplier={supplier}
@@ -1109,7 +1113,7 @@ const SuppliersPage = () => {
               <p className="text-sm text-[#6D6D6D]">{t('suppliers.empty')}</p>
             </div>
           ) : (
-            paginatedSuppliers.map((supplier) => (
+            ensureArray(paginatedSuppliers).map((supplier) => (
               <SupplierCard
                 key={supplier.id}
                 supplier={supplier}

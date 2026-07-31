@@ -70,6 +70,7 @@ import { ensureArray } from '../../utils/apiHelpers';
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
 const DATE_LOCALE = 'ar-SA';
+const CURRENCY = 'SAR';
 
 // ==========================================
 // STATUS BADGE
@@ -181,7 +182,7 @@ const InventoryCard = ({ item, onView, onEdit, onDelete }) => {
         </div>
         <div className="flex items-center gap-1">
           <DollarSign size={12} />
-          {item.stockValue.toLocaleString()} DH
+          {item.stockValue.toLocaleString()} ${CURRENCY}
         </div>
         <div className="flex items-center gap-1">
           <Calendar size={12} />
@@ -546,7 +547,7 @@ const ViewInventoryModal = ({ isOpen, onClose, item }) => {
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">Valeur du stock</p>
-              <p className="text-xl font-bold text-[#3D2F24]">{item.stockValue.toLocaleString()} DH</p>
+              <p className="text-xl font-bold text-[#3D2F24]">{item.stockValue.toLocaleString()} ${CURRENCY}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">Catégorie</p>
@@ -785,7 +786,7 @@ const InventoryPage = () => {
     unit: item.unit,
     type: item.type === 'finished' ? t('inventory.types.finished') : item.type === 'raw' ? t('inventory.types.raw') : t('inventory.types.packaging'),
     status: item.status === 'available' ? 'Disponible' : item.status === 'low_stock' ? 'Stock faible' : item.status === 'out_of_stock' ? 'Rupture' : 'Expiré',
-    stockValue: `${item.stockValue.toLocaleString()} DH`,
+    stockValue: `${item.stockValue.toLocaleString()} ${CURRENCY}`,
     lastUpdated: new Date(item.lastUpdated).toLocaleDateString(DATE_LOCALE)
   });
 
@@ -794,7 +795,7 @@ const InventoryPage = () => {
     { label: 'Stock total', value: kpis.totalStock },
     { label: 'Stock faible', value: kpis.lowStock },
     { label: 'Rupture', value: kpis.outOfStock },
-    { label: 'Valeur du stock', value: `${kpis.totalValue.toLocaleString()} DH` }
+    { label: 'Valeur du stock', value: `${kpis.totalValue.toLocaleString()} ${CURRENCY}` }
   ];
 
   // ==========================================
@@ -889,7 +890,7 @@ const InventoryPage = () => {
             data={filteredInventory}
             columns={columns}
             title={t('inventory.export.title')}
-            subtitle={t('inventory.export.subtitle', { count: filteredInventory.length, value: `${kpis.totalValue.toLocaleString()} DH` })}
+            subtitle={t('inventory.export.subtitle', { count: filteredInventory.length, value: `${kpis.totalValue.toLocaleString()} ${CURRENCY}` })}
             filename={`inventaire_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -936,7 +937,7 @@ const InventoryPage = () => {
         <KPICard icon={Box} title="Stock total" value={kpis.totalStock} color="indigo" />
         <KPICard icon={AlertTriangle} title="Stock faible" value={kpis.lowStock} color="amber" />
         <KPICard icon={AlertCircle} title="Rupture" value={kpis.outOfStock} color="rose" />
-        <KPICard icon={DollarSign} title="Valeur du stock" value={`${kpis.totalValue.toLocaleString()} DH`} color="gold" />
+        <KPICard icon={DollarSign} title="Valeur du stock" value={`${kpis.totalValue.toLocaleString()} ${CURRENCY}`} color="gold" />
       </div>
 
       {/* Filters */}

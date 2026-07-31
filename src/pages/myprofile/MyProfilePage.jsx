@@ -38,6 +38,7 @@ import {
   toArray,
   normalizeProfilePermissions,
   formatUserStatus,
+  getApiErrorMessage,
 } from '../../utils/apiHelpers';
 
 // ==========================================
@@ -309,8 +310,8 @@ const SessionCard = ({ session, onDisconnect }) => {
       </div>
       <div className="mt-2 grid grid-cols-2 gap-1 text-[10px] md:text-xs text-[#6D6D6D]">
         <span>IP: {session.ip || '—'}</span>
-        <span>Ville: {session.city || '—'}</span>
-        <span className="col-span-2 truncate">Dernière: {session.lastActivity || session.created_at || '—'}</span>
+        <span>{t('profile.sessions.city')}: {session.city || '—'}</span>
+        <span className="col-span-2 truncate">{t('profile.sessions.lastActivity')}: {session.lastActivity || session.created_at || '—'}</span>
       </div>
     </div>
   );
@@ -578,40 +579,9 @@ const MyProfilePage = () => {
   // Gestion d'erreur Axios
   const handleApiError = (error, defaultMessage = t('common.error')) => {
     console.error('API Error:', error);
-    
-    if (error.response) {
-      const status = error.response.status;
-      const data = error.response.data;
-      
-      if (status === 422) {
-        // Erreur de validation
-        const errors = data.errors || {};
-        const firstError = Object.values(errors)[0]?.[0] || t('errors.invalidData');
-        showToast(firstError, 'error');
-        return firstError;
-      } else if (status === 401) {
-        showToast('Session expirée. Veuillez vous reconnecter.', 'error');
-        return t('errors.unauthorized');
-      } else if (status === 403) {
-        showToast('Vous n\'avez pas les permissions nécessaires.', 'error');
-        return t('errors.forbidden');
-      } else if (status === 404) {
-        showToast('Ressource non trouvée.', 'error');
-        return t('errors.notFound');
-      } else if (status === 500) {
-        showToast(t('errors.serverError'), 'error');
-        return t('errors.serverError');
-      }
-      
-      showToast(data.message || defaultMessage, 'error');
-      return data.message || defaultMessage;
-    } else if (error.request) {
-      showToast('Impossible de contacter le serveur.', 'error');
-      return t('errors.networkError');
-    } else {
-      showToast(defaultMessage, 'error');
-      return defaultMessage;
-    }
+    const message = getApiErrorMessage(error, defaultMessage);
+    showToast(message, 'error');
+    return message;
   };
 
   // ==========================================
@@ -725,7 +695,7 @@ const MyProfilePage = () => {
       }
 
     } catch (error) {
-      handleApiError(error, 'Erreur lors du chargement du profil');
+      handleApiError(error, t('profile.errors.load'));
     } finally {
       setIsLoading(false);
     }
@@ -795,9 +765,9 @@ const MyProfilePage = () => {
       });
 
       setIsEditing(false);
-      showToast('✅ Profil mis à jour avec succès', 'success');
+      showToast(t('profile.messages.updated'), 'success');
     } catch (error) {
-      handleApiError(error, 'Erreur lors de l\'enregistrement du profil');
+      handleApiError(error, t('profile.errors.save'));
     } finally {
       setIsSaving(false);
     }
@@ -806,7 +776,7 @@ const MyProfilePage = () => {
   const handleCancel = () => {
     loadProfileData();
     setIsEditing(false);
-    showToast('🔁 Modifications annulées', 'info');
+    showToast(t('profile.messages.cancelled'), 'info');
   };
 
   const handleAvatarUpload = async (file, dataUrl) => {
@@ -814,9 +784,9 @@ const MyProfilePage = () => {
     try {
       await uploadAvatar(file);
       setAvatar(dataUrl);
-      showToast('📸 Photo de profil mise à jour', 'success');
+      showToast(t('profile.messages.avatarUpdated'), 'success');
     } catch (error) {
-      handleApiError(error, 'Erreur lors de l\'upload de la photo');
+      handleApiError(error, t('profile.errors.avatarUpload'));
     } finally {
       setIsUploading(false);
     }
@@ -826,9 +796,9 @@ const MyProfilePage = () => {
     try {
       await removeAvatar();
       setAvatar(null);
-      showToast('🗑️ Photo de profil supprimée', 'info');
+      showToast(t('profile.messages.avatarRemoved'), 'info');
     } catch (error) {
-      handleApiError(error, 'Erreur lors de la suppression de la photo');
+      handleApiError(error, t('profile.errors.avatarRemove'));
     }
   };
 
@@ -837,9 +807,9 @@ const MyProfilePage = () => {
     try {
       await changePassword(data);
       setIsPasswordModalOpen(false);
-      showToast('🔑 Mot de passe changé avec succès', 'success');
+      showToast(t('profile.messages.passwordChanged'), 'success');
     } catch (error) {
-      handleApiError(error, 'Erreur lors du changement de mot de passe');
+      handleApiError(error, t('profile.errors.passwordChange'));
     } finally {
       setIsChangingPassword(false);
     }
@@ -850,24 +820,24 @@ const MyProfilePage = () => {
       await revokeSession(sessionId);
       const sessionsRes = await getSessions();
       setSessions(toArray(sessionsRes));
-      showToast('🔒 Session déconnectée avec succès', 'success');
+      showToast(t('profile.messages.sessionDisconnected'), 'success');
     } catch (error) {
-      handleApiError(error, 'Erreur lors de la déconnexion de la session');
+      handleApiError(error, t('profile.errors.sessionDisconnect'));
     }
   };
 
   // ✅ Fonction avec confirmation
   const handleDisconnectAllSessions = () => {
-    if (window.confirm('Êtes-vous sûr de vouloir déconnecter toutes vos sessions actives ?')) {
+    if (window.confirm(t('profile.sessions.confirmDisconnectAll', 'هل أنت متأكد من قطع اتصال جميع الجلسات النشطة؟'))) {
       setIsLoadingSessions(true);
       revokeAllSessions()
         .then(async () => {
           const sessionsRes = await getSessions();
           setSessions(toArray(sessionsRes));
-          showToast('🔒 Toutes les sessions ont été déconnectées', 'success');
+          showToast(t('profile.messages.allSessionsDisconnected'), 'success');
         })
         .catch((error) => {
-          handleApiError(error, 'Erreur lors de la déconnexion des sessions');
+          handleApiError(error, t('profile.errors.sessionsDisconnectAll'));
         })
         .finally(() => {
           setIsLoadingSessions(false);
@@ -885,9 +855,9 @@ const MyProfilePage = () => {
       await deleteDocument(docId);
       const docsRes = await getDocuments();
       setDocuments(toArray(docsRes));
-      showToast('🗑️ Document supprimé avec succès', 'success');
+      showToast(t('profile.messages.documentDeleted'), 'success');
     } catch (error) {
-      handleApiError(error, 'Erreur lors de la suppression du document');
+      handleApiError(error, t('profile.errors.documentDelete'));
     }
   };
 
@@ -901,9 +871,9 @@ const MyProfilePage = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      showToast(`📥 "${doc.name}" téléchargé avec succès`, 'success');
+      showToast(t('profile.messages.documentDownloaded', { name: doc.name }), 'success');
     } catch (error) {
-      handleApiError(error, 'Erreur lors du téléchargement');
+      handleApiError(error, t('profile.errors.documentDownload'));
     }
   };
 
@@ -918,9 +888,9 @@ const MyProfilePage = () => {
           await uploadDocument(file, file.name, file.type);
           const docsRes = await getDocuments();
           setDocuments(toArray(docsRes));
-          showToast('📄 Document ajouté avec succès', 'success');
+          showToast(t('profile.messages.documentAdded'), 'success');
         } catch (error) {
-          handleApiError(error, 'Erreur lors de l\'ajout du document');
+          handleApiError(error, t('profile.errors.documentAdd'));
         }
       }
     };
@@ -931,9 +901,9 @@ const MyProfilePage = () => {
     try {
       await updateTwoFactorAuth({ enabled: !twoFactorEnabled, method: 'app' });
       setTwoFactorEnabled(!twoFactorEnabled);
-      showToast(`🔐 2FA ${!twoFactorEnabled ? 'activé' : 'désactivé'} avec succès`, 'success');
+      showToast(t('profile.messages.twoFactorUpdated'), 'success');
     } catch (error) {
-      handleApiError(error, 'Erreur lors du changement de 2FA');
+      handleApiError(error, t('profile.errors.twoFactor'));
     }
   };
 
@@ -968,15 +938,15 @@ const MyProfilePage = () => {
   });
 
   const profileSummary = [
-    { label: 'Nom complet', value: `${profileData.firstName} ${profileData.lastName}` },
+    { label: t('profile.fields.fullName'), value: `${profileData.firstName} ${profileData.lastName}` },
     { label: 'Email', value: profileData.email },
     { label: tc('phone'), value: profileData.phone },
-    { label: 'Fonction', value: professionalData.position || '—' },
+    { label: t('profile.fields.position'), value: professionalData.position || '—' },
     { label: tc('department'), value: professionalData.department || '—' },
     { label: t('orders.kpi.total'), value: stats.orders },
     { label: 'Clients', value: stats.clients },
     { label: 'Produits', value: stats.products },
-    { label: 'Documents', value: stats.documents }
+    { label: t('profile.fields.documents'), value: stats.documents }
   ];
 
   const handleExportSuccess = () => {
@@ -984,7 +954,7 @@ const MyProfilePage = () => {
   };
 
   const handleExportError = () => {
-    showToast('Erreur lors de l\'export', 'error');
+    showToast(t('profile.messages.exportError'), 'error');
   };
 
   const activeSessionsCount = (Array.isArray(sessions) ? sessions : []).filter(
@@ -1037,7 +1007,7 @@ const MyProfilePage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 mb-4 md:mb-6">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Mon Profil
+            {t('profile.title')}
           </h1>
           <p className="text-xs md:text-sm text-[#6D6D6D]">
             Consultez et gérez vos informations personnelles et professionnelles
@@ -1152,7 +1122,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Email</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.email')}</label>
             <input
               type="email"
               name="email"
@@ -1165,7 +1135,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Téléphone</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.phone')}</label>
             <input
               type="text"
               name="phone"
@@ -1178,7 +1148,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Date de naissance</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.birthDate')}</label>
             <input
               type="text"
               name="birthDate"
@@ -1191,7 +1161,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Genre</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.gender')}</label>
             <select
               name="gender"
               value={profileData.gender}
@@ -1209,7 +1179,7 @@ const MyProfilePage = () => {
           </div>
           {/* ... suite des champs ... */}
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Nationalité</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.nationality')}</label>
             <input
               type="text"
               name="nationality"
@@ -1222,7 +1192,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Adresse</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.address')}</label>
             <input
               type="text"
               name="address"
@@ -1235,7 +1205,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Ville</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.city')}</label>
             <input
               type="text"
               name="city"
@@ -1248,7 +1218,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Code Postal</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.postalCode')}</label>
             <input
               type="text"
               name="postalCode"
@@ -1261,7 +1231,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Pays</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.country')}</label>
             <input
               type="text"
               name="country"
@@ -1288,7 +1258,7 @@ const MyProfilePage = () => {
             </select>
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Fuseau horaire</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.timezone')}</label>
             <input
               type="text"
               name="timezone"
@@ -1310,7 +1280,7 @@ const MyProfilePage = () => {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Matricule</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.employeeId')}</label>
             <input
               type="text"
               value={professionalData.employeeId || '—'}
@@ -1319,7 +1289,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Département</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.department')}</label>
             <input
               type="text"
               value={professionalData.department || '—'}
@@ -1328,7 +1298,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Fonction</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.position')}</label>
             <input
               type="text"
               value={professionalData.position || '—'}
@@ -1337,7 +1307,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Manager</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.manager')}</label>
             <input
               type="text"
               value={professionalData.manager || '—'}
@@ -1346,7 +1316,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Date d'embauche</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.hireDate')}</label>
             <input
               type="text"
               value={professionalData.hiringDate || '—'}
@@ -1364,7 +1334,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Bureau</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.office')}</label>
             <input
               type="text"
               value={professionalData.office || '—'}
@@ -1373,7 +1343,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Rôle</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.role')}</label>
             <input
               type="text"
               value={professionalData.role || '—'}
@@ -1382,7 +1352,7 @@ const MyProfilePage = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Dernière connexion</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.lastLogin')}</label>
             <input
               type="text"
               value={professionalData.lastLogin || '—'}
@@ -1439,8 +1409,8 @@ const MyProfilePage = () => {
                 <LogOut size={16} className="md:w-[18px] md:h-[18px]" />
               </div>
               <div className="flex-1">
-                <p className="text-xs md:text-sm font-medium text-[#3D2F24]">Sessions actives</p>
-                <p className="text-[10px] md:text-xs text-[#6D6D6D]">{activeSessionsCount} appareils</p>
+                <p className="text-xs md:text-sm font-medium text-[#3D2F24]">{t('profile.fields.activeSessions')}</p>
+                <p className="text-[10px] md:text-xs text-[#6D6D6D]">{activeSessionsCount} {t('profile.fields.devices')}</p>
               </div>
               <button
                 onClick={handleDisconnectAllSessions}
@@ -1478,7 +1448,7 @@ const MyProfilePage = () => {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Langue</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.language')}</label>
             <select
               value={preferences.language}
               onChange={(e) => handlePreferenceChange('language', e.target.value)}
@@ -1488,7 +1458,7 @@ const MyProfilePage = () => {
             </select>
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Thème</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.theme')}</label>
             <select
               value={preferences.theme}
               onChange={(e) => handlePreferenceChange('theme', e.target.value)}
@@ -1500,7 +1470,7 @@ const MyProfilePage = () => {
             </select>
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Devise</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.currency')}</label>
             <select
               value={preferences.currency}
               onChange={(e) => handlePreferenceChange('currency', e.target.value)}
@@ -1513,7 +1483,7 @@ const MyProfilePage = () => {
             </select>
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Format date</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.dateFormat')}</label>
             <select
               value={preferences.dateFormat}
               onChange={(e) => handlePreferenceChange('dateFormat', e.target.value)}
@@ -1525,7 +1495,7 @@ const MyProfilePage = () => {
             </select>
           </div>
           <div>
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Format heure</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.timeFormat')}</label>
             <select
               value={preferences.timeFormat}
               onChange={(e) => handlePreferenceChange('timeFormat', e.target.value)}
@@ -1536,7 +1506,7 @@ const MyProfilePage = () => {
             </select>
           </div>
           <div className="space-y-1 md:space-y-2">
-            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">Notifications</label>
+            <label className="block text-[10px] md:text-xs font-semibold text-[#6D6D6D] mb-0.5 md:mb-1 uppercase tracking-wide">{t('profile.fields.notifications')}</label>
             <div className="flex flex-wrap items-center gap-2 md:gap-4">
               <label className="flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs text-[#6D6D6D]">
                 <input
@@ -1621,14 +1591,14 @@ const MyProfilePage = () => {
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 md:p-6 shadow-sm mb-4 md:mb-6">
         <div className="flex items-center justify-between mb-3 md:mb-4">
           <h3 className="text-sm md:text-base font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Sessions actives
+            {t('profile.fields.activeSessions')}
           </h3>
           <button
             onClick={handleDisconnectAllSessions}
             disabled={isLoadingSessions}
             className="text-[10px] md:text-xs font-medium text-rose-500 hover:text-rose-600 transition-colors disabled:opacity-50"
           >
-            {isLoadingSessions ? 'Déconnexion...' : 'Déconnecter tout'}
+            {isLoadingSessions ? t('profile.sessions.disconnecting') : t('profile.sessions.disconnectAll')}
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
@@ -1652,7 +1622,7 @@ const MyProfilePage = () => {
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 md:p-6 shadow-sm mb-4 md:mb-6">
         <div className="flex items-center justify-between mb-3 md:mb-4">
           <h3 className="text-sm md:text-base font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Documents personnels
+            {t('profile.fields.personalDocuments')}
           </h3>
           <button
             onClick={handleAddDocument}
@@ -1700,7 +1670,7 @@ const MyProfilePage = () => {
       {/* Section 9: Permissions */}
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 md:p-6 shadow-sm mb-4 md:mb-6">
         <h3 className="text-sm md:text-base font-bold text-[#3D2F24] mb-3 md:mb-4" style={{ fontFamily: FONT_HEADING }}>
-          Aperçu des permissions
+          {t('profile.fields.permissionsPreview')}
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-xs md:text-sm">
@@ -1747,11 +1717,11 @@ const MyProfilePage = () => {
         <StatCard icon={ClipboardList} title="Commandes" value={stats.orders} color="blue" />
         <StatCard icon={Users} title="Clients" value={stats.clients} color="green" />
         <StatCard icon={Package} title="Produits" value={stats.products} color="purple" />
-        <StatCard icon={LogOut} title="Dernière connexion" value={stats.lastLogin?.split(' ')[1] || '08:30'} color="amber" subtitle={stats.lastLogin?.split(' ')[0] || '—'} />
+        <StatCard icon={LogOut} title={t('profile.fields.lastLogin')} value={stats.lastLogin?.split(' ')[1] || '08:30'} color="amber" subtitle={stats.lastLogin?.split(' ')[0] || '—'} />
         <StatCard icon={Clock} title="Temps moyen" value={stats.avgTime} color="indigo" />
         <StatCard icon={CheckCircle} title="Validées" value={stats.validatedOrders} color="emerald" />
-        <StatCard icon={Bell} title="Notifications" value={stats.notifications} color="rose" />
-        <StatCard icon={Upload} title="Documents" value={stats.documents} color="cyan" />
+        <StatCard icon={Bell} title={t('profile.fields.notifications')} value={stats.notifications} color="rose" />
+        <StatCard icon={Upload} title={t('profile.fields.documents')} value={stats.documents} color="cyan" />
       </div>
 
       {/* Change Password Modal */}

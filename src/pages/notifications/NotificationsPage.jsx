@@ -174,6 +174,7 @@ import {
   getNotificationPriorities,
   getUnreadCount
 } from '../../services/notificationService';
+import { safeArray, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
 
 // ==========================================
 // CONSTANTES
@@ -181,7 +182,7 @@ import {
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
 const DATE_LOCALE = 'ar-SA';
-const CURRENCY = 'MAD';
+const CURRENCY = 'SAR';
 
 // ==========================================
 // COMPOSANTS UI
@@ -759,12 +760,14 @@ const NotificationsPage = () => {
         sort_order: 'desc'
       };
       const response = await getNotifications(params);
-      const data = response.data.data || [];
-      setNotifications(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      const res = response?.data;
+      const list = safeArray(res);
+      setNotifications(list);
+      setTotalCount(res?.meta?.total ?? list.length);
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      showToast('Erreur lors du chargement des notifications', 'error');
+      showToast(getApiErrorMessage(error, t('errors.loadFailed')), 'error');
+      setNotifications([]);
     } finally {
       setIsLoading(false);
     }
@@ -949,7 +952,7 @@ const NotificationsPage = () => {
   };
 
   const handleSelectAll = () => {
-    const currentIds = notifications.map(n => n.id);
+    const currentIds = ensureArray(notifications).map(n => n.id);
     if (selectedIds.length === currentIds.length) {
       setSelectedIds([]);
     } else {
@@ -1244,7 +1247,7 @@ const NotificationsPage = () => {
               </p>
             </div>
           ) : (
-            notifications.map((notification) => (
+            ensureArray(notifications).map((notification) => (
               <NotificationItem
                 key={notification.id}
                 notification={notification}

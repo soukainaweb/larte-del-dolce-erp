@@ -71,6 +71,7 @@ import {
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
 const DATE_LOCALE = 'ar-SA';
+const CURRENCY = 'SAR';
 
 // ==========================================
 // PAYMENT STATUS BADGE
@@ -198,11 +199,11 @@ const InvoiceCard = ({ invoice, onView, onEdit, onDelete }) => {
         </div>
         <div className="flex items-center gap-1">
           <DollarSign size={12} />
-          {invoice.totalAmount.toLocaleString()} DH
+          {invoice.totalAmount.toLocaleString()} ${CURRENCY}
         </div>
         <div className="flex items-center gap-1">
           <CheckCircle size={12} />
-          {invoice.paidAmount.toLocaleString()} DH
+          {invoice.paidAmount.toLocaleString()} ${CURRENCY}
         </div>
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#ECE8E1]">
@@ -251,10 +252,10 @@ const InvoiceTableRow = ({ invoice, onView, onEdit, onDelete, index }) => {
         {new Date(invoice.dueDate).toLocaleDateString(DATE_LOCALE)}
       </td>
       <td className="px-4 py-3 text-sm font-medium text-[#3D2F24]">
-        {invoice.totalAmount.toLocaleString()} DH
+        {invoice.totalAmount.toLocaleString()} ${CURRENCY}
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {invoice.paidAmount.toLocaleString()} DH
+        {invoice.paidAmount.toLocaleString()} ${CURRENCY}
       </td>
       <td className="px-4 py-3">
         <PaymentMethodBadge method={invoice.paymentMethod} />
@@ -614,7 +615,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                       <div>
                         <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{tc('total')}</label>
                         <p className="text-sm font-bold text-[#3D2F24]">
-                          {(product.total || 0).toFixed(2)} DH
+                          {(product.total || 0).toFixed(2)} ${CURRENCY}
                         </p>
                       </div>
                       {formData.products.length > 1 && (
@@ -639,23 +640,23 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-[#6D6D6D]">{t('orders.summary.subtotal')}</span>
-                <span className="font-medium text-[#3D2F24]">{totals.subtotal.toFixed(2)} DH</span>
+                <span className="font-medium text-[#3D2F24]">{totals.subtotal.toFixed(2)} ${CURRENCY}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#6D6D6D]">{t('orders.summary.totalDiscount')}</span>
-                <span className="font-medium text-[#3D2F24]">{totals.totalDiscount.toFixed(2)} DH</span>
+                <span className="font-medium text-[#3D2F24]">{totals.totalDiscount.toFixed(2)} ${CURRENCY}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#6D6D6D]">TVA</span>
-                <span className="font-medium text-[#3D2F24]">{totals.totalVat.toFixed(2)} DH</span>
+                <span className="font-medium text-[#3D2F24]">{totals.totalVat.toFixed(2)} ${CURRENCY}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#6D6D6D]">Livraison</span>
-                <span className="font-medium text-[#3D2F24]">{totals.delivery.toFixed(2)} DH</span>
+                <span className="font-medium text-[#3D2F24]">{totals.delivery.toFixed(2)} ${CURRENCY}</span>
               </div>
               <div className="flex justify-between pt-2 border-t border-[#ECE8E1]">
                 <span className="font-bold text-[#3D2F24]">{t('orders.summary.grandTotal')}</span>
-                <span className="font-bold text-[#3D2F24] text-lg">{totals.total.toFixed(2)} DH</span>
+                <span className="font-bold text-[#3D2F24] text-lg">{totals.total.toFixed(2)} ${CURRENCY}</span>
               </div>
             </div>
           </div>
@@ -847,11 +848,11 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">{tc('total')}</p>
-              <p className="text-sm font-bold text-[#3D2F24]">{invoice.totalAmount.toLocaleString()} DH</p>
+              <p className="text-sm font-bold text-[#3D2F24]">{invoice.totalAmount.toLocaleString()} ${CURRENCY}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">{t('common.statuses.paid')}</p>
-              <p className="text-sm font-bold text-[#3D2F24]">{invoice.paidAmount.toLocaleString()} DH</p>
+              <p className="text-sm font-bold text-[#3D2F24]">{invoice.paidAmount.toLocaleString()} ${CURRENCY}</p>
             </div>
           </div>
 
@@ -859,7 +860,7 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
               <p className="text-sm text-amber-700">
                 <Clock size={14} className="inline mr-1" />
-                Montant restant: {remainingAmount.toLocaleString()} DH
+                Montant restant: {remainingAmount.toLocaleString()} ${CURRENCY}
               </p>
             </div>
           )}
@@ -871,28 +872,28 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
                 <div key={idx} className="flex justify-between items-center bg-white rounded-lg p-2 border border-[#ECE8E1]">
                   <div>
                     <p className="text-sm font-medium text-[#3D2F24]">{p.name}</p>
-                    <p className="text-xs text-[#6D6D6D]">Qté: {p.quantity} × {p.price} DH</p>
+                    <p className="text-xs text-[#6D6D6D]">Qté: {p.quantity} × {p.price} ${CURRENCY}</p>
                   </div>
-                  <p className="text-sm font-bold text-[#3D2F24]">{p.total?.toFixed(2)} DH</p>
+                  <p className="text-sm font-bold text-[#3D2F24]">{p.total?.toFixed(2)} ${CURRENCY}</p>
                 </div>
               ))}
             </div>
             <div className="mt-3 pt-3 border-t border-[#ECE8E1] space-y-1 text-sm">
               <div className="flex justify-between">
                 <span className="text-[#6D6D6D]">{t('orders.summary.subtotal')}</span>
-                <span className="text-[#3D2F24]">{invoice.subtotal?.toFixed(2)} DH</span>
+                <span className="text-[#3D2F24]">{invoice.subtotal?.toFixed(2)} ${CURRENCY}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#6D6D6D]">TVA</span>
-                <span className="text-[#3D2F24]">{invoice.totalVat?.toFixed(2)} DH</span>
+                <span className="text-[#3D2F24]">{invoice.totalVat?.toFixed(2)} ${CURRENCY}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#6D6D6D]">Livraison</span>
-                <span className="text-[#3D2F24]">{invoice.deliveryFees?.toFixed(2)} DH</span>
+                <span className="text-[#3D2F24]">{invoice.deliveryFees?.toFixed(2)} ${CURRENCY}</span>
               </div>
               <div className="flex justify-between pt-1 border-t border-[#ECE8E1] font-bold">
                 <span className="text-[#3D2F24]">{t('orders.summary.grandTotal')}</span>
-                <span className="text-[#3D2F24]">{invoice.totalAmount.toFixed(2)} DH</span>
+                <span className="text-[#3D2F24]">{invoice.totalAmount.toFixed(2)} ${CURRENCY}</span>
               </div>
             </div>
           </div>
@@ -1043,8 +1044,8 @@ const InvoicesPage = () => {
     customer: item.customer,
     invoiceDate: new Date(item.invoiceDate).toLocaleDateString(DATE_LOCALE),
     dueDate: new Date(item.dueDate).toLocaleDateString(DATE_LOCALE),
-    totalAmount: `${item.totalAmount.toLocaleString()} DH`,
-    paidAmount: `${item.paidAmount.toLocaleString()} DH`,
+    totalAmount: `${item.totalAmount.toLocaleString()} ${CURRENCY}`,
+    paidAmount: `${item.paidAmount.toLocaleString()} ${CURRENCY}`,
     paymentMethod: item.paymentMethod === 'cash' ? t('common.paymentMethods.cash') :
                    item.paymentMethod === 'card' ? t('common.paymentMethods.card') :
                    item.paymentMethod === 'transfer' ? t('common.paymentMethods.transfer') : t('common.paymentMethods.online'),
@@ -1062,7 +1063,7 @@ const InvoicesPage = () => {
     { label: t('invoices.kpi.unpaid'), value: kpis.unpaid },
     { label: t('common.statuses.overdue'), value: kpis.overdue },
     { label: tc('today'), value: kpis.today },
-    { label: t('finance.kpi.totalRevenue'), value: `${kpis.revenue.toLocaleString()} DH` }
+    { label: t('finance.kpi.totalRevenue'), value: `${kpis.revenue.toLocaleString()} ${CURRENCY}` }
   ];
 
   // ==========================================
@@ -1155,7 +1156,7 @@ const InvoicesPage = () => {
             data={filteredInvoices}
             columns={columns}
             title="{t('invoices.export.title')}"
-            subtitle={`${filteredInvoices.length} factures - Total: ${kpis.revenue.toLocaleString()} DH`}
+            subtitle={`${filteredInvoices.length} factures - Total: ${kpis.revenue.toLocaleString()} ${CURRENCY}`}
             filename={`factures_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
@@ -1203,7 +1204,7 @@ const InvoicesPage = () => {
         <KPICard icon={XCircle} title="Non payées" value={kpis.unpaid} color="rose" />
         <KPICard icon={AlertCircle} title="En retard" value={kpis.overdue} color="red" />
         <KPICard icon={Calendar} title={tc('today')} value={kpis.today} color="purple" />
-        <KPICard icon={DollarSign} title="Revenu total" value={`${kpis.revenue.toLocaleString()} DH`} color="gold" />
+        <KPICard icon={DollarSign} title="Revenu total" value={`${kpis.revenue.toLocaleString()} ${CURRENCY}`} color="gold" />
       </div>
 
       {/* Filters */}

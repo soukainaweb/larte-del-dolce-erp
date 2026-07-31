@@ -66,6 +66,7 @@ import {
   sendPaymentReceipt,
   printPaymentReceipt
 } from '../../services/paymentService';
+import { safeArray, ensureArray } from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -755,11 +756,13 @@ const PaymentsPage = () => {
         sort_order: 'desc'
       };
       const response = await getPayments(params);
-      const data = response.data.data || [];
-      setPayments(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      const res = response?.data;
+      const list = safeArray(res);
+      setPayments(list);
+      setTotalCount(res?.meta?.total ?? list.length);
     } catch (error) {
       console.error('Error fetching payments:', error);
+      setPayments([]);
     } finally {
       setIsLoading(false);
     }
@@ -802,12 +805,12 @@ const PaymentsPage = () => {
 
   // Filter payments (API already handles filters)
   const filteredPayments = useMemo(() => {
-    return payments;
+    return Array.isArray(payments) ? payments : [];
   }, [payments]);
 
   // Paginate
   const paginatedPayments = useMemo(() => {
-    return filteredPayments;
+    return ensureArray(filteredPayments);
   }, [filteredPayments]);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
@@ -919,7 +922,7 @@ const PaymentsPage = () => {
   }, [searchTerm, statusFilter]);
 
   const uniqueStatuses = useMemo(() => {
-    const statuses = new Set(payments.map(p => p.status));
+    const statuses = new Set(ensureArray(payments).map(p => p.status));
     return Array.from(statuses);
   }, [payments]);
 
@@ -1067,7 +1070,7 @@ const PaymentsPage = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedPayments.map((payment, index) => (
+                  ensureArray(paginatedPayments).map((payment, index) => (
                     <PaymentTableRow
                       key={payment.id}
                       payment={payment}
@@ -1107,7 +1110,7 @@ const PaymentsPage = () => {
               <p className="text-sm text-[#6D6D6D]">{t('payments.empty')}</p>
             </div>
           ) : (
-            paginatedPayments.map((payment) => (
+            ensureArray(paginatedPayments).map((payment) => (
               <PaymentCard
                 key={payment.id}
                 payment={payment}
@@ -1142,7 +1145,7 @@ const PaymentsPage = () => {
             <p className="text-sm text-[#6D6D6D]">{t('payments.empty')}</p>
           </div>
         ) : (
-          paginatedPayments.map((payment) => (
+          ensureArray(paginatedPayments).map((payment) => (
             <PaymentCard
               key={payment.id}
               payment={payment}
