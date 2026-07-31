@@ -154,7 +154,7 @@ const Header = React.memo(({
   };
 
   return (
-    <header className="relative w-full h-16 sm:h-[76px] bg-white border-b border-[#ECE5DB] px-2 sm:px-4 lg:px-6 flex items-center justify-between gap-2 sticky top-0 z-[60] select-none isolate" dir="rtl">
+    <header className="relative w-full h-16 sm:h-[76px] bg-white border-b border-[#ECE5DB] px-2 sm:px-4 lg:px-6 flex items-center justify-between gap-2 sticky top-0 z-[60] select-none isolate overflow-visible" dir="rtl">
       <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-4 flex-1 min-w-0 overflow-hidden">
         <button
           type="button"
@@ -197,8 +197,8 @@ const Header = React.memo(({
         </button>
       </div>
 
-      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 ms-auto">
-        <div className="relative z-[70]" ref={notifRef}>
+      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 ms-auto overflow-visible">
+        <div className="relative z-[99] overflow-visible" ref={notifRef}>
           <button
             type="button"
             onClick={() => toggleDropdown('notifications')}
@@ -219,7 +219,7 @@ const Header = React.memo(({
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="absolute mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white border border-[#ECE5DB] rounded-2xl shadow-xl p-1 z-[80] overflow-hidden start-0 origin-top-left"
+                className="absolute mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white border border-[#ECE5DB] rounded-2xl shadow-xl p-1 z-[99] overflow-hidden end-0 start-auto origin-top-end"
               >
                 <div className="px-4 py-3 border-b border-[#ECE5DB] flex justify-between items-center bg-[#F7F5F2]/50">
                   <span className="text-xs font-bold text-[#273338]">{t('header.notifications')}</span>
@@ -272,7 +272,7 @@ const Header = React.memo(({
 
         <div className="w-px h-6 bg-[#ECE5DB] mx-0.5 hidden sm:block" />
 
-        <div className="relative z-[70]" ref={profileRef}>
+        <div className="relative z-[99] overflow-visible" ref={profileRef}>
           <button
             type="button"
             onClick={() => toggleDropdown('profile')}
@@ -304,7 +304,7 @@ const Header = React.memo(({
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="absolute mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white border border-[#ECE5DB] rounded-2xl shadow-xl p-1.5 z-[80] start-0 origin-top-left"
+                className="absolute mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white border border-[#ECE5DB] rounded-2xl shadow-xl p-1.5 z-[99] end-0 start-auto origin-top-end"
               >
                 <div className="px-3.5 py-3 border-b border-[#ECE5DB] bg-[#F7F5F2]/40 rounded-t-xl mb-1.5 lg:hidden text-start">
                   <p className="text-sm font-bold text-[#273338]">
