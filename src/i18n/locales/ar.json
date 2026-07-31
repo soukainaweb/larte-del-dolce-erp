@@ -2088,7 +2088,35 @@
       "company": "الشركة",
       "changePhoto": "تغيير الصورة",
       "changePasswordAction": "تغيير كلمة المرور",
-      "changing": "جاري التغيير..."
+      "changing": "جاري التغيير...",
+      "phone": "الهاتف",
+      "birthDate": "تاريخ الميلاد",
+      "gender": "الجنس",
+      "nationality": "الجنسية",
+      "address": "العنوان",
+      "city": "المدينة",
+      "postalCode": "الرمز البريدي",
+      "country": "البلد",
+      "employeeId": "الرقم الوظيفي",
+      "department": "القسم",
+      "position": "الوظيفة",
+      "manager": "المدير",
+      "hireDate": "تاريخ التوظيف",
+      "office": "المكتب",
+      "role": "الدور",
+      "lastLogin": "آخر تسجيل دخول",
+      "theme": "السمة",
+      "currency": "العملة",
+      "dateFormat": "تنسيق التاريخ",
+      "timeFormat": "تنسيق الوقت",
+      "notifications": "الإشعارات",
+      "fullName": "الاسم الكامل",
+      "documents": "المستندات",
+      "activeSessions": "الجلسات النشطة",
+      "devices": "أجهزة",
+      "personalDocuments": "المستندات الشخصية",
+      "permissionsPreview": "معاينة الصلاحيات",
+      "email": "البريد الإلكتروني"
     },
     "avatar": {
       "formats": "PNG, JPG, JPEG, WEBP • الحد الأقصى 5 ميجابايت"
@@ -2098,11 +2126,37 @@
     },
     "messages": {
       "updated": "تم تحديث الملف الشخصي بنجاح",
-      "cancelled": "تم إلغاء التعديلات"
+      "cancelled": "تم إلغاء التعديلات",
+      "avatarUpdated": "تم تحديث صورة الملف الشخصي",
+      "avatarRemoved": "تم حذف صورة الملف الشخصي",
+      "passwordChanged": "تم تغيير كلمة المرور بنجاح",
+      "sessionDisconnected": "تم قطع اتصال الجلسة بنجاح",
+      "allSessionsDisconnected": "تم قطع جميع الجلسات",
+      "documentDeleted": "تم حذف المستند بنجاح",
+      "documentDownloaded": "تم تنزيل \"{{name}}\" بنجاح",
+      "documentAdded": "تمت إضافة المستند بنجاح",
+      "twoFactorUpdated": "تم تحديث المصادقة الثنائية بنجاح",
+      "exportError": "خطأ أثناء التصدير"
+    },
+    "errors": {
+      "load": "خطأ أثناء تحميل الملف الشخصي",
+      "save": "خطأ أثناء حفظ الملف الشخصي",
+      "avatarUpload": "خطأ أثناء رفع الصورة",
+      "avatarRemove": "خطأ أثناء حذف الصورة",
+      "passwordChange": "خطأ أثناء تغيير كلمة المرور",
+      "sessionDisconnect": "خطأ أثناء قطع اتصال الجلسة",
+      "sessionsDisconnectAll": "خطأ أثناء قطع جميع الجلسات",
+      "documentDelete": "خطأ أثناء حذف المستند",
+      "documentDownload": "خطأ أثناء التنزيل",
+      "documentAdd": "خطأ أثناء إضافة المستند",
+      "twoFactor": "خطأ أثناء تغيير المصادقة الثنائية"
     },
     "sessions": {
       "disconnect": "قطع الاتصال",
-      "disconnectAll": "قطع جميع الجلسات"
+      "disconnectAll": "قطع جميع الجلسات",
+      "disconnecting": "جاري قطع الاتصال...",
+      "city": "المدينة",
+      "confirmDisconnectAll": "هل أنت متأكد من قطع اتصال جميع الجلسات النشطة؟"
     },
     "kpi": {
       "lastLogin": "آخر تسجيل دخول",

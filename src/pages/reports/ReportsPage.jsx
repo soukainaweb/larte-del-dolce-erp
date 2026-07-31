@@ -140,6 +140,7 @@ import {
   deleteGeneratedReport,
   exportReportData
 } from '../../services/reportService';
+import { safeArray, ensureArray } from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -1589,40 +1590,41 @@ const ReportsPage = () => {
       }
       
       const salesRes = await getSalesOverview(params);
-      setSalesData(salesRes.data.data || []);
+      setSalesData(safeArray(salesRes?.data));
       
       const statusRes = await getOrderStatusDistribution(params);
-      setOrderStatusData(statusRes.data.data || []);
+      setOrderStatusData(safeArray(statusRes?.data));
       
       const productsRes = await getProductsReport(params);
-      setTopProducts(productsRes.data.data || []);
+      setTopProducts(safeArray(productsRes?.data));
       
       const customersRes = await getCustomersReport(params);
-      setTopCustomers(customersRes.data.data || []);
+      setTopCustomers(safeArray(customersRes?.data));
       
       const categoriesRes = await getProductsReport({ ...params, group_by: 'category' });
-      setTopCategories(categoriesRes.data.data || []);
+      setTopCategories(safeArray(categoriesRes?.data));
       
       const repsRes = await getSalesRepsReport(params);
-      setTopSalesReps(repsRes.data.data || []);
+      setTopSalesReps(safeArray(repsRes?.data));
       
       const productionRes = await getProductionReport(params);
-      setProductionData(productionRes.data.data || []);
+      setProductionData(safeArray(productionRes?.data));
       
       const deliveryRes = await getDeliveriesReport(params);
-      setDeliveryStats(deliveryRes.data.data || []);
+      setDeliveryStats(safeArray(deliveryRes?.data));
       
       const yearlyRes = await getYearlyComparison(params);
-      setYearlyComparison(yearlyRes.data.data || []);
+      setYearlyComparison(safeArray(yearlyRes?.data));
       
       const activitiesRes = await getRecentActivities({ limit: 10 });
-      setRecentActivities(activitiesRes.data.data || []);
+      setRecentActivities(safeArray(activitiesRes?.data));
       
       const alertsRes = await getAlerts({ limit: 10 });
-      setAlerts(alertsRes.data.data || []);
+      setAlerts(safeArray(alertsRes?.data));
       
     } catch (error) {
       console.error('Error loading overview data:', error);
+      setSalesData([]);
     }
   };
 
@@ -1634,9 +1636,10 @@ const ReportsPage = () => {
         search: searchTerm || undefined
       };
       const res = await getOrdersReport(params);
-      setOrdersData(res.data.data || []);
+      setOrdersData(safeArray(res?.data));
     } catch (error) {
       console.error('Error loading orders data:', error);
+      setOrdersData([]);
     }
   };
 
@@ -1648,9 +1651,10 @@ const ReportsPage = () => {
         search: searchTerm || undefined
       };
       const res = await getInvoicesReport(params);
-      setInvoicesList(res.data.data || []);
+      setInvoicesList(safeArray(res?.data));
     } catch (error) {
       console.error('Error loading invoices data:', error);
+      setInvoicesList([]);
     }
   };
 
@@ -1662,16 +1666,17 @@ const ReportsPage = () => {
         search: searchTerm || undefined
       };
       const res = await getDeliveriesReport(params);
-      setDeliveriesList(res.data.data || []);
+      setDeliveriesList(safeArray(res?.data));
     } catch (error) {
       console.error('Error loading deliveries data:', error);
+      setDeliveriesList([]);
     }
   };
 
   const loadReportsData = async () => {
     try {
       const res = await getGeneratedReports();
-      setGeneratedReports(res.data.data || []);
+      setGeneratedReports(safeArray(res?.data));
     } catch (error) {
       console.error('Error loading reports data:', error);
     }
@@ -1707,27 +1712,31 @@ const ReportsPage = () => {
   // KPI CALCULATIONS
   // ==========================================
   const kpis = useMemo(() => {
-    const totalRevenue = salesData.reduce((sum, d) => sum + (d.revenue || 0), 0);
-    const totalOrders = salesData.reduce((sum, d) => sum + (d.orders || 0), 0);
-    const totalProducts = salesData.reduce((sum, d) => sum + (d.products || 0), 0);
+    const salesList = ensureArray(salesData);
+    const customersList = ensureArray(topCustomers);
+    const ordersList = ensureArray(ordersData);
+
+    const totalRevenue = salesList.reduce((sum, d) => sum + (d.revenue || 0), 0);
+    const totalOrders = salesList.reduce((sum, d) => sum + (d.orders || 0), 0);
+    const totalProducts = salesList.reduce((sum, d) => sum + (d.products || 0), 0);
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     
     let monthlyGrowth = 0;
-    if (salesData.length >= 2) {
-      const last = salesData[salesData.length - 1];
-      const prev = salesData[salesData.length - 2];
+    if (salesList.length >= 2) {
+      const last = salesList[salesList.length - 1];
+      const prev = salesList[salesList.length - 2];
       monthlyGrowth = prev.revenue > 0 ? ((last.revenue - prev.revenue) / prev.revenue) * 100 : 0;
     }
     
-    const totalInvoices = invoicesList.length;
-    const totalDeliveries = deliveriesList.length;
-    const inProduction = ordersData.filter(o => o.status === t('orders.status.in_production')).length;
-    const pendingOrders = ordersData.filter(o => o.status === t('common.pending')).length;
-    const totalCustomers = topCustomers.reduce((sum, c) => sum + (c.orders || 0), 0);
+    const totalInvoices = ensureArray(invoicesList).length;
+    const totalDeliveries = ensureArray(deliveriesList).length;
+    const inProduction = ordersList.filter(o => o.status === t('orders.status.in_production')).length;
+    const pendingOrders = ordersList.filter(o => o.status === t('common.pending')).length;
+    const totalCustomers = customersList.reduce((sum, c) => sum + (c.orders || 0), 0);
 
-    const revenueTrend = salesData.map(d => ({ value: d.revenue || 0 }));
-    const orderTrend = salesData.map(d => ({ value: d.orders || 0 }));
-    const productTrend = salesData.map(d => ({ value: d.products || 0 }));
+    const revenueTrend = salesList.map(d => ({ value: d.revenue || 0 }));
+    const orderTrend = salesList.map(d => ({ value: d.orders || 0 }));
+    const productTrend = salesList.map(d => ({ value: d.products || 0 }));
 
     return {
       totalRevenue,
@@ -1964,7 +1973,7 @@ const ReportsPage = () => {
         try {
           await deleteGeneratedReport(report.id);
           const res = await getGeneratedReports();
-          setGeneratedReports(res.data.data || []);
+          setGeneratedReports(safeArray(res?.data));
           showToast(t('reports.messages.reportDeleted', { name: report.name }), 'success');
         } catch (error) {
           console.error('Error deleting report:', error);

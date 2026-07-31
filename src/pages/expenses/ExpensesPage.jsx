@@ -67,6 +67,7 @@ import {
   getExpenseStatistics,
   exportExpenses,
 } from '../../services/expenseService';
+import { safeArray, ensureArray } from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -874,11 +875,13 @@ const ExpensesPage = () => {
         sort_order: 'desc'
       };
       const response = await getExpenses(params);
-      const data = response.data.data || [];
-      setExpenses(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      const res = response?.data;
+      const list = safeArray(res);
+      setExpenses(list);
+      setTotalCount(res?.meta?.total ?? list.length);
     } catch (error) {
       console.error('Error fetching expenses:', error);
+      setExpenses([]);
     } finally {
       setIsLoading(false);
     }
@@ -921,12 +924,12 @@ const ExpensesPage = () => {
 
   // Filter expenses (API already handles filters)
   const filteredExpenses = useMemo(() => {
-    return expenses;
+    return Array.isArray(expenses) ? expenses : [];
   }, [expenses]);
 
   // Paginate
   const paginatedExpenses = useMemo(() => {
-    return filteredExpenses;
+    return ensureArray(filteredExpenses);
   }, [filteredExpenses]);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
@@ -1231,7 +1234,7 @@ const ExpensesPage = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedExpenses.map((expense, index) => (
+                  ensureArray(paginatedExpenses).map((expense, index) => (
                     <ExpenseTableRow
                       key={expense.id}
                       expense={expense}
@@ -1271,7 +1274,7 @@ const ExpensesPage = () => {
               <p className="text-sm text-[#6D6D6D]">{t('expenses.empty')}</p>
             </div>
           ) : (
-            paginatedExpenses.map((expense) => (
+            ensureArray(paginatedExpenses).map((expense) => (
               <ExpenseCard
                 key={expense.id}
                 expense={expense}
@@ -1306,7 +1309,7 @@ const ExpensesPage = () => {
             <p className="text-sm text-[#6D6D6D]">{t('expenses.empty')}</p>
           </div>
         ) : (
-          paginatedExpenses.map((expense) => (
+          ensureArray(paginatedExpenses).map((expense) => (
             <ExpenseCard
               key={expense.id}
               expense={expense}

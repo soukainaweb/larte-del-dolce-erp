@@ -36,19 +36,22 @@ export const buildProductPayload = (data = {}) => {
   return payload;
 };
 
-const appendProductFormData = (formData, payload) => {
-  Object.entries(payload).forEach(([key, value]) => {
-    if (value === undefined || value === null) return;
-
-    if (key === 'image' && value instanceof File) {
-      formData.append('image', value);
-      return;
-    }
-
-    if (key === 'image') return;
-
-    formData.append(key, value);
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
+
+const normalizeProductPayload = async (data = {}) => {
+  const payload = buildProductPayload(data);
+
+  if (payload.image instanceof File) {
+    payload.image = await readFileAsDataUrl(payload.image);
+  }
+
+  return payload;
 };
 
 /**
@@ -82,19 +85,9 @@ export const getProductById = (id) => {
  * @param {string|File} data.image - Base64 string or File object for upload
  * @returns {Promise} - Axios response
  */
-export const createProduct = (data) => {
-  const payload = buildProductPayload(data);
-
-  if (payload.image instanceof File) {
-    const formData = new FormData();
-    appendProductFormData(formData, payload);
-    return api.post("/products", formData, {
-      headers: { "Content-Type": "multipart/form-data" }
-    });
-  }
-
-  const { image, ...jsonPayload } = payload;
-  return api.post("/products", jsonPayload);
+export const createProduct = async (data) => {
+  const payload = await normalizeProductPayload(data);
+  return api.post("/products", payload);
 };
 
 /**
@@ -103,20 +96,9 @@ export const createProduct = (data) => {
  * @param {Object} data - Updated product data
  * @returns {Promise} - Axios response
  */
-export const updateProduct = (id, data) => {
-  const payload = buildProductPayload(data);
-
-  if (payload.image instanceof File) {
-    const formData = new FormData();
-    appendProductFormData(formData, payload);
-    formData.append("_method", "PUT");
-    return api.post(`/products/${id}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" }
-    });
-  }
-
-  const { image, ...jsonPayload } = payload;
-  return api.put(`/products/${id}`, jsonPayload);
+export const updateProduct = async (id, data) => {
+  const payload = await normalizeProductPayload(data);
+  return api.put(`/products/${id}`, payload);
 };
 
 /**

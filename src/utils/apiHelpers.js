@@ -193,6 +193,18 @@ export const extractValidationMessage = (data) => {
  */
 export const ensureArray = (value) => (Array.isArray(value) ? value : []);
 
+/**
+ * Safely extract a list array from an API response body.
+ * Handles Laravel envelopes and paginated payloads.
+ */
+export const safeArray = (payload) => {
+  const data = payload?.data !== undefined && (payload?.status !== undefined || payload?.headers !== undefined)
+    ? payload.data
+    : payload;
+
+  return Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+};
+
 const ACTIVITY_DATE_LOCALE = 'ar-SA';
 
 /**
