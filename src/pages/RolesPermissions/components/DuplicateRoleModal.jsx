@@ -9,8 +9,10 @@ import {
   Users,
   Shield
 } from 'lucide-react';
+import { usePageI18n } from '../../../hooks/usePageI18n';
 
 const DuplicateRoleModal = ({ isOpen, onClose, role, onDuplicate, isLoading }) => {
+  const { t, tc } = usePageI18n('roles');
   const [formData, setFormData] = useState({
     name: '',
     copyPermissions: true,
@@ -22,10 +24,10 @@ const DuplicateRoleModal = ({ isOpen, onClose, role, onDuplicate, isLoading }) =
     if (role) {
       setFormData(prev => ({
         ...prev,
-        name: `${role.name} (Copie)`
+        name: `${role.name}${t('roles.modals.copySuffix')}`
       }));
     }
-  }, [role]);
+  }, [role, t]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -41,7 +43,7 @@ const DuplicateRoleModal = ({ isOpen, onClose, role, onDuplicate, isLoading }) =
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.name) {
-      setErrors({ name: 'Le nom est requis' });
+      setErrors({ name: t('roles.usersManagement.nameRequired') });
       return;
     }
     onDuplicate(formData);
@@ -59,7 +61,7 @@ const DuplicateRoleModal = ({ isOpen, onClose, role, onDuplicate, isLoading }) =
       >
         <div className="border-b border-[#EAE6DF] px-6 py-4 flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#2B2B2B]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-            Dupliquer le rôle
+            {t('roles.modals.duplicateTitle')}
           </h3>
           <button onClick={onClose} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <X size={20} className="text-[#7A7A7A]" />
@@ -69,7 +71,7 @@ const DuplicateRoleModal = ({ isOpen, onClose, role, onDuplicate, isLoading }) =
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-xs font-semibold text-[#7A7A7A] mb-1.5 uppercase tracking-wide">
-              Nouveau nom *
+              {t('roles.modals.newName')} *
             </label>
             <input
               type="text"
@@ -93,7 +95,7 @@ const DuplicateRoleModal = ({ isOpen, onClose, role, onDuplicate, isLoading }) =
                 className="w-4 h-4 rounded border-[#EAE6DF] text-[#C8A45D] focus:ring-[#C8A45D]/30"
               />
               <Shield size={16} className="text-[#7A7A7A]" />
-              Copier les permissions
+              {t('roles.modals.copyPermissions')}
             </label>
             <label className="flex items-center gap-2 text-sm text-[#2B2B2B] cursor-pointer">
               <input
@@ -104,7 +106,7 @@ const DuplicateRoleModal = ({ isOpen, onClose, role, onDuplicate, isLoading }) =
                 className="w-4 h-4 rounded border-[#EAE6DF] text-[#C8A45D] focus:ring-[#C8A45D]/30"
               />
               <Users size={16} className="text-[#7A7A7A]" />
-              Copier les utilisateurs
+              {t('roles.modals.copyUsers')}
             </label>
           </div>
 
@@ -114,7 +116,7 @@ const DuplicateRoleModal = ({ isOpen, onClose, role, onDuplicate, isLoading }) =
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#7A7A7A] border border-[#EAE6DF] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
@@ -122,7 +124,7 @@ const DuplicateRoleModal = ({ isOpen, onClose, role, onDuplicate, isLoading }) =
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Copy size={16} />
-              {isLoading ? 'Duplication...' : 'Dupliquer'}
+              {isLoading ? t('roles.modals.duplicating') : t('roles.modals.duplicate')}
             </button>
           </div>
         </form>

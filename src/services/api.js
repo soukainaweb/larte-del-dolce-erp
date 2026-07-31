@@ -4,6 +4,7 @@ import i18n from '../i18n';
 import { AUTH_TOKEN_KEY, clearAuthStorage, getStoredToken } from '../utils/authStorage';
 import { dispatchAppToast } from '../utils/toastBus';
 import { extractValidationMessage } from '../utils/apiHelpers';
+import { translateApiErrorMessage } from '../utils/apiErrorTranslator';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -53,6 +54,16 @@ api.interceptors.response.use(
         error.validationMessage = validationMessage;
         error.message = validationMessage;
       }
+    }
+
+    if (status === 401) {
+      const authMessage =
+        translateApiErrorMessage(data?.message) ||
+        i18n.t('errors.unauthorized', {
+          defaultValue: 'يرجى تسجيل الدخول للوصول لهذه الصفحة.',
+        });
+      error.authMessage = authMessage;
+      error.message = authMessage;
     }
 
     if (status >= 500) {

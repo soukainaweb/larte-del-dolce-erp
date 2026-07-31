@@ -526,7 +526,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="cash">Espèces</option>
+                <option value="cash">{t('common.paymentMethods.cash')}</option>
                 <option value="card">Carte bancaire</option>
                 <option value="transfer">Virement</option>
                 <option value="online">En ligne</option>
@@ -558,7 +558,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#B8863B] rounded-lg hover:bg-[#A67937] transition-colors"
               >
                 <Plus size={14} />
-                Ajouter produit
+                {t('orders.fields.addProduct')}
               </button>
             </div>
             <div className="space-y-3">
@@ -566,7 +566,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                 <div key={index} className="bg-white rounded-lg p-3 border border-[#ECE8E1]">
                   <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                     <div className="col-span-2 md:col-span-1">
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Produit</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{t('common.product')}</label>
                       <input
                         type="text"
                         value={product.name}
@@ -602,7 +602,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Remise (%)</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{t('orders.fields.discount')}</label>
                       <input
                         type="number"
                         value={product.discount}
@@ -635,14 +635,14 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
 
           {/* Summary */}
           <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1]">
-            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">Résumé</h4>
+            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{t('orders.summary.title')}</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-[#6D6D6D]">Sous-total</span>
+                <span className="text-[#6D6D6D]">{t('orders.summary.subtotal')}</span>
                 <span className="font-medium text-[#3D2F24]">{totals.subtotal.toFixed(2)} DH</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#6D6D6D]">Remise totale</span>
+                <span className="text-[#6D6D6D]">{t('orders.summary.totalDiscount')}</span>
                 <span className="font-medium text-[#3D2F24]">{totals.totalDiscount.toFixed(2)} DH</span>
               </div>
               <div className="flex justify-between">
@@ -654,7 +654,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                 <span className="font-medium text-[#3D2F24]">{totals.delivery.toFixed(2)} DH</span>
               </div>
               <div className="flex justify-between pt-2 border-t border-[#ECE8E1]">
-                <span className="font-bold text-[#3D2F24]">Total TTC</span>
+                <span className="font-bold text-[#3D2F24]">{t('orders.summary.grandTotal')}</span>
                 <span className="font-bold text-[#3D2F24] text-lg">{totals.total.toFixed(2)} DH</span>
               </div>
             </div>
@@ -704,7 +704,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
               onClick={onClose}
               className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Annuler
+              {tc('cancel')}
             </button>
             <button
               type="submit"
@@ -741,21 +741,18 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, invoice, isLoading }) => {
           <Trash2 size={28} className="text-rose-500" />
         </div>
         <h3 className="text-lg font-bold text-[#3D2F24] text-center" style={{ fontFamily: FONT_HEADING }}>
-          Supprimer la facture ?
+          {t('invoices.modals.deleteTitle')}
         </h3>
         <p className="text-sm text-[#6D6D6D] text-center mt-2">
           {isPaid ? (
             <>
-              <span className="text-rose-500 font-semibold">⚠️ Attention :</span><br />
-              Cette facture est déjà payée. Vous ne pouvez pas la supprimer.
+              <span className="text-rose-500 font-semibold">⚠️ {tc('attention')}</span><br />
+              {t('invoices.modals.deletePaidWarning')}
             </>
           ) : (
             <>
-              Vous êtes sur le point de supprimer la facture{' '}
-              <span className="font-semibold text-[#3D2F24]">
-                {invoice?.invoiceNumber}
-              </span>.
-              Cette action est irréversible.
+              {t('invoices.modals.deleteMessage', { number: invoice?.invoiceNumber })}{' '}
+              {tc('irreversibleAction')}
             </>
           )}
         </p>
@@ -764,7 +761,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, invoice, isLoading }) => {
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
           >
-            Annuler
+            {tc('cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -800,7 +797,7 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails de la facture
+            {t('invoices.modals.detailsTitle')}
           </h3>
           <button
             onClick={onClose}
@@ -882,7 +879,7 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
             </div>
             <div className="mt-3 pt-3 border-t border-[#ECE8E1] space-y-1 text-sm">
               <div className="flex justify-between">
-                <span className="text-[#6D6D6D]">Sous-total</span>
+                <span className="text-[#6D6D6D]">{t('orders.summary.subtotal')}</span>
                 <span className="text-[#3D2F24]">{invoice.subtotal?.toFixed(2)} DH</span>
               </div>
               <div className="flex justify-between">
@@ -894,7 +891,7 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
                 <span className="text-[#3D2F24]">{invoice.deliveryFees?.toFixed(2)} DH</span>
               </div>
               <div className="flex justify-between pt-1 border-t border-[#ECE8E1] font-bold">
-                <span className="text-[#3D2F24]">Total TTC</span>
+                <span className="text-[#3D2F24]">{t('orders.summary.grandTotal')}</span>
                 <span className="text-[#3D2F24]">{invoice.totalAmount.toFixed(2)} DH</span>
               </div>
             </div>
@@ -911,7 +908,7 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
-            Fermer
+            {tc('close')}
           </button>
         </div>
       </motion.div>
@@ -1157,7 +1154,7 @@ const InvoicesPage = () => {
           <ExportButtons
             data={filteredInvoices}
             columns={columns}
-            title="Liste des factures"
+            title="{t('invoices.export.title')}"
             subtitle={`${filteredInvoices.length} factures - Total: ${kpis.revenue.toLocaleString()} DH`}
             filename={`factures_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
@@ -1171,7 +1168,7 @@ const InvoicesPage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <Plus size={18} />
-            Nouvelle facture
+            {t('invoices.addInvoice')}
           </button>
           <div className="flex items-center gap-1 border border-[#ECE8E1] rounded-xl bg-white p-1">
             <button
@@ -1228,7 +1225,7 @@ const InvoicesPage = () => {
               onChange={(e) => setPaymentStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les paiements</option>
+              <option value="all">{t('common.allPayments')}</option>
               {uniquePaymentStatuses.map(status => (
                 <option key={status} value={status}>
                   {status === 'paid' ? t('common.labels.paidAmount') :
@@ -1243,7 +1240,7 @@ const InvoicesPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
+              <option value="all">{t('common.allStatuses')}</option>
               <option value="draft">Brouillon</option>
               <option value="sent">Envoyée</option>
               <option value="paid">Payée</option>
@@ -1278,7 +1275,7 @@ const InvoicesPage = () => {
                     <td colSpan="10" className="text-center py-8">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm text-[#6D6D6D]">Chargement des factures...</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.invoices') })}</p>
                       </div>
                     </td>
                   </tr>
@@ -1287,12 +1284,12 @@ const InvoicesPage = () => {
                     <td colSpan="10" className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <FileText size={40} className="text-[#ECE8E1]" />
-                        <p className="text-sm text-[#6D6D6D]">Aucune facture trouvée</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('invoices.empty')}</p>
                         <button
                           onClick={() => setIsCreateModalOpen(true)}
                           className="text-sm text-[#B8863B] font-medium hover:underline"
                         >
-                          Créer une facture
+                          {t('invoices.addInvoice')}
                         </button>
                       </div>
                     </td>
@@ -1330,12 +1327,12 @@ const InvoicesPage = () => {
           {isLoading ? (
             <div className="col-span-full flex flex-col items-center justify-center py-8 gap-3">
               <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-[#6D6D6D]">Chargement des factures...</p>
+              <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.invoices') })}</p>
             </div>
           ) : paginatedInvoices.length === 0 ? (
             <div className="col-span-full bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
               <FileText size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-              <p className="text-sm text-[#6D6D6D]">Aucune facture trouvée</p>
+              <p className="text-sm text-[#6D6D6D]">{t('invoices.empty')}</p>
             </div>
           ) : (
             paginatedInvoices.map((invoice) => (
@@ -1365,12 +1362,12 @@ const InvoicesPage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des factures...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.invoices') })}</p>
           </div>
         ) : paginatedInvoices.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <FileText size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucune facture trouvée</p>
+            <p className="text-sm text-[#6D6D6D]">{t('invoices.empty')}</p>
           </div>
         ) : (
           paginatedInvoices.map((invoice) => (

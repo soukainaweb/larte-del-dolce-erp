@@ -1,5 +1,6 @@
 import { normalizeRole, extractUserPermissions } from './roleMapping';
 import i18n from '../i18n';
+import { translateApiErrorMessage } from './apiErrorTranslator';
 
 /**
  * Unwrap Laravel ApiResponse envelope from an axios response or plain body.
@@ -171,20 +172,20 @@ export const normalizeCustomerList = (payload) => {
 export const extractValidationMessage = (data) => {
   if (!data) return null;
 
-  if (data.message && typeof data.message === 'string') {
-    return data.message;
-  }
+  let message = null;
 
-  if (data.errors && typeof data.errors === 'object') {
+  if (data.message && typeof data.message === 'string') {
+    message = data.message;
+  } else if (data.errors && typeof data.errors === 'object') {
     const firstField = Object.keys(data.errors)[0];
     if (firstField && Array.isArray(data.errors[firstField])) {
-      return data.errors[firstField][0];
+      message = data.errors[firstField][0];
+    } else {
+      message = Object.values(data.errors).flat()[0] || null;
     }
-    const first = Object.values(data.errors).flat()[0];
-    if (first) return first;
   }
 
-  return null;
+  return translateApiErrorMessage(message);
 };
 
 /**
@@ -207,8 +208,8 @@ export const normalizeActivityLog = (log) => {
     : null;
 
   const statusMap = {
-    success: 'Succès',
-    failed: 'Echec',
+    success: i18n.t('common.success'),
+    failed: i18n.t('common.error'),
   };
 
   return {
@@ -251,11 +252,11 @@ export const getApiErrorMessage = (error, fallback) => {
   if (!error) return defaultFallback;
 
   if (error.validationMessage) {
-    return error.validationMessage;
+    return translateApiErrorMessage(error.validationMessage);
   }
 
   if (error.serverMessage) {
-    return error.serverMessage;
+    return translateApiErrorMessage(error.serverMessage);
   }
 
   // Network error (no response)
@@ -272,26 +273,26 @@ export const getApiErrorMessage = (error, fallback) => {
   const { status, data } = error.response;
 
   if (status === 401) {
-    return data?.message || i18n.t('errors.unauthorized');
+    return translateApiErrorMessage(data?.message) || i18n.t('errors.unauthorized');
   }
 
   if (status === 403) {
-    return data?.message || i18n.t('errors.forbidden');
+    return translateApiErrorMessage(data?.message) || i18n.t('errors.forbidden');
   }
 
   if (status === 404) {
-    return data?.message || i18n.t('errors.notFound');
+    return translateApiErrorMessage(data?.message) || i18n.t('errors.notFound');
   }
 
   if (status === 422) {
-    return extractValidationMessage(data) || data?.message || i18n.t('errors.invalidData');
+    return extractValidationMessage(data) || translateApiErrorMessage(data?.message) || i18n.t('errors.invalidData');
   }
 
   if (status >= 500) {
-    return data?.message || i18n.t('errors.serverConnectionError');
+    return translateApiErrorMessage(data?.message) || i18n.t('errors.serverConnectionError');
   }
 
-  return data?.message || defaultFallback;
+  return translateApiErrorMessage(data?.message) || defaultFallback;
 };
 
 /**
@@ -403,13 +404,13 @@ export const normalizeProfilePermissions = (payload) => {
 };
 
 const USER_STATUS_LABELS = {
-  online: 'En ligne',
-  offline: 'Hors ligne',
-  away: 'Absent',
-  active: 'Actif',
-  inactive: 'Inactif',
-  suspended: 'Suspendu',
-  locked: 'Verrouillé',
+  online: i18n.t('common.statuses.online'),
+  offline: i18n.t('common.statuses.offline'),
+  away: i18n.t('common.statuses.away'),
+  active: i18n.t('common.active'),
+  inactive: i18n.t('common.inactive'),
+  suspended: i18n.t('common.statuses.suspended'),
+  locked: i18n.t('common.statuses.locked'),
 };
 
 /**

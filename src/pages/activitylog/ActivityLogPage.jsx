@@ -985,7 +985,7 @@ const ActivityLogPage = () => {
               onChange={(e) => setUserFilter(e.target.value)}
               className="px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les utilisateurs</option>
+              <option value="all">{t('common.allUsers')}</option>
               {uniqueUsers.map(user => (
                 <option key={user} value={user}>{user}</option>
               ))}
@@ -996,7 +996,7 @@ const ActivityLogPage = () => {
               onChange={(e) => setModuleFilter(e.target.value)}
               className="px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les modules</option>
+              <option value="all">{t('common.allModules')}</option>
               {uniqueModules.map(module => (
                 <option key={module} value={module}>{module}</option>
               ))}
@@ -1018,7 +1018,7 @@ const ActivityLogPage = () => {
               onChange={(e) => setLevelFilter(e.target.value)}
               className="px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les niveaux</option>
+              <option value="all">{t('common.allLevels')}</option>
               {uniqueLevels.map(level => (
                 <option key={level} value={level}>
                   {level === 'info' ? 'Information' :
@@ -1088,8 +1088,8 @@ const ActivityLogPage = () => {
                   <td colSpan="10" className="px-3 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <History size={48} className="text-[#D1CBC0]" />
-                      <h3 className="text-lg font-bold text-[#3D2F24]">Aucune activité</h3>
-                      <p className="text-sm text-[#6D6D6D]">Aucune activité ne correspond à vos critères</p>
+                      <h3 className="text-lg font-bold text-[#3D2F24]">{t('activityLog.empty')}</h3>
+                      <p className="text-sm text-[#6D6D6D]">{t('activityLog.empty')} ne correspond à vos critères</p>
                       <button
                         onClick={handleResetFilters}
                         className="text-sm text-[#B8863B] font-medium hover:underline"

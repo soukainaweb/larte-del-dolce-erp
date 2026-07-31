@@ -938,7 +938,7 @@ const PaymentsPage = () => {
           <ExportButtons
             data={filteredPayments}
             columns={columns}
-            title="Liste des paiements"
+            title="{t('payments.export.title')}"
             subtitle={`${filteredPayments.length} paiements - Total: ${kpis.total.toLocaleString()} ${CURRENCY}`}
             filename={`paiements_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
@@ -984,7 +984,7 @@ const PaymentsPage = () => {
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
         <KPICard icon={CreditCard} title="Total des paiements" value={kpis.total} color="blue" isCurrency />
         <KPICard icon={Calendar} title="Reçu aujourd'hui" value={kpis.today} color="emerald" isCurrency />
-        <KPICard icon={Clock} title="En attente" value={kpis.pending} color="amber" isCurrency />
+        <KPICard icon={Clock} title={t('common.pending')} value={kpis.pending} color="amber" isCurrency />
         <KPICard icon={AlertCircle} title="Partiellement payées" value={kpis.partiallyPaid} color="gold" />
         <KPICard icon={AlertCircle} title="En retard" value={kpis.overdue} color="rose" isCurrency />
         <KPICard icon={TrendingUp} title="Revenu du mois" value={kpis.monthRevenue} color="purple" isCurrency />
@@ -1009,7 +1009,7 @@ const PaymentsPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Tous les statuts</option>
+              <option value="all">{t('common.allStatuses')}</option>
               {uniqueStatuses.map(status => (
                 <option key={status} value={status}>
                   {status === 'paid' ? t('common.labels.paidAmount') :
@@ -1047,7 +1047,7 @@ const PaymentsPage = () => {
                     <td colSpan="9" className="text-center py-8">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm text-[#6D6D6D]">Chargement des paiements...</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.payments') })}</p>
                       </div>
                     </td>
                   </tr>
@@ -1056,12 +1056,12 @@ const PaymentsPage = () => {
                     <td colSpan="9" className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <CreditCard size={40} className="text-[#ECE8E1]" />
-                        <p className="text-sm text-[#6D6D6D]">Aucun paiement trouvé</p>
+                        <p className="text-sm text-[#6D6D6D]">{t('payments.empty')}</p>
                         <button
                           onClick={() => setIsCreateModalOpen(true)}
                           className="text-sm text-[#B8863B] font-medium hover:underline"
                         >
-                          Enregistrer un paiement
+                          {t('payments.addPayment')}
                         </button>
                       </div>
                     </td>
@@ -1099,12 +1099,12 @@ const PaymentsPage = () => {
           {isLoading ? (
             <div className="col-span-full flex flex-col items-center justify-center py-8 gap-3">
               <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-[#6D6D6D]">Chargement des paiements...</p>
+              <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.payments') })}</p>
             </div>
           ) : paginatedPayments.length === 0 ? (
             <div className="col-span-full bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
               <CreditCard size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-              <p className="text-sm text-[#6D6D6D]">Aucun paiement trouvé</p>
+              <p className="text-sm text-[#6D6D6D]">{t('payments.empty')}</p>
             </div>
           ) : (
             paginatedPayments.map((payment) => (
@@ -1134,12 +1134,12 @@ const PaymentsPage = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[#6D6D6D]">Chargement des paiements...</p>
+            <p className="text-sm text-[#6D6D6D]">{t('common.loadingModule', { module: t('nav.payments') })}</p>
           </div>
         ) : paginatedPayments.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <CreditCard size={40} className="text-[#ECE8E1] mx-auto mb-3" />
-            <p className="text-sm text-[#6D6D6D]">Aucun paiement trouvé</p>
+            <p className="text-sm text-[#6D6D6D]">{t('payments.empty')}</p>
           </div>
         ) : (
           paginatedPayments.map((payment) => (

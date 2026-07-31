@@ -95,10 +95,124 @@
     "thisWeek": "هذا الأسبوع",
     "thisMonth": "هذا الشهر",
     "thisYear": "هذا العام",
+    "yesterday": "أمس",
+    "thisQuarter": "هذا الربع",
+    "customPeriod": "فترة مخصصة",
     "custom": "مخصص",
+    "apply": "تطبيق",
+    "current": "الحالي",
+    "target": "الهدف",
+    "performance": "الأداء",
+    "indicator": "المؤشر",
+    "noNotes": "لا توجد ملاحظات",
+    "vsPreviousMonth": "مقابل الشهر السابق",
+    "unknownError": "خطأ غير معروف",
+    "user": "المستخدم",
+    "modify": "تعديل",
+    "test": "اختبار",
+    "reset": "إعادة تعيين",
+    "start": "البداية",
+    "end": "النهاية",
+    "capacity": "السعة",
+    "avgTime": "الوقت المتوسط",
+    "minStock": "الحد الأدنى للمخزون",
+    "workingDays": "أيام العمل",
+    "unitsPerDay": "وحدات/يوم",
+    "revenue": "الإيرادات",
+    "profit": "الربح",
+    "sales": "المبيعات",
+    "growth": "النمو",
+    "forecast": "التوقعات",
+    "actual": "فعلي",
+    "expenses": "المصروفات",
+    "loyalty": "الولاء",
+    "yield": "الإنتاجية",
+    "successRate": "معدل النجاح",
+    "avgBasket": "متوسط السلة",
+    "inProduction": "قيد الإنتاج",
+    "outOfStock": "نفاد المخزون",
+    "available": "متاح",
+    "new": "جدد",
+    "loyal": "مخلصون",
+    "delayed": "متأخرة",
+    "onTime": "في الوقت",
+    "done": "منجزة",
+    "generated": "تم إنشاؤها",
+    "inProgress": "قيد التنفيذ",
+    "allDeleted": "تم حذف الكل",
+    "totalAmount": "المبلغ الإجمالي",
+    "currentValue": "القيمة الحالية",
+    "previousValue": "القيمة السابقة",
+    "evolution": "التطور",
+    "breadcrumbReports": "التقارير والإحصائيات",
+    "advancedFilters": "فلاتر متقدمة",
+    "searchCustomer": "البحث عن عميل...",
+    "searchProduct": "البحث عن منتج...",
+    "payment": "الدفع",
+    "allCities": "جميع المدن",
+    "notStarted": "لم تبدأ",
+    "finished": "منتهية",
+    "printing": "جاري الطباعة...",
+    "printStarted": "تم بدء الطباعة",
+    "infoUpdated": "تم تحديث المعلومات بنجاح",
+    "settingsSaved": "تم حفظ جميع الإعدادات بنجاح",
+    "settingsRestored": "تمت استعادة الإعدادات بنجاح",
+    "productionUpdated": "تم تحديث إعدادات الإنتاج",
+    "ordersUpdated": "تم تحديث إعدادات الطلبات",
+    "billingUpdated": "تم تحديث إعدادات الفوترة",
+    "notificationsSaved": "تم حفظ تفضيلات الإشعارات",
+    "securityUpdated": "تم تحديث إعدادات الأمان",
+    "productionReset": "تمت إعادة تعيين إعدادات الإنتاج",
+    "ordersReset": "تمت إعادة تعيين إعدادات الطلبات",
+    "twoFactorEnabled": "تم تفعيل المصادقة الثنائية بنجاح",
+    "twoFactorDisabled": "تم إلغاء المصادقة الثنائية",
+    "allUsersDisconnected": "تم قطع اتصال جميع المستخدمين",
+    "activityLogExported": "تم تصدير سجل النشاط بنجاح",
+    "activityLogExporting": "جاري تصدير سجل النشاط...",
+    "infoCopied": "تم نسخ المعلومات إلى الحافظة",
+    "infoReadyToCopy": "المعلومات جاهزة للنسخ",
+    "loadError": "خطأ أثناء تحميل البيانات",
+    "exportInProgress": "جاري التصدير {{type}}...",
+    "exportFileSuccess": "تم تصدير {{filename}} بنجاح ({{count}} صف)",
+    "exportFileError": "خطأ أثناء التصدير: {{message}}",
+    "periodChanged": "تم تغيير الفترة: {{period}}",
+    "productionResumed": "تم استئناف الإنتاج بنجاح",
+    "deliveryExported": "تم تصدير التسليم {{id}} بنجاح",
+    "invoiceExported": "تم تصدير الفاتورة {{id}} بنجاح",
+    "reportPrinting": "جاري طباعة التقرير \"{{name}}\"...",
+    "productionTestDone": "اكتمل اختبار الإنتاج! النتائج: 500 وحدة في 4.5 س",
+    "invoicePdfExported": "تم تصدير الفاتورة بصيغة PDF بنجاح",
+    "viewingActivity": "عرض النشاط #{{id}}",
+    "viewingActiveConnections": "عرض الاتصالات النشطة",
+    "orderHistory": "سجل تعديلات الطلبات",
+    "updateInfo": "حدّث المعلومات",
+    "testSimulation": "اختبار المحاكاة",
+    "verifyBeforeTest": "تحقق من الإعدادات قبل بدء الاختبار",
+    "restoreSettings": "استعادة الإعدادات",
+    "disconnectAllUsers": "قطع اتصال جميع المستخدمين",
+    "companyInfoExport": "تصدير معلومات الشركة",
+    "companyInfoTitle": "معلومات الشركة",
+    "editCompanyInfo": "تعديل معلومات الشركة",
+    "updateCompanyInfo": "حدّث معلومات شركتك",
+    "editProductionSettings": "تعديل إعدادات الإنتاج",
+    "configureProduction": "اضبط إعدادات الإنتاج",
+    "productionTest": "اختبار الإنتاج",
+    "simulateProduction": "محاكاة الإنتاج بالإعدادات الحالية",
+    "editOrderSettings": "تعديل إعدادات الطلبات",
+    "configureOrders": "اضبط إعدادات الطلبات",
+    "editBillingSettings": "تعديل إعدادات الفوترة",
+    "configureBilling": "اضبط إعدادات الفوترة",
+    "editNotificationSettings": "تعديل إعدادات الإشعارات",
+    "configureNotifications": "اضبط قنوات الإشعارات والتفضيلات",
+    "editSecuritySettings": "تعديل إعدادات الأمان",
+    "configureSecurity": "اضبط إعدادات أمان النظام",
+    "value": "القيمة",
+    "minutes": "دقيقة",
+    "currency": "العملة",
     "statuses": {
       "online": "متصل",
       "offline": "غير متصل",
+      "away": "غائب",
       "suspended": "موقوف",
       "locked": "مقفل",
       "validated": "تم التحقق",
@@ -133,6 +247,12 @@
     "allStatuses": "جميع الحالات",
     "allRoles": "جميع الأدوار",
     "allTypes": "جميع الأنواع",
+    "allCategories": "جميع الفئات",
+    "allUsers": "جميع المستخدمين",
+    "allModules": "جميع الوحدات",
+    "allLevels": "جميع المستويات",
+    "allPayments": "جميع المدفوعات",
+    "salesRep": "المسؤول / البائع",
     "saving": "جاري الحفظ...",
     "deleting": "جاري الحذف...",
     "notProvided": "غير محدد",
@@ -156,6 +276,11 @@
     "product": "المنتج",
     "customer": "العميل",
     "taxId": "الرقم الضريبي",
+    "company": "الشركة",
+    "contactPerson": "جهة الاتصال",
+    "contact": "جهة الاتصال",
+    "paymentTermsLabel": "شروط الدفع",
+    "attention": "تنبيه:",
     "website": "الموقع الإلكتروني",
     "activate": "تفعيل",
     "deactivate": "إلغاء التفعيل",
@@ -189,7 +314,8 @@
       "categoryDescription": "وصف الفئة",
       "currentPassword": "كلمة المرور الحالية",
       "newPassword": "كلمة المرور الجديدة",
-      "confirmNewPassword": "تأكيد كلمة المرور الجديدة"
+      "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
+      "supplierAddress": "العنوان الكامل للمورد..."
     },
     "reference": "المرجع",
     "supplier": "المورد",
@@ -197,6 +323,7 @@
     "validation": {
       "nameRequired": "الاسم مطلوب",
       "emailRequired": "البريد الإلكتروني مطلوب",
+      "phoneRequired": "الهاتف مطلوب",
       "priceRequired": "السعر مطلوب",
       "stockRequired": "المخزون مطلوب",
       "categoryRequired": "الفئة مطلوبة",
@@ -276,6 +403,9 @@
     "helpCenter": "مركز المساعدة",
     "documentation": "التوثيق",
     "logout": "تسجيل الخروج",
+    "closeMenu": "إغلاق القائمة",
+    "expandMenu": "توسيع القائمة",
+    "collapseMenu": "طي القائمة",
     "groups": {
       "gestion": "الإدارة",
       "stock": "المخزون والإنتاج",
@@ -719,13 +849,28 @@
     "title": "التوصيل",
     "subtitle": "تتبع وإدارة التوصيل",
     "search": "البحث عن توصيل...",
-    "addDelivery": "توصيل جديد",
+    "addDelivery": "إضافة توصيل",
+    "empty": "لم يتم العثور على توصيلات",
+    "emptyShort": "لا توجد توصيلات",
+    "export": {
+      "title": "قائمة التوصيلات"
+    },
+    "modals": {
+      "editTitle": "تعديل التوصيل",
+      "deleteTitle": "حذف التوصيل؟",
+      "detailsTitle": "تفاصيل التوصيل",
+      "deleteMessage": "أنت على وشك حذف التوصيل {{id}}.",
+      "deleteDeliveredWarning": "هذا التوصيل مكتمل بالفعل. لا يمكنك حذفه.",
+      "deleteInProgressWarning": "هذا التوصيل قيد التنفيذ. لا يمكنك حذفه."
+    },
     "kpi": {
       "total": "إجمالي التوصيلات",
       "pending": "قيد الانتظار",
       "inTransit": "في الطريق",
       "delivered": "تم التوصيل",
-      "failed": "فشل"
+      "failed": "فشل",
+      "inProgress": "قيد التنفيذ",
+      "cancelled": "ملغاة"
     },
     "table": {
       "deliveryNumber": "رقم التوصيل",
@@ -813,9 +958,28 @@
     "title": "المخزون",
     "subtitle": "إدارة المخزون",
     "search": "البحث عن منتج...",
+    "addMovement": "إضافة حركة مخزون",
+    "empty": "لم يتم العثور على منتجات",
     "modals": {
       "deleteTitle": "حذف الصنف؟",
-      "deleteMessage": "أنت على وشك حذف \"{{name}}\"."
+      "deleteMessage": "أنت على وشك حذف \"{{name}}\".",
+      "detailsTitle": "تفاصيل المخزون"
+    },
+    "addProduct": "إضافة منتج",
+    "types": {
+      "finished": "منتج نهائي",
+      "raw": "مادة خام",
+      "packaging": "تغليف"
+    },
+    "status": {
+      "available": "متوفر",
+      "low_stock": "مخزون منخفض",
+      "out_of_stock": "نفاد المخزون",
+      "expired": "منتهي الصلاحية"
+    },
+    "export": {
+      "title": "قائمة المنتجات في المخزون",
+      "subtitle": "{{count}} منتج - القيمة الإجمالية: {{value}}"
     },
     "messages": {
       "deleted": "تم حذف الصنف بنجاح",
@@ -826,7 +990,8 @@
       "inStock": "متوفر",
       "lowStock": "مخزون منخفض",
       "outOfStock": "نفاد المخزون",
-      "totalValue": "القيمة الإجمالية"
+      "totalValue": "القيمة الإجمالية",
+      "totalStock": "إجمالي المخزون"
     },
     "table": {
       "product": "المنتج",
@@ -842,6 +1007,34 @@
     "title": "المستودع",
     "subtitle": "إدارة المستودعات",
     "search": "البحث عن مستودع...",
+    "addWarehouse": "إضافة مستودع",
+    "empty": "لم يتم العثور على مستودعات",
+    "export": {
+      "title": "قائمة المستودعات",
+      "subtitle": "{{count}} مستودع - القيمة الإجمالية: {{value}}"
+    },
+    "modals": {
+      "editTitle": "تعديل المستودع",
+      "deleteTitle": "حذف المستودع؟",
+      "detailsTitle": "تفاصيل المستودع",
+      "deleteMessage": "أنت على وشك حذف المستودع {{name}}.",
+      "deleteWarning": "يحتوي هذا المستودع على {{count}} منتج. لا يمكنك حذفه."
+    },
+    "status": {
+      "maintenance": "صيانة"
+    },
+    "fields": {
+      "defaultWarehouse": "المستودع الرئيسي",
+      "primary": "رئيسي",
+      "stockValue": "قيمة المخزون",
+      "manager": "المسؤول",
+      "notAssigned": "غير مُسند"
+    },
+    "types": {
+      "raw": "مواد خام",
+      "finished": "منتجات نهائية",
+      "packaging": "تغليف"
+    },
     "kpi": {
       "totalWarehouses": "إجمالي المستودعات",
       "active": "نشطة",
@@ -862,7 +1055,24 @@
     "title": "الموردون",
     "subtitle": "إدارة الموردين",
     "search": "البحث عن مورد...",
-    "addSupplier": "مورد جديد",
+    "addSupplier": "إضافة مورد",
+    "empty": "لم يتم العثور على موردين",
+    "export": {
+      "title": "قائمة الموردين",
+      "subtitle": "{{count}} مورد"
+    },
+    "modals": {
+      "editTitle": "تعديل المورد",
+      "deleteTitle": "حذف المورد؟",
+      "detailsTitle": "تفاصيل المورد",
+      "deleteMessage": "أنت على وشك حذف المورد {{name}}.",
+      "deleteWarning": "هذا المورد لديه طلبات مرتبطة ({{amount}}). لا يمكنك حذفه."
+    },
+    "fields": {
+      "totalOrders": "إجمالي الطلبات",
+      "totalAmount": "المبلغ الإجمالي",
+      "companyLabel": "الشركة:"
+    },
     "types": {
       "raw": "مواد خام",
       "packaging": "تغليف",
@@ -884,7 +1094,11 @@
       "phone": "الهاتف",
       "products": "المنتجات",
       "balance": "الرصيد",
-      "status": "الحالة"
+      "status": "الحالة",
+      "company": "الشركة",
+      "supplier": "المورد",
+      "purchases": "المشتريات",
+      "totalPurchases": "إجمالي المشتريات"
     }
   },
   "invoices": {
@@ -893,6 +1107,7 @@
     "search": "البحث عن فاتورة...",
     "addInvoice": "فاتورة جديدة",
     "empty": "لم يتم العثور على فواتير",
+    "emptyShort": "لا توجد فواتير",
     "export": {
       "title": "قائمة الفواتير"
     },
@@ -900,7 +1115,9 @@
       "addTitle": "فاتورة جديدة",
       "editTitle": "تعديل الفاتورة",
       "deleteTitle": "حذف الفاتورة؟",
-      "detailsTitle": "تفاصيل الفاتورة"
+      "detailsTitle": "تفاصيل الفاتورة",
+      "deleteMessage": "أنت على وشك حذف الفاتورة {{number}}.",
+      "deletePaidWarning": "هذه الفاتورة مدفوعة بالفعل. لا يمكنك حذفها."
     },
     "fields": {
       "paidAmount": "المبلغ المدفوع",
@@ -930,7 +1147,11 @@
     "title": "المدفوعات",
     "subtitle": "تتبع المدفوعات",
     "search": "البحث عن دفعة...",
-    "addPayment": "دفعة جديدة",
+    "addPayment": "تسجيل دفعة",
+    "empty": "لم يتم العثور على مدفوعات",
+    "export": {
+      "title": "قائمة المدفوعات"
+    },
     "filters": {
       "allPayments": "جميع المدفوعات"
     },
@@ -981,7 +1202,11 @@
     "title": "المصروفات",
     "subtitle": "إدارة المصروفات",
     "search": "البحث عن مصروف...",
-    "addExpense": "مصروف جديد",
+    "addExpense": "إضافة مصروف",
+    "empty": "لم يتم العثور على مصروفات",
+    "export": {
+      "title": "قائمة المصروفات"
+    },
     "kpi": {
       "total": "إجمالي المصروفات",
       "thisMonth": "هذا الشهر",
@@ -1037,7 +1262,17 @@
     "title": "الإنتاج",
     "subtitle": "تتبع الإنتاج",
     "search": "البحث عن إنتاج...",
-    "addProduction": "إنتاج جديد",
+    "addProduction": "إضافة إنتاج",
+    "empty": "لم يتم العثور على عمليات إنتاج",
+    "modals": {
+      "editTitle": "تعديل الإنتاج",
+      "deleteTitle": "حذف الإنتاج؟",
+      "detailsTitle": "تفاصيل الإنتاج",
+      "deleteMessage": "أنت على وشك حذف الإنتاج {{name}}."
+    },
+    "export": {
+      "title": "قائمة الإنتاج"
+    },
     "kpi": {
       "total": "إجمالي أوامر الإنتاج",
       "inProgress": "قيد التنفيذ",
@@ -1059,6 +1294,7 @@
     "title": "التقارير",
     "subtitle": "تقارير النشاط",
     "search": "بحث...",
+    "empty": "لا توجد تقارير",
     "export": {
       "orderTitle": "تفاصيل الطلب",
       "invoiceTitle": "تفاصيل الفاتورة",
@@ -1067,7 +1303,10 @@
       "excelSuccess": "تم تصدير التقرير بصيغة Excel بنجاح",
       "printStarted": "جاري الطباعة...",
       "downloadError": "خطأ أثناء التنزيل",
-      "reportDownloaded": "تم تنزيل التقرير \"{{name}}\" بنجاح"
+      "reportDownloaded": "تم تنزيل التقرير \"{{name}}\" بنجاح",
+      "statusDelivered": "الحالة: تم التوصيل",
+      "statusInProduction": "الحالة: قيد الإنتاج",
+      "statusPending": "الحالة: قيد الانتظار"
     },
     "messages": {
       "refreshed": "تم تحديث البيانات بنجاح",
@@ -1094,7 +1333,29 @@
       "totalReports": "إجمالي التقارير",
       "generated": "تم إنشاؤها",
       "scheduled": "مجدولة",
-      "thisMonth": "هذا الشهر"
+      "thisMonth": "هذا الشهر",
+      "revenue": "الإيرادات",
+      "totalOrders": "إجمالي الطلبات",
+      "products": "المنتجات",
+      "customers": "العملاء",
+      "growth": "النمو",
+      "invoices": "الفواتير",
+      "deliveries": "التوصيل",
+      "inProduction": "قيد الإنتاج",
+      "completed": "مكتملة",
+      "avgBasket": "متوسط السلة",
+      "stockOut": "نفاد المخزون",
+      "available": "متاح",
+      "newCustomers": "جدد",
+      "loyalty": "الولاء",
+      "avgTime": "الوقت المتوسط",
+      "yield": "الإنتاجية",
+      "paidInvoices": "مدفوعة",
+      "unpaidInvoices": "غير مدفوعة",
+      "totalInvoices": "إجمالي الفواتير",
+      "completedDeliveries": "تسليمات مكتملة",
+      "lateDeliveries": "متأخرة",
+      "successRate": "معدل النجاح"
     },
     "table": {
       "name": "الاسم",
@@ -1103,6 +1364,93 @@
       "generatedBy": "أنشأه",
       "date": "التاريخ",
       "format": "التنسيق"
+    },
+    "allOrdersDeleted": "تم حذف جميع الطلبات",
+    "allDeliveriesDeleted": "تم حذف جميع التسليمات",
+    "allReportsDeleted": "تم حذف جميع التقارير",
+    "reportsCount": "{{count}} تقارير",
+    "generatedCount": "{{count}} تم إنشاؤها",
+    "inProgressCount": "{{count}} قيد التنفيذ",
+    "tabs": {
+      "overview": "نظرة عامة",
+      "orders": "الطلبات",
+      "sales": "المبيعات",
+      "production": "الإنتاج",
+      "products": "المنتجات",
+      "customers": "العملاء",
+      "invoices": "الفواتير",
+      "deliveries": "التوصيل",
+      "analytics": "التحليلات",
+      "reports": "التقارير"
+    },
+    "charts": {
+      "salesEvolution": "تطور المبيعات",
+      "salesEvolutionSub": "الإيرادات وعدد الطلبات",
+      "orderDistribution": "توزيع الطلبات",
+      "topProducts": "أفضل المنتجات",
+      "monthlyRevenue": "الإيرادات الشهرية",
+      "dailyProduction": "الإنتاج اليومي",
+      "deliveries": "التوصيل",
+      "salesRepPerformance": "أداء المندوبين",
+      "yearlyComparison": "المقارنة السنوية",
+      "legend": {
+        "revenue": "الإيرادات",
+        "orders": "الطلبات",
+        "products": "المنتجات",
+        "target": "الهدف",
+        "delivered": "تم التوصيل",
+        "delayed": "متأخرة",
+        "produced": "منتج"
+      },
+      "deliveryStatus": "حالة التسليمات"
+    },
+    "top": {
+      "clients": "أفضل العملاء",
+      "products": "أفضل المنتجات",
+      "categories": "أفضل الفئات",
+      "salesReps": "أفضل المندوبين"
+    },
+    "sections": {
+      "recentActivity": "النشاط الأخير",
+      "alerts": "التنبيهات"
+    },
+    "filters": {
+      "period": "الفترة",
+      "client": "العميل",
+      "salesRep": "المندوب",
+      "status": "الحالة",
+      "production": "الإنتاج"
+    },
+    "modals": {
+      "productionDetails": "تفاصيل الإنتاج",
+      "orderLabel": "طلب",
+      "progress": "التقدم",
+      "quantity": "الكمية",
+      "produced": "منتج",
+      "remaining": "متبقي",
+      "assignedTo": "مُسند إلى",
+      "startDate": "تاريخ البدء",
+      "deliveryDetails": "تفاصيل التسليم",
+      "invoiceDetails": "تفاصيل الفاتورة",
+      "dueDate": "تاريخ الاستحقاق"
+    },
+    "status": {
+      "suspended": "موقوفة",
+      "completed": "مكتملة",
+      "done": "منجزة",
+      "delayed": "متأخر",
+      "unpaid": "غير مدفوعة",
+      "generated": "تم إنشاؤه",
+      "inProgress": "قيد التنفيذ",
+      "error": "خطأ"
+    },
+    "types": {
+      "sales": "المبيعات",
+      "orders": "الطلبات",
+      "production": "الإنتاج",
+      "financial": "مالي",
+      "customers": "العملاء",
+      "products": "المنتجات"
     }
   },
   "analytics": {
@@ -1114,14 +1462,212 @@
       "orders": "الطلبات",
       "customers": "العملاء",
       "growth": "النمو",
-      "conversion": "معدل التحويل"
+      "conversion": "معدل التحويل",
+      "profit": "الربح",
+      "completedOrders": "طلبات مكتملة",
+      "pendingOrders": "طلبات قيد الانتظار",
+      "activeCustomers": "عملاء نشطون",
+      "newCustomers": "عملاء جدد",
+      "productsSold": "منتجات مباعة",
+      "paidInvoices": "فواتير مدفوعة",
+      "unpaidInvoices": "فواتير غير مدفوعة",
+      "deliveriesDone": "تسليمات منجزة",
+      "productionDone": "إنتاج منجز",
+      "dailyProduction": "الإنتاج اليومي",
+      "finishedProducts": "منتجات منتهية",
+      "avgTime": "الوقت المتوسط",
+      "yield": "الإنتاجية",
+      "expenses": "المصروفات",
+      "netProfit": "صافي الربح",
+      "paymentsReceived": "مدفوعات مستلمة",
+      "inactiveCustomers": "عملاء غير نشطين",
+      "loyalCustomers": "عملاء مخلصون",
+      "topProduct": "أفضل منتج",
+      "outOfStock": "نفاد المخزون",
+      "available": "متاح",
+      "completedDeliveries": "تسليمات مكتملة",
+      "late": "متأخر",
+      "successRate": "معدل النجاح",
+      "forecastRevenue": "إيرادات متوقعة",
+      "forecastSales": "مبيعات متوقعة",
+      "forecastProduction": "إنتاج متوقع",
+      "forecastOrders": "طلبات متوقعة",
+      "ordersCreated": "طلبات منشأة",
+      "ordersValidated": "طلبات مصادق عليها",
+      "ordersCancelled": "طلبات ملغاة"
     },
     "table": {
       "metric": "المؤشر",
       "current": "الحالي",
       "previous": "السابق",
       "change": "التغيير",
-      "trend": "الاتجاه"
+      "trend": "الاتجاه",
+      "indicator": "المؤشر",
+      "currentValue": "القيمة الحالية",
+      "previousValue": "القيمة السابقة",
+      "evolution": "التطور",
+      "target": "الهدف",
+      "performance": "الأداء"
+    },
+    "breadcrumb": "التحليلات",
+    "tabs": {
+      "overview": "نظرة عامة",
+      "sales": "المبيعات",
+      "orders": "الطلبات",
+      "production": "الإنتاج",
+      "financial": "المالية",
+      "customers": "العملاء",
+      "products": "المنتجات",
+      "deliveries": "التوصيل",
+      "comparisons": "المقارنات",
+      "forecast": "التوقعات"
+    },
+    "periods": {
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "week": "هذا الأسبوع",
+      "month": "هذا الشهر",
+      "quarter": "هذا الربع",
+      "year": "هذا العام",
+      "custom": "مخصص"
+    },
+    "filters": {
+      "title": "فلاتر متقدمة",
+      "client": "العميل",
+      "salesRep": "المندوب",
+      "product": "المنتج",
+      "category": "الفئة",
+      "city": "المدينة",
+      "status": "الحالة",
+      "payment": "الدفع",
+      "production": "الإنتاج",
+      "searchClient": "البحث عن عميل...",
+      "searchProduct": "البحث عن منتج...",
+      "unpaid": "غير مدفوع",
+      "allCategories": "جميع الفئات",
+      "allCities": "جميع المدن",
+      "finished": "منتهية",
+      "inProgress": "قيد التنفيذ",
+      "notStarted": "لم تبدأ",
+      "categories": {
+        "pastry": "معجنات",
+        "bakery": "مخبوزات",
+        "viennoiserie": " viennoiserie",
+        "confectionery": "حلويات",
+        "beverages": "مشروبات"
+      }
+    },
+    "charts": {
+      "revenueProfitEvolution": "تطور الإيرادات والربح",
+      "revenueProfitSub": "مقارنة شهرية للإيرادات والأرباح",
+      "orderDistribution": "توزيع الطلبات",
+      "orderDistributionSub": "التوزيع حسب الحالة",
+      "salesByRegion": "المبيعات حسب المنطقة",
+      "salesByRegionSub": "التوزيع الجغرافي للإيرادات",
+      "globalPerformance": "الأداء العام",
+      "globalPerformanceSub": "مقارنة 2024 مقابل 2025",
+      "salesEvolution": "تطور المبيعات",
+      "salesEvolutionSub": "الإيرادات والربح والأهداف",
+      "salesRepPerformance": "أداء المندوبين",
+      "salesRepPerformanceSub": "الإيرادات حسب المندوب",
+      "salesByCategory": "المبيعات حسب الفئة",
+      "salesByCategorySub": "أداء الفئات",
+      "ordersEvolution": "تطور الطلبات",
+      "ordersEvolutionSub": "عدد الطلبات شهرياً",
+      "dailyProduction": "الإنتاج اليومي",
+      "dailyProductionSub": "الإنتاج مقابل الهدف",
+      "productionTrend": "اتجاه الإنتاج",
+      "productionTrendSub": "التطور اليومي",
+      "financialAnalysis": "التحليل المالي",
+      "financialAnalysisSub": "الإيرادات والمصروفات والربح",
+      "financialPerformance": "الأداء المالي (6 أشهر)",
+      "financialPerformanceSub": "الأشهر الأخيرة",
+      "customerGrowth": "نمو العملاء",
+      "customerGrowthSub": "تطور عدد العملاء",
+      "customerDistribution": "توزيع العملاء",
+      "customerDistributionSub": "التوزيع حسب الحالة",
+      "topProducts": "أفضل المنتجات",
+      "topProductsSub": "الأكثر مبيعاً",
+      "productsByCategory": "المنتجات حسب الفئة",
+      "productsByCategorySub": "التوزيع حسب الفئة",
+      "monthlyDeliveries": "التسليمات الشهرية",
+      "monthlyDeliveriesSub": "تم التوصيل مقابل متأخر",
+      "deliveryDistribution": "توزيع التسليمات",
+      "deliveryDistributionSub": "حالة التسليمات",
+      "yearlyComparison": "المقارنة السنوية",
+      "yearlyComparisonSub": "2024 مقابل 2025",
+      "yearlyTrend": "الاتجاه السنوي",
+      "yearlyTrendSub": "تطور مقارن",
+      "forecastVsActual": "التوقعات مقابل الفعلي",
+      "forecastVsActualSub": "مقارنة شهرية",
+      "projection6Months": "توقعات 6 أشهر",
+      "projection6MonthsSub": "الاتجاه التوقعي",
+      "kpiAnalysisTable": "جدول تحليل مؤشرات الأداء",
+      "kpiAnalysisSub": "تحليل شامل لمؤشرات الأداء",
+      "legend": {
+        "revenue": "الإيرادات",
+        "profit": "الربح",
+        "orders": "الطلبات",
+        "target": "الهدف",
+        "products": "المنتجات",
+        "expenses": "المصروفات",
+        "delivered": "تم التوصيل",
+        "delayed": "متأخرة",
+        "actual": "فعلي",
+        "forecast": "توقعات",
+        "active": "نشط",
+        "inactive": "غير نشط",
+        "new": "جدد",
+        "year2024": "2024",
+        "year2025": "2025"
+      }
+    },
+    "top": {
+      "products": "أفضل المنتجات",
+      "clients": "أفضل العملاء",
+      "categories": "أفضل الفئات",
+      "salesReps": "أفضل المندوبين",
+      "top10Clients": "أفضل 10 عملاء",
+      "top10Products": "أفضل 10 منتجات"
+    },
+    "comparison": {
+      "todayVsYesterday": "اليوم مقابل أمس",
+      "weekVsPrevious": "هذا الأسبوع مقابل الأسبوع السابق",
+      "monthVsPrevious": "هذا الشهر مقابل الشهر السابق",
+      "yearVsPrevious": "هذا العام مقابل العام السابق",
+      "current": "الحالي",
+      "previous": "السابق"
+    },
+    "sections": {
+      "recentActivity": "النشاط الأخير",
+      "alerts": "التنبيهات",
+      "kpiTable": "جدول تحليل مؤشرات الأداء"
+    },
+    "export": {
+      "indicator": "المؤشر",
+      "currentValue": "القيمة الحالية",
+      "previousValue": "القيمة السابقة",
+      "evolution": "التطور",
+      "target": "الهدف",
+      "performance": "الأداء",
+      "summary": {
+        "totalRevenue": "إجمالي الإيرادات",
+        "totalProfit": "إجمالي الربح",
+        "totalOrders": "إجمالي الطلبات",
+        "activeClients": "عملاء نشطون",
+        "productsSold": "منتجات مباعة",
+        "paidInvoices": "فواتير مدفوعة",
+        "deliveries": "التسليمات",
+        "growth": "النمو"
+      }
+    },
+    "messages": {
+      "loadError": "خطأ أثناء تحميل البيانات",
+      "refreshed": "تم تحديث البيانات بنجاح",
+      "filtersReset": "تم إعادة تعيين الفلاتر بنجاح",
+      "periodChanged": "تم تغيير الفترة: {{period}}",
+      "exportSuccess": "تم تصدير {{filename}} بنجاح ({{count}} صف)",
+      "exportError": "خطأ أثناء التصدير: {{message}}"
     }
   },
   "notifications": {
@@ -1131,10 +1677,27 @@
     "markAsRead": "تحديد كمقروء",
     "markAllRead": "تحديد الكل كمقروء",
     "noNotifications": "لا توجد إشعارات",
+    "emptyFiltered": "لا توجد إشعارات تطابق الفلاتر",
+    "allRead": "أنت على اطلاع! جميع إشعاراتك مقروءة",
+    "export": {
+      "title": "قائمة الإشعارات"
+    },
+    "modals": {
+      "detailsTitle": "تفاصيل الإشعار",
+      "deleteConfirm": "حذف الإشعار \"{{title}}\"؟",
+      "deleteReadConfirm": "حذف جميع الإشعارات المقروءة؟",
+      "deleteSelectedConfirm": "حذف {{count}} إشعار(ات) محدد(ة)؟"
+    },
+    "actions": {
+      "deleteRead": "حذف الإشعارات المقروءة",
+      "deleteSelected": "حذف ({{count}})"
+    },
+    "unread": "غير مقروء",
     "kpi": {
       "total": "إجمالي الإشعارات",
       "unread": "غير مقروءة",
       "today": "اليوم",
+      "new": "جديدة",
       "critical": "حرجة"
     },
     "table": {
@@ -1244,6 +1807,17 @@
       "deleteUsersWarning": "{{count}} مستخدم(ون) مرتبط(ون) بهذا الدور. سيتأثرون.",
       "irreversible": "هذا الإجراء لا يمكن التراجع عنه.",
       "permissionsTitle": "إدارة الصلاحيات",
+      "duplicateTitle": "نسخ الدور",
+      "editTitle": "تعديل الدور",
+      "createTitle": "إنشاء دور",
+      "newName": "الاسم الجديد",
+      "copyPermissions": "نسخ الصلاحيات",
+      "copyUsers": "نسخ المستخدمين",
+      "duplicate": "نسخ",
+      "duplicating": "جاري النسخ...",
+      "copySuffix": " (نسخة)",
+      "color": "اللون",
+      "icon": "الأيقونة",
       "selectAll": "تحديد الكل",
       "deselectAll": "إلغاء تحديد الكل",
       "reset": "إعادة تعيين",
@@ -1265,6 +1839,8 @@
     "subtitle": "سجل إجراءات النظام",
     "search": "البحث عن مستخدم، إجراء، وحدة...",
     "unknownUser": "مستخدم غير معروف",
+    "empty": "لا توجد أنشطة",
+    "emptyFiltered": "لا توجد أنشطة تطابق معايير البحث",
     "newValue": "القيمة الجديدة",
     "activeUsers": "المستخدمون النشطون",
     "modals": {
@@ -1338,20 +1914,148 @@
     "companyDescription": "إدارة معلومات شركتك",
     "noForm": "لا يوجد نموذج متاح لهذا القسم",
     "notifications": {
-      "testSuccess": "تم إرسال إشعار الاختبار بنجاح",
-      "saved": "تم حفظ تفضيلات الإشعارات"
+      "title": "إعدادات الإشعارات",
+      "description": "اضبط قنوات الإشعارات والتفضيلات",
+      "channels": {
+        "orders": "الطلبات",
+        "production": "الإنتاج",
+        "payments": "المدفوعات",
+        "reports": "التقارير",
+        "stock": "المخزون",
+        "invoices": "الفواتير",
+        "deliveries": "التوصيل",
+        "system": "النظام"
+      }
     },
     "backup": {
-      "creating": "جاري إنشاء النسخة الاحتياطية...",
-      "created": "تم إنشاء النسخة الاحتياطية بنجاح - {{size}}",
-      "downloading": "جاري تنزيل النسخة الاحتياطية...",
-      "downloaded": "تم تنزيل النسخة الاحتياطية بنجاح",
-      "restoreTitle": "استعادة النسخة الاحتياطية",
-      "restoreMessage": "سيتم استعادة جميع البيانات من النسخة الاحتياطية المحددة. هل أنت متأكد؟",
-      "restored": "تم استعادة النسخة الاحتياطية بنجاح",
-      "deleteTitle": "حذف النسخة الاحتياطية",
-      "deleteMessage": "هل أنت متأكد من حذف هذه النسخة الاحتياطية؟",
-      "deleted": "تم حذف النسخة الاحتياطية بنجاح"
+      "title": "النسخ الاحتياطي",
+      "full": "كاملة",
+      "local": "محلي"
+    },
+    "tabs": {
+      "company": "الشركة",
+      "production": "الإنتاج",
+      "orders": "الطلبات",
+      "invoices": "الفوترة",
+      "notifications": "الإشعارات",
+      "security": "الأمان",
+      "backup": "النسخ الاحتياطي",
+      "export": "التصدير",
+      "history": "السجل"
+    },
+    "company": {
+      "title": "معلومات الشركة",
+      "description": "إدارة معلومات شركتك",
+      "infoTitle": "معلومات الشركة"
+    },
+    "production": {
+      "title": "إعدادات الإنتاج",
+      "description": "اضبط إعدادات الإنتاج",
+      "settingsTitle": "إعدادات الإنتاج"
+    },
+    "orders": {
+      "title": "إعدادات الطلبات",
+      "description": "اضبط إعدادات الطلبات"
+    },
+    "billing": {
+      "title": "إعدادات الفوترة",
+      "description": "اضبط إعدادات الفوترة"
+    },
+    "security": {
+      "title": "إعدادات الأمان",
+      "description": "اضبط إعدادات أمان النظام"
+    },
+    "history": {
+      "title": "سجل النشاط",
+      "action": "الإجراء",
+      "module": "الوحدة",
+      "browser": "المتصفح",
+      "success": "نجاح",
+      "error": "خطأ"
+    },
+    "fields": {
+      "ice": "ICE",
+      "if": "IF",
+      "rc": "RC",
+      "taxId": "الرقم الضريبي",
+      "prefix": "البادئة",
+      "autoNumber": "ترقيم تلقائي",
+      "nextNumber": "الرقم التالي",
+      "validation": "التحقق",
+      "urgentDelay": "تأخير عاجل",
+      "allowDeletion": "السماح بالحذف",
+      "requireConfirmation": "يتطلب تأكيداً",
+      "vat": "ض.ق.م",
+      "currency": "العملة",
+      "paymentTerms": "شروط الدفع",
+      "pdfFormat": "تنسيق PDF",
+      "numbering": "الترقيم"
+    },
+    "days": {
+      "monday": "الاثنين",
+      "tuesday": "الثلاثاء",
+      "wednesday": "الأربعاء",
+      "thursday": "الخميس",
+      "friday": "الجمعة",
+      "saturday": "السبت",
+      "sunday": "الأحد"
+    },
+    "messages": {
+      "refreshed": "تم تحديث البيانات بنجاح",
+      "allSaved": "تم حفظ جميع الإعدادات بنجاح",
+      "restored": "تمت استعادة الإعدادات بنجاح",
+      "pdfExported": "تم تصدير PDF بنجاح",
+      "excelExported": "تم تصدير Excel بنجاح",
+      "csvExported": "تم تصدير CSV بنجاح",
+      "jsonExported": "تم تصدير JSON بنجاح",
+      "printStarted": "تم بدء الطباعة",
+      "exportInProgress": "جاري التصدير {{type}}...",
+      "exportError": "خطأ أثناء التصدير {{type}}",
+      "companyUpdated": "تم تحديث المعلومات بنجاح",
+      "productionUpdated": "تم تحديث إعدادات الإنتاج",
+      "productionTestDone": "اكتمل اختبار الإنتاج! النتائج: 500 وحدة في 4.5 س",
+      "ordersUpdated": "تم تحديث إعدادات الطلبات",
+      "billingUpdated": "تم تحديث إعدادات الفوترة",
+      "invoiceExported": "تم تصدير الفاتورة بصيغة PDF بنجاح",
+      "notificationsSaved": "تم حفظ تفضيلات الإشعارات",
+      "securityUpdated": "تم تحديث إعدادات الأمان",
+      "twoFactorEnabled": "تم تفعيل المصادقة الثنائية بنجاح",
+      "twoFactorDisabled": "تم إلغاء المصادقة الثنائية",
+      "allUsersDisconnected": "تم قطع اتصال جميع المستخدمين",
+      "viewingConnections": "عرض الاتصالات النشطة",
+      "viewingActivity": "عرض النشاط #{{id}}",
+      "infoCopied": "تم نسخ المعلومات إلى الحافظة",
+      "infoReadyToCopy": "المعلومات جاهزة للنسخ",
+      "activityExporting": "جاري تصدير سجل النشاط...",
+      "activityExported": "تم تصدير سجل النشاط بنجاح",
+      "productionReset": "تمت إعادة تعيين إعدادات الإنتاج",
+      "ordersReset": "تمت إعادة تعيين إعدادات الطلبات",
+      "orderHistory": "سجل تعديلات الطلبات",
+      "printing": "جاري الطباعة..."
+    },
+    "modals": {
+      "updateInfo": "حدّث المعلومات",
+      "testSimulation": "اختبار المحاكاة",
+      "verifyBeforeTest": "تحقق من الإعدادات قبل بدء الاختبار",
+      "restoreSettings": "استعادة الإعدادات",
+      "disconnectAllUsers": "قطع اتصال جميع المستخدمين",
+      "settingsExport": "تصدير الإعدادات",
+      "editCompany": "تعديل معلومات الشركة",
+      "updateCompany": "حدّث معلومات شركتك",
+      "editProduction": "تعديل إعدادات الإنتاج",
+      "configureProduction": "اضبط إعدادات الإنتاج",
+      "productionTest": "اختبار الإنتاج",
+      "simulateProduction": "محاكاة الإنتاج بالإعدادات الحالية",
+      "editOrders": "تعديل إعدادات الطلبات",
+      "configureOrders": "اضبط إعدادات الطلبات",
+      "editBilling": "تعديل إعدادات الفوترة",
+      "configureBilling": "اضبط إعدادات الفوترة",
+      "editNotifications": "تعديل إعدادات الإشعارات",
+      "configureNotifications": "اضبط قنوات الإشعارات والتفضيلات",
+      "editSecurity": "تعديل إعدادات الأمان",
+      "configureSecurity": "اضبط إعدادات أمان النظام",
+      "estimatedDuration": "المدة المقدرة: 2-5 ثوانٍ",
+      "runTest": "بدء الاختبار"
     }
   },
   "profile": {
@@ -1372,7 +2076,14 @@
     "activity": "النشاط",
     "fields": {
       "language": "اللغة",
-      "timezone": "المنطقة الزمنية"
+      "timezone": "المنطقة الزمنية",
+      "company": "الشركة",
+      "changePhoto": "تغيير الصورة",
+      "changePasswordAction": "تغيير كلمة المرور",
+      "changing": "جاري التغيير..."
+    },
+    "avatar": {
+      "formats": "PNG, JPG, JPEG, WEBP • الحد الأقصى 5 ميجابايت"
     },
     "validation": {
       "minPassword": "8 أحرف على الأقل"
@@ -1411,11 +2122,11 @@
     "saveFailed": "فشل الحفظ",
     "deleteFailed": "فشل الحذف",
     "networkError": "خطأ في الشبكة. تحقق من اتصالك.",
-    "unauthorized": "انتهت الجلسة. يرجى تسجيل الدخول مجدداً.",
+    "unauthorized": "يرجى تسجيل الدخول للوصول لهذه الصفحة.",
     "forbidden": "ليس لديك الصلاحيات اللازمة.",
     "notFound": "المورد غير موجود.",
     "serverError": "خطأ داخلي في الخادم.",
-    "serverConnectionError": "حدث خطأ في الاتصال بالخادم",
+    "serverConnectionError": "حدث خطأ في الخادم، يرجى المحاولة لاحقاً.",
     "invalidData": "بيانات غير صالحة"
   },
   "success": {
