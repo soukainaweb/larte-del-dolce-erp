@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\Invoice;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Supplier;
@@ -83,5 +84,70 @@ class FinanceService
     public function topSuppliers()
     {
         return Supplier::orderByDesc('created_at')->take(10)->get();
+    }
+
+    public function pendingCustomerPayments(array $filters = []): array
+    {
+        $limit = (int) ($filters['limit'] ?? $filters['per_page'] ?? 10);
+
+        return Invoice::with('order.customer')
+            ->where('status', '!=', 'paid')
+            ->orderBy('due_date')
+            ->take($limit)
+            ->get()
+            ->map(function (Invoice $invoice) {
+                $dueDate = $invoice->due_date;
+                $isOverdue = $dueDate && $dueDate->isPast();
+
+                return [
+                    'invoice' => $invoice->invoice_number ?? ('INV-' . $invoice->id),
+                    'customer' => $invoice->order?->customer?->name ?? '—',
+                    'amount' => (float) ($invoice->total_amount ?? 0),
+                    'dueDate' => $dueDate?->format('Y-m-d') ?? '—',
+                    'status' => $isOverdue ? 'Overdue' : 'Pending',
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    public function pendingSupplierPayments(array $filters = []): array
+    {
+        $limit = (int) ($filters['limit'] ?? $filters['per_page'] ?? 10);
+
+        return Expense::query()
+            ->latest('expense_date')
+            ->take($limit)
+            ->get()
+            ->map(function (Expense $expense) {
+                return [
+                    'purchaseOrder' => 'EXP-' . $expense->id,
+                    'supplier' => $expense->description ?: ($expense->category ?? '—'),
+                    'amount' => (float) ($expense->amount ?? 0),
+                    'dueDate' => $expense->expense_date?->format('Y-m-d') ?? '—',
+                    'status' => 'Pending',
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    public function financeNotifications(array $filters = []): array
+    {
+        $limit = (int) ($filters['limit'] ?? 5);
+
+        return Notification::query()
+            ->when(auth()->id(), fn ($query) => $query->where('user_id', auth()->id()))
+            ->latest()
+            ->take($limit)
+            ->get()
+            ->map(fn (Notification $notification) => [
+                'id' => $notification->id,
+                'title' => $notification->title ?? 'Notification',
+                'time' => optional($notification->created_at)->diffForHumans(),
+                'type' => $notification->type ?? 'info',
+            ])
+            ->values()
+            ->all();
     }
 }

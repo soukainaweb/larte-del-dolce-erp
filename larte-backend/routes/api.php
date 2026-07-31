@@ -868,6 +868,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('/revenue-expenses', [FinanceController::class, 'revenueExpenses']);
         Route::get('/expense-categories', [FinanceController::class, 'expenseCategories']);
         Route::get('/transactions', [FinanceController::class, 'transactions']);
+        Route::get('/payments/customers', [FinanceController::class, 'pendingCustomerPayments']);
+        Route::get('/payments/suppliers', [FinanceController::class, 'pendingSupplierPayments']);
+        Route::get('/notifications', [FinanceController::class, 'notifications']);
         Route::get('/customers/top', [FinanceController::class, 'topCustomers']);
         Route::get('/suppliers/top', [FinanceController::class, 'topSuppliers']);
         Route::get('/summary', [FinanceController::class, 'summary']);

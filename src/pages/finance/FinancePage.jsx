@@ -79,6 +79,20 @@ import {
   updateTransaction,
   deleteTransaction
 } from '../../services/financeService';
+import { safeArray, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
+
+const normalizeFinanceMetrics = (raw = {}) => ({
+  totalRevenue: raw.totalRevenue ?? raw.total_revenue ?? 0,
+  totalExpenses: raw.totalExpenses ?? raw.total_expenses ?? 0,
+  netProfit: raw.netProfit ?? raw.net_profit ?? 0,
+  cashBalance: raw.cashBalance ?? raw.cash_balance ?? 0,
+  outstandingPayments: raw.outstandingPayments ?? raw.outstanding_payments ?? raw.pending_invoices ?? 0,
+  supplierPaymentsDue: raw.supplierPaymentsDue ?? raw.supplier_payments_due ?? 0,
+  todayRevenue: raw.todayRevenue ?? raw.today_revenue ?? 0,
+  monthlyRevenue: raw.monthlyRevenue ?? raw.monthly_revenue ?? 0,
+});
+
+const unwrapFinancePayload = (axiosResponse) => axiosResponse?.data?.data ?? axiosResponse?.data ?? null;
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -476,36 +490,72 @@ const FinancePage = () => {
   // Load all finance data
   const loadFinanceData = async () => {
     setIsLoading(true);
+    let firstError = null;
+
     try {
       const params = { period: dateRange };
-      if (dateRange === 'custom') {
-        // You can add custom date params here
+
+      const [
+        metricsRes,
+        revenueRes,
+        expenseRes,
+        transRes,
+        custPayRes,
+        suppPayRes,
+        topCustRes,
+        topSuppRes,
+        notifRes,
+      ] = await Promise.allSettled([
+        getFinanceMetrics(params),
+        getRevenueExpensesData(params),
+        getExpenseCategories(params),
+        getRecentTransactions({ ...params, per_page: 10 }),
+        getPendingCustomerPayments(params),
+        getPendingSupplierPayments(params),
+        getTopCustomers({ ...params, limit: 4 }),
+        getTopSuppliers({ ...params, limit: 4 }),
+        getFinanceNotifications({ ...params, limit: 5 }),
+      ]);
+
+      const resolveResponse = (result, fallback) => {
+        if (result.status === 'fulfilled') {
+          return result.value;
+        }
+        if (!firstError) {
+          firstError = result.reason;
+        }
+        console.error('Finance section failed:', result.reason);
+        return null;
+      };
+
+      const metricsPayload = unwrapFinancePayload(resolveResponse(metricsRes));
+      if (metricsPayload) {
+        setMetrics(normalizeFinanceMetrics(metricsPayload));
       }
 
-      const [metricsRes, revenueRes, expenseRes, transRes, custPayRes, suppPayRes, topCustRes, topSuppRes, notifRes] =
-        await Promise.all([
-          getFinanceMetrics(params),
-          getRevenueExpensesData(params),
-          getExpenseCategories(params),
-          getRecentTransactions({ ...params, per_page: 10 }),
-          getPendingCustomerPayments(params),
-          getPendingSupplierPayments(params),
-          getTopCustomers({ ...params, limit: 4 }),
-          getTopSuppliers({ ...params, limit: 4 }),
-          getFinanceNotifications({ limit: 5 })
-        ]);
+      setMonthlyData(safeArray(resolveResponse(revenueRes)?.data));
+      setExpenseCategories(safeArray(resolveResponse(expenseRes)?.data));
+      setTransactions(safeArray(resolveResponse(transRes)?.data));
+      setCustomerPayments(safeArray(resolveResponse(custPayRes)?.data));
+      setSupplierPayments(safeArray(resolveResponse(suppPayRes)?.data));
+      setTopCustomers(safeArray(resolveResponse(topCustRes)?.data));
+      setTopSuppliers(safeArray(resolveResponse(topSuppRes)?.data));
+      setNotifications(safeArray(resolveResponse(notifRes)?.data));
 
-      setMetrics(metricsRes.data.data || metrics);
-      setMonthlyData(revenueRes.data.data || []);
-      setExpenseCategories(expenseRes.data.data || []);
-      setTransactions(transRes.data.data || []);
-      setCustomerPayments(custPayRes.data.data || []);
-      setSupplierPayments(suppPayRes.data.data || []);
-      setTopCustomers(topCustRes.data.data || []);
-      setTopSuppliers(topSuppRes.data.data || []);
-      setNotifications(notifRes.data.data || []);
+      if (firstError) {
+        showToast(getApiErrorMessage(firstError, t('finance.errors.load', t('errors.loadFailed'))), 'error');
+      }
     } catch (error) {
       console.error('Error loading finance data:', error);
+      showToast(getApiErrorMessage(error, t('finance.errors.load', t('errors.loadFailed'))), 'error');
+      setMonthlyData([]);
+      setExpenseCategories([]);
+      setTransactions([]);
+      setCustomerPayments([]);
+      setSupplierPayments([]);
+      setTopCustomers([]);
+      setTopSuppliers([]);
+      setNotifications([]);
     } finally {
       setIsLoading(false);
     }
@@ -737,7 +787,7 @@ const FinancePage = () => {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((transaction) => (
+              {ensureArray(transactions).map((transaction) => (
                 <tr key={transaction.id} className="hover:bg-[#F8F7F4] transition-colors border-b border-[#ECE8E1]">
                   <td className="px-4 py-3 text-sm font-medium text-[#3D2F24]">{transaction.id}</td>
                   <td className="px-4 py-3 text-sm text-[#6D6D6D]">{transaction.date}</td>
@@ -768,7 +818,7 @@ const FinancePage = () => {
         </div>
 
         <div className="md:hidden p-4 space-y-3">
-          {transactions.map((transaction) => (
+          {ensureArray(transactions).map((transaction) => (
             <TransactionCard key={transaction.id} transaction={transaction} t={t} onView={handleViewTransaction} />
           ))}
         </div>
@@ -781,7 +831,7 @@ const FinancePage = () => {
             <p className="text-xs text-[#6D6D6D]">{t('finance.pendingCustomerPaymentsSubtitle')}</p>
           </div>
           <div className="p-4 space-y-3">
-            {customerPayments.map((payment, idx) => (
+            {ensureArray(customerPayments).map((payment, idx) => (
               <PendingPaymentCard key={idx} payment={payment} type="customer" t={t} />
             ))}
             <button
@@ -799,7 +849,7 @@ const FinancePage = () => {
             <p className="text-xs text-[#6D6D6D]">{t('finance.pendingSupplierPaymentsSubtitle')}</p>
           </div>
           <div className="p-4 space-y-3">
-            {supplierPayments.map((payment, idx) => (
+            {ensureArray(supplierPayments).map((payment, idx) => (
               <PendingPaymentCard key={idx} payment={payment} type="supplier" t={t} />
             ))}
             <button
@@ -817,7 +867,7 @@ const FinancePage = () => {
             <p className="text-xs text-[#6D6D6D]">{t('finance.financeNotificationsSubtitle')}</p>
           </div>
           <div className="p-4 space-y-2 max-h-[280px] overflow-y-auto">
-            {notifications.map((notification) => (
+            {ensureArray(notifications).map((notification) => (
               <NotificationItem key={notification.id} notification={notification} />
             ))}
           </div>
@@ -841,7 +891,7 @@ const FinancePage = () => {
                 </tr>
               </thead>
               <tbody>
-                {topCustomers.map((customer, idx) => (
+                {ensureArray(topCustomers).map((customer, idx) => (
                   <tr key={idx} className="border-b border-[#ECE8E1] last:border-0">
                     <td className="px-4 py-2 text-sm text-[#3D2F24]">{customer.customer}</td>
                     <td className="px-4 py-2 text-sm text-[#6D6D6D]">{customer.orders}</td>
@@ -853,7 +903,7 @@ const FinancePage = () => {
             </table>
           </div>
           <div className="md:hidden p-4 space-y-3">
-            {topCustomers.map((customer, idx) => (
+            {ensureArray(topCustomers).map((customer, idx) => (
               <TopCustomerCard key={idx} customer={customer} t={t} />
             ))}
           </div>
@@ -875,7 +925,7 @@ const FinancePage = () => {
                 </tr>
               </thead>
               <tbody>
-                {topSuppliers.map((supplier, idx) => (
+                {ensureArray(topSuppliers).map((supplier, idx) => (
                   <tr key={idx} className="border-b border-[#ECE8E1] last:border-0">
                     <td className="px-4 py-2 text-sm text-[#3D2F24]">{supplier.supplier}</td>
                     <td className="px-4 py-2 text-sm text-[#6D6D6D]">{supplier.purchases}</td>
@@ -887,7 +937,7 @@ const FinancePage = () => {
             </table>
           </div>
           <div className="md:hidden p-4 space-y-3">
-            {topSuppliers.map((supplier, idx) => (
+            {ensureArray(topSuppliers).map((supplier, idx) => (
               <TopSupplierCard key={idx} supplier={supplier} t={t} />
             ))}
           </div>
