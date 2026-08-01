@@ -1,13 +1,13 @@
 FROM php:8.2-apache
 
-# System dependencies for Composer
+# System dependencies for Composer & PHP extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     unzip \
+    libonig-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Laravel required PHP extensions
-# openssl, tokenizer, ctype, and json are bundled with PHP 8.2
 RUN docker-php-ext-install -j"$(nproc)" \
         pdo_mysql \
         mbstring \
