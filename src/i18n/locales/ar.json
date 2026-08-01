@@ -1039,7 +1039,35 @@
       "primary": "رئيسي",
       "stockValue": "قيمة المخزون",
       "manager": "المسؤول",
-      "notAssigned": "غير مُسند"
+      "notAssigned": "غير مُسند",
+      "code": "الرمز"
+    },
+    "actions": {
+      "transfer": "تحويل"
+    },
+    "transfer": {
+      "title": "تحويل بين المستودعات",
+      "fromWarehouse": "من المستودع",
+      "toWarehouse": "إلى المستودع",
+      "reason": "السبب",
+      "reasonPlaceholder": "سبب التحويل...",
+      "submit": "تحويل"
+    },
+    "placeholders": {
+      "location": "الطابق 1، المنطقة أ",
+      "selectManager": "اختر مسؤولاً",
+      "description": "وصف المستودع..."
+    },
+    "validation": {
+      "nameRequired": "اسم المستودع مطلوب",
+      "codeRequired": "رمز المستودع مطلوب",
+      "fromWarehouseRequired": "يرجى اختيار المستودع المصدر",
+      "toWarehouseRequired": "يرجى اختيار المستودع الوجهة",
+      "productRequired": "يرجى اختيار منتج",
+      "quantityRequired": "يجب أن تكون الكمية أكبر من 0"
+    },
+    "pagination": {
+      "pageOf": "صفحة {{current}} من {{total}}"
     },
     "types": {
       "raw": "مواد خام",
@@ -1062,7 +1090,8 @@
       "capacity": "السعة",
       "items": "الأصناف",
       "manager": "المسؤول",
-      "status": "الحالة"
+      "status": "الحالة",
+      "value": "القيمة"
     }
   },
   "suppliers": {
