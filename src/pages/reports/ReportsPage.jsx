@@ -1818,28 +1818,24 @@ const ReportsPage = () => {
   // ==========================================
   // HANDLERS - TOAST
   // ==========================================
-  const showToast = (message, type = 'success') => {
-  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ isOpen: true, message, type });
-  };
+  }, []);
 
-  const hideToast = () => {
-  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
+  const hideToast = useCallback(() => {
     setToast({ isOpen: false, message: '', type: 'success' });
-  };
+  }, []);
 
   // ==========================================
   // HANDLERS - CONFIRM DIALOG
   // ==========================================
-  const showConfirm = (title, description, onConfirm) => {
-  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
+  const showConfirm = useCallback((title, description, onConfirm) => {
     setConfirmDialog({ isOpen: true, title, description, onConfirm });
-  };
+  }, []);
 
-  const hideConfirm = () => {
-  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
+  const hideConfirm = useCallback(() => {
     setConfirmDialog({ isOpen: false, title: '', description: '', onConfirm: null });
-  };
+  }, []);
 
   // ==========================================
   // HANDLERS - ACTIONS GÉNÉRALES
@@ -2157,21 +2153,21 @@ const ReportsPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <TopListCard 
           title={t('reports.top.clients')} 
-          items={topCustomers.map(c => ({ ...c, value: c.revenue }))} 
+          items={ensureArray(topCustomers).map(c => ({ ...c, value: c.revenue }))} 
           valueLabel={t('reports.charts.legend.revenue')} 
           icon={Users} 
           valueKey="revenue"
         />
         <TopListCard 
           title={t('reports.top.products')} 
-          items={topProducts.map(c => ({ ...c, value: c.sales }))} 
+          items={ensureArray(topProducts).map(c => ({ ...c, value: c.sales }))} 
           valueLabel={t('common.sales')} 
           icon={Package} 
           valueKey="sales"
         />
         <TopListCard 
           title={t('reports.top.categories')} 
-          items={topCategories.map(c => ({ ...c, value: c.sales }))} 
+          items={ensureArray(topCategories).map(c => ({ ...c, value: c.sales }))} 
           valueLabel={t('common.sales')} 
           icon={Layers} 
           valueKey="sales"
@@ -2182,7 +2178,7 @@ const ReportsPage = () => {
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
           <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.sections.recentActivity')}</h3>
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {recentActivities.map((activity) => (
+            {ensureArray(recentActivities).map((activity) => (
               <ActivityItem key={activity.id} activity={activity} />
             ))}
           </div>
@@ -2190,7 +2186,7 @@ const ReportsPage = () => {
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
           <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.sections.alerts')}</h3>
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {alerts.map((alert) => (
+            {ensureArray(alerts).map((alert) => (
               <AlertItem key={alert.id} alert={alert} onDismiss={handleDismissAlert} />
             ))}
           </div>
@@ -2200,19 +2196,19 @@ const ReportsPage = () => {
   );
 
   const renderOrders = () => {
-  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
-    const paidCount = ordersData.filter(o => o.status === t('orders.status.delivered')).length;
-    const pending = ordersData.filter(o => o.status === t('common.pending')).length;
+    const orders = ensureArray(ordersData);
+    const paidCount = orders.filter(o => o.status === t('orders.status.delivered')).length;
+    const pending = orders.filter(o => o.status === t('common.pending')).length;
 
     return (
       <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <KPICard icon={ShoppingBag} title={t('reports.kpi.totalOrders')} value={ordersData.length} change={8.10} color="blue" />
+          <KPICard icon={ShoppingBag} title={t('reports.kpi.totalOrders')} value={orders.length} change={8.10} color="blue" />
           <KPICard icon={Clock} title={t('common.pending')} value={pending} change={-5.90} color="amber" />
           <KPICard icon={CheckCircle} title={t('reports.kpi.completed')} value={paidCount} change={5.20} color="green" />
           <KPICard icon={DollarSign} title={t('reports.kpi.avgBasket')} value={kpis.avgOrderValue} change={3.80} color="gold" isCurrency />
         </div>
-        {ordersData.length === 0 ? (
+        {orders.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Package size={48} className="text-[#D1CBC0] mx-auto mb-3" />
             <h3 className="text-lg font-bold text-[#3D2F24]">{t('orders.empty')}</h3>
@@ -2220,7 +2216,7 @@ const ReportsPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ordersData.map((order) => (
+            {orders.map((order) => (
               <OrderCard
                 key={order.id}
                 order={order}
@@ -2271,7 +2267,7 @@ const ReportsPage = () => {
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
           <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('reports.charts.dailyProduction')}</h3>
           <div className="space-y-2">
-            {productionData.map((day, idx) => (
+            {ensureArray(productionData).map((day, idx) => (
               <div key={idx} className="flex items-center gap-3">
                 <span className="text-xs font-medium text-[#6D6D6D] w-8">{day.day}</span>
                 <div className="flex-1 h-2 bg-[#F8F7F4] rounded-full overflow-hidden">
@@ -2285,7 +2281,7 @@ const ReportsPage = () => {
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
           <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Alertes Production</h3>
           <div className="space-y-2">
-            {alerts.filter(a => a.type === 'danger' || a.type === 'warning').slice(0, 3).map(alert => (
+            {ensureArray(alerts).filter(a => a.type === 'danger' || a.type === 'warning').slice(0, 3).map(alert => (
               <AlertItem key={alert.id} alert={alert} />
             ))}
           </div>
@@ -2295,24 +2291,26 @@ const ReportsPage = () => {
   );
 
   const renderProducts = () => {
-  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
+    const products = ensureArray(topProducts);
+    const categories = ensureArray(topCategories);
+
     return (
       <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <KPICard icon={Package} title="Total Produits" value={topProducts.length} change={5.30} color="purple" />
-          <KPICard icon={TrendingUp} title="Top Ventes" value={topProducts[0]?.sales || 0} change={15.20} color="gold" />
+          <KPICard icon={Package} title="Total Produits" value={products.length} change={5.30} color="purple" />
+          <KPICard icon={TrendingUp} title="Top Ventes" value={products[0]?.sales || 0} change={15.20} color="gold" />
           <KPICard icon={AlertCircle} title={t('reports.kpi.stockOut')} value="5" change={-10.40} color="rose" />
           <KPICard icon={CheckCircle} title={t('reports.kpi.available')} value="52" change={8.90} color="green" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <TopProductsChart data={topProducts} />
+          <TopProductsChart data={products} />
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
             <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Répartition par Catégorie</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <RePieChart>
                   <Pie
-                    data={topCategories}
+                    data={categories}
                     dataKey="sales"
                     nameKey="name"
                     cx="50%"
@@ -2323,7 +2321,7 @@ const ReportsPage = () => {
                     label={({ name, value }) => `${value}`}
                     labelLine={false}
                   >
-                    {topCategories.map((entry, index) => (
+                    {categories.map((entry, index) => (
                       <Cell key={index} fill={['#B8863B', '#3B82F6', '#22C55E', '#8B5CF6', '#F59E0B'][index % 5]} />
                     ))}
                   </Pie>
@@ -2340,7 +2338,7 @@ const ReportsPage = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {topProducts.map((product, idx) => (
+          {products.map((product, idx) => (
             <motion.div
               key={idx}
               whileHover={{ y: -2, boxShadow: '0 4px 15px rgba(0,0,0,0.06)' }}
@@ -2373,27 +2371,28 @@ const ReportsPage = () => {
   };
 
   const renderCustomers = () => {
-  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
+    const customers = ensureArray(topCustomers);
+
     return (
       <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <KPICard icon={Users} title="Total Clients" value={kpis.totalCustomers} change={9.20} color="green" />
           <KPICard icon={User} title={t('reports.kpi.newCustomers')} value="24" change={15.80} color="blue" />
           <KPICard icon={Award} title={t('reports.kpi.loyalty')} value="76%" change={5.60} color="purple" />
-          <KPICard icon={Star} title="Top Client" value={topCustomers[0]?.name || '-'} change={0} color="gold" />
+          <KPICard icon={Star} title="Top Client" value={customers[0]?.name || '-'} change={0} color="gold" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <TopListCard title={t('reports.top.clients')} items={topCustomers.map(c => ({ ...c, value: c.revenue }))} valueLabel={t('reports.charts.legend.revenue')} icon={Users} valueKey="revenue" />
+          <TopListCard title={t('reports.top.clients')} items={customers.map(c => ({ ...c, value: c.revenue }))} valueLabel={t('reports.charts.legend.revenue')} icon={Users} valueKey="revenue" />
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm">
             <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Répartition par Ville</h3>
             <div className="space-y-3">
               {['Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fès'].map((city, idx) => {
-                const count = topCustomers.filter(c => c.city === city).length;
+                const count = customers.filter(c => c.city === city).length;
                 return (
                   <div key={idx} className="flex items-center gap-3">
                     <span className="text-xs text-[#6D6D6D] w-24">{city}</span>
                     <div className="flex-1 h-2 bg-[#F8F7F4] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#B8863B] rounded-full" style={{ width: `${(count / topCustomers.length) * 100}%` }} />
+                      <div className="h-full bg-[#B8863B] rounded-full" style={{ width: `${customers.length ? (count / customers.length) * 100 : 0}%` }} />
                     </div>
                     <span className="text-xs text-[#6D6D6D]">{count}</span>
                   </div>
@@ -2403,7 +2402,7 @@ const ReportsPage = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {topCustomers.map((customer, idx) => (
+          {customers.map((customer, idx) => (
             <motion.div
               key={idx}
               whileHover={{ y: -2, boxShadow: '0 4px 15px rgba(0,0,0,0.06)' }}
@@ -2436,20 +2435,20 @@ const ReportsPage = () => {
   };
 
   const renderInvoices = () => {
-  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
-    const paidCount = invoicesList.filter(i => i.status === t('common.paymentStatus.paid')).length;
-    const unpaidCount = invoicesList.filter(i => i.status === 'Impayée').length;
-    const pendingCount = invoicesList.filter(i => i.status === t('common.pending')).length;
+    const invoices = ensureArray(invoicesList);
+    const paidCount = invoices.filter(i => i.status === t('common.paymentStatus.paid')).length;
+    const unpaidCount = invoices.filter(i => i.status === 'Impayée').length;
+    const pendingCount = invoices.filter(i => i.status === t('common.pending')).length;
 
     return (
       <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <KPICard icon={CreditCard} title="Total Factures" value={invoicesList.length} change={4.70} color="teal" />
+          <KPICard icon={CreditCard} title="Total Factures" value={invoices.length} change={4.70} color="teal" />
           <KPICard icon={CheckCircle} title="Payées" value={paidCount} change={6.20} color="green" />
           <KPICard icon={XCircle} title="Impayées" value={unpaidCount} change={-3.80} color="rose" />
           <KPICard icon={Clock} title={t('common.pending')} value={pendingCount} change={2.40} color="amber" />
         </div>
-        {invoicesList.length === 0 ? (
+        {invoices.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <FileText size={48} className="text-[#D1CBC0] mx-auto mb-3" />
             <h3 className="text-lg font-bold text-[#3D2F24]">{t('invoices.emptyShort')}</h3>
@@ -2457,7 +2456,7 @@ const ReportsPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {invoicesList.map((invoice) => (
+            {invoices.map((invoice) => (
               <InvoiceCard
                 key={invoice.id}
                 invoice={invoice}
@@ -2473,15 +2472,16 @@ const ReportsPage = () => {
   };
 
   const renderDeliveries = () => {
-  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
-    const deliveredCount = deliveriesList.filter(d => d.status === 'Effectuée').length;
-    const pendingCount = deliveriesList.filter(d => d.status === t('common.pending')).length;
-    const delayedCount = deliveriesList.filter(d => d.status === 'Retard').length;
+    const deliveries = ensureArray(deliveriesList);
+    const deliveredCount = deliveries.filter(d => d.status === 'Effectuée').length;
+    const pendingCount = deliveries.filter(d => d.status === t('common.pending')).length;
+    const delayedCount = deliveries.filter(d => d.status === 'Retard').length;
+    const deliveryTotal = deliveredCount + pendingCount + delayedCount || 1;
 
     return (
       <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <KPICard icon={Truck} title="Total Livraisons" value={deliveriesList.length} change={6.80} color="cyan" />
+          <KPICard icon={Truck} title="Total Livraisons" value={deliveries.length} change={6.80} color="cyan" />
           <KPICard icon={CheckCircle} title="Effectuées" value={deliveredCount} change={8.30} color="green" />
           <KPICard icon={Clock} title={t('common.pending')} value={pendingCount} change={-2.60} color="amber" />
           <KPICard icon={AlertCircle} title="Retard" value={delayedCount} change={-5.70} color="rose" />
@@ -2494,34 +2494,34 @@ const ReportsPage = () => {
               <div>
                 <div className="flex justify-between text-xs text-[#6D6D6D] mb-1">
                   <span>Effectuées</span>
-                  <span>{deliveredCount} ({Math.round((deliveredCount / (deliveredCount + pendingCount + delayedCount)) * 100)}%)</span>
+                  <span>{deliveredCount} ({Math.round((deliveredCount / deliveryTotal) * 100)}%)</span>
                 </div>
                 <div className="h-2 bg-[#F8F7F4] rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(deliveredCount / (deliveredCount + pendingCount + delayedCount)) * 100}%` }} />
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(deliveredCount / deliveryTotal) * 100}%` }} />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs text-[#6D6D6D] mb-1">
                   <span>{t('common.pending')}</span>
-                  <span>{pendingCount} ({Math.round((pendingCount / (deliveredCount + pendingCount + delayedCount)) * 100)}%)</span>
+                  <span>{pendingCount} ({Math.round((pendingCount / deliveryTotal) * 100)}%)</span>
                 </div>
                 <div className="h-2 bg-[#F8F7F4] rounded-full overflow-hidden">
-                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${(pendingCount / (deliveredCount + pendingCount + delayedCount)) * 100}%` }} />
+                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${(pendingCount / deliveryTotal) * 100}%` }} />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs text-[#6D6D6D] mb-1">
                   <span>Retard</span>
-                  <span>{delayedCount} ({Math.round((delayedCount / (deliveredCount + pendingCount + delayedCount)) * 100)}%)</span>
+                  <span>{delayedCount} ({Math.round((delayedCount / deliveryTotal) * 100)}%)</span>
                 </div>
                 <div className="h-2 bg-[#F8F7F4] rounded-full overflow-hidden">
-                  <div className="h-full bg-rose-500 rounded-full" style={{ width: `${(delayedCount / (deliveredCount + pendingCount + delayedCount)) * 100}%` }} />
+                  <div className="h-full bg-rose-500 rounded-full" style={{ width: `${(delayedCount / deliveryTotal) * 100}%` }} />
                 </div>
               </div>
             </div>
           </div>
         </div>
-        {deliveriesList.length === 0 ? (
+        {deliveries.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <Truck size={48} className="text-[#D1CBC0] mx-auto mb-3" />
             <h3 className="text-lg font-bold text-[#3D2F24]">{t('deliveries.emptyShort')}</h3>
@@ -2529,7 +2529,7 @@ const ReportsPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {deliveriesList.map((delivery) => (
+            {deliveries.map((delivery) => (
               <DeliveryCard
                 key={delivery.id}
                 delivery={delivery}
@@ -2562,23 +2562,25 @@ const ReportsPage = () => {
   );
 
   const renderGeneratedReports = () => {
+    const reports = ensureArray(generatedReports);
+
     return (
       <div>
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           <div className="flex items-center gap-2 bg-white border border-[#ECE8E1] rounded-lg px-3 py-2">
             <Package size={16} className="text-[#6D6D6D]" />
-            <span className="text-sm text-[#3D2F24]">{t('reports.reportsCount', { count: generatedReports.length })}</span>
+            <span className="text-sm text-[#3D2F24]">{t('reports.reportsCount', { count: reports.length })}</span>
           </div>
           <div className="flex items-center gap-2 bg-white border border-[#ECE8E1] rounded-lg px-3 py-2">
             <CheckCircle size={16} className="text-emerald-500" />
-            <span className="text-sm text-[#3D2F24]">{t('reports.generatedCount', { count: generatedReports.filter(r => r.status === t('reports.status.generated') || r.status === 'Généré').length })}</span>
+            <span className="text-sm text-[#3D2F24]">{t('reports.generatedCount', { count: reports.filter(r => r.status === t('reports.status.generated') || r.status === 'Généré').length })}</span>
           </div>
           <div className="flex items-center gap-2 bg-white border border-[#ECE8E1] rounded-lg px-3 py-2">
             <Clock size={16} className="text-amber-500" />
-            <span className="text-sm text-[#3D2F24]">{generatedReports.filter(r => r.status === t('reports.status.inProgress') || r.status === 'En cours' || r.status === t('common.pending')).length} {t('reports.status.inProgress')}</span>
+            <span className="text-sm text-[#3D2F24]">{reports.filter(r => r.status === t('reports.status.inProgress') || r.status === 'En cours' || r.status === t('common.pending')).length} {t('reports.status.inProgress')}</span>
           </div>
         </div>
-        {generatedReports.length === 0 ? (
+        {reports.length === 0 ? (
           <div className="bg-white border border-[#ECE8E1] rounded-xl p-8 text-center">
             <FileIcon size={48} className="text-[#D1CBC0] mx-auto mb-3" />
             <h3 className="text-lg font-bold text-[#3D2F24]">{t('reports.empty')}</h3>
@@ -2586,7 +2588,7 @@ const ReportsPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3">
-            {generatedReports.map(report => (
+            {reports.map(report => (
               <ReportCard
                 key={report.id}
                 report={report}
