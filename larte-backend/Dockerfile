@@ -1,29 +1,18 @@
 FROM php:8.2-apache
 
-# System dependencies for Composer and PHP extensions
+# System dependencies for Composer
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     unzip \
-    libzip-dev \
-    libpng-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# PHP extensions required by Laravel 12 and this application
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" \
-        pdo \
+# Laravel required PHP extensions
+# openssl, tokenizer, ctype, and json are bundled with PHP 8.2
+RUN docker-php-ext-install -j"$(nproc)" \
         pdo_mysql \
-        pdo_pgsql \
         mbstring \
         dom \
-        fileinfo \
-        zip \
-        gd
-
-# openssl, tokenizer, xml, ctype, and json are included with PHP 8.2
+        fileinfo
 
 RUN a2enmod rewrite headers
 
