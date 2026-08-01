@@ -139,8 +139,12 @@ const Toast = ({ message, type = 'success', onClose }) => {
 // ==========================================
 // CONFIRM DIALOG
 // ==========================================
-const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirmText = tc('confirm'), cancelText = tc('cancel'), isLoading = false }) => {
+const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirmText, cancelText, isLoading = false }) => {
+  const { tc } = usePageI18n('settings');
   if (!isOpen) return null;
+
+  const resolvedConfirmText = confirmText ?? tc('confirm');
+  const resolvedCancelText = cancelText ?? tc('cancel');
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -163,7 +167,7 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirm
             disabled={isLoading}
             className="px-4 py-2 text-sm text-[#6D6D6D] hover:text-[#2B2B2B] hover:bg-[#F8F7F4] rounded-lg transition-colors disabled:opacity-50"
           >
-            {cancelText}
+            {resolvedCancelText}
           </button>
           <button
             onClick={onConfirm}
@@ -171,7 +175,7 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, description, confirm
             className="px-4 py-2 text-sm bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {isLoading && <Loader2 size={16} className="animate-spin" />}
-            {confirmText}
+            {resolvedConfirmText}
           </button>
         </div>
       </motion.div>

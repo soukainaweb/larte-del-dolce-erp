@@ -269,6 +269,10 @@ export const getApiErrorMessage = (error, fallback) => {
 
   if (!error) return defaultFallback;
 
+  if (error.timeoutMessage) {
+    return translateApiErrorMessage(error.timeoutMessage);
+  }
+
   if (error.validationMessage) {
     return translateApiErrorMessage(error.validationMessage);
   }

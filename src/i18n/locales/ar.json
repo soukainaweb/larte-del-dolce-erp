@@ -1053,6 +1053,9 @@
       "utilization": "نسبة الاستخدام",
       "transfers": "عمليات النقل"
     },
+    "errors": {
+      "load": "تعذّر تحميل بيانات المستودعات."
+    },
     "table": {
       "name": "الاسم",
       "location": "الموقع",
@@ -1304,6 +1307,9 @@
       "endDate": "تاريخ الانتهاء",
       "status": "الحالة",
       "assignedTo": "مُسند إلى"
+    },
+    "errors": {
+      "load": "تعذّر تحميل بيانات الإنتاج."
     }
   },
   "reports": {
@@ -1892,7 +1898,18 @@
       "totalEvents": "إجمالي الأحداث",
       "today": "اليوم",
       "thisWeek": "هذا الأسبوع",
-      "critical": "حرجة"
+      "critical": "حرجة",
+      "todayActivities": "أنشطة اليوم",
+      "last24h": "آخر 24 ساعة",
+      "connected": "متصلون",
+      "criticalActions": "إجراءات حرجة",
+      "toMonitor": "للمراقبة",
+      "successfulActions": "إجراءات ناجحة",
+      "successLabel": "نجاح",
+      "avgTime": "متوسط الوقت",
+      "perSession": "لكل جلسة",
+      "securityScore": "الأمان",
+      "score": "النتيجة"
     },
     "table": {
       "user": "المستخدم",
@@ -1904,7 +1921,43 @@
       "date": "التاريخ",
       "time": "الوقت",
       "device": "الجهاز",
-      "browser": "المتصفح"
+      "browser": "المتصفح",
+      "level": "المستوى"
+    },
+    "export": {
+      "title": "سجل النشاط",
+      "subtitle": "{{count}} نشاط - {{today}} اليوم"
+    },
+    "exportSummary": {
+      "totalActivities": "إجمالي الأنشطة",
+      "successfulActions": "إجراءات ناجحة",
+      "security": "الأمان"
+    },
+    "filters": {
+      "allDates": "جميع التواريخ",
+      "yesterday": "أمس",
+      "thisWeek": "هذا الأسبوع",
+      "thisMonth": "هذا الشهر",
+      "allActions": "جميع الإجراءات",
+      "resetFilters": "إعادة تعيين الفلاتر"
+    },
+    "charts": {
+      "byDay": "الأنشطة حسب اليوم",
+      "distribution": "توزيع الأنشطة",
+      "byUser": "الأنشطة حسب المستخدم",
+      "topModules": "الوحدات الأكثر استخداماً"
+    },
+    "timeline": {
+      "title": "الجدول الزمني للنشاط"
+    },
+    "critical": {
+      "title": "أنشطة حرجة"
+    },
+    "pagination": {
+      "pageOf": "صفحة {{current}} من {{total}}"
+    },
+    "recentLogins": {
+      "title": "آخر تسجيلات الدخول"
     },
     "actions": {
       "created": "إنشاء",
@@ -2236,6 +2289,7 @@
     "saveFailed": "فشل الحفظ",
     "deleteFailed": "فشل الحذف",
     "networkError": "خطأ في الشبكة. تحقق من اتصالك.",
+    "requestTimeout": "انتهت مهلة الطلب. يرجى المحاولة مرة أخرى.",
     "unauthorized": "يرجى تسجيل الدخول للوصول لهذه الصفحة.",
     "forbidden": "ليس لديك الصلاحيات اللازمة.",
     "notFound": "المورد غير موجود.",

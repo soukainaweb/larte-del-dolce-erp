@@ -2562,7 +2562,6 @@ const ReportsPage = () => {
   );
 
   const renderGeneratedReports = () => {
-  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('reports');
     return (
       <div>
         <div className="flex items-center gap-3 mb-6 flex-wrap">

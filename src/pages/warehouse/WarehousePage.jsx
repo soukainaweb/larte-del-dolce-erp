@@ -35,6 +35,8 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
+import { useToast } from '../../contexts/ToastContext';
+import { safeArray, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
 import {
   getWarehouses,
   createWarehouse,
@@ -432,7 +434,7 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
               <option value="">Sélectionner un responsable</option>
-              {managers.map(m => (
+              {ensureArray(managers).map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
@@ -722,7 +724,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
               }`}
             >
               <option value="">{tc('selectOption')}</option>
-              {warehouses.map(w => (
+              {ensureArray(warehouses).map(w => (
                 <option key={w.id} value={w.id}>{w.name}</option>
               ))}
             </select>
@@ -740,7 +742,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
               }`}
             >
               <option value="">{tc('selectOption')}</option>
-              {warehouses.map(w => (
+              {ensureArray(warehouses).map(w => (
                 <option key={w.id} value={w.id}>{w.name}</option>
               ))}
             </select>
@@ -816,6 +818,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
 // ==========================================
 const WarehousePage = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('warehouse');
 
   const [warehouses, setWarehouses] = useState([]);
@@ -852,11 +855,14 @@ const WarehousePage = () => {
         sort_order: 'desc'
       };
       const response = await getWarehouses(params);
-      const data = response.data.data || [];
+      const data = safeArray(response);
       setWarehouses(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      setTotalCount(response.data?.meta?.total ?? data.length);
     } catch (error) {
       console.error('Error fetching warehouses:', error);
+      setWarehouses([]);
+      setTotalCount(0);
+      showToast(getApiErrorMessage(error, t('warehouse.errors.load', t('errors.loadFailed'))), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -894,14 +900,10 @@ const WarehousePage = () => {
   }, []);
 
   // Filter warehouses (client-side for demo, API already handles filters)
-  const filteredWarehouses = useMemo(() => {
-    return warehouses;
-  }, [warehouses]);
+  const filteredWarehouses = useMemo(() => ensureArray(warehouses), [warehouses]);
 
   // Paginate
-  const paginatedWarehouses = useMemo(() => {
-    return filteredWarehouses;
-  }, [filteredWarehouses]);
+  const paginatedWarehouses = useMemo(() => ensureArray(filteredWarehouses), [filteredWarehouses]);
 
   const totalPages = useMemo(() => {
     return Math.ceil(totalCount / itemsPerPage) || 1;
@@ -1040,7 +1042,7 @@ const WarehousePage = () => {
   }, [searchTerm, typeFilter, statusFilter]);
 
   const uniqueTypes = useMemo(() => {
-    const types = new Set(warehouses.map(w => w.type));
+    const types = new Set(ensureArray(warehouses).map(w => w.type));
     return Array.from(types);
   }, [warehouses]);
 
@@ -1201,7 +1203,7 @@ const WarehousePage = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedWarehouses.map((warehouse, index) => (
+                  ensureArray(paginatedWarehouses).map((warehouse, index) => (
                     <WarehouseTableRow
                       key={warehouse.id}
                       warehouse={warehouse}
@@ -1242,7 +1244,7 @@ const WarehousePage = () => {
               <p className="text-sm text-[#6D6D6D]">{t('warehouse.empty')}</p>
             </div>
           ) : (
-            paginatedWarehouses.map((warehouse) => (
+            ensureArray(paginatedWarehouses).map((warehouse) => (
               <WarehouseCard
                 key={warehouse.id}
                 warehouse={warehouse}
@@ -1278,7 +1280,7 @@ const WarehousePage = () => {
             <p className="text-sm text-[#6D6D6D]">{t('warehouse.empty')}</p>
           </div>
         ) : (
-          paginatedWarehouses.map((warehouse) => (
+          ensureArray(paginatedWarehouses).map((warehouse) => (
             <WarehouseCard
               key={warehouse.id}
               warehouse={warehouse}
