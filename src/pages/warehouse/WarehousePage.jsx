@@ -44,7 +44,6 @@ import {
   updateWarehouseStatus,
   deleteWarehouse,
   transferProducts,
-  getWarehouseStatistics,
   exportWarehouses,
   getWarehouseTypes,
   getWarehouseStatuses
@@ -56,6 +55,23 @@ import {
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
 const DATE_LOCALE = 'ar-SA';
+const CURRENCY = 'SAR';
+const CURRENCY_SYMBOL = 'ر.س';
+
+const formatCurrency = (value) => {
+  const amount = Number(value ?? 0);
+  if (Number.isNaN(amount)) return `0 ${CURRENCY_SYMBOL}`;
+  return `${amount.toLocaleString(DATE_LOCALE)} ${CURRENCY_SYMBOL}`;
+};
+
+const getWarehouseProductCount = (warehouse) =>
+  Number(warehouse?.productCount ?? warehouse?.product_count ?? warehouse?.items_count ?? 0) || 0;
+
+const getWarehouseStockValue = (warehouse) =>
+  Number(warehouse?.stockValue ?? warehouse?.stock_value ?? warehouse?.inventory_value ?? 0) || 0;
+
+const isWarehouseActive = (warehouse) =>
+  warehouse?.status === 'active' || warehouse?.is_active === true || warehouse?.isActive === true;
 
 // ==========================================
 // STATUS BADGE
@@ -171,11 +187,11 @@ const WarehouseCard = ({ warehouse, onView, onEdit, onDelete, onToggleStatus }) 
         </div>
         <div className="flex items-center gap-1">
           <User size={12} />
-          {warehouse.manager || 'Non assigné'}
+          {warehouse.manager || t('warehouse.fields.notAssigned')}
         </div>
         <div className="flex items-center gap-1">
           <DollarSign size={12} />
-          {warehouse.stockValue.toLocaleString()} DH
+          {formatCurrency(getWarehouseStockValue(warehouse))}
         </div>
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#ECE8E1]">
@@ -232,9 +248,9 @@ const WarehouseTableRow = ({ warehouse, onView, onEdit, onDelete, onToggleStatus
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{warehouse.location || '—'}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{warehouse.manager || '—'}</td>
-      <td className="px-4 py-3 text-sm text-[#6D6D6D]">{warehouse.productCount || 0}</td>
+      <td className="px-4 py-3 text-sm text-[#6D6D6D]">{getWarehouseProductCount(warehouse)}</td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {warehouse.stockValue.toLocaleString()} DH
+        {formatCurrency(getWarehouseStockValue(warehouse))}
       </td>
       <td className="px-4 py-3">
         <StatusBadge status={warehouse.status} />
@@ -333,8 +349,8 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.name) newErrors.name = 'Le nom est requis';
-    if (!formData.code) newErrors.code = 'Le code est requis';
+    if (!formData.name) newErrors.name = t('warehouse.validation.nameRequired');
+    if (!formData.code) newErrors.code = t('warehouse.validation.codeRequired');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -370,7 +386,7 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Nom *</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('name')} *</label>
             <input
               type="text"
               name="name"
@@ -385,7 +401,7 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Code *</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('warehouse.fields.code')} *</label>
               <input
                 type="text"
                 name="code"
@@ -398,7 +414,7 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
               {errors.code && <p className="text-xs text-rose-500 mt-1">{errors.code}</p>}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Type</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('type')}</label>
               <select
                 name="type"
                 value={formData.type}
@@ -408,32 +424,32 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
                 <option value="raw">{t('warehouse.types.raw')}</option>
                 <option value="finished">{t('warehouse.types.finished')}</option>
                 <option value="packaging">{t('warehouse.types.packaging')}</option>
-                <option value="other">Autre</option>
+                <option value="other">{t('suppliers.types.other')}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Emplacement</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('warehouse.table.location')}</label>
             <input
               type="text"
               name="location"
               value={formData.location}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
-              placeholder="Étage 1, Zone A, Casablanca"
+              placeholder={t('warehouse.placeholders.location')}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Responsable</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('warehouse.fields.manager')}</label>
             <select
               name="manager"
               value={formData.manager}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="">Sélectionner un responsable</option>
+              <option value="">{t('warehouse.placeholders.selectManager')}</option>
               {ensureArray(managers).map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
@@ -441,14 +457,14 @@ const WarehouseModal = ({ isOpen, onClose, onSave, warehouse, isLoading }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Description</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('description')}</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
               rows={3}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all resize-none"
-              placeholder="Description de l'entrepôt..."
+              placeholder={t('warehouse.placeholders.description')}
             />
           </div>
 
@@ -511,7 +527,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, warehouse, isLoading }) => {
   const { t, tc } = usePageI18n('warehouse');
   if (!isOpen) return null;
 
-  const hasProducts = warehouse?.productCount > 0;
+  const hasProducts = getWarehouseProductCount(warehouse) > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -531,7 +547,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, warehouse, isLoading }) => {
           {hasProducts ? (
             <>
               <span className="text-rose-500 font-semibold">⚠️ {tc('attention')}</span><br />
-              {t('warehouse.modals.deleteWarning', { count: warehouse.productCount })}
+              {t('warehouse.modals.deleteWarning', { count: getWarehouseProductCount(warehouse) })}
             </>
           ) : (
             <>
@@ -613,11 +629,11 @@ const ViewWarehouseModal = ({ isOpen, onClose, warehouse }) => {
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">{tc('product')}</p>
-              <p className="text-xl font-bold text-[#3D2F24]">{warehouse.productCount || 0}</p>
+              <p className="text-xl font-bold text-[#3D2F24]">{getWarehouseProductCount(warehouse)}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">{t('warehouse.fields.stockValue')}</p>
-              <p className="text-xl font-bold text-[#3D2F24]">{warehouse.stockValue.toLocaleString()} DH</p>
+              <p className="text-xl font-bold text-[#3D2F24]">{formatCurrency(getWarehouseStockValue(warehouse))}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">{t('warehouse.fields.manager')}</p>
@@ -677,10 +693,10 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.fromWarehouse) newErrors.fromWarehouse = 'Sélectionnez un entrepôt source';
-    if (!formData.toWarehouse) newErrors.toWarehouse = 'Sélectionnez un entrepôt destination';
-    if (!formData.product) newErrors.product = 'Sélectionnez un produit';
-    if (formData.quantity < 1) newErrors.quantity = 'La quantité doit être supérieure à 0';
+    if (!formData.fromWarehouse) newErrors.fromWarehouse = t('warehouse.validation.fromWarehouseRequired');
+    if (!formData.toWarehouse) newErrors.toWarehouse = t('warehouse.validation.toWarehouseRequired');
+    if (!formData.product) newErrors.product = t('warehouse.validation.productRequired');
+    if (formData.quantity < 1) newErrors.quantity = t('warehouse.validation.quantityRequired');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -702,7 +718,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Transférer des {t('orders.table.products')}
+            {t('warehouse.transfer.title')}
           </h3>
           <button
             onClick={onClose}
@@ -714,7 +730,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">De l'entrepôt</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('warehouse.transfer.fromWarehouse')}</label>
             <select
               name="fromWarehouse"
               value={formData.fromWarehouse}
@@ -732,7 +748,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Vers l'entrepôt</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('warehouse.transfer.toWarehouse')}</label>
             <select
               name="toWarehouse"
               value={formData.toWarehouse}
@@ -765,7 +781,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Quantité</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('quantity')}</label>
             <input
               type="number"
               name="quantity"
@@ -780,14 +796,14 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Raison</label>
+            <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('warehouse.transfer.reason')}</label>
             <textarea
               name="reason"
               value={formData.reason}
               onChange={handleChange}
               rows={3}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all resize-none"
-              placeholder="Raison du transfert..."
+              placeholder={t('warehouse.transfer.reasonPlaceholder')}
             />
           </div>
 
@@ -804,7 +820,7 @@ const TransferModal = ({ isOpen, onClose, onTransfer, warehouses, isLoading }) =
               disabled={isLoading}
               className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {isLoading ? tc('saving') : tc('update')}
+              {isLoading ? tc('saving') : t('warehouse.transfer.submit')}
             </button>
           </div>
         </form>
@@ -840,6 +856,17 @@ const WarehousePage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+  const [allWarehouses, setAllWarehouses] = useState([]);
+
+  const fetchAllWarehousesForKpi = async () => {
+    try {
+      const response = await getWarehouses({ per_page: 500, page: 1 });
+      setAllWarehouses(safeArray(response));
+    } catch (error) {
+      console.error('Error fetching warehouse KPI data:', error);
+      setAllWarehouses([]);
+    }
+  };
 
   // Load warehouses
   const fetchWarehouses = async () => {
@@ -872,32 +899,19 @@ const WarehousePage = () => {
     fetchWarehouses();
   }, [currentPage, itemsPerPage, searchTerm, typeFilter, statusFilter]);
 
-  // Calculate KPIs from API statistics
-  const [kpis, setKpis] = useState({
-    total: 0,
-    active: 0,
-    totalProducts: 0,
-    totalValue: 0
-  });
-
-  const fetchStatistics = async () => {
-    try {
-      const response = await getWarehouseStatistics();
-      const stats = response.data.data || {};
-      setKpis({
-        total: stats.total || 0,
-        active: stats.active || 0,
-        totalProducts: stats.totalProducts || 0,
-        totalValue: stats.totalValue || 0
-      });
-    } catch (error) {
-      console.error('Error fetching warehouse statistics:', error);
-    }
-  };
-
   useEffect(() => {
-    fetchStatistics();
+    fetchAllWarehousesForKpi();
   }, []);
+
+  const kpis = useMemo(() => {
+    const list = ensureArray(allWarehouses);
+    return {
+      total: totalCount || list.length,
+      active: list.filter(isWarehouseActive).length,
+      totalProducts: list.reduce((sum, warehouse) => sum + getWarehouseProductCount(warehouse), 0),
+      totalValue: list.reduce((sum, warehouse) => sum + getWarehouseStockValue(warehouse), 0),
+    };
+  }, [allWarehouses, totalCount]);
 
   // Filter warehouses (client-side for demo, API already handles filters)
   const filteredWarehouses = useMemo(() => ensureArray(warehouses), [warehouses]);
@@ -913,14 +927,14 @@ const WarehousePage = () => {
   // EXPORT CONFIGURATION
   // ==========================================
   const columns = [
-    { label: 'Nom', accessor: 'name', width: 18 },
-    { label: 'Code', accessor: 'code', width: 10 },
-    { label: 'Type', accessor: 'type', width: 14 },
-    { label: 'Emplacement', accessor: 'location', width: 18 },
-    { label: 'Responsable', accessor: 'manager', width: 14 },
-    { label: 'Produits', accessor: 'productCount', width: 10 },
-    { label: 'Valeur du stock', accessor: 'stockValue', width: 14 },
-    { label: 'Statut', accessor: 'status', width: 12 }
+    { label: t('warehouse.table.name'), accessor: 'name', width: 18 },
+    { label: t('warehouse.fields.code'), accessor: 'code', width: 10 },
+    { label: tc('type'), accessor: 'type', width: 14 },
+    { label: t('warehouse.table.location'), accessor: 'location', width: 18 },
+    { label: t('warehouse.fields.manager'), accessor: 'manager', width: 14 },
+    { label: t('warehouse.table.items'), accessor: 'productCount', width: 10 },
+    { label: t('warehouse.fields.stockValue'), accessor: 'stockValue', width: 14 },
+    { label: tc('status'), accessor: 'status', width: 12 }
   ];
 
   const rowFormatter = (item) => ({
@@ -931,17 +945,17 @@ const WarehousePage = () => {
           item.type === 'packaging' ? t('suppliers.types.packaging') : t('suppliers.types.other'),
     location: item.location || '—',
     manager: item.manager || '—',
-    productCount: item.productCount || 0,
-    stockValue: `${item.stockValue.toLocaleString()} DH`,
+    productCount: getWarehouseProductCount(item),
+    stockValue: formatCurrency(getWarehouseStockValue(item)),
     status: item.status === 'active' ? tc('active') :
             item.status === 'inactive' ? tc('inactive') : t('warehouse.status.maintenance')
   });
 
   const summary = [
-    { label: 'Total entrepôts', value: kpis.total },
-    { label: 'Entrepôts actifs', value: kpis.active },
-    { label: 'Produits stockés', value: kpis.totalProducts },
-    { label: 'Valeur du stock', value: `${kpis.totalValue.toLocaleString()} DH` }
+    { label: t('warehouse.kpi.totalWarehouses'), value: kpis.total },
+    { label: t('warehouse.kpi.active'), value: kpis.active },
+    { label: t('warehouse.table.items'), value: kpis.totalProducts },
+    { label: t('warehouse.fields.stockValue'), value: formatCurrency(kpis.totalValue) }
   ];
 
   // ==========================================
@@ -963,7 +977,7 @@ const WarehousePage = () => {
       const newWarehouse = response.data.data;
       setWarehouses(prev => [newWarehouse, ...prev]);
       setIsCreateModalOpen(false);
-      await fetchStatistics();
+      await fetchAllWarehousesForKpi();
     } catch (error) {
       console.error('Error creating warehouse:', error);
     } finally {
@@ -981,7 +995,7 @@ const WarehousePage = () => {
       ));
       setIsEditModalOpen(false);
       setSelectedWarehouse(null);
-      await fetchStatistics();
+      await fetchAllWarehousesForKpi();
     } catch (error) {
       console.error('Error updating warehouse:', error);
     } finally {
@@ -990,14 +1004,14 @@ const WarehousePage = () => {
   };
 
   const handleDeleteWarehouse = async () => {
-    if (selectedWarehouse.productCount > 0) return;
+    if (getWarehouseProductCount(selectedWarehouse) > 0) return;
     setIsSaving(true);
     try {
       await deleteWarehouse(selectedWarehouse.id);
       setWarehouses(prev => prev.filter(w => w.id !== selectedWarehouse.id));
       setIsDeleteModalOpen(false);
       setSelectedWarehouse(null);
-      await fetchStatistics();
+      await fetchAllWarehousesForKpi();
     } catch (error) {
       console.error('Error deleting warehouse:', error);
     } finally {
@@ -1013,7 +1027,7 @@ const WarehousePage = () => {
       setWarehouses(prev => prev.map(w =>
         w.id === warehouse.id ? updatedWarehouse : w
       ));
-      await fetchStatistics();
+      await fetchAllWarehousesForKpi();
     } catch (error) {
       console.error('Error toggling warehouse status:', error);
     }
@@ -1024,7 +1038,7 @@ const WarehousePage = () => {
     try {
       await transferProducts(formData);
       setIsTransferModalOpen(false);
-      await fetchStatistics();
+      await fetchAllWarehousesForKpi();
     } catch (error) {
       console.error('Error transferring:', error);
     } finally {
@@ -1034,7 +1048,7 @@ const WarehousePage = () => {
 
   const handleRefresh = () => {
     fetchWarehouses();
-    fetchStatistics();
+    fetchAllWarehousesForKpi();
   };
 
   useEffect(() => {
@@ -1062,8 +1076,8 @@ const WarehousePage = () => {
             data={filteredWarehouses}
             columns={columns}
             title={t('warehouse.export.title')}
-            subtitle={t('warehouse.export.subtitle', { count: filteredWarehouses.length, value: `${kpis.totalValue.toLocaleString()} DH` })}
-            filename={`entrepots_${new Date().toISOString().split('T')[0]}`}
+            subtitle={t('warehouse.export.subtitle', { count: filteredWarehouses.length, value: formatCurrency(kpis.totalValue) })}
+            filename={`warehouses_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
             rowFormatter={rowFormatter}
             userName={user?.firstName}
@@ -1082,7 +1096,7 @@ const WarehousePage = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#ECE8E1] bg-white text-[#3D2F24] font-medium hover:bg-[#F8F7F4] transition-all"
           >
             <ArrowRightLeft size={18} />
-            Transférer
+            {t('warehouse.actions.transfer')}
           </button>
           <div className="flex items-center gap-1 border border-[#ECE8E1] rounded-xl bg-white p-1">
             <button
@@ -1112,10 +1126,10 @@ const WarehousePage = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={Building} title={t('warehouse.kpi.totalWarehouses')} value={kpis.total} color="blue" />
-        <KPICard icon={CheckCircle} title={t('warehouse.kpi.active')} value={kpis.active} color="emerald" />
-        <KPICard icon={Package} title={t('warehouse.table.items')} value={kpis.totalProducts} color="purple" />
-        <KPICard icon={DollarSign} title={t('warehouse.fields.stockValue')} value={`${kpis.totalValue.toLocaleString()} DH`} color="gold" />
+        <KPICard icon={Building} title={t('warehouse.kpi.totalWarehouses')} value={isLoading ? '—' : kpis.total} color="blue" />
+        <KPICard icon={CheckCircle} title={t('warehouse.kpi.active')} value={isLoading ? '—' : kpis.active} color="emerald" />
+        <KPICard icon={Package} title={t('warehouse.table.items')} value={isLoading ? '—' : kpis.totalProducts} color="purple" />
+        <KPICard icon={DollarSign} title={t('warehouse.fields.stockValue')} value={isLoading ? '—' : formatCurrency(kpis.totalValue)} color="gold" />
       </div>
 
       {/* Filters */}
@@ -1141,7 +1155,7 @@ const WarehousePage = () => {
               {uniqueTypes.map(type => (
                 <option key={type} value={type}>
                   {type === 'raw' ? t('suppliers.types.raw') :
-                   type === 'finished' ? 'Produits finis' :
+                   type === 'finished' ? t('warehouse.types.finished') :
                    type === 'packaging' ? t('suppliers.types.packaging') : t('suppliers.types.other')}
                 </option>
               ))}
@@ -1167,12 +1181,12 @@ const WarehousePage = () => {
             <table className="w-full">
               <thead>
                 <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Entrepôt</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Emplacement</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Responsable</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('warehouse.table.name')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('type')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('warehouse.table.location')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('warehouse.fields.manager')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('product')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Valeur</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('warehouse.table.value')}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                 </tr>
@@ -1306,8 +1320,8 @@ const WarehousePage = () => {
       {filteredWarehouses.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
           <p className="text-sm text-[#6D6D6D]">
-            Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} entrepôts
+            {t('common.showing')} {((currentPage - 1) * itemsPerPage) + 1} {t('common.of')}{' '}
+            {Math.min(currentPage * itemsPerPage, totalCount)} {t('common.of')} {totalCount}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -1318,7 +1332,7 @@ const WarehousePage = () => {
               <ChevronLeft size={16} className="text-[#6D6D6D]" />
             </button>
             <span className="text-sm font-medium text-[#3D2F24]">
-              Page {currentPage} sur {totalPages}
+              {t('warehouse.pagination.pageOf', { current: currentPage, total: totalPages })}
             </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
