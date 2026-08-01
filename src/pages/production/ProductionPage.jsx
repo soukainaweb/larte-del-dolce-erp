@@ -31,6 +31,8 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
+import { useToast } from '../../contexts/ToastContext';
+import { safeArray, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
 import {
   getProductions,
   createProduction,
@@ -663,6 +665,7 @@ const ProductionDetailsModal = ({ isOpen, onClose, production }) => {
 // ==========================================
 const ProductionPage = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('production');
   const location = useLocation();
   const navigate = useNavigate();
@@ -697,10 +700,14 @@ const ProductionPage = () => {
         sort_order: 'desc'
       };
       const response = await getProductions(params);
-      setProductions(response.data.data || []);
-      setTotalCount(response.data.meta?.total || 0);
+      const data = safeArray(response);
+      setProductions(data);
+      setTotalCount(response.data?.meta?.total ?? data.length);
     } catch (error) {
       console.error('Error fetching productions:', error);
+      setProductions([]);
+      setTotalCount(0);
+      showToast(getApiErrorMessage(error, t('production.errors.load', t('errors.loadFailed'))), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -748,14 +755,10 @@ const ProductionPage = () => {
   }, []);
 
   // Filter productions (client-side for demo, API already handles filters)
-  const filteredProductions = useMemo(() => {
-    return productions;
-  }, [productions]);
+  const filteredProductions = useMemo(() => ensureArray(productions), [productions]);
 
   // Paginate
-  const paginatedProductions = useMemo(() => {
-    return filteredProductions;
-  }, [filteredProductions]);
+  const paginatedProductions = useMemo(() => ensureArray(filteredProductions), [filteredProductions]);
 
   const totalPages = useMemo(() => {
     return Math.ceil(totalCount / itemsPerPage) || 1;
@@ -872,7 +875,7 @@ const ProductionPage = () => {
   };
 
   const uniqueStatuses = useMemo(() => {
-    const statuses = new Set(productions.map(p => p.status));
+    const statuses = new Set(ensureArray(productions).map(p => p.status));
     return Array.from(statuses);
   }, [productions]);
 
@@ -993,7 +996,7 @@ const ProductionPage = () => {
                   </td>
                 </tr>
               ) : (
-                paginatedProductions.map((production, index) => (
+                ensureArray(paginatedProductions).map((production, index) => (
                   <ProductionTableRow
                     key={production.id}
                     production={production}
@@ -1031,7 +1034,7 @@ const ProductionPage = () => {
             <p className="text-sm text-[#6D6D6D]">{t('production.empty')}</p>
           </div>
         ) : (
-          paginatedProductions.map((production) => (
+          ensureArray(paginatedProductions).map((production) => (
             <ProductionCard
               key={production.id}
               production={production}

@@ -19,7 +19,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
-  timeout: 10000,
+  timeout: 30000,
 });
 
 api.interceptors.request.use(
@@ -80,6 +80,16 @@ api.interceptors.response.use(
       if (!isAuthPage) {
         dispatchAppToast(serverMessage, 'error');
       }
+    }
+
+    if (!error.response) {
+      const timeoutMessage = error.code === 'ECONNABORTED'
+        ? i18n.t('errors.requestTimeout', {
+            defaultValue: 'انتهت مهلة الطلب. يرجى المحاولة مرة أخرى.',
+          })
+        : i18n.t('errors.networkError');
+      error.timeoutMessage = timeoutMessage;
+      error.message = timeoutMessage;
     }
 
     return Promise.reject(error);

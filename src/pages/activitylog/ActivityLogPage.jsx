@@ -184,7 +184,14 @@ import {
   ensureArray,
   parseListResponse,
   normalizeActivityLogList,
+  getApiErrorMessage,
 } from '../../utils/apiHelpers';
+
+const isSuccessStatus = (status, successLabel) =>
+  status === successLabel || status === 'Succès' || status === 'success';
+
+const isFailedStatus = (status, errorLabel) =>
+  status === errorLabel || status === 'Echec' || status === 'Échec' || status === 'failed';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -370,8 +377,8 @@ const ViewActivityModal = ({ isOpen, onClose, activity, onExportPDF, onPrint, on
             <div className="bg-[#F8F7F4] rounded-xl p-3">
               <p className="text-[10px] text-[#6D6D6D] uppercase tracking-wide">{tc('status')}</p>
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                activity.status === 'Succès' ? 'bg-emerald-50 text-emerald-700' : 
-                activity.status === 'Echec' ? 'bg-rose-50 text-rose-700' : 'bg-gray-50 text-gray-600'
+                isSuccessStatus(activity.status, t('common.success')) ? 'bg-emerald-50 text-emerald-700' :
+                isFailedStatus(activity.status, t('common.error')) ? 'bg-rose-50 text-rose-700' : 'bg-gray-50 text-gray-600'
               }`}>
                 {activity.status || '—'}
               </span>
@@ -442,7 +449,7 @@ const ActivityLogPage = () => {
   const { user: currentUser } = useAuth();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('activityLog');
   const { showToast: globalShowToast } = useToast();
-  const { exportPDF, print, isExporting } = useExport({ userName: currentUser?.firstName || 'Utilisateur' });
+  const { exportPDF, print, isExporting } = useExport({ userName: currentUser?.firstName || t('users.table.user') });
 
   // States
   const [isLoading, setIsLoading] = useState(true);
@@ -487,15 +494,13 @@ const ActivityLogPage = () => {
   const [timelineActivities, setTimelineActivities] = useState([]);
 
   // Toast
-  const showToast = (message, type = 'success') => {
-  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('activityLog');
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ isOpen: true, message, type });
-  };
+  }, []);
 
-  const hideToast = () => {
-  const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('activityLog');
+  const hideToast = useCallback(() => {
     setToast({ isOpen: false, message: '', type: 'success' });
-  };
+  }, []);
 
   // Écouter les événements de toast personnalisés
   useEffect(() => {
@@ -504,7 +509,7 @@ const ActivityLogPage = () => {
     };
     window.addEventListener('showToast', handler);
     return () => window.removeEventListener('showToast', handler);
-  }, []);
+  }, [showToast]);
 
   // ==========================================
   // CHARGEMENT DES DONNÉES
@@ -540,7 +545,7 @@ const ActivityLogPage = () => {
       if (status === 404 || status >= 500) {
         setLoadError(t('activityLog.errors.fetchFailed'));
       } else {
-        showToast(t('activityLog.errors.load'), 'error');
+        showToast(getApiErrorMessage(error, t('activityLog.errors.load')), 'error');
       }
     } finally {
       setIsLoading(false);
@@ -713,16 +718,16 @@ const ActivityLogPage = () => {
   // ==========================================
 
   const exportColumns = [
-    { label: 'Date', accessor: 'date', width: 20 },
-    { label: 'Heure', accessor: 'time', width: 15 },
+    { label: tc('date'), accessor: 'date', width: 20 },
+    { label: t('activityLog.table.time'), accessor: 'time', width: 15 },
     { label: t('users.table.user'), accessor: 'userName', width: 25 },
-    { label: 'Module', accessor: 'module', width: 25 },
-    { label: 'Action', accessor: 'action', width: 25 },
-    { label: 'Description', accessor: 'description', width: 50 },
-    { label: 'Niveau', accessor: 'level', width: 20 },
-    { label: 'IP', accessor: 'ip', width: 20 },
-    { label: 'Navigateur', accessor: 'browser', width: 20 },
-    { label: 'Statut', accessor: 'status', width: 15 }
+    { label: t('activityLog.table.module'), accessor: 'module', width: 25 },
+    { label: t('activityLog.table.action'), accessor: 'action', width: 25 },
+    { label: t('activityLog.table.description'), accessor: 'description', width: 50 },
+    { label: t('activityLog.table.level'), accessor: 'level', width: 20 },
+    { label: t('activityLog.table.ipAddress'), accessor: 'ip', width: 20 },
+    { label: t('activityLog.table.browser'), accessor: 'browser', width: 20 },
+    { label: tc('status'), accessor: 'status', width: 15 }
   ];
 
   const rowFormatter = (activity) => ({
@@ -739,12 +744,12 @@ const ActivityLogPage = () => {
   });
 
   const exportSummary = {
-    'Total activités': filteredActivities.length,
-    'today': stats.today,
-    'activeUsers': stats.users,
-    'critical': stats.critical,
-    'Actions réussies': stats.success,
-    'Sécurité': stats.security
+    [t('activityLog.exportSummary.totalActivities')]: filteredActivities.length,
+    [t('activityLog.kpi.today')]: stats.today,
+    [t('activityLog.activeUsers')]: stats.users,
+    [t('activityLog.kpi.critical')]: stats.critical,
+    [t('activityLog.exportSummary.successfulActions')]: stats.success,
+    [t('activityLog.exportSummary.security')]: stats.security
   };
 
   // ==========================================
@@ -889,9 +894,9 @@ const ActivityLogPage = () => {
           <ExportButtons
             data={filteredActivities}
             columns={exportColumns}
-            title="Journal d'activité"
-            subtitle={`${filteredActivities.length} activités - ${stats.today} aujourd'hui`}
-            filename={`journal_activite_${new Date().toISOString().split('T')[0]}`}
+            title={t('activityLog.export.title')}
+            subtitle={t('activityLog.export.subtitle', { count: filteredActivities.length, today: stats.today })}
+            filename={`activity_log_${new Date().toISOString().split('T')[0]}`}
             summary={exportSummary}
             rowFormatter={rowFormatter}
             userName={currentUser?.firstName || t('users.table.user')}
@@ -905,45 +910,45 @@ const ActivityLogPage = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         <KPICard
           icon={History}
-          title="Activités aujourd'hui"
+          title={t('activityLog.kpi.todayActivities')}
           value={stats.today}
           color="blue"
-          subtitle="Dernières 24h"
+          subtitle={t('activityLog.kpi.last24h')}
         />
         <KPICard
           icon={Users}
-          title="Utilisateurs actifs"
+          title={t('activityLog.activeUsers')}
           value={stats.users}
           color="green"
-          subtitle="Connectés"
+          subtitle={t('activityLog.kpi.connected')}
         />
         <KPICard
           icon={AlertTriangle}
-          title="Actions critiques"
+          title={t('activityLog.kpi.criticalActions')}
           value={stats.critical}
           color="red"
-          subtitle="À surveiller"
+          subtitle={t('activityLog.kpi.toMonitor')}
         />
         <KPICard
           icon={CheckCircle}
-          title="Actions réussies"
+          title={t('activityLog.kpi.successfulActions')}
           value={stats.success}
           color="green"
-          subtitle="Succès"
+          subtitle={t('activityLog.kpi.successLabel')}
         />
         <KPICard
           icon={Clock}
-          title="Temps moyen"
+          title={t('activityLog.kpi.avgTime')}
           value={stats.duration}
           color="orange"
-          subtitle="Par session"
+          subtitle={t('activityLog.kpi.perSession')}
         />
         <KPICard
           icon={ShieldCheck}
-          title="Sécurité"
+          title={t('activityLog.kpi.securityScore')}
           value={stats.security}
           color="gold"
-          subtitle="Score"
+          subtitle={t('activityLog.kpi.score')}
         />
       </div>
 
@@ -973,11 +978,11 @@ const ActivityLogPage = () => {
               onChange={(e) => setDateFilter(e.target.value)}
               className="px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Toutes les dates</option>
-              <option value="today">Aujourd'hui</option>
-              <option value="yesterday">Hier</option>
-              <option value="week">Cette semaine</option>
-              <option value="month">Ce mois</option>
+              <option value="all">{t('activityLog.filters.allDates')}</option>
+              <option value="today">{tc('today')}</option>
+              <option value="yesterday">{t('activityLog.filters.yesterday')}</option>
+              <option value="week">{t('activityLog.filters.thisWeek')}</option>
+              <option value="month">{t('activityLog.filters.thisMonth')}</option>
             </select>
 
             <select
@@ -986,7 +991,7 @@ const ActivityLogPage = () => {
               className="px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
               <option value="all">{t('common.allUsers')}</option>
-              {uniqueUsers.map(user => (
+              {ensureArray(uniqueUsers).map(user => (
                 <option key={user} value={user}>{user}</option>
               ))}
             </select>
@@ -997,7 +1002,7 @@ const ActivityLogPage = () => {
               className="px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
               <option value="all">{t('common.allModules')}</option>
-              {uniqueModules.map(module => (
+              {ensureArray(uniqueModules).map(module => (
                 <option key={module} value={module}>{module}</option>
               ))}
             </select>
@@ -1007,8 +1012,8 @@ const ActivityLogPage = () => {
               onChange={(e) => setActionFilter(e.target.value)}
               className="px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
-              <option value="all">Toutes les actions</option>
-              {uniqueActions.map(action => (
+              <option value="all">{t('activityLog.filters.allActions')}</option>
+              {ensureArray(uniqueActions).map(action => (
                 <option key={action} value={action}>{action}</option>
               ))}
             </select>
@@ -1019,12 +1024,12 @@ const ActivityLogPage = () => {
               className="px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
               <option value="all">{t('common.allLevels')}</option>
-              {uniqueLevels.map(level => (
+              {ensureArray(uniqueLevels).map(level => (
                 <option key={level} value={level}>
-                  {level === 'info' ? 'Information' :
-                   level === 'success' ? 'Succès' :
-                   level === 'warning' ? 'Avertissement' :
-                   level === 'error' ? 'Erreur' :
+                  {level === 'info' ? t('activityLog.levels.info') :
+                   level === 'success' ? t('activityLog.levels.success') :
+                   level === 'warning' ? t('activityLog.levels.warning') :
+                   level === 'error' ? t('activityLog.levels.error') :
                    level === 'critical' ? t('notifications.kpi.critical') : level}
                 </option>
               ))}
@@ -1034,7 +1039,7 @@ const ActivityLogPage = () => {
               onClick={handleResetFilters}
               className="px-3 py-2 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors"
             >
-              Réinitialiser
+              {tc('reset')}
             </button>
           </div>
         </div>
@@ -1047,13 +1052,13 @@ const ActivityLogPage = () => {
             <thead className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
               <tr>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('date')}</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Heure</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Utilisateur</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Module</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Action</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Description</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Niveau</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">IP</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('activityLog.table.time')}</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('activityLog.table.user')}</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('activityLog.table.module')}</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('activityLog.table.action')}</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('activityLog.table.description')}</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('activityLog.table.level')}</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('activityLog.table.ipAddress')}</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
                 <th className="px-3 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
               </tr>
@@ -1089,18 +1094,18 @@ const ActivityLogPage = () => {
                     <div className="flex flex-col items-center gap-3">
                       <History size={48} className="text-[#D1CBC0]" />
                       <h3 className="text-lg font-bold text-[#3D2F24]">{t('activityLog.empty')}</h3>
-                      <p className="text-sm text-[#6D6D6D]">{t('activityLog.empty')} ne correspond à vos critères</p>
+                      <p className="text-sm text-[#6D6D6D]">{t('activityLog.emptyFiltered')}</p>
                       <button
                         onClick={handleResetFilters}
                         className="text-sm text-[#B8863B] font-medium hover:underline"
                       >
-                        Réinitialiser les filtres
+                        {t('activityLog.filters.resetFilters')}
                       </button>
                     </div>
                   </td>
                 </tr>
               ) : (
-                paginatedActivities.map((activity, index) => {
+                ensureArray(paginatedActivities).map((activity, index) => {
                   const levelColors = {
                     info: 'bg-blue-50 text-blue-700 border-blue-200',
                     success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -1110,10 +1115,10 @@ const ActivityLogPage = () => {
                   };
 
                   const levelLabels = {
-                    info: 'Information',
-                    success: 'Succès',
-                    warning: 'Avertissement',
-                    error: 'Erreur',
+                    info: t('activityLog.levels.info'),
+                    success: t('activityLog.levels.success'),
+                    warning: t('activityLog.levels.warning'),
+                    error: t('activityLog.levels.error'),
                     critical: t('notifications.kpi.critical')
                   };
 
@@ -1150,8 +1155,8 @@ const ActivityLogPage = () => {
                       <td className="px-3 py-3 text-sm text-[#6D6D6D]">{activity.ip || '—'}</td>
                       <td className="px-3 py-3">
                         <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
-                          activity.status === 'Succès' ? 'bg-emerald-50 text-emerald-700' : 
-                          activity.status === 'Echec' ? 'bg-rose-50 text-rose-700' : 'bg-gray-50 text-gray-600'
+                          isSuccessStatus(activity.status, t('common.success')) ? 'bg-emerald-50 text-emerald-700' :
+                          isFailedStatus(activity.status, t('common.error')) ? 'bg-rose-50 text-rose-700' : 'bg-gray-50 text-gray-600'
                         }`}>
                           {activity.status || '—'}
                         </span>
@@ -1168,7 +1173,7 @@ const ActivityLogPage = () => {
                           <button
                             onClick={() => handleCopy(activity)}
                             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-                            title="Copier"
+                            title={t('activityLog.modals.copy')}
                           >
                             <Copy size={15} className="text-[#6D6D6D]" />
                           </button>
@@ -1187,8 +1192,8 @@ const ActivityLogPage = () => {
           <div className="p-4 border-t border-[#ECE8E1] flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3 text-sm text-[#6D6D6D]">
               <span>
-                Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-                {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount}
+                {t('common.showing')} {((currentPage - 1) * itemsPerPage) + 1} {t('common.of')}{' '}
+                {Math.min(currentPage * itemsPerPage, totalCount)} {t('common.of')} {totalCount}
               </span>
               <select
                 value={itemsPerPage}
@@ -1220,7 +1225,7 @@ const ActivityLogPage = () => {
                 <ChevronLeft size={16} className="text-[#6D6D6D]" />
               </button>
               <span className="text-sm font-medium text-[#3D2F24]">
-                Page {currentPage} sur {totalPages}
+                {t('activityLog.pagination.pageOf', { current: currentPage, total: totalPages })}
               </span>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
@@ -1246,7 +1251,7 @@ const ActivityLogPage = () => {
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-6 shadow-sm mb-6">
         <h3 className="text-sm font-bold text-[#3D2F24] mb-4 flex items-center gap-2">
           <Clock size={18} className="text-[#B8863B]" />
-          Timeline d'activité
+          {t('activityLog.timeline.title')}
         </h3>
         <div className="space-y-4 max-h-80 overflow-y-auto">
           {ensureArray(timelineActivities).slice(0, 10).map((activity, idx) => (
@@ -1276,7 +1281,7 @@ const ActivityLogPage = () => {
       {/* ===== GRAPHIQUES ===== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-6 shadow-sm">
-          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Activités par jour</h3>
+          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('activityLog.charts.byDay')}</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={activitiesByDay}>
@@ -1297,7 +1302,7 @@ const ActivityLogPage = () => {
         </div>
 
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-6 shadow-sm">
-          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Répartition des activités</h3>
+          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('activityLog.charts.distribution')}</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <RePieChart>
@@ -1334,7 +1339,7 @@ const ActivityLogPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-6 shadow-sm">
-          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Activités par utilisateur</h3>
+          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('activityLog.charts.byUser')}</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={activitiesByUser}>
@@ -1355,7 +1360,7 @@ const ActivityLogPage = () => {
         </div>
 
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-6 shadow-sm">
-          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">Modules les plus utilisés</h3>
+          <h3 className="text-sm font-bold text-[#3D2F24] mb-4">{t('activityLog.charts.topModules')}</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={activitiesByModule} layout="vertical">
@@ -1377,15 +1382,15 @@ const ActivityLogPage = () => {
       </div>
 
       {/* ===== ACTIVITÉS CRITIQUES ===== */}
-      {criticalActivities.length > 0 && (
+      {ensureArray(criticalActivities).length > 0 && (
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-6 shadow-sm mb-6">
           <h3 className="text-sm font-bold text-[#3D2F24] mb-4 flex items-center gap-2">
             <AlertTriangle size={18} className="text-rose-500" />
-            Activités critiques
+            {t('activityLog.critical.title')}
             <span className="text-xs bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full">{criticalActivities.length}</span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {criticalActivities.map((activity) => (
+            {ensureArray(criticalActivities).map((activity) => (
               <div
                 key={activity.id}
                 className="bg-rose-50 border border-rose-200 rounded-xl p-4 hover:shadow-md transition-all cursor-pointer"
@@ -1409,7 +1414,7 @@ const ActivityLogPage = () => {
                   className="mt-2 text-xs font-medium text-rose-600 hover:text-rose-700 transition-colors flex items-center gap-1"
                 >
                   <Eye size={12} />
-                  Voir les détails
+                  {actions.view}
                 </button>
               </div>
             ))}
@@ -1418,14 +1423,14 @@ const ActivityLogPage = () => {
       )}
 
       {/* ===== DERNIÈRES CONNEXIONS ===== */}
-      {recentLogins.length > 0 && (
+      {ensureArray(recentLogins).length > 0 && (
         <div className="bg-white border border-[#ECE8E1] rounded-xl p-6 shadow-sm">
           <h3 className="text-sm font-bold text-[#3D2F24] mb-4 flex items-center gap-2">
             <LogOut size={18} className="text-[#B8863B]" />
-            Dernières connexions
+            {t('activityLog.recentLogins.title')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {recentLogins.map((login, idx) => (
+            {ensureArray(recentLogins).map((login, idx) => (
               <div key={idx} className="bg-[#F8F7F4] rounded-xl p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-[#B8863B]/20 flex items-center justify-center">
