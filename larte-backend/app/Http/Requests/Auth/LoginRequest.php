@@ -23,7 +23,7 @@ class LoginRequest extends FormRequest
     {
         if ($this->has('email') && is_string($this->email)) {
             $this->merge([
-                'email' => trim($this->email),
+                'email' => mb_strtolower(trim($this->email)),
             ]);
         }
     }

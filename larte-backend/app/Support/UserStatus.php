@@ -101,8 +101,17 @@ final class UserStatus
 
     public static function canAuthenticate(?string $status): bool
     {
+        if ($status === null || $status === '') {
+            return true;
+        }
+
         $normalized = self::normalize($status, self::ACTIVE);
 
-        return !in_array($normalized, self::blockedForLogin(), true);
+        // Presence statuses (online/offline/away) must not block authentication.
+        if (self::isPresence($normalized)) {
+            return true;
+        }
+
+        return ! in_array($normalized, self::blockedForLogin(), true);
     }
 }
