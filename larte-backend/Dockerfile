@@ -7,9 +7,9 @@ ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/do
 RUN chmod +x /usr/local/bin/install-php-extensions && \
     install-php-extensions pdo_mysql mbstring dom fileinfo zip
 
-# 2. Enable Apache rewrite headers
-RUN a2enmod rewrite headers
-
+# 2. Configure Apache modules for Laravel
+RUN a2dismod mpm_event \
+    && a2enmod mpm_prefork rewrite headers
 # 3. Configure Apache DocumentRoot to point to Laravel's public directory
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
