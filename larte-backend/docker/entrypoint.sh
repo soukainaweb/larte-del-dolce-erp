@@ -30,6 +30,8 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
+/usr/local/bin/ensure-mpm-prefork.sh
+
 if grep -q '^Listen ' /etc/apache2/ports.conf; then
   sed -i "s/^Listen .*/Listen ${PORT}/" /etc/apache2/ports.conf
 else

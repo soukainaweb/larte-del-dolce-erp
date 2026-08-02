@@ -24,6 +24,11 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 COPY docker/apache-laravel.conf /etc/apache2/conf-available/laravel.conf
 RUN a2enconf laravel
 
+# mod_php requires mpm_prefork; enforce after all Apache module/conf changes
+COPY docker/ensure-mpm-prefork.sh /usr/local/bin/ensure-mpm-prefork.sh
+RUN chmod +x /usr/local/bin/ensure-mpm-prefork.sh \
+    && /usr/local/bin/ensure-mpm-prefork.sh
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
