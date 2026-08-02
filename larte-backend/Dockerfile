@@ -1,30 +1,40 @@
 FROM php:8.2-apache
 
-# 1. Install Composer & Extension Installer helper
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+# System dependencies for Composer
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN chmod +x /usr/local/bin/install-php-extensions && \
-    install-php-extensions pdo_mysql mbstring dom fileinfo zip
+# Laravel required PHP extensions
+# openssl, tokenizer, ctype, and json are bundled with PHP 8.2
+RUN docker-php-ext-install -j"$(nproc)" \
+        pdo_mysql \
+        mbstring \
+        dom \
+        fileinfo
 
-# 2. Configure Apache modules for Laravel
-# 2. Configure Apache modules for Laravel
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.* \
-    /etc/apache2/mods-enabled/mpm_worker.* \
-    /etc/apache2/mods-enabled/mpm_prefork.* \
-    && a2enmod mpm_prefork rewrite headers
-# 3. Configure Apache DocumentRoot to point to Laravel's public directory
+RUN a2enmod rewrite headers
+
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
     && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 COPY docker/apache-laravel.conf /etc/apache2/conf-available/laravel.conf
 RUN a2enconf laravel
 
+# mod_php requires mpm_prefork; enforce after all Apache module/conf changes
+COPY docker/ensure-mpm-prefork.sh /usr/local/bin/ensure-mpm-prefork.sh
+RUN chmod +x /usr/local/bin/ensure-mpm-prefork.sh \
+    && /usr/local/bin/ensure-mpm-prefork.sh
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 WORKDIR /var/www/html
 
-# 4. Copy dependencies and install via Composer
 COPY composer.json composer.lock ./
+
 RUN composer install \
     --no-dev \
     --optimize-autoloader \
@@ -32,7 +42,6 @@ RUN composer install \
     --no-scripts \
     --prefer-dist
 
-# 5. Copy the rest of the application
 COPY . .
 
 RUN composer dump-autoload --optimize --no-interaction \
