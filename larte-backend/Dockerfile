@@ -8,7 +8,7 @@ RUN chmod +x /usr/local/bin/install-php-extensions && \
     install-php-extensions pdo_mysql mbstring dom fileinfo zip
 
 # 2. Configure Apache modules for Laravel
-RUN a2dismod mpm_event \
+RUN a2dismod mpm_event mpm_worker mpm_prefork || true \
     && a2enmod mpm_prefork rewrite headers
 # 3. Configure Apache DocumentRoot to point to Laravel's public directory
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
