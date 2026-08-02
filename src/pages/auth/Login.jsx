@@ -38,9 +38,8 @@ const Login = () => {
 
     try {
       const data = await loginService({
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password,
-        remember: formData.remember,
       });
 
       const userData = extractUserFromResponse(data);
