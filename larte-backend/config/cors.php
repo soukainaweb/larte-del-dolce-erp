@@ -7,11 +7,11 @@ return [
     | Cross-Origin Resource Sharing (CORS) Configuration
     |--------------------------------------------------------------------------
     |
-    | Here you may configure your settings for cross-origin resource sharing
-    | or "CORS". This determines what cross-origin operations may execute
-    | in web browsers. You are free to adjust these settings as needed.
+    | Allowed origins are driven by environment variables so production
+    | frontend URLs can be configured without code changes.
     |
-    | To learn more: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+    | FRONTEND_URL          — primary SPA origin (e.g. https://your-app.onrender.com)
+    | CORS_ALLOWED_ORIGINS  — optional comma-separated list (overrides FRONTEND_URL)
     |
     */
 
@@ -19,7 +19,11 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => array_values(array_filter(
+        env('CORS_ALLOWED_ORIGINS')
+            ? array_map('trim', explode(',', env('CORS_ALLOWED_ORIGINS')))
+            : (env('FRONTEND_URL') ? [trim(env('FRONTEND_URL'))] : ['*'])
+    )),
 
     'allowed_origins_patterns' => [],
 

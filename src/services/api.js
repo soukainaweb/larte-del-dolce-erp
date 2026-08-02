@@ -6,10 +6,13 @@ import { dispatchAppToast } from '../utils/toastBus';
 import { extractValidationMessage } from '../utils/apiHelpers';
 import { translateApiErrorMessage } from '../utils/apiErrorTranslator';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_API_URL ||
-  'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+if (!API_BASE_URL && import.meta.env.DEV) {
+  console.warn(
+    'VITE_API_URL is not set. Add it to .env (see .env.example).'
+  );
+}
 
 const AUTH_PAGES = ['/login', '/forgot-password', '/reset-password', '/change-password'];
 
