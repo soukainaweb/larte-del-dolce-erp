@@ -1,18 +1,21 @@
 FROM php:8.2-apache
 
-# System dependencies for Composer
+# System dependencies for Composer and PHP extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     unzip \
+    libzip-dev \
+    libxml2-dev \
+    default-libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Laravel required PHP extensions
-# openssl, tokenizer, ctype, and json are bundled with PHP 8.2
+# Install only extensions not bundled in php:8.2-apache.
+# mbstring, dom, fileinfo, openssl, tokenizer, ctype, json, and xml are already available.
 RUN docker-php-ext-install -j"$(nproc)" \
-        pdo_mysql \
-        mbstring \
-        dom \
-        fileinfo
+    pdo_mysql \
+    zip
+
+RUN php -r "foreach (['pdo_mysql', 'mbstring', 'dom', 'zip'] as \$ext) { if (!extension_loaded(\$ext)) { fwrite(STDERR, \"Missing PHP extension: {\$ext}\n\"); exit(1); } }"
 
 RUN a2enmod rewrite headers
 
