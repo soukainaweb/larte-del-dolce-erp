@@ -23,9 +23,13 @@ class AuthController extends Controller
     public function login(LoginRequest $request)
     {
         $credentials = $request->validated();
-        $user = User::where('email', $credentials['email'])->first();
+        $email = mb_strtolower($credentials['email']);
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        $user = User::query()
+            ->whereRaw('LOWER(email) = ?', [$email])
+            ->first();
+
+        if (! $user || ! Hash::check($credentials['password'], $user->getAuthPassword())) {
             $this->logAuthEvent(
                 action: 'login_failed',
                 description: 'Failed login attempt for ' . ($credentials['email'] ?? 'unknown'),
@@ -40,7 +44,7 @@ class AuthController extends Controller
             ]);
         }
 
-        if (!UserStatus::canAuthenticate($user->status)) {
+        if (! UserStatus::canAuthenticate($user->status)) {
             $this->logAuthEvent(
                 action: 'login_blocked',
                 description: 'Blocked login for user #' . $user->id . ' (status: ' . $user->status . ')',
@@ -125,7 +129,7 @@ class AuthController extends Controller
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password) {
-                $user->forceFill(['password' => Hash::make($password)])->save();
+                $user->forceFill(['password' => $password])->save();
             }
         );
 
