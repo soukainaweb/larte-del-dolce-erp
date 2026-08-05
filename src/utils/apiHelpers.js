@@ -195,7 +195,20 @@ export const extractValidationMessage = (data) => {
 /**
  * Ensure value is always an array (safe default for API list states).
  */
-export const ensureArray = (value) => (Array.isArray(value) ? value : []);
+export const ensureArray = (value) => {
+  if (Array.isArray(value)) return value;
+  if (value == null) return [];
+  if (typeof value === 'object') return Object.values(value);
+  return [];
+};
+
+/**
+ * Safely call Array.reduce — returns initialValue when input is not an array.
+ */
+export const safeReduce = (value, reducer, initialValue) => {
+  if (!Array.isArray(value)) return initialValue;
+  return value.reduce(reducer, initialValue);
+};
 
 /**
  * Safely extract a list array from an API response body.

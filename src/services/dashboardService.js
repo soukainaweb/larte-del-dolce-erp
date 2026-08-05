@@ -1,10 +1,42 @@
 // src/services/dashboardService.js
 import api from './api';
-import { unwrapData, toArray } from '../utils/apiHelpers';
+import { unwrapData, toArray, ensureArray } from '../utils/apiHelpers';
 
 const toNumber = (value, fallback = 0) => {
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
+};
+
+const normalizeChartData = (chartData) => ({
+  labels: ensureArray(chartData?.labels),
+  revenue: ensureArray(chartData?.revenue),
+  orders: ensureArray(chartData?.orders),
+  production: ensureArray(chartData?.production),
+  invoices: ensureArray(chartData?.invoices),
+});
+
+const normalizeKpiBlock = (kpi) => {
+  if (!kpi || typeof kpi !== 'object') return kpi;
+
+  return Object.fromEntries(
+    Object.entries(kpi).map(([key, metric]) => {
+      if (!metric || typeof metric !== 'object') return [key, metric];
+      return [key, { ...metric, trend: ensureArray(metric.trend) }];
+    }),
+  );
+};
+
+const normalizeDashboardStats = (payload) => {
+  const data = unwrapData(payload);
+  if (!data || typeof data !== 'object') return data;
+
+  return {
+    ...data,
+    kpi: normalizeKpiBlock(data.kpi),
+    distribution: data.distribution && typeof data.distribution === 'object'
+      ? data.distribution
+      : {},
+  };
 };
 
 export const normalizeTopProducts = (payload) => {
@@ -90,7 +122,7 @@ const dashboardService = {
 
     const url = `/dashboard/stats${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await dashboardGet(url);
-    return unwrapData(response);
+    return normalizeDashboardStats(response);
   },
 
   getDashboardAnalytics: async (params = {}) => {
@@ -100,7 +132,12 @@ const dashboardService = {
 
     const url = `/dashboard/analytics${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await dashboardGet(url);
-    return unwrapData(response);
+    const data = unwrapData(response);
+
+    return {
+      ...data,
+      chartData: normalizeChartData(data?.chartData),
+    };
   },
 
   getRecentOrders: async (params = {}) => {

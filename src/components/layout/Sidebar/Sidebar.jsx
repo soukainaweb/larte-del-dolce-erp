@@ -47,7 +47,7 @@ import {
   Recycle,
 } from 'lucide-react';
 import brandLogo from '../../../constants/brandAssets';
-import { isAdminRole, resolveRoleKey } from '../../../utils/permissions';
+import { isAdminRole, resolveRoleKey, resolvePermissionList } from '../../../utils/permissions';
 
 const REQUIRED_ADMIN_MENU_IDS = [
   'meetings',
@@ -105,8 +105,9 @@ const isItemVisible = (item, role, permissions) => {
   const roleKey = resolveRoleKey(role);
   if (isAdminRole(role)) return true;
 
-  if (item.permission && permissions && permissions.length > 0) {
-    if (!permissions.includes(item.permission)) return false;
+  const permissionList = resolvePermissionList(permissions);
+  if (item.permission && permissionList.length > 0) {
+    if (!permissionList.includes(item.permission)) return false;
   }
   if (!item.roles || item.roles.length === 0) return true;
   if (FULL_ACCESS_ROLES.includes(roleKey)) return true;
@@ -778,6 +779,7 @@ const Sidebar = ({
   useEffect(() => {
     if (!import.meta.env.DEV) return;
 
+    const permissionList = resolvePermissionList(permissions);
     const visibleIds = visibleMenuItems.map((item) => item.id);
     const missingRequired = REQUIRED_ADMIN_MENU_IDS.filter((id) => !visibleIds.includes(id));
 
@@ -786,8 +788,8 @@ const Sidebar = ({
     console.log('raw role prop', currentUser?.role);
     console.log('resolvedRoleKey', resolvedRoleKey);
     console.log('isAdminRole', isAdminRole(currentUser?.role));
-    console.log('permissions count', permissions?.length ?? 0);
-    console.log('permissions sample', permissions?.slice(0, 8));
+    console.log('permissions count', permissionList.length);
+    console.log('permissions sample', permissionList.slice(0, 8));
     console.log('menuItems total', menuItems.length);
     console.log('visible menu ids', visibleIds);
     console.log('required admin items missing', missingRequired);

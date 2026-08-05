@@ -9,7 +9,7 @@ import {
   persistAuth,
   AUTH_USER_KEY,
 } from '../utils/authStorage';
-import { mapRoleToFrontendKey } from '../utils/roleMapping';
+import { mapRoleToFrontendKey, normalizePermissionNames } from '../utils/roleMapping';
 
 const AuthContext = createContext();
 
@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }) => {
     updateUser,
     isAuthenticated: !!user && !!token,
     roleKey: user ? mapRoleToFrontendKey(user.role) : null,
-    permissions: user?.permissions || [],
+    permissions: normalizePermissionNames(user?.permissions ?? user?.role?.permissions),
   };
 
   return (

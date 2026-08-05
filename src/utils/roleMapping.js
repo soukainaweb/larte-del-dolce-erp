@@ -116,11 +116,60 @@ export const normalizeRole = (role) => {
 };
 
 /**
+ * Normalize any permissions payload into a flat array of permission name strings.
+ * Handles arrays, backend permission objects, and object maps from roles UI.
+ *
+ * @param {unknown} input
+ * @returns {string[]}
+ */
+export const normalizePermissionNames = (input) => {
+  if (!input) return [];
+
+  if (Array.isArray(input)) {
+    return input
+      .map((entry) => (typeof entry === 'string' ? entry : entry?.name))
+      .filter(Boolean);
+  }
+
+  if (typeof input === 'object') {
+    const names = [];
+
+    Object.entries(input).forEach(([key, value]) => {
+      if (typeof value === 'boolean') {
+        if (value) names.push(key);
+        return;
+      }
+
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        Object.entries(value).forEach(([action, enabled]) => {
+          if (enabled) names.push(`${key}.${action}`);
+        });
+        return;
+      }
+
+      if (typeof value === 'string') {
+        names.push(value);
+      } else if (value?.name) {
+        names.push(value.name);
+      }
+    });
+
+    return names.filter(Boolean);
+  }
+
+  return [];
+};
+
+/**
  * Extract permission names from a user object returned by the API.
  * @param {object|null|undefined} user
  * @returns {string[]}
  */
 export const extractUserPermissions = (user) => {
-  if (!user?.role?.permissions) return [];
-  return user.role.permissions.map((p) => (typeof p === 'string' ? p : p.name)).filter(Boolean);
+  if (!user) return [];
+
+  const fromUser = normalizePermissionNames(user.permissions);
+  if (fromUser.length > 0) return fromUser;
+
+  return normalizePermissionNames(user.role?.permissions);
 };
