@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\SalesScope;
 use App\Support\OrderWorkflow;
 use App\Support\StatusMapper;
 use App\Support\NumberGenerator;
@@ -45,6 +46,8 @@ class OrderService
         if (!empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
+
+        SalesScope::applyOrderScope($query);
 
         return StatusMapper::transformOrderCollection(
             $query->orderByDesc('created_at')->paginate($filters['per_page'] ?? 10)
@@ -233,23 +236,27 @@ class OrderService
 
     public function statistics(): array
     {
+        $query = SalesScope::applyOrderScope(Order::query());
+
         return [
-            'total' => Order::count(),
-            'draft' => Order::where('status', OrderWorkflow::DRAFT)->count(),
-            'pending' => Order::where('status', OrderWorkflow::SUBMITTED)->count(),
-            'validated' => Order::where('status', OrderWorkflow::APPROVED)->count(),
-            'in_production' => Order::where('status', OrderWorkflow::PREPARING)->count(),
-            'ready' => Order::where('status', OrderWorkflow::READY)->count(),
-            'in_delivery' => Order::where('status', OrderWorkflow::ASSIGNED)->count(),
-            'delivered' => Order::where('status', OrderWorkflow::DELIVERED)->count(),
-            'cancelled' => Order::where('status', OrderWorkflow::CANCELLED)->count(),
-            'total_revenue' => Order::where('payment_status', 'paid')->sum('total_amount'),
+            'total' => (clone $query)->count(),
+            'draft' => (clone $query)->where('status', OrderWorkflow::DRAFT)->count(),
+            'pending' => (clone $query)->where('status', OrderWorkflow::SUBMITTED)->count(),
+            'validated' => (clone $query)->where('status', OrderWorkflow::APPROVED)->count(),
+            'in_production' => (clone $query)->where('status', OrderWorkflow::PREPARING)->count(),
+            'ready' => (clone $query)->where('status', OrderWorkflow::READY)->count(),
+            'in_delivery' => (clone $query)->where('status', OrderWorkflow::ASSIGNED)->count(),
+            'delivered' => (clone $query)->where('status', OrderWorkflow::DELIVERED)->count(),
+            'cancelled' => (clone $query)->where('status', OrderWorkflow::CANCELLED)->count(),
+            'total_revenue' => (clone $query)->where('payment_status', 'paid')->sum('total_amount'),
         ];
     }
 
     public function export()
     {
-        return Order::with(['customer', 'user'])->get()->map(fn ($order) => [
+        $query = SalesScope::applyOrderScope(Order::with(['customer', 'user']));
+
+        return $query->get()->map(fn ($order) => [
             'N° Commande' => $order->order_number,
             'Client' => $order->customer->name ?? '—',
             'Total' => $order->total_amount,
@@ -261,7 +268,7 @@ class OrderService
 
     public function history(array $filters = [])
     {
-        $query = Order::with(['customer'])->orderByDesc('created_at');
+        $query = SalesScope::applyOrderScope(Order::with(['customer'])->orderByDesc('created_at'));
 
         if (!empty($filters['customer_id'])) {
             $query->where('customer_id', $filters['customer_id']);

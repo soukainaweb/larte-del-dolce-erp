@@ -53,6 +53,7 @@ const Header = React.memo(({
   isMobile = false,
   isTablet = false,
   user = {},
+  permissions = [],
   notifications = [],
   unreadNotificationCount = 0,
   onNotificationClick = () => {},
@@ -118,28 +119,31 @@ const Header = React.memo(({
     }
   }, [isMobile, isTablet, onMenuClick, onToggleSidebar]);
 
-  const profileActions = [
-    {
-      label: t('header.myProfile'),
-      icon: User,
-      action: () => { closeDropdowns(); navigate('/dashboard/profile'); },
-    },
-    {
-      label: t('header.settings'),
-      icon: Settings,
-      action: () => { closeDropdowns(); navigate('/dashboard/settings'); },
-    },
-    {
-      label: t('header.activityLog'),
-      icon: Activity,
-      action: () => { closeDropdowns(); navigate('/dashboard/activity-logs'); },
-    },
-    {
-      label: t('header.helpCenter'),
-      icon: HelpCircle,
-      action: () => { closeDropdowns(); navigate('/dashboard/settings'); },
-    },
-  ];
+  const profileActions = useMemo(() => {
+    const can = (perm) => !perm || permissions.length === 0 || permissions.includes(perm);
+    return [
+      {
+        label: t('header.myProfile'),
+        icon: User,
+        action: () => { closeDropdowns(); navigate('/dashboard/profile'); },
+      },
+      can('settings.view') && {
+        label: t('header.settings'),
+        icon: Settings,
+        action: () => { closeDropdowns(); navigate('/dashboard/settings'); },
+      },
+      can('users.view') && {
+        label: t('header.activityLog'),
+        icon: Activity,
+        action: () => { closeDropdowns(); navigate('/dashboard/activity-logs'); },
+      },
+      can('settings.view') && {
+        label: t('header.helpCenter'),
+        icon: HelpCircle,
+        action: () => { closeDropdowns(); navigate('/dashboard/settings'); },
+      },
+    ].filter(Boolean);
+  }, [permissions, t, navigate, closeDropdowns]);
 
   const formatNotifTime = (dateStr) => {
     if (!dateStr) return '';

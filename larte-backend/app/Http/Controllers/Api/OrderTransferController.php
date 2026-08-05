@@ -24,6 +24,10 @@ class OrderTransferController extends Controller
 
     public function transfer(TransferOrderRequest $request, Order $order)
     {
+        if (\App\Support\SalesScope::isSalesRep()) {
+            return $this->error('Sales representatives cannot transfer orders.', [], 403);
+        }
+
         $this->authorize('update', $order);
 
         try {

@@ -908,8 +908,9 @@ const TransferHistoryModal = ({ isOpen, onClose, transfers, t }) => {
 // MAIN ORDERS PAGE
 // ==========================================
 const OrdersPage = () => {
-  const { user } = useAuth();
+  const { user, roleKey } = useAuth();
   const { showToast } = useToast();
+  const isSalesRep = roleKey === 'sales_rep';
   const { t: tGlobal } = useTranslation();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('orders');
   const location = useLocation();
@@ -1312,6 +1313,8 @@ const OrdersPage = () => {
             onSuccess={handleExportSuccess}
             onError={handleExportError}
           />
+          {!isSalesRep && (
+          <>
           <button
             type="button"
             onClick={openTransferHistory}
@@ -1328,6 +1331,8 @@ const OrdersPage = () => {
             <ArrowRightLeft size={18} />
             {tGlobal('orderTransfers.title')}
           </button>
+          </>
+          )}
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"

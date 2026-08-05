@@ -2,8 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FlaskConical, Plus, Search, Edit2, Trash2, Eye, X, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { unwrapData, unwrapPaginated, getApiErrorMessage } from '../../utils/apiHelpers';
+import { isSalesRepRole } from '../../utils/roleMapping';
 import { getSamples, createSample, updateSample, deleteSample, getSampleStatistics } from '../../services/sampleService';
 import { getProducts } from '../../services/productService';
 import { getUsers } from '../../services/userServicePage';
@@ -23,7 +25,7 @@ const StatusBadge = ({ status, t }) => {
   return <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${map[status] || map.pending}`}>{t(`samples.status.${status}`, status)}</span>;
 };
 
-const SampleModal = ({ isOpen, onClose, onSave, item, products, users, isLoading, t }) => {
+const SampleModal = ({ isOpen, onClose, onSave, item, products, users, isLoading, t, lockSalesperson }) => {
   const [form, setForm] = useState(emptyForm());
   useEffect(() => {
     if (item) {
@@ -50,7 +52,9 @@ const SampleModal = ({ isOpen, onClose, onSave, item, products, users, isLoading
             <div><label className="text-xs font-semibold text-[#6D6D6D] uppercase">{t('samples.fields.quantity')}</label><input type="number" min="1" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} className="w-full mt-1 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg" /></div>
             <div><label className="text-xs font-semibold text-[#6D6D6D] uppercase">{t('common.status')}</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full mt-1 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg">{['pending', 'delivered', 'returned', 'cancelled'].map((s) => <option key={s} value={s}>{t(`samples.status.${s}`)}</option>)}</select></div>
           </div>
+          {!lockSalesperson && (
           <div><label className="text-xs font-semibold text-[#6D6D6D] uppercase">{t('samples.fields.salesperson')}</label><select value={form.salesperson_id} onChange={(e) => setForm({ ...form, salesperson_id: e.target.value })} className="w-full mt-1 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg"><option value="">{t('common.selectOption')}</option>{users.map((u) => <option key={u.id} value={u.id}>{u.first_name || u.firstName} {u.last_name || u.lastName}</option>)}</select></div>
+          )}
           <div><label className="text-xs font-semibold text-[#6D6D6D] uppercase">{t('common.notes')}</label><textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="w-full mt-1 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg" /></div>
           <div className="flex justify-end gap-2"><button type="button" onClick={onClose} className="px-4 py-2 border rounded-xl">{t('common.cancel')}</button><button type="submit" disabled={isLoading} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white">{t('common.save')}</button></div>
         </form>
@@ -61,7 +65,9 @@ const SampleModal = ({ isOpen, onClose, onSave, item, products, users, isLoading
 
 const SamplesPage = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { showToast } = useToast();
+  const isSalesRep = isSalesRepRole(user);
   const [items, setItems] = useState([]);
   const [stats, setStats] = useState({});
   const [products, setProducts] = useState([]);
@@ -92,8 +98,10 @@ const SamplesPage = () => {
   useEffect(() => {
     getSampleStatistics().then((r) => setStats(unwrapData(r) || {}));
     getProducts({ per_page: 200 }).then((r) => setProducts(unwrapPaginated(r).items));
-    getUsers({ per_page: 200 }).then((r) => setUsers(unwrapPaginated(r).items));
-  }, []);
+    if (!isSalesRep) {
+      getUsers({ per_page: 200 }).then((r) => setUsers(unwrapPaginated(r).items));
+    }
+  }, [isSalesRep]);
 
   const handleSave = async (payload) => {
     setSaving(true);
@@ -157,7 +165,7 @@ const SamplesPage = () => {
         )}
       </div>
       {totalPages > 1 && <div className="flex justify-center gap-2 mt-4"><button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft /></button><span>{page}/{totalPages}</span><button type="button" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}><ChevronRight /></button></div>}
-      <AnimatePresence>{modal && <SampleModal isOpen onClose={() => { setModal(false); setSelected(null); }} onSave={handleSave} item={selected} products={products} users={users} isLoading={saving} t={t} />}</AnimatePresence>
+      <AnimatePresence>{modal && <SampleModal isOpen onClose={() => { setModal(false); setSelected(null); }} onSave={handleSave} item={selected} products={products} users={users} isLoading={saving} t={t} lockSalesperson={isSalesRep} />}</AnimatePresence>
     </div>
   );
 };

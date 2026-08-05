@@ -238,6 +238,7 @@ const DashboardLayout = () => {
             ...user,
             role: user?.role ? { ...user.role, display_name: getRoleDisplayName(user.role) } : user?.role,
           }}
+          permissions={permissions}
           notifications={notifications}
           unreadNotificationCount={unreadCount}
           onNotificationClick={handleNotificationClick}

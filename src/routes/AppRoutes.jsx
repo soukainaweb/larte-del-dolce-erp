@@ -45,6 +45,7 @@ import SettingsPage from '../pages/settings/SettingsPage';
 
 // Composant de fallback
 import ModuleFallback from '../components/ModuleFallback';
+import PermissionRoute from '../components/auth/PermissionRoute';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -104,37 +105,37 @@ const AppRoutes = () => {
         {/* Pages principales */}
         <Route index element={<DashboardHome />} />
         <Route path="profile" element={<MyProfile />} />
-        <Route path="users" element={<UsersPage />} />
-        <Route path="customers" element={<CustomersPage />} />
-        <Route path="products" element={<ProductsPage />} />
-        <Route path="production" element={<ProductionPage />} />
-        <Route path="orders" element={<OrdersPage />} />
-        <Route path="categories" element={<CategoriesPage />} />
-        <Route path="inventory" element={<InventoryPage />} />
-        <Route path="warehouse" element={<WarehousePage />} />
-        <Route path="suppliers" element={<SuppliersPage />} />
-        <Route path="deliveries" element={<DeliveriesPage />} /> 
-        <Route path="invoices" element={<InvoicesPage />} /> 
-        <Route path="payments" element={<PaymentsPage />} />
-        <Route path="expenses" element={<ExpensesPage />} /> 
-        <Route path="meetings" element={<MeetingsPage />} />
-        <Route path="samples" element={<SamplesPage />} />
-        <Route path="waste-returns" element={<WasteReturnsPage />} />
-        <Route path="purchases" element={<PurchasesPage />} />
-        <Route path="finance" element={<FinancePage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="analytics" element={<AnalyticsPage />} />
+        <Route path="users" element={<PermissionRoute permission="users.view"><UsersPage /></PermissionRoute>} />
+        <Route path="customers" element={<PermissionRoute permission="customers.view"><CustomersPage /></PermissionRoute>} />
+        <Route path="products" element={<PermissionRoute permission="products.view"><ProductsPage /></PermissionRoute>} />
+        <Route path="production" element={<PermissionRoute permission="productions.view"><ProductionPage /></PermissionRoute>} />
+        <Route path="orders" element={<PermissionRoute permission="orders.view"><OrdersPage /></PermissionRoute>} />
+        <Route path="categories" element={<PermissionRoute permission="categories.view"><CategoriesPage /></PermissionRoute>} />
+        <Route path="inventory" element={<PermissionRoute permission="inventory.view"><InventoryPage /></PermissionRoute>} />
+        <Route path="warehouse" element={<PermissionRoute permission="warehouses.view"><WarehousePage /></PermissionRoute>} />
+        <Route path="suppliers" element={<PermissionRoute permission="suppliers.view"><SuppliersPage /></PermissionRoute>} />
+        <Route path="deliveries" element={<PermissionRoute permission="deliveries.view"><DeliveriesPage /></PermissionRoute>} /> 
+        <Route path="invoices" element={<PermissionRoute permission="finance.view"><InvoicesPage /></PermissionRoute>} /> 
+        <Route path="payments" element={<PermissionRoute permission="payments.view"><PaymentsPage /></PermissionRoute>} />
+        <Route path="expenses" element={<PermissionRoute permission="expenses.view"><ExpensesPage /></PermissionRoute>} /> 
+        <Route path="meetings" element={<PermissionRoute permission="meetings.view"><MeetingsPage /></PermissionRoute>} />
+        <Route path="samples" element={<PermissionRoute permission="samples.view"><SamplesPage /></PermissionRoute>} />
+        <Route path="waste-returns" element={<PermissionRoute permission="waste_returns.view"><WasteReturnsPage /></PermissionRoute>} />
+        <Route path="purchases" element={<PermissionRoute permission="purchases.view"><PurchasesPage /></PermissionRoute>} />
+        <Route path="finance" element={<PermissionRoute permission="finance.view"><FinancePage /></PermissionRoute>} />
+        <Route path="reports" element={<PermissionRoute permission="reports.view"><ReportsPage /></PermissionRoute>} />
+        <Route path="analytics" element={<PermissionRoute permission="reports.view"><AnalyticsPage /></PermissionRoute>} />
         <Route path="notifications" element={<NotificationsPage />} />
-        <Route path="roles" element={<RolesPermissionsPage />} />
-        <Route path="roles/*" element={<RolesPermissionsPage />} />
+        <Route path="roles" element={<PermissionRoute permission="roles.view"><RolesPermissionsPage /></PermissionRoute>} />
+        <Route path="roles/*" element={<PermissionRoute permission="roles.view"><RolesPermissionsPage /></PermissionRoute>} />
 
         {/* ⭐ NOUVEAU : Route pour Journal d'activité */}
-        <Route path="activity-logs" element={<ActivityLogPage />} />
-        <Route path="activity-logs/*" element={<ActivityLogPage />} />
+        <Route path="activity-logs" element={<PermissionRoute permission="users.view"><ActivityLogPage /></PermissionRoute>} />
+        <Route path="activity-logs/*" element={<PermissionRoute permission="users.view"><ActivityLogPage /></PermissionRoute>} />
 
         {/* ⭐ NOUVEAU : Route pour Paramètres */}
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="settings/*" element={<SettingsPage />} />
+        <Route path="settings" element={<PermissionRoute permission="settings.view"><SettingsPage /></PermissionRoute>} />
+        <Route path="settings/*" element={<PermissionRoute permission="settings.view"><SettingsPage /></PermissionRoute>} />
 
         {/* Routes de détail - Fallback */}
         <Route path="orders/:id" element={<ModuleFallback module="order" />} />

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Sample;
 use App\Support\NumberGenerator;
+use App\Support\SalesScope;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class SampleService
@@ -28,6 +29,8 @@ class SampleService
             $query->where('salesperson_id', $filters['salesperson_id']);
         }
 
+        SalesScope::applySampleScope($query);
+
         return $query->orderByDesc('created_at')->paginate($filters['per_page'] ?? 10);
     }
 
@@ -37,12 +40,21 @@ class SampleService
             ?? NumberGenerator::next('SMP', Sample::class, 'sample_code');
         $data['created_by'] = auth()->id();
 
+        if (SalesScope::isSalesRep()) {
+            $data['salesperson_id'] = auth()->id();
+        }
+
         return Sample::create($data)->load(['product', 'salesperson', 'creator']);
     }
 
     public function update(Sample $sample, array $data): Sample
     {
         unset($data['sample_code']);
+
+        if (SalesScope::isSalesRep()) {
+            unset($data['salesperson_id']);
+        }
+
         $sample->update($data);
 
         return $sample->fresh()->load(['product', 'salesperson', 'creator']);
@@ -55,11 +67,13 @@ class SampleService
 
     public function statistics(): array
     {
+        $query = SalesScope::applySampleScope(Sample::query());
+
         return [
-            'total' => Sample::count(),
-            'pending' => Sample::where('status', 'pending')->count(),
-            'delivered' => Sample::where('status', 'delivered')->count(),
-            'returned' => Sample::where('status', 'returned')->count(),
+            'total' => (clone $query)->count(),
+            'pending' => (clone $query)->where('status', 'pending')->count(),
+            'delivered' => (clone $query)->where('status', 'delivered')->count(),
+            'returned' => (clone $query)->where('status', 'returned')->count(),
         ];
     }
 

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Meeting;
+use App\Support\SalesScope;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class MeetingService
@@ -35,6 +36,8 @@ class MeetingService
             $query->whereDate('meeting_date', '<=', $filters['date_to']);
         }
 
+        SalesScope::applyMeetingScope($query);
+
         return $query->orderByDesc('meeting_date')->paginate($filters['per_page'] ?? 10);
     }
 
@@ -59,11 +62,13 @@ class MeetingService
 
     public function statistics(): array
     {
+        $query = SalesScope::applyMeetingScope(Meeting::query());
+
         return [
-            'total' => Meeting::count(),
-            'scheduled' => Meeting::where('status', 'scheduled')->count(),
-            'completed' => Meeting::where('status', 'completed')->count(),
-            'cancelled' => Meeting::where('status', 'cancelled')->count(),
+            'total' => (clone $query)->count(),
+            'scheduled' => (clone $query)->where('status', 'scheduled')->count(),
+            'completed' => (clone $query)->where('status', 'completed')->count(),
+            'cancelled' => (clone $query)->where('status', 'cancelled')->count(),
         ];
     }
 

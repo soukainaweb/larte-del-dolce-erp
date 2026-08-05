@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Support\SalesScope;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class CustomerService
@@ -28,11 +29,17 @@ class CustomerService
             $query->where('type', $filters['type']);
         }
 
+        SalesScope::applyCustomerScope($query);
+
         return $query->paginate($filters['per_page'] ?? 10);
     }
 
     public function create(array $data): Customer
     {
+        if (SalesScope::isSalesRep()) {
+            $data['user_id'] = auth()->id();
+        }
+
         $customer = Customer::create($data);
 
         ActivityLogger::logModelEvent($customer, 'created', sprintf('Client %s créé', $customer->name));
@@ -67,17 +74,21 @@ class CustomerService
 
     public function statistics(): array
     {
+        $query = SalesScope::applyCustomerScope(Customer::query());
+
         return [
-            'total' => Customer::count(),
-            'active' => Customer::where('status', 'active')->count(),
-            'inactive' => Customer::where('status', 'inactive')->count(),
-            'blocked' => Customer::where('status', 'blocked')->count(),
+            'total' => (clone $query)->count(),
+            'active' => (clone $query)->where('status', 'active')->count(),
+            'inactive' => (clone $query)->where('status', 'inactive')->count(),
+            'blocked' => (clone $query)->where('status', 'blocked')->count(),
         ];
     }
 
     public function export()
     {
-        return Customer::withCount('orders')->get()->map(fn ($c) => [
+        $query = SalesScope::applyCustomerScope(Customer::withCount('orders'));
+
+        return $query->get()->map(fn ($c) => [
             'Nom' => $c->name,
             'Email' => $c->email,
             'Téléphone' => $c->phone,
