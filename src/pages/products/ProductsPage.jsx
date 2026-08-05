@@ -363,6 +363,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
                 name="sku"
                 value={formData.sku}
                 onChange={handleChange}
+                placeholder={!product ? t('products.autoSkuHint', 'Auto-generated (PRD001...)') : ''}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               />
             </div>

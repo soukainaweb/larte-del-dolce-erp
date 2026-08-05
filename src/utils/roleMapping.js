@@ -74,6 +74,14 @@ export const mapRoleToFrontendKey = (role) => {
   return BACKEND_TO_FRONTEND_ROLE[slug] || slug || 'viewer';
 };
 
+export const isSalesRepRole = (roleOrUser) => {
+  if (!roleOrUser) return false;
+  if (roleOrUser.role) {
+    return mapRoleToFrontendKey(roleOrUser.role) === 'sales_rep';
+  }
+  return mapRoleToFrontendKey(roleOrUser) === 'sales_rep';
+};
+
 /**
  * Get display label for a role (prefers backend display_name when present).
  * @param {string|{ name?: string, display_name?: string }|null|undefined} role

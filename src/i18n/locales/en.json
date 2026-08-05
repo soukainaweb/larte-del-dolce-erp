@@ -72,7 +72,21 @@
     "thisWeek": "This week",
     "thisMonth": "This month",
     "thisYear": "This year",
-    "custom": "Custom"
+    "custom": "Custom",
+    "selectOption": "Select...",
+    "selectCategory": "Select category",
+    "selectProduct": "Select product",
+    "allStatuses": "All statuses",
+    "optional": "Optional",
+    "saving": "Saving...",
+    "saved": "Saved successfully",
+    "sku": "Product code (SKU)",
+    "category": "Category",
+    "validation": {
+      "nameRequired": "Name is required",
+      "dateRequired": "Date is required",
+      "required": "This field is required"
+    }
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -97,6 +111,10 @@
     "activityLogs": "Activity Log",
     "settings": "Settings",
     "profile": "My Profile",
+    "meetings": "Meetings",
+    "samples": "Samples",
+    "wasteReturns": "Waste & Returns",
+    "purchases": "Purchases",
     "helpCenter": "Help Center",
     "documentation": "Documentation",
     "logout": "Logout",
@@ -153,7 +171,73 @@
     "profile": "Profile",
     "notifications": "Notifications",
     "finance": "Finance",
-    "activityLogs": "Activity Log"
+    "activityLogs": "Activity Log",
+    "meetings": "Meetings",
+    "samples": "Samples",
+    "waste-returns": "Waste & Returns",
+    "purchases": "Purchases"
+  },
+  "meetings": {
+    "title": "Meetings",
+    "subtitle": "Schedule and manage client meetings",
+    "addTitle": "Add meeting",
+    "editTitle": "Edit meeting",
+    "searchPlaceholder": "Search meetings...",
+    "empty": "No meetings found",
+    "confirmDelete": "Delete this meeting?",
+    "fields": { "title": "Meeting title", "time": "Time" },
+    "status": { "scheduled": "Scheduled", "completed": "Completed", "cancelled": "Cancelled" },
+    "kpi": { "total": "Total meetings" },
+    "messages": { "created": "Meeting created", "updated": "Meeting updated", "deleted": "Meeting deleted" },
+    "errors": { "load": "Failed to load meetings", "save": "Failed to save meeting", "delete": "Failed to delete meeting" }
+  },
+  "samples": {
+    "title": "Samples",
+    "subtitle": "Manage product samples for sales",
+    "addTitle": "Add sample",
+    "editTitle": "Edit sample",
+    "searchPlaceholder": "Search samples...",
+    "empty": "No samples found",
+    "confirmDelete": "Delete this sample?",
+    "fields": { "name": "Sample name", "code": "Sample code", "quantity": "Quantity", "salesperson": "Salesperson" },
+    "status": { "pending": "Pending", "delivered": "Delivered", "returned": "Returned", "cancelled": "Cancelled" },
+    "kpi": { "total": "Total samples" }
+  },
+  "wasteReturns": {
+    "title": "Waste & Returns",
+    "subtitle": "Track product waste and customer returns",
+    "addTitle": "Add record",
+    "editTitle": "Edit record",
+    "searchPlaceholder": "Search records...",
+    "empty": "No records found",
+    "confirmDelete": "Delete this record?",
+    "fields": { "reference": "Reference", "type": "Type", "quantity": "Quantity", "reason": "Reason" },
+    "types": { "waste": "Waste", "return": "Return" },
+    "kpi": { "total": "Total records", "quantity": "Total quantity" }
+  },
+  "purchases": {
+    "title": "Purchases",
+    "subtitle": "Manage material and product purchases",
+    "addTitle": "Add purchase",
+    "editTitle": "Edit purchase",
+    "searchPlaceholder": "Search purchases...",
+    "empty": "No purchases found",
+    "confirmDelete": "Delete this purchase?",
+    "fields": { "number": "Purchase #", "material": "Material / product", "quantity": "Quantity", "price": "Total price", "unitPrice": "Unit price", "supplier": "Supplier" },
+    "status": { "pending": "Pending", "received": "Received", "cancelled": "Cancelled" },
+    "kpi": { "total": "Total purchases", "amount": "Total amount" }
+  },
+  "orderTransfers": {
+    "title": "Transfer order",
+    "historyTitle": "Transfer history",
+    "selectOrder": "Order",
+    "currentSalesperson": "Current salesperson",
+    "newSalesperson": "New salesperson",
+    "notes": "Notes",
+    "submit": "Transfer order",
+    "success": "Order transferred successfully",
+    "empty": "No transfer history",
+    "columns": { "order": "Order", "from": "From", "to": "To", "date": "Date", "by": "Transferred by" }
   },
   "auth": {
     "login": "Login",

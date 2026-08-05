@@ -65,4 +65,14 @@ class Order extends Model
     {
         return $this->hasOne(Delivery::class);
     }
+
+    public function transfers()
+    {
+        return $this->hasMany(OrderTransfer::class);
+    }
+
+    public function meetings()
+    {
+        return $this->hasMany(Meeting::class);
+    }
 }

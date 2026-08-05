@@ -24,6 +24,10 @@ export const NAV_I18N_KEYS = {
   activity: 'nav.activityLogs',
   settings: 'nav.settings',
   profile: 'nav.profile',
+  meetings: 'nav.meetings',
+  samples: 'nav.samples',
+  wasteReturns: 'nav.wasteReturns',
+  purchases: 'nav.purchases',
 };
 
 export const getNavLabel = (t, id) => {

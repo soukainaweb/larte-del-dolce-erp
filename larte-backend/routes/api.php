@@ -14,6 +14,11 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\ExpenseController;
+use App\Http\Controllers\Api\MeetingController;
+use App\Http\Controllers\Api\OrderTransferController;
+use App\Http\Controllers\Api\PurchaseController;
+use App\Http\Controllers\Api\SampleController;
+use App\Http\Controllers\Api\WasteReturnController;
 use App\Http\Controllers\Api\FinanceController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\InvoiceController;
@@ -598,7 +603,80 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::post('/{order}/products', [OrderController::class, 'addProduct'])->middleware('permission:orders.update');
         Route::patch('/{order}/products/{orderItem}', [OrderController::class, 'updateProduct'])->middleware('permission:orders.update');
         Route::delete('/{order}/products/{orderItem}', [OrderController::class, 'removeProduct'])->middleware('permission:orders.update');
+        Route::post('/{order}/transfer', [OrderTransferController::class, 'transfer'])->middleware('permission:orders.update');
         Route::delete('/{order}', [OrderController::class, 'destroy'])->middleware('permission:orders.delete');
+    });
+
+    Route::prefix('order-transfers')->middleware('permission:orders.view')->group(function () {
+        Route::get('/', [OrderTransferController::class, 'index']);
+    });
+
+
+
+
+    // ==================================================
+    // MEETINGS
+    // ==================================================
+
+    Route::prefix('meetings')->middleware('permission:meetings.view')->group(function () {
+        Route::get('/statistics', [MeetingController::class, 'statistics']);
+        Route::get('/statuses', [MeetingController::class, 'statuses']);
+        Route::get('/', [MeetingController::class, 'index']);
+        Route::post('/', [MeetingController::class, 'store'])->middleware('permission:meetings.create');
+        Route::get('/{meeting}', [MeetingController::class, 'show']);
+        Route::put('/{meeting}', [MeetingController::class, 'update'])->middleware('permission:meetings.update');
+        Route::delete('/{meeting}', [MeetingController::class, 'destroy'])->middleware('permission:meetings.delete');
+    });
+
+
+
+
+    // ==================================================
+    // SAMPLES
+    // ==================================================
+
+    Route::prefix('samples')->middleware('permission:samples.view')->group(function () {
+        Route::get('/statistics', [SampleController::class, 'statistics']);
+        Route::get('/statuses', [SampleController::class, 'statuses']);
+        Route::get('/', [SampleController::class, 'index']);
+        Route::post('/', [SampleController::class, 'store'])->middleware('permission:samples.create');
+        Route::get('/{sample}', [SampleController::class, 'show']);
+        Route::put('/{sample}', [SampleController::class, 'update'])->middleware('permission:samples.update');
+        Route::delete('/{sample}', [SampleController::class, 'destroy'])->middleware('permission:samples.delete');
+    });
+
+
+
+
+    // ==================================================
+    // WASTE / RETURNS
+    // ==================================================
+
+    Route::prefix('waste-returns')->middleware('permission:waste_returns.view')->group(function () {
+        Route::get('/statistics', [WasteReturnController::class, 'statistics']);
+        Route::get('/types', [WasteReturnController::class, 'types']);
+        Route::get('/', [WasteReturnController::class, 'index']);
+        Route::post('/', [WasteReturnController::class, 'store'])->middleware('permission:waste_returns.create');
+        Route::get('/{wasteReturn}', [WasteReturnController::class, 'show']);
+        Route::put('/{wasteReturn}', [WasteReturnController::class, 'update'])->middleware('permission:waste_returns.update');
+        Route::delete('/{wasteReturn}', [WasteReturnController::class, 'destroy'])->middleware('permission:waste_returns.delete');
+    });
+
+
+
+
+    // ==================================================
+    // PURCHASES
+    // ==================================================
+
+    Route::prefix('purchases')->middleware('permission:purchases.view')->group(function () {
+        Route::get('/statistics', [PurchaseController::class, 'statistics']);
+        Route::get('/statuses', [PurchaseController::class, 'statuses']);
+        Route::get('/', [PurchaseController::class, 'index']);
+        Route::post('/', [PurchaseController::class, 'store'])->middleware('permission:purchases.create');
+        Route::get('/{purchase}', [PurchaseController::class, 'show']);
+        Route::put('/{purchase}', [PurchaseController::class, 'update'])->middleware('permission:purchases.update');
+        Route::delete('/{purchase}', [PurchaseController::class, 'destroy'])->middleware('permission:purchases.delete');
     });
 
 

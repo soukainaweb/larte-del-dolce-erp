@@ -36,6 +36,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Clock,
+  Calendar,
   Eye,
   Edit2,
   Trash2,
@@ -400,9 +401,10 @@ const DistributionTooltip = ({ active, payload }) => {
 // ==========================================
 export default function DashboardHome({ isLoading: initialLoading = false }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, roleKey } = useAuth();
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const isSalesRep = roleKey === 'sales_rep';
   
  const activeUser = {
   fullName:
@@ -448,7 +450,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
       { key: 'analytics', label: 'analytiques', run: () => dashboardService.getDashboardAnalytics({ period }) },
       { key: 'orders', label: 'commandes', run: () => dashboardService.getRecentOrders({ limit: 5 }) },
       { key: 'notifications', label: 'notifications', run: () => dashboardService.getNotifications({ limit: 5 }) },
-      { key: 'production', label: 'production', run: () => dashboardService.getProductionStatus({ limit: 4 }) },
+      ...(isSalesRep ? [] : [{ key: 'production', label: 'production', run: () => dashboardService.getProductionStatus({ limit: 4 }) }]),
       { key: 'topProducts', label: 'produits populaires', run: () => dashboardService.getTopProducts({ limit: 5, period }) },
     ];
 
@@ -514,7 +516,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
     }
 
     setLoading(false);
-  }, [showToast, t]);
+  }, [showToast, t, isSalesRep]);
 
   // ===== INITIAL LOAD =====
   useEffect(() => {
@@ -630,7 +632,15 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
     { name: t('dashboard.distributionDelivered'), value: distribution.livrees || 0, color: '#22C55E' },
   ] : [];
 
-  const kpiCards = [
+  const kpiCards = isSalesRep
+    ? [
+        { key: 'orders', title: t('dashboard.kpiTodayOrders'), icon: ShoppingBag, color: 'bg-amber-500', isCurrency: false },
+        { key: 'revenue', title: t('dashboard.kpiRevenue'), icon: DollarSign, color: 'bg-[#C6923B]', isCurrency: true },
+        { key: 'customers', title: t('dashboard.kpiActiveCustomers'), icon: Users, color: 'bg-blue-500', isCurrency: false },
+        { key: 'meetings', title: t('nav.meetings'), icon: Calendar, color: 'bg-indigo-500', isCurrency: false },
+        { key: 'samples', title: t('nav.samples'), icon: Layers, color: 'bg-purple-500', isCurrency: false },
+      ]
+    : [
     { key: 'orders', title: t('dashboard.kpiTodayOrders'), icon: ShoppingBag, color: 'bg-amber-500', isCurrency: false },
     { key: 'production', title: t('dashboard.kpiPendingOrders'), icon: Layers, color: 'bg-orange-500', isCurrency: false },
     { key: 'deliveries', title: t('dashboard.kpiCompletedOrders'), icon: Truck, color: 'bg-emerald-500', isCurrency: false },
@@ -639,7 +649,12 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
     { key: 'invoices', title: t('dashboard.kpiPendingInvoices'), icon: FileText, color: 'bg-rose-500', isCurrency: false },
   ];
 
-  const quickActions = [
+  const quickActions = isSalesRep
+    ? [
+        { label: t('dashboard.quickActions.newOrder'), icon: PlusCircle, action: 'newOrder' },
+        { label: t('dashboard.quickActions.newCustomer'), icon: UserPlus, action: 'newCustomer' },
+      ]
+    : [
     { label: t('dashboard.quickActions.newOrder'), icon: PlusCircle, action: 'newOrder' },
     { label: t('dashboard.quickActions.newCustomer'), icon: UserPlus, action: 'newCustomer' },
     { label: t('dashboard.quickActions.newInvoice'), icon: FilePlus, action: 'newInvoice' },
@@ -756,7 +771,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
       {/* ==========================================
           KPI GRID (6 CARDS)
           ========================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${isSalesRep ? 'xl:grid-cols-5' : 'xl:grid-cols-6'} gap-4`}>
         {kpiCards.map((card, idx) => {
           const item = kpi?.[card.key];
 
@@ -822,8 +837,8 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
             labels={chartData?.labels || []}
             series1={chartData?.revenue || []}
             series2={chartData?.orders || []}
-            series3={chartData?.production || []}
-            series4={chartData?.invoices || []}
+            series3={isSalesRep ? [] : (chartData?.production || [])}
+            series4={isSalesRep ? [] : (chartData?.invoices || [])}
           />
         </div>
 
@@ -1027,7 +1042,8 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
       {/* ==========================================
           LIVE PRODUCTION & TOP PRODUCTS
           ========================================== */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className={`grid grid-cols-1 ${isSalesRep ? '' : 'xl:grid-cols-2'} gap-6`}>
+        {!isSalesRep && (
         <div className="bg-white border border-[#ECE8E1] p-6 rounded-[18px] shadow-sm">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-[#202020]" style={{ fontFamily: FONT_HEADING, fontSize: 17 }}>{t('dashboard.productionToday')}</h3>
@@ -1062,6 +1078,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
             ))}
           </div>
         </div>
+        )}
 
         <div className="bg-white border border-[#ECE8E1] p-6 rounded-[18px] shadow-sm">
           <div className="mb-4">

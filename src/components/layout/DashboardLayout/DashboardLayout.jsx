@@ -8,6 +8,7 @@ import { getNotifications, getUnreadCount, markNotificationAsRead } from '../../
 import { findSearchRoute, getActiveMenuId } from '../../../utils/searchRoutes';
 import { getNotificationRoute } from '../../../utils/notificationRoutes';
 import { getRoleDisplayName } from '../../../utils/roleMapping';
+import { resolveRoleKey } from '../../../utils/permissions';
 
 import Header from '../Header/Header';
 import Sidebar from '../Sidebar/Sidebar';
@@ -202,6 +203,18 @@ const DashboardLayout = () => {
   }
 
   const activeItemId = getActiveMenuId(location.pathname);
+  const sidebarRole = resolveRoleKey(user?.role) || roleKey || user?.role;
+
+  useEffect(() => {
+    if (!import.meta.env.DEV || !user) return;
+    console.group('[DashboardLayout] auth debug');
+    console.log('user', user);
+    console.log('roleKey (AuthContext)', roleKey);
+    console.log('sidebarRole (resolved)', sidebarRole);
+    console.log('permissions', permissions);
+    console.log('permissions count', permissions?.length ?? 0);
+    console.groupEnd();
+  }, [user, roleKey, sidebarRole, permissions]);
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] flex" dir="rtl">
@@ -213,7 +226,7 @@ const DashboardLayout = () => {
         onCloseMobile={handleCloseMobile}
         currentUser={{
           ...user,
-          role: roleKey || user?.role?.frontendKey || user?.role?.name || user?.role,
+          role: sidebarRole,
         }}
         permissions={permissions}
         onNavigate={handleNavigate}
@@ -238,6 +251,7 @@ const DashboardLayout = () => {
             ...user,
             role: user?.role ? { ...user.role, display_name: getRoleDisplayName(user.role) } : user?.role,
           }}
+          permissions={permissions}
           notifications={notifications}
           unreadNotificationCount={unreadCount}
           onNotificationClick={handleNotificationClick}

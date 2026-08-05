@@ -27,6 +27,10 @@ const ROUTE_KEY_MAP = {
   notifications: 'breadcrumb.notifications',
   finance: 'breadcrumb.finance',
   'activity-logs': 'breadcrumb.activityLogs',
+  meetings: 'breadcrumb.meetings',
+  samples: 'breadcrumb.samples',
+  'waste-returns': 'breadcrumb.waste-returns',
+  purchases: 'breadcrumb.purchases',
 };
 
 const getBreadcrumbItems = (pathname, t) => {

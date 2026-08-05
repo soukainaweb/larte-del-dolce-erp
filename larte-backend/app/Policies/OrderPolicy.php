@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\User;
 use App\Policies\Concerns\ChecksPermissions;
 use App\Support\OrderWorkflow;
+use App\Support\SalesScope;
 
 class OrderPolicy
 {
@@ -18,7 +19,7 @@ class OrderPolicy
 
     public function view(User $user, Order $order): bool
     {
-        return $this->can('orders.view');
+        return $this->can('orders.view') && SalesScope::ownsOrder($order, $user);
     }
 
     public function create(User $user): bool
@@ -28,12 +29,12 @@ class OrderPolicy
 
     public function update(User $user, Order $order): bool
     {
-        return $this->can('orders.update');
+        return $this->can('orders.update') && SalesScope::ownsOrder($order, $user);
     }
 
     public function delete(User $user, Order $order): bool
     {
-        return $this->can('orders.delete');
+        return $this->can('orders.delete') && SalesScope::ownsOrder($order, $user);
     }
 
     public function transition(User $user, Order $order, string $toStatus): bool
