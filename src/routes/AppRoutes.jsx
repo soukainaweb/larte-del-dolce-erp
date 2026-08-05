@@ -27,6 +27,10 @@ import DeliveriesPage from '../pages/deliveries/DeliveriesPage';
 import InvoicesPage from '../pages/invoices/InvoicesPage';
 import PaymentsPage from '../pages/payments/PaymentsPage';
 import ExpensesPage from '../pages/expenses/ExpensesPage';
+import MeetingsPage from '../pages/meetings/MeetingsPage';
+import SamplesPage from '../pages/samples/SamplesPage';
+import WasteReturnsPage from '../pages/wasteReturns/WasteReturnsPage';
+import PurchasesPage from '../pages/purchases/PurchasesPage';
 import FinancePage from '../pages/finance/FinancePage';
 import ReportsPage from '../pages/reports/ReportsPage';
 import AnalyticsPage from '../pages/analytics/AnalyticsPage';
@@ -113,6 +117,10 @@ const AppRoutes = () => {
         <Route path="invoices" element={<InvoicesPage />} /> 
         <Route path="payments" element={<PaymentsPage />} />
         <Route path="expenses" element={<ExpensesPage />} /> 
+        <Route path="meetings" element={<MeetingsPage />} />
+        <Route path="samples" element={<SamplesPage />} />
+        <Route path="waste-returns" element={<WasteReturnsPage />} />
+        <Route path="purchases" element={<PurchasesPage />} />
         <Route path="finance" element={<FinancePage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />

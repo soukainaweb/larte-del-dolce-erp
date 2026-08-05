@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Services\ActivityLogger;
+use App\Support\NumberGenerator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 
@@ -35,6 +37,10 @@ class ProductService
     {
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']) . '-' . Str::random(4);
+        }
+
+        if (empty($data['sku'])) {
+            $data['sku'] = NumberGenerator::next('PRD', Product::class, 'sku');
         }
 
         $product = Product::create($data)->load('category');

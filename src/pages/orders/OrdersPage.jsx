@@ -42,12 +42,17 @@ import {
   XCircle,
   UserCheck,
   UserX,
-  MoreHorizontal
+  MoreHorizontal,
+  ArrowRightLeft,
+  History,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
 import orderService from '../../services/orderService';
+import { transferOrder, getOrderTransfers } from '../../services/orderTransferService';
+import { getUsers } from '../../services/userServicePage';
 import { getApiErrorMessage } from '../../utils/apiHelpers';
 import { useToast } from '../../contexts/ToastContext';
 import { exportPDF } from '../../services/export/pdfExport';
@@ -797,11 +802,115 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
 };
 
 // ==========================================
+// ORDER TRANSFER MODAL
+// ==========================================
+const TransferOrderModal = ({ isOpen, onClose, orders, users, onSubmit, isLoading, t }) => {
+  const [orderId, setOrderId] = useState('');
+  const [toSalespersonId, setToSalespersonId] = useState('');
+  const [notes, setNotes] = useState('');
+
+  const selectedOrder = orders.find((o) => String(o.id) === String(orderId));
+  const currentRep = selectedOrder?.rep || selectedOrder?.user?.name || '—';
+
+  useEffect(() => {
+    if (!isOpen) {
+      setOrderId('');
+      setToSalespersonId('');
+      setNotes('');
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>{t('orderTransfers.title')}</h3>
+          <button type="button" onClick={onClose}><X size={20} /></button>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-[#6D6D6D] uppercase">{t('orderTransfers.selectOrder')}</label>
+          <select value={orderId} onChange={(e) => setOrderId(e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg">
+            <option value="">{t('common.selectOption')}</option>
+            {orders.map((o) => (
+              <option key={o.id} value={o.id}>{o.orderNumber || o.order_number || `#${o.id}`} — {o.customer}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-[#6D6D6D] uppercase">{t('orderTransfers.currentSalesperson')}</label>
+          <input readOnly value={currentRep} className="w-full mt-1 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg bg-[#F8F7F4]" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-[#6D6D6D] uppercase">{t('orderTransfers.newSalesperson')}</label>
+          <select value={toSalespersonId} onChange={(e) => setToSalespersonId(e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg">
+            <option value="">{t('common.selectOption')}</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>{u.first_name || u.firstName} {u.last_name || u.lastName}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-[#6D6D6D] uppercase">{t('orderTransfers.notes')}</label>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full mt-1 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg" />
+        </div>
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="px-4 py-2 border rounded-xl">{t('common.cancel')}</button>
+          <button type="button" disabled={!orderId || !toSalespersonId || isLoading}
+            onClick={() => onSubmit(orderId, { to_salesperson_id: Number(toSalespersonId), notes })}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white disabled:opacity-50">
+            {t('orderTransfers.submit')}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const TransferHistoryModal = ({ isOpen, onClose, transfers, t }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold" style={{ fontFamily: FONT_HEADING }}>{t('orderTransfers.historyTitle')}</h3>
+          <button type="button" onClick={onClose}><X size={20} /></button>
+        </div>
+        {transfers.length === 0 ? (
+          <p className="text-sm text-[#6D6D6D] text-center py-8">{t('orderTransfers.empty')}</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead><tr className="border-b">{['order', 'from', 'to', 'date', 'by'].map((c) => (
+              <th key={c} className="px-3 py-2 text-left text-xs uppercase text-[#6D6D6D]">{t(`orderTransfers.columns.${c}`)}</th>
+            ))}</tr></thead>
+            <tbody>
+              {transfers.map((tr) => (
+                <tr key={tr.id} className="border-b border-[#ECE8E1]">
+                  <td className="px-3 py-2">{tr.order?.order_number || tr.order?.orderNumber || tr.order_id}</td>
+                  <td className="px-3 py-2">{tr.from_salesperson ? `${tr.from_salesperson.first_name || ''} ${tr.from_salesperson.last_name || ''}`.trim() : '—'}</td>
+                  <td className="px-3 py-2">{tr.to_salesperson ? `${tr.to_salesperson.first_name || ''} ${tr.to_salesperson.last_name || ''}`.trim() : '—'}</td>
+                  <td className="px-3 py-2">{tr.created_at ? new Date(tr.created_at).toLocaleString(DATE_LOCALE) : '—'}</td>
+                  <td className="px-3 py-2">{tr.transferred_by_user ? `${tr.transferred_by_user.first_name || ''} ${tr.transferred_by_user.last_name || ''}`.trim() : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </motion.div>
+    </div>
+  );
+};
+
+// ==========================================
 // MAIN ORDERS PAGE
 // ==========================================
 const OrdersPage = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { t: tGlobal } = useTranslation();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('orders');
   const location = useLocation();
   const navigate = useNavigate();
@@ -824,6 +933,11 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [salesUsers, setSalesUsers] = useState([]);
+  const [transfers, setTransfers] = useState([]);
+  const [isTransferring, setIsTransferring] = useState(false);
 
   // ==========================================
   // FETCH ORDERS FROM API
@@ -859,6 +973,42 @@ const OrdersPage = () => {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  useEffect(() => {
+    getUsers({ per_page: 200 }).then((res) => {
+      const list = res?.data?.data?.data || res?.data?.data || [];
+      setSalesUsers(Array.isArray(list) ? list : []);
+    }).catch(() => {});
+  }, []);
+
+  const fetchTransferHistory = async () => {
+    try {
+      const res = await getOrderTransfers({ per_page: 50 });
+      setTransfers(res.data || []);
+    } catch (error) {
+      console.error('Error fetching transfer history:', error);
+    }
+  };
+
+  const handleTransferOrder = async (orderId, payload) => {
+    setIsTransferring(true);
+    try {
+      await transferOrder(orderId, payload);
+      showToast(tGlobal('orderTransfers.success'), 'success');
+      setIsTransferModalOpen(false);
+      fetchOrders();
+      fetchTransferHistory();
+    } catch (error) {
+      showToast(getApiErrorMessage(error, tGlobal('errors.saveFailed')), 'error');
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  const openTransferHistory = () => {
+    fetchTransferHistory();
+    setIsHistoryModalOpen(true);
+  };
 
   useEffect(() => {
     if (!location.state?.openAddModal) return;
@@ -1163,6 +1313,22 @@ const OrdersPage = () => {
             onError={handleExportError}
           />
           <button
+            type="button"
+            onClick={openTransferHistory}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#ECE8E1] bg-white text-[#3D2F24] hover:bg-[#F8F7F4]"
+          >
+            <History size={18} />
+            {tGlobal('orderTransfers.historyTitle')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsTransferModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#B8863B] text-[#B8863B] bg-white hover:bg-[#F8F5EF]"
+          >
+            <ArrowRightLeft size={18} />
+            {tGlobal('orderTransfers.title')}
+          </button>
+          <button
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
@@ -1418,6 +1584,27 @@ const OrdersPage = () => {
               setSelectedOrder(null);
             }}
             order={selectedOrder}
+          />
+        )}
+
+        {isTransferModalOpen && (
+          <TransferOrderModal
+            isOpen={isTransferModalOpen}
+            onClose={() => setIsTransferModalOpen(false)}
+            orders={orders}
+            users={salesUsers}
+            onSubmit={handleTransferOrder}
+            isLoading={isTransferring}
+            t={tGlobal}
+          />
+        )}
+
+        {isHistoryModalOpen && (
+          <TransferHistoryModal
+            isOpen={isHistoryModalOpen}
+            onClose={() => setIsHistoryModalOpen(false)}
+            transfers={transfers}
+            t={tGlobal}
           />
         )}
       </AnimatePresence>

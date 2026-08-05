@@ -10,16 +10,21 @@ use App\Models\Expense;
 use App\Models\Inventory;
 use App\Models\Invoice;
 use App\Models\Notification;
+use App\Models\Meeting;
 use App\Models\Order;
+use App\Models\OrderTransfer;
 use App\Models\Payment;
 use App\Models\Permission;
 use App\Models\Product;
 use App\Models\Production;
+use App\Models\Purchase;
 use App\Models\Role;
+use App\Models\Sample;
 use App\Models\Setting;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Models\WasteReturn;
 use App\Policies\ActivityLogPolicy;
 use App\Policies\CategoryPolicy;
 use App\Policies\CustomerPolicy;
@@ -29,18 +34,23 @@ use App\Policies\ExpensePolicy;
 use App\Policies\FinancePolicy;
 use App\Policies\InventoryPolicy;
 use App\Policies\InvoicePolicy;
+use App\Policies\MeetingPolicy;
 use App\Policies\NotificationPolicy;
 use App\Policies\OrderPolicy;
+use App\Policies\OrderTransferPolicy;
 use App\Policies\PaymentPolicy;
 use App\Policies\PermissionPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\ProductionPolicy;
+use App\Policies\PurchasePolicy;
 use App\Policies\ReportPolicy;
 use App\Policies\RolePolicy;
+use App\Policies\SamplePolicy;
 use App\Policies\SettingPolicy;
 use App\Policies\SupplierPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\WarehousePolicy;
+use App\Policies\WasteReturnPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -69,6 +79,11 @@ class AppServiceProvider extends ServiceProvider
         Role::class => RolePolicy::class,
         Permission::class => PermissionPolicy::class,
         ActivityLog::class => ActivityLogPolicy::class,
+        Meeting::class => MeetingPolicy::class,
+        Sample::class => SamplePolicy::class,
+        OrderTransfer::class => OrderTransferPolicy::class,
+        WasteReturn::class => WasteReturnPolicy::class,
+        Purchase::class => PurchasePolicy::class,
     ];
 
     public function register(): void

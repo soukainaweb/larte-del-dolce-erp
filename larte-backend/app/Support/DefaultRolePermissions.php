@@ -40,6 +40,10 @@ class DefaultRolePermissions
             'roles' => ['view', 'create', 'update', 'delete'],
             'permissions' => ['view', 'create', 'update', 'delete'],
             'settings' => ['view', 'update'],
+            'meetings' => ['view', 'create', 'update', 'delete'],
+            'samples' => ['view', 'create', 'update', 'delete'],
+            'waste_returns' => ['view', 'create', 'update', 'delete'],
+            'purchases' => ['view', 'create', 'update', 'delete'],
         ];
     }
 
@@ -63,18 +67,26 @@ class DefaultRolePermissions
                 'warehouses.view', 'warehouses.create', 'warehouses.update',
                 'deliveries.view', 'deliveries.create', 'deliveries.update',
                 'productions.view', 'productions.create', 'productions.update',
+                'meetings.view', 'meetings.create', 'meetings.update', 'meetings.delete',
+                'samples.view', 'samples.create', 'samples.update', 'samples.delete',
+                'waste_returns.view', 'waste_returns.create', 'waste_returns.update',
+                'purchases.view', 'purchases.create', 'purchases.update',
                 'users.view',
             ]),
             'accountant' => array_merge(self::BASELINE, [
                 'reports.view', 'finance.view',
                 'payments.view', 'payments.create', 'payments.update',
-                'expenses.view', 'expenses.create', 'expenses.update',
-                'orders.view', 'customers.view',
+            'expenses.view', 'expenses.create', 'expenses.update',
+            'waste_returns.view', 'waste_returns.create', 'waste_returns.update',
+            'purchases.view', 'purchases.create', 'purchases.update',
+            'orders.view', 'customers.view',
             ]),
             'sales' => array_merge(self::BASELINE, [
                 'orders.view', 'orders.create', 'orders.update',
                 'customers.view', 'customers.create', 'customers.update',
                 'products.view', 'deliveries.view',
+                'meetings.view', 'meetings.create', 'meetings.update',
+                'samples.view', 'samples.create', 'samples.update',
             ]),
             'viewer' => self::viewerPermissions(),
             'delivery' => array_merge(self::BASELINE, [
@@ -91,6 +103,7 @@ class DefaultRolePermissions
             'orders.view', 'customers.view', 'products.view', 'categories.view',
             'inventory.view', 'finance.view', 'payments.view', 'expenses.view',
             'suppliers.view', 'warehouses.view', 'deliveries.view', 'productions.view',
+            'meetings.view', 'samples.view', 'waste_returns.view', 'purchases.view',
             'users.view', 'roles.view', 'permissions.view', 'settings.view',
         ];
     }

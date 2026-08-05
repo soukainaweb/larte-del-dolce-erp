@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Support\OrderWorkflow;
 use App\Support\StatusMapper;
+use App\Support\NumberGenerator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -53,7 +54,7 @@ class OrderService
     public function create(array $data, int $userId): array
     {
         return DB::transaction(function () use ($data, $userId) {
-            $orderNumber = 'ORD-' . date('Ymd') . '-' . str_pad(Order::count() + 1, 4, '0', STR_PAD_LEFT);
+            $orderNumber = NumberGenerator::next('ORD', Order::class, 'order_number');
             $initialStatus = OrderWorkflow::canonical($data['status'] ?? OrderWorkflow::SUBMITTED);
 
             $order = Order::create([
