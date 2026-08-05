@@ -47,6 +47,7 @@ import {
   Recycle,
 } from 'lucide-react';
 import brandLogo from '../../../constants/brandAssets';
+import { hasFullAccessRole } from '../../../utils/permissions';
 
 // ==================================================
 // DESIGN TOKENS — L'arte del dolce ERP Sidebar
@@ -91,6 +92,7 @@ const FULL_ACCESS_ROLES = [ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.MANAGER];
 
 const isItemVisible = (item, role, permissions) => {
   if (item.visible === false) return false;
+  if (hasFullAccessRole(role)) return true;
   if (item.permission && permissions && permissions.length > 0) {
     if (!permissions.includes(item.permission)) return false;
   }
@@ -139,6 +141,30 @@ const DEFAULT_MENU_CONFIG = [
     badge: null,
     children: null,
     permission: 'customers.view',
+    visible: true,
+    group: 'gestion',
+  },
+  {
+    id: 'categories',
+    title: 'Catégories',
+    icon: FolderTree,
+    route: '/dashboard/categories',
+    roles: ALL_CORE_ROLES,
+    badge: null,
+    children: null,
+    permission: 'categories.view',
+    visible: true,
+    group: 'gestion',
+  },
+  {
+    id: 'products',
+    title: 'Produits',
+    icon: Package,
+    route: '/dashboard/products',
+    roles: [...ALL_CORE_ROLES, ROLES.PRODUCTION_MANAGER, ROLES.WAREHOUSE_MANAGER],
+    badge: null,
+    children: null,
+    permission: 'products.view',
     visible: true,
     group: 'gestion',
   },
