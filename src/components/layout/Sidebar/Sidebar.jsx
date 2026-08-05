@@ -47,7 +47,16 @@ import {
   Recycle,
 } from 'lucide-react';
 import brandLogo from '../../../constants/brandAssets';
-import { hasFullAccessRole } from '../../../utils/permissions';
+import { isAdminRole, resolveRoleKey } from '../../../utils/permissions';
+
+const REQUIRED_ADMIN_MENU_IDS = [
+  'meetings',
+  'samples',
+  'wasteReturns',
+  'purchases',
+  'categories',
+  'products',
+];
 
 // ==================================================
 // DESIGN TOKENS — L'arte del dolce ERP Sidebar
@@ -92,13 +101,16 @@ const FULL_ACCESS_ROLES = [ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.MANAGER];
 
 const isItemVisible = (item, role, permissions) => {
   if (item.visible === false) return false;
-  if (hasFullAccessRole(role)) return true;
+
+  const roleKey = resolveRoleKey(role);
+  if (isAdminRole(role)) return true;
+
   if (item.permission && permissions && permissions.length > 0) {
     if (!permissions.includes(item.permission)) return false;
   }
   if (!item.roles || item.roles.length === 0) return true;
-  if (FULL_ACCESS_ROLES.includes(role)) return true;
-  return item.roles.includes(role);
+  if (FULL_ACCESS_ROLES.includes(roleKey)) return true;
+  return item.roles.includes(roleKey);
 };
 
 // ==================================================
@@ -751,12 +763,48 @@ const Sidebar = ({
     [onNavigate, onCloseMobile],
   );
 
+  const resolvedRoleKey = useMemo(
+    () => resolveRoleKey(currentUser?.role),
+    [currentUser?.role],
+  );
+
   const visibleMenuItems = useMemo(
     () => translatedMenuItems.filter((item) => isItemVisible(item, currentUser?.role, permissions)),
     [translatedMenuItems, currentUser?.role, permissions],
   );
 
   const dashboardVisible = isItemVisible(DASHBOARD_ITEM, currentUser?.role, permissions);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+
+    const visibleIds = visibleMenuItems.map((item) => item.id);
+    const missingRequired = REQUIRED_ADMIN_MENU_IDS.filter((id) => !visibleIds.includes(id));
+
+    console.group('[Sidebar] access debug');
+    console.log('currentUser', currentUser);
+    console.log('raw role prop', currentUser?.role);
+    console.log('resolvedRoleKey', resolvedRoleKey);
+    console.log('isAdminRole', isAdminRole(currentUser?.role));
+    console.log('permissions count', permissions?.length ?? 0);
+    console.log('permissions sample', permissions?.slice(0, 8));
+    console.log('menuItems total', menuItems.length);
+    console.log('visible menu ids', visibleIds);
+    console.log('required admin items missing', missingRequired);
+    REQUIRED_ADMIN_MENU_IDS.forEach((id) => {
+      const item = menuItems.find((entry) => entry.id === id);
+      if (!item) {
+        console.warn(`[Sidebar] menu config missing item: ${id}`);
+        return;
+      }
+      console.log(
+        `[Sidebar] ${id}`,
+        visibleIds.includes(id) ? 'VISIBLE' : 'HIDDEN',
+        { permission: item.permission, roles: item.roles },
+      );
+    });
+    console.groupEnd();
+  }, [currentUser, resolvedRoleKey, permissions, visibleMenuItems, menuItems]);
 
   const renderNav = (isMobile) => (
     <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3">
