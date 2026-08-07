@@ -20,7 +20,8 @@ class UpdateMeetingRequest extends FormRequest
             'customer_id' => ['nullable', 'exists:customers,id'],
             'order_id' => ['nullable', 'exists:orders,id'],
             'notes' => ['nullable', 'string'],
-            'status' => ['sometimes', 'in:scheduled,live,finished,cancelled'],
+            'status' => ['sometimes', 'in:draft,scheduled,live,finished,cancelled'],
+            'publish' => ['nullable', 'boolean'],
             'invitee_user_ids' => ['nullable', 'array'],
             'invitee_user_ids.*' => ['integer', 'exists:users,id'],
         ];

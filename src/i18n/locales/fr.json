@@ -177,17 +177,31 @@
       "invitees": "Inviter des participants"
     },
     "status": {
+      "draft": "Brouillon",
       "scheduled": "Planifiée",
       "live": "En direct",
       "finished": "Terminée",
       "completed": "Terminée",
       "cancelled": "Annulée"
     },
+    "invitationStatus": {
+      "pending": "En attente",
+      "accepted": "Acceptée",
+      "declined": "Refusée"
+    },
+    "actions": {
+      "saveDraft": "Enregistrer brouillon",
+      "schedule": "Planifier et inviter",
+      "cancel": "Annuler la réunion"
+    },
+    "confirmCancel": "Annuler cette réunion ?",
     "kpi": { "total": "Total réunions" },
     "messages": {
-      "created": "Réunion créée et invitations envoyées",
+      "draftCreated": "Réunion enregistrée comme brouillon",
+      "scheduled": "Réunion planifiée et invitations envoyées",
       "updated": "Réunion mise à jour",
-      "deleted": "Réunion supprimée"
+      "deleted": "Réunion supprimée",
+      "cancelled": "Réunion annulée"
     },
     "errors": {
       "load": "Échec du chargement",
@@ -211,8 +225,42 @@
       "endMeeting": "Terminer",
       "participants": "Participants",
       "host": "Hôte",
+      "participant": "Participant",
       "remove": "Retirer",
       "guest": "Invité"
+    },
+    "details": {
+      "title": "Détails de la réunion",
+      "subtitle": "Informations, participants et historique",
+      "notFound": "Réunion introuvable ou accès refusé",
+      "information": "Informations",
+      "organizer": "Organisateur",
+      "participants": "Participants",
+      "invitationStatus": "Statut d'invitation",
+      "history": "Historique",
+      "name": "Nom",
+      "role": "Rôle",
+      "noParticipants": "Aucun participant invité",
+      "noHistory": "Aucune activité enregistrée",
+      "system": "Système",
+      "startedAt": "Démarrée à",
+      "endedAt": "Terminée à",
+      "calendar": "Ajouter au calendrier",
+      "addGoogleCalendar": "Ajouter à Google Calendar",
+      "downloadIcs": "Télécharger le fichier ICS",
+      "icsDownloaded": "Fichier calendrier téléchargé",
+      "videoRoom": "Salle vidéo",
+      "videoRoomHint": "Rejoignez la réunion vidéo intégrée lorsqu'elle est en direct."
+    },
+    "activity": {
+      "created": "Réunion créée",
+      "updated": "Réunion mise à jour",
+      "scheduled": "Réunion planifiée",
+      "invitation_sent": "Invitation envoyée",
+      "started": "Réunion démarrée",
+      "ended": "Réunion terminée",
+      "cancelled": "Réunion annulée",
+      "joined": "Participant rejoint"
     }
   },
   "samples": {

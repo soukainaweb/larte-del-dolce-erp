@@ -28,6 +28,7 @@ import InvoicesPage from '../pages/invoices/InvoicesPage';
 import PaymentsPage from '../pages/payments/PaymentsPage';
 import ExpensesPage from '../pages/expenses/ExpensesPage';
 import MeetingsPage from '../pages/meetings/MeetingsPage';
+import MeetingDetailsPage from '../pages/meetings/MeetingDetailsPage';
 import MeetingRoomPage from '../pages/meetings/MeetingRoomPage';
 import SamplesPage from '../pages/samples/SamplesPage';
 import WasteReturnsPage from '../pages/wasteReturns/WasteReturnsPage';
@@ -119,7 +120,8 @@ const AppRoutes = () => {
         <Route path="invoices" element={<PermissionRoute permission="finance.view"><InvoicesPage /></PermissionRoute>} /> 
         <Route path="payments" element={<PermissionRoute permission="payments.view"><PaymentsPage /></PermissionRoute>} />
         <Route path="expenses" element={<PermissionRoute permission="expenses.view"><ExpensesPage /></PermissionRoute>} /> 
-        <Route path="meetings/:id" element={<PermissionRoute permission="meetings.view"><MeetingRoomPage /></PermissionRoute>} />
+        <Route path="meetings/:id/room" element={<PermissionRoute permission="meetings.view"><MeetingRoomPage /></PermissionRoute>} />
+        <Route path="meetings/:id" element={<PermissionRoute permission="meetings.view"><MeetingDetailsPage /></PermissionRoute>} />
         <Route path="meetings" element={<PermissionRoute permission="meetings.view"><MeetingsPage /></PermissionRoute>} />
         <Route path="samples" element={<PermissionRoute permission="samples.view"><SamplesPage /></PermissionRoute>} />
         <Route path="waste-returns" element={<PermissionRoute permission="waste_returns.view"><WasteReturnsPage /></PermissionRoute>} />

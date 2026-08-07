@@ -177,9 +177,9 @@ const MeetingRoomPage = () => {
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
-            onClick={() => navigate('/dashboard/meetings')}
+            onClick={() => navigate(`/dashboard/meetings/${id}`)}
             className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            aria-label={t('meetings.room.backToList')}
+            aria-label={t('meetings.details.title')}
           >
             <ArrowRight className="w-5 h-5 rotate-180" />
           </button>

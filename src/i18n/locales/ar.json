@@ -489,17 +489,31 @@
       "invitees": "دعوة المشاركين"
     },
     "status": {
+      "draft": "مسودة",
       "scheduled": "مجدول",
       "live": "مباشر",
       "finished": "منتهي",
       "completed": "منتهي",
       "cancelled": "ملغى"
     },
+    "invitationStatus": {
+      "pending": "قيد الانتظار",
+      "accepted": "مقبول",
+      "declined": "مرفوض"
+    },
+    "actions": {
+      "saveDraft": "حفظ كمسودة",
+      "schedule": "جدولة ودعوة",
+      "cancel": "إلغاء الاجتماع"
+    },
+    "confirmCancel": "إلغاء هذا الاجتماع؟",
     "kpi": { "total": "إجمالي الاجتماعات" },
     "messages": {
-      "created": "تم إنشاء الاجتماع وإرسال الدعوات",
+      "draftCreated": "تم حفظ الاجتماع كمسودة",
+      "scheduled": "تمت جدولة الاجتماع وإرسال الدعوات",
       "updated": "تم التحديث",
-      "deleted": "تم الحذف"
+      "deleted": "تم الحذف",
+      "cancelled": "تم إلغاء الاجتماع"
     },
     "errors": {
       "load": "فشل التحميل",
@@ -523,8 +537,42 @@
       "endMeeting": "إنهاء الاجتماع",
       "participants": "المشاركون",
       "host": "المضيف",
+      "participant": "مشارك",
       "remove": "إزالة",
       "guest": "ضيف"
+    },
+    "details": {
+      "title": "تفاصيل الاجتماع",
+      "subtitle": "معلومات الاجتماع والمشاركون والسجل",
+      "notFound": "الاجتماع غير موجود أو الوصول مرفوض",
+      "information": "معلومات الاجتماع",
+      "organizer": "المنظم",
+      "participants": "المشاركون",
+      "invitationStatus": "حالة الدعوة",
+      "history": "سجل الاجتماع",
+      "name": "الاسم",
+      "role": "الدور",
+      "noParticipants": "لا يوجد مشاركون مدعوون",
+      "noHistory": "لا يوجد نشاط مسجل",
+      "system": "النظام",
+      "startedAt": "بدأ في",
+      "endedAt": "انتهى في",
+      "calendar": "إضافة إلى التقويم",
+      "addGoogleCalendar": "إضافة إلى Google Calendar",
+      "downloadIcs": "تنزيل ملف ICS",
+      "icsDownloaded": "تم تنزيل ملف التقويم",
+      "videoRoom": "غرفة الفيديو",
+      "videoRoomHint": "انضم إلى اجتماع الفيديو المدمج عندما يكون مباشراً."
+    },
+    "activity": {
+      "created": "تم إنشاء الاجتماع",
+      "updated": "تم تحديث الاجتماع",
+      "scheduled": "تمت جدولة الاجتماع",
+      "invitation_sent": "تم إرسال الدعوة",
+      "started": "بدأ الاجتماع",
+      "ended": "انتهى الاجتماع",
+      "cancelled": "تم إلغاء الاجتماع",
+      "joined": "انضم مشارك"
     }
   },
   "samples": {

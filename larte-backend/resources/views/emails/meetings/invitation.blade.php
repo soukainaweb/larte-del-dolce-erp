@@ -15,6 +15,8 @@ You have been invited to a video meeting on **L'arte del dolce ERP**.
 
 **Time:** {{ is_string($meeting->meeting_time) ? substr($meeting->meeting_time, 0, 5) : $meeting->meeting_time }}
 
+**Organizer:** {{ $organizerName ?: config('app.name') }}
+
 @if($meeting->notes)
 **Notes:**
 
@@ -25,7 +27,15 @@ You have been invited to a video meeting on **L'arte del dolce ERP**.
 Join Meeting
 </x-mail::button>
 
-This link opens the meeting inside the ERP video room.
+@if($googleCalendarUrl)
+<x-mail::button :url="$googleCalendarUrl" color="success">
+Add to Google Calendar
+</x-mail::button>
+@endif
+
+An ICS calendar file is attached so you can add this meeting to Outlook, Apple Calendar, or other apps.
+
+You can also [view meeting details]({{ $detailsUrl }}) in the ERP.
 
 Thanks,<br>
 {{ config('app.name') }}

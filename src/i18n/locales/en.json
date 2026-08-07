@@ -191,17 +191,31 @@
       "invitees": "Invite participants"
     },
     "status": {
+      "draft": "Draft",
       "scheduled": "Scheduled",
       "live": "Live",
       "finished": "Finished",
       "completed": "Finished",
       "cancelled": "Cancelled"
     },
+    "invitationStatus": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "declined": "Declined"
+    },
+    "actions": {
+      "saveDraft": "Save draft",
+      "schedule": "Schedule & invite",
+      "cancel": "Cancel meeting"
+    },
+    "confirmCancel": "Cancel this meeting?",
     "kpi": { "total": "Total meetings" },
     "messages": {
-      "created": "Meeting created and invitations sent",
+      "draftCreated": "Meeting saved as draft",
+      "scheduled": "Meeting scheduled and invitations sent",
       "updated": "Meeting updated",
-      "deleted": "Meeting deleted"
+      "deleted": "Meeting deleted",
+      "cancelled": "Meeting cancelled"
     },
     "errors": {
       "load": "Failed to load meetings",
@@ -225,8 +239,42 @@
       "endMeeting": "End meeting",
       "participants": "Participants",
       "host": "Host",
+      "participant": "Participant",
       "remove": "Remove",
       "guest": "Guest"
+    },
+    "details": {
+      "title": "Meeting details",
+      "subtitle": "View meeting information, participants, and activity",
+      "notFound": "Meeting not found or access denied",
+      "information": "Meeting information",
+      "organizer": "Organizer",
+      "participants": "Participants",
+      "invitationStatus": "Invitation status",
+      "history": "Meeting history",
+      "name": "Name",
+      "role": "Role",
+      "noParticipants": "No participants invited yet",
+      "noHistory": "No activity recorded yet",
+      "system": "System",
+      "startedAt": "Started at",
+      "endedAt": "Ended at",
+      "calendar": "Add to calendar",
+      "addGoogleCalendar": "Add to Google Calendar",
+      "downloadIcs": "Download ICS file",
+      "icsDownloaded": "Calendar file downloaded",
+      "videoRoom": "Video room",
+      "videoRoomHint": "Join the embedded video meeting when it is live."
+    },
+    "activity": {
+      "created": "Meeting created",
+      "updated": "Meeting updated",
+      "scheduled": "Meeting scheduled",
+      "invitation_sent": "Invitation sent",
+      "started": "Meeting started",
+      "ended": "Meeting ended",
+      "cancelled": "Meeting cancelled",
+      "joined": "Participant joined"
     }
   },
   "samples": {

@@ -8,6 +8,7 @@ use App\Http\Requests\Meetings\UpdateMeetingRequest;
 use App\Models\Meeting;
 use App\Services\MeetingService;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class MeetingController extends Controller
 {
@@ -71,6 +72,26 @@ class MeetingController extends Controller
         return $this->success($this->meetingService->statuses());
     }
 
+    public function schedule(Meeting $meeting)
+    {
+        $this->authorize('schedule', $meeting);
+
+        return $this->success(
+            $this->meetingService->schedule($meeting),
+            'Meeting scheduled and invitations sent'
+        );
+    }
+
+    public function cancel(Meeting $meeting)
+    {
+        $this->authorize('cancel', $meeting);
+
+        return $this->success(
+            $this->meetingService->cancel($meeting),
+            'Meeting cancelled successfully'
+        );
+    }
+
     public function start(Meeting $meeting)
     {
         $this->authorize('start', $meeting);
@@ -98,5 +119,25 @@ class MeetingController extends Controller
         return $this->success(
             $this->meetingService->session($meeting, request()->user())
         );
+    }
+
+    public function history(Meeting $meeting)
+    {
+        $this->authorize('view', $meeting);
+
+        return $this->success($this->meetingService->history($meeting));
+    }
+
+    public function ics(Meeting $meeting)
+    {
+        $this->authorize('view', $meeting);
+
+        $content = $this->meetingService->icsContent($meeting);
+        $filename = 'meeting-' . $meeting->id . '.ics';
+
+        return response($content, Response::HTTP_OK, [
+            'Content-Type' => 'text/calendar; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 }

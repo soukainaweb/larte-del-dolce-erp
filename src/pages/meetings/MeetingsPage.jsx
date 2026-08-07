@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  CalendarDays, Plus, Search, Edit2, Trash2, Eye, X, RefreshCw,
-  ChevronLeft, ChevronRight, Users, ClipboardList, Video, LogIn,
+  Plus, Search, Edit2, Trash2, Eye, X, RefreshCw,
+  ChevronLeft, ChevronRight, Video, LogIn, Mail,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
@@ -11,7 +11,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { unwrapData, unwrapPaginated, getApiErrorMessage } from '../../utils/apiHelpers';
 import { isAdminRole } from '../../utils/permissions';
 import {
-  getMeetings, createMeeting, updateMeeting, deleteMeeting, getMeetingStatistics, startMeeting,
+  getMeetings, createMeeting, updateMeeting, deleteMeeting, getMeetingStatistics, startMeeting, scheduleMeeting,
 } from '../../services/meetingService';
 import { getCustomers } from '../../services/customerService';
 import { getUsers } from '../../services/userServicePage';
@@ -33,6 +33,7 @@ const emptyForm = () => ({
 
 const StatusBadge = ({ status, t }) => {
   const map = {
+    draft: 'bg-amber-50 text-amber-700 border-amber-200',
     scheduled: 'bg-blue-50 text-blue-700 border-blue-200',
     live: 'bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse',
     finished: 'bg-slate-50 text-slate-700 border-slate-200',
@@ -90,7 +91,7 @@ const MeetingModal = ({ isOpen, onClose, onSave, item, customers, orders, users,
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e, publish = false) => {
     e.preventDefault();
     const next = {};
     if (!form.title.trim()) next.title = t('common.validation.nameRequired');
@@ -104,7 +105,8 @@ const MeetingModal = ({ isOpen, onClose, onSave, item, customers, orders, users,
       ...form,
       customer_id: form.customer_id || null,
       order_id: form.order_id || null,
-    });
+      publish,
+    }, publish);
   };
 
   if (!isOpen) return null;
@@ -119,7 +121,7 @@ const MeetingModal = ({ isOpen, onClose, onSave, item, customers, orders, users,
           </h3>
           <button type="button" onClick={onClose} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg"><X size={20} /></button>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(e, false); }} className="p-6 space-y-4">
           <div>
             <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase">{t('meetings.fields.title')} *</label>
             <input name="title" value={form.title} onChange={handleChange}
@@ -177,11 +179,15 @@ const MeetingModal = ({ isOpen, onClose, onSave, item, customers, orders, users,
             <textarea name="notes" value={form.notes} onChange={handleChange} rows={3}
               className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg" />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm border border-[#ECE8E1] rounded-xl">{t('common.cancel')}</button>
-            <button type="submit" disabled={isLoading}
+            <button type="button" disabled={isLoading} onClick={(e) => { e.preventDefault(); handleSubmit(e, false); }}
+              className="px-4 py-2 text-sm rounded-xl border border-[#ECE8E1] disabled:opacity-50">
+              {isLoading ? t('common.saving') : t('meetings.actions.saveDraft')}
+            </button>
+            <button type="button" disabled={isLoading} onClick={(e) => { e.preventDefault(); handleSubmit(e, true); }}
               className="px-4 py-2 text-sm rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white disabled:opacity-50">
-              {isLoading ? t('common.saving') : t('common.save')}
+              {isLoading ? t('common.saving') : t('meetings.actions.schedule')}
             </button>
           </div>
         </form>
@@ -196,7 +202,7 @@ const MeetingsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
-  const [stats, setStats] = useState({ total: 0, scheduled: 0, live: 0, finished: 0, cancelled: 0 });
+  const [stats, setStats] = useState({ total: 0, draft: 0, scheduled: 0, live: 0, finished: 0, cancelled: 0 });
   const [customers, setCustomers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
@@ -209,7 +215,7 @@ const MeetingsPage = () => {
   const [modal, setModal] = useState(null);
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [viewItem, setViewItem] = useState(null);
+  const [schedulingId, setSchedulingId] = useState(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -246,15 +252,15 @@ const MeetingsPage = () => {
 
   const totalPages = Math.max(1, Math.ceil(total / perPage));
 
-  const handleSave = async (payload) => {
+  const handleSave = async (payload, publish = false) => {
     setSaving(true);
     try {
       if (selected) {
         await updateMeeting(selected.id, payload);
-        showToast(t('meetings.messages.updated'), 'success');
+        showToast(publish ? t('meetings.messages.scheduled') : t('meetings.messages.updated'), 'success');
       } else {
         await createMeeting(payload);
-        showToast(t('meetings.messages.created'), 'success');
+        showToast(publish ? t('meetings.messages.scheduled') : t('meetings.messages.draftCreated'), 'success');
       }
       setModal(null);
       setSelected(null);
@@ -264,6 +270,20 @@ const MeetingsPage = () => {
       showToast(getApiErrorMessage(err, t('meetings.errors.save')), 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleScheduleDraft = async (item) => {
+    setSchedulingId(item.id);
+    try {
+      await scheduleMeeting(item.id);
+      showToast(t('meetings.messages.scheduled'), 'success');
+      fetchData();
+      getMeetingStatistics().then((r) => setStats(unwrapData(r) || {}));
+    } catch (err) {
+      showToast(getApiErrorMessage(err, t('meetings.errors.save')), 'error');
+    } finally {
+      setSchedulingId(null);
     }
   };
 
@@ -283,14 +303,14 @@ const MeetingsPage = () => {
       if (item.status === 'scheduled' && canManageMeeting(item, user)) {
         await startMeeting(item.id);
       }
-      navigate(`/dashboard/meetings/${item.id}`);
+      navigate(`/dashboard/meetings/${item.id}/room`);
     } catch (err) {
       showToast(getApiErrorMessage(err, t('meetings.errors.save')), 'error');
     }
   };
 
   const filtered = useMemo(() => items, [items]);
-  const statusOptions = ['scheduled', 'live', 'finished', 'cancelled'];
+  const statusOptions = ['draft', 'scheduled', 'live', 'finished', 'cancelled'];
 
   return (
     <div className="w-full min-h-screen bg-[#F8F7F4] p-6" style={{ fontFamily: FONT_BODY }}>
@@ -305,9 +325,10 @@ const MeetingsPage = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
         {[
           { label: t('meetings.kpi.total'), value: stats.total, color: 'text-blue-600' },
+          { label: t('meetings.status.draft'), value: stats.draft, color: 'text-amber-600' },
           { label: t('meetings.status.scheduled'), value: stats.scheduled, color: 'text-indigo-600' },
           { label: t('meetings.status.live'), value: stats.live, color: 'text-emerald-600' },
           { label: t('meetings.status.finished'), value: stats.finished ?? stats.completed, color: 'text-slate-600' },
@@ -355,10 +376,16 @@ const MeetingsPage = () => {
               <tbody>
                 {filtered.map((row) => {
                   const isHost = canManageMeeting(row, user);
-                  const canJoin = row.status === 'live' || (row.status === 'scheduled' && isHost);
+                  const isInvited = isHost || (row.invitees || []).some((inv) => Number(inv.user_id) === Number(user?.id));
+                  const canJoin = row.status === 'live' && isInvited;
                   return (
                     <tr key={row.id} className="border-b border-[#ECE8E1] hover:bg-[#F8F7F4]">
-                      <td className="px-4 py-3 text-sm font-medium">{row.title}</td>
+                      <td className="px-4 py-3 text-sm font-medium">
+                        <button type="button" onClick={() => navigate(`/dashboard/meetings/${row.id}`)}
+                          className="text-left hover:text-[#B8863B] transition-colors">
+                          {row.title}
+                        </button>
+                      </td>
                       <td className="px-4 py-3 text-sm text-[#6D6D6D]">
                         {row.meeting_date ? new Date(row.meeting_date).toLocaleDateString(DATE_LOCALE) : '—'}
                       </td>
@@ -367,6 +394,12 @@ const MeetingsPage = () => {
                       <td className="px-4 py-3"><StatusBadge status={row.status} t={t} /></td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
+                          {row.status === 'draft' && isHost && (
+                            <button type="button" onClick={() => handleScheduleDraft(row)} disabled={schedulingId === row.id}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-blue-50 text-blue-700 border border-blue-200 disabled:opacity-50">
+                              <Mail size={14} />{t('meetings.actions.schedule')}
+                            </button>
+                          )}
                           {row.status === 'scheduled' && isHost && (
                             <button type="button" onClick={() => handleStartAndJoin(row)}
                               className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -374,13 +407,13 @@ const MeetingsPage = () => {
                             </button>
                           )}
                           {row.status === 'live' && canJoin && (
-                            <button type="button" onClick={() => navigate(`/dashboard/meetings/${row.id}`)}
+                            <button type="button" onClick={() => navigate(`/dashboard/meetings/${row.id}/room`)}
                               className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
                               <LogIn size={14} />{t('meetings.room.joinMeeting')}
                             </button>
                           )}
-                          <button type="button" onClick={() => setViewItem(row)} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg"><Eye size={16} /></button>
-                          {isHost && row.status !== 'live' && (
+                          <button type="button" onClick={() => navigate(`/dashboard/meetings/${row.id}`)} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg"><Eye size={16} /></button>
+                          {isHost && !['live'].includes(row.status) && (
                             <button type="button" onClick={() => { setSelected(row); setModal('form'); }} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg"><Edit2 size={16} /></button>
                           )}
                           {isHost && (
@@ -411,38 +444,6 @@ const MeetingsPage = () => {
             onClose={() => { setModal(null); setSelected(null); }} onSave={handleSave} isLoading={saving} t={t} />
         )}
       </AnimatePresence>
-
-      {viewItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-3">
-            <div className="flex justify-between items-start">
-              <h3 className="text-lg font-bold" style={{ fontFamily: FONT_HEADING }}>{viewItem.title}</h3>
-              <button type="button" onClick={() => setViewItem(null)}><X size={20} /></button>
-            </div>
-            <StatusBadge status={viewItem.status} t={t} />
-            <p className="text-sm flex items-center gap-2"><CalendarDays size={14} />{viewItem.meeting_date} {(viewItem.meeting_time || '').slice(0, 5)}</p>
-            <p className="text-sm flex items-center gap-2"><Users size={14} />{viewItem.customer?.name || '—'}</p>
-            <p className="text-sm flex items-center gap-2"><ClipboardList size={14} />{viewItem.order?.order_number || '—'}</p>
-            {viewItem.invitees?.length > 0 && (
-              <div className="text-sm">
-                <p className="font-semibold mb-1">{t('meetings.fields.invitees')}</p>
-                <ul className="text-[#6D6D6D] space-y-0.5">
-                  {viewItem.invitees.map((inv) => (
-                    <li key={inv.id}>{inv.user?.first_name ? `${inv.user.first_name} ${inv.user.last_name || ''}` : inv.email}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {viewItem.notes && <p className="text-sm text-[#6D6D6D]">{viewItem.notes}</p>}
-            {(viewItem.status === 'live' || (viewItem.status === 'scheduled' && canManageMeeting(viewItem, user))) && (
-              <button type="button" onClick={() => { setViewItem(null); handleStartAndJoin(viewItem); }}
-                className="w-full mt-2 px-4 py-2 rounded-xl bg-[#B8863B] text-white text-sm">
-                {viewItem.status === 'live' ? t('meetings.room.joinMeeting') : t('meetings.room.startMeeting')}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

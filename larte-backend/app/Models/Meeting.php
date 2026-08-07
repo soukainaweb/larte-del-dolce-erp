@@ -13,6 +13,7 @@ class Meeting extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const STATUS_DRAFT = 'draft';
     public const STATUS_SCHEDULED = 'scheduled';
     public const STATUS_LIVE = 'live';
     public const STATUS_FINISHED = 'finished';
@@ -48,7 +49,7 @@ class Meeting extends Model
                 $meeting->room_name = self::generateRoomName();
             }
             if (empty($meeting->status)) {
-                $meeting->status = self::STATUS_SCHEDULED;
+                $meeting->status = self::STATUS_DRAFT;
             }
         });
     }
@@ -78,14 +79,20 @@ class Meeting extends Model
         return $this->hasMany(MeetingInvitee::class);
     }
 
+    public function activities(): HasMany
+    {
+        return $this->hasMany(MeetingActivity::class)->orderByDesc('created_at');
+    }
+
+    public function isAdminUser(?User $user): bool
+    {
+        return $user && strtolower((string) ($user->role?->name ?? '')) === 'admin';
+    }
+
     public function isHost(?User $user): bool
     {
         if (! $user) {
             return false;
-        }
-
-        if (strtolower((string) ($user->role?->name ?? '')) === 'admin') {
-            return true;
         }
 
         if ((int) $this->created_by === (int) $user->id) {
@@ -124,14 +131,27 @@ class Meeting extends Model
             return false;
         }
 
+        if (in_array($this->status, [self::STATUS_CANCELLED, self::STATUS_FINISHED, self::STATUS_DRAFT], true)) {
+            return false;
+        }
+
         if ($this->status === self::STATUS_LIVE) {
             return true;
         }
 
-        if ($this->status === self::STATUS_SCHEDULED && $this->isHost($user)) {
+        return $this->status === self::STATUS_SCHEDULED && $this->isHost($user);
+    }
+
+    public function canManage(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($this->isAdminUser($user)) {
             return true;
         }
 
-        return false;
+        return $this->isHost($user);
     }
 }
