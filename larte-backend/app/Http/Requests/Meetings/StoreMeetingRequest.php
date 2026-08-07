@@ -20,7 +20,9 @@ class StoreMeetingRequest extends FormRequest
             'customer_id' => ['nullable', 'exists:customers,id'],
             'order_id' => ['nullable', 'exists:orders,id'],
             'notes' => ['nullable', 'string'],
-            'status' => ['nullable', 'in:scheduled,completed,cancelled'],
+            'status' => ['nullable', 'in:scheduled,live,finished,cancelled'],
+            'invitee_user_ids' => ['nullable', 'array'],
+            'invitee_user_ids.*' => ['integer', 'exists:users,id'],
         ];
     }
 }

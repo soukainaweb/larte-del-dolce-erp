@@ -37,7 +37,7 @@ class MeetingController extends Controller
     {
         $this->authorize('view', $meeting);
 
-        return $this->success($meeting->load(['customer', 'order', 'creator']));
+        return $this->success($meeting->load(['customer', 'order', 'creator', 'invitees.user']));
     }
 
     public function update(UpdateMeetingRequest $request, Meeting $meeting)
@@ -69,5 +69,34 @@ class MeetingController extends Controller
     public function statuses()
     {
         return $this->success($this->meetingService->statuses());
+    }
+
+    public function start(Meeting $meeting)
+    {
+        $this->authorize('start', $meeting);
+
+        return $this->success(
+            $this->meetingService->start($meeting),
+            'Meeting started successfully'
+        );
+    }
+
+    public function end(Meeting $meeting)
+    {
+        $this->authorize('end', $meeting);
+
+        return $this->success(
+            $this->meetingService->end($meeting),
+            'Meeting ended successfully'
+        );
+    }
+
+    public function session(Meeting $meeting)
+    {
+        $this->authorize('join', $meeting);
+
+        return $this->success(
+            $this->meetingService->session($meeting, request()->user())
+        );
     }
 }

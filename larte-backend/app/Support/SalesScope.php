@@ -58,7 +58,8 @@ class SalesScope
 
         return $query->where(function (Builder $q) use ($userId) {
             $q->where('created_by', $userId)
-                ->orWhereHas('order', fn (Builder $oq) => $oq->where('user_id', $userId));
+                ->orWhereHas('order', fn (Builder $oq) => $oq->where('user_id', $userId))
+                ->orWhereHas('invitees', fn (Builder $iq) => $iq->where('user_id', $userId));
         });
     }
 
@@ -104,6 +105,10 @@ class SalesScope
         $userId = self::userId($user);
 
         if ((int) $meeting->created_by === (int) $userId) {
+            return true;
+        }
+
+        if ($meeting->invitees()->where('user_id', $userId)->exists()) {
             return true;
         }
 

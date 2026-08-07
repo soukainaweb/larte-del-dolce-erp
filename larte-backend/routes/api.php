@@ -624,6 +624,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('/', [MeetingController::class, 'index']);
         Route::post('/', [MeetingController::class, 'store'])->middleware('permission:meetings.create');
         Route::get('/{meeting}', [MeetingController::class, 'show']);
+        Route::get('/{meeting}/session', [MeetingController::class, 'session']);
+        Route::post('/{meeting}/start', [MeetingController::class, 'start'])->middleware('permission:meetings.update');
+        Route::post('/{meeting}/end', [MeetingController::class, 'end'])->middleware('permission:meetings.update');
         Route::put('/{meeting}', [MeetingController::class, 'update'])->middleware('permission:meetings.update');
         Route::delete('/{meeting}', [MeetingController::class, 'destroy'])->middleware('permission:meetings.delete');
     });

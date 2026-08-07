@@ -179,17 +179,55 @@
   },
   "meetings": {
     "title": "Meetings",
-    "subtitle": "Schedule and manage client meetings",
+    "subtitle": "Schedule and join embedded video meetings",
     "addTitle": "Add meeting",
     "editTitle": "Edit meeting",
     "searchPlaceholder": "Search meetings...",
     "empty": "No meetings found",
     "confirmDelete": "Delete this meeting?",
-    "fields": { "title": "Meeting title", "time": "Time" },
-    "status": { "scheduled": "Scheduled", "completed": "Completed", "cancelled": "Cancelled" },
+    "fields": {
+      "title": "Meeting title",
+      "time": "Time",
+      "invitees": "Invite participants"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "live": "Live",
+      "finished": "Finished",
+      "completed": "Finished",
+      "cancelled": "Cancelled"
+    },
     "kpi": { "total": "Total meetings" },
-    "messages": { "created": "Meeting created", "updated": "Meeting updated", "deleted": "Meeting deleted" },
-    "errors": { "load": "Failed to load meetings", "save": "Failed to save meeting", "delete": "Failed to delete meeting" }
+    "messages": {
+      "created": "Meeting created and invitations sent",
+      "updated": "Meeting updated",
+      "deleted": "Meeting deleted"
+    },
+    "errors": {
+      "load": "Failed to load meetings",
+      "save": "Failed to save meeting",
+      "delete": "Failed to delete meeting"
+    },
+    "room": {
+      "loading": "Loading meeting room...",
+      "accessDenied": "You are not invited to this meeting",
+      "backToList": "Back to meetings",
+      "meetingEnded": "This meeting has ended",
+      "startMeeting": "Start Meeting",
+      "joinMeeting": "Join Meeting",
+      "hostWaiting": "You are the host. Start the meeting when ready.",
+      "waitingForHost": "Waiting for the host to start the meeting...",
+      "started": "Meeting is now live",
+      "ended": "Meeting ended for everyone",
+      "confirmEnd": "End this meeting for all participants?",
+      "muteAll": "Mute all",
+      "mutedAll": "All participants muted",
+      "endMeeting": "End meeting",
+      "participants": "Participants",
+      "host": "Host",
+      "remove": "Remove",
+      "guest": "Guest"
+    }
   },
   "samples": {
     "title": "Samples",

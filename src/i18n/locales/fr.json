@@ -165,17 +165,55 @@
   },
   "meetings": {
     "title": "Réunions",
-    "subtitle": "Planifier et gérer les réunions clients",
+    "subtitle": "Planifier et rejoindre des réunions vidéo intégrées",
     "addTitle": "Ajouter une réunion",
     "editTitle": "Modifier la réunion",
     "searchPlaceholder": "Rechercher des réunions...",
     "empty": "Aucune réunion",
     "confirmDelete": "Supprimer cette réunion ?",
-    "fields": { "title": "Titre", "time": "Heure" },
-    "status": { "scheduled": "Planifiée", "completed": "Terminée", "cancelled": "Annulée" },
+    "fields": {
+      "title": "Titre",
+      "time": "Heure",
+      "invitees": "Inviter des participants"
+    },
+    "status": {
+      "scheduled": "Planifiée",
+      "live": "En direct",
+      "finished": "Terminée",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    },
     "kpi": { "total": "Total réunions" },
-    "messages": { "created": "Réunion créée", "updated": "Réunion mise à jour", "deleted": "Réunion supprimée" },
-    "errors": { "load": "Échec du chargement", "save": "Échec de l'enregistrement", "delete": "Échec de la suppression" }
+    "messages": {
+      "created": "Réunion créée et invitations envoyées",
+      "updated": "Réunion mise à jour",
+      "deleted": "Réunion supprimée"
+    },
+    "errors": {
+      "load": "Échec du chargement",
+      "save": "Échec de l'enregistrement",
+      "delete": "Échec de la suppression"
+    },
+    "room": {
+      "loading": "Chargement de la salle...",
+      "accessDenied": "Vous n'êtes pas invité à cette réunion",
+      "backToList": "Retour aux réunions",
+      "meetingEnded": "Cette réunion est terminée",
+      "startMeeting": "Démarrer la réunion",
+      "joinMeeting": "Rejoindre la réunion",
+      "hostWaiting": "Vous êtes l'hôte. Démarrez la réunion quand vous êtes prêt.",
+      "waitingForHost": "En attente du démarrage par l'hôte...",
+      "started": "La réunion est en direct",
+      "ended": "Réunion terminée pour tous",
+      "confirmEnd": "Terminer la réunion pour tous les participants ?",
+      "muteAll": "Couper le micro",
+      "mutedAll": "Tous les micros coupés",
+      "endMeeting": "Terminer",
+      "participants": "Participants",
+      "host": "Hôte",
+      "remove": "Retirer",
+      "guest": "Invité"
+    }
   },
   "samples": {
     "title": "Échantillons",
