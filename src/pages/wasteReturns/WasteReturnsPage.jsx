@@ -135,7 +135,7 @@ const WasteReturnsPage = () => {
       {totalPages > 1 && <div className="flex justify-center gap-2 mt-4"><button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft /></button><span>{page}/{totalPages}</span><button type="button" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}><ChevronRight /></button></div>}
       <AnimatePresence>
         {modal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4">
             <motion.form initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} onSubmit={handleSave} className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4">
               <div className="flex justify-between"><h3 className="text-lg font-bold" style={{ fontFamily: FONT_HEADING }}>{selected ? t('wasteReturns.editTitle') : t('wasteReturns.addTitle')}</h3><button type="button" onClick={() => setModal(false)}><X size={20} /></button></div>
               <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full px-3 py-2 text-sm border rounded-lg">{['waste', 'return'].map((ty) => <option key={ty} value={ty}>{t(`wasteReturns.types.${ty}`)}</option>)}</select>

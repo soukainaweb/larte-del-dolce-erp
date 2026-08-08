@@ -45,6 +45,18 @@ export default {
       borderRadius: {
         xl2: "22px",
       },
+
+      zIndex: {
+        layout: "10",
+        "layout-sidebar": "30",
+        "layout-header": "40",
+        "layout-sidebar-backdrop": "45",
+        "layout-sidebar-drawer": "46",
+        "layout-dropdown": "50",
+        modal: "100",
+        "modal-nested": "110",
+        toast: "120",
+      },
     },
   },
 

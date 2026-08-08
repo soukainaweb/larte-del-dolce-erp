@@ -430,7 +430,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -676,7 +676,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, order, isLoading }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -721,7 +721,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
   if (!isOpen || !order) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -833,7 +833,7 @@ const TransferOrderModal = ({ isOpen, onClose, orders, users, onSubmit, isLoadin
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4">
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
         className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4">
         <div className="flex justify-between items-center">
@@ -882,7 +882,7 @@ const TransferOrderModal = ({ isOpen, onClose, orders, users, onSubmit, isLoadin
 const TransferHistoryModal = ({ isOpen, onClose, transfers, t }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4">
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
         className="bg-white rounded-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6">
         <div className="flex justify-between items-center mb-4">

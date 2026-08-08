@@ -99,7 +99,7 @@ const Toast = ({ message, type = 'success', onClose }) => {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className={`fixed top-4 right-4 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg ${typeConfig[type]}`}
+      className={`fixed top-4 right-4 z-toast flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg ${typeConfig[type]}`}
     >
       {icons[type]}
       <span className="text-sm font-medium">{message}</span>
