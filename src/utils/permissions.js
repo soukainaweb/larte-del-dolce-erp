@@ -43,7 +43,7 @@ export const hasPermission = (permission, permissions = [], roleKey = null) => {
   if (isAdminRole(roleKey)) return true;
 
   const permissionList = normalizePermissionNames(permissions);
-  if (permissionList.length === 0) return true;
+  if (permissionList.length === 0) return false;
   return permissionList.includes(permission);
 };
 

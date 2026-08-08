@@ -51,6 +51,7 @@ import { useToast } from '../../contexts/ToastContext';
 import dashboardService from '../../services/dashboardService';
 import orderService from '../../services/orderService';
 import { unwrapData, toArray, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
+import { translateRoleLabel } from '../../utils/roleMapping';
 
 
 // ==========================================
@@ -419,11 +420,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
     `${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
     t('dashboard.defaultUser'),
 
-  role:
-    user?.role?.display_name ||
-    user?.role?.name ||
-    user?.role?.frontendKey ||
-    t('dashboard.defaultUser'),
+  role: translateRoleLabel(user?.role) || t('dashboard.defaultUser'),
 
   status:
     user?.status || 'Offline',
