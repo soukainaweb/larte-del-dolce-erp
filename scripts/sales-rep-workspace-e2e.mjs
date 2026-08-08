@@ -216,7 +216,7 @@ async function runApiChecks(token, permissions) {
     { path: '/inventory?per_page=1', perm: 'inventory.view', expect: 403 },
     { path: '/suppliers?per_page=1', perm: 'suppliers.view', expect: 403 },
     { path: '/productions?per_page=1', perm: 'productions.view', expect: 403 },
-    { path: '/reports/summary', perm: 'reports.view', expect: 403 },
+    { path: '/reports/sales-overview', perm: 'reports.view', expect: 403 },
   ];
 
   for (const check of authorized) {
@@ -262,14 +262,14 @@ async function runUiChecks() {
       return;
     }
 
-    const bodyText = await page.locator('body').innerText();
-    results.ui.hasArabicRole = bodyText.includes('المندوب');
-    results.ui.hasSalesRepEnglish = bodyText.includes('Sales Representative');
+    const headerText = await page.locator('header').innerText();
+    results.ui.hasArabicRole = headerText.includes('المندوب');
+    results.ui.hasSalesRepEnglish = headerText.includes('Sales Representative');
     if (!results.ui.hasArabicRole) {
-      fail('Arabic role label "المندوب" not found in UI');
+      fail('Arabic role label "المندوب" not found in header');
     }
     if (results.ui.hasSalesRepEnglish) {
-      fail('English "Sales Representative" shown instead of Arabic role label');
+      fail('English "Sales Representative" shown in header instead of Arabic role label');
     }
 
     for (const id of EXPECTED_SIDEBAR_IDS) {
@@ -313,6 +313,14 @@ async function runUiChecks() {
     }
 
     for (const path of UNAUTHORIZED_PATHS) {
+      if (!page.url().includes('/dashboard')) {
+        await page.goto(`${FRONTEND_URL}/login`, { waitUntil: 'networkidle' });
+        await page.fill('#email', SALES_EMAIL);
+        await page.fill('#password', SALES_PASSWORD);
+        await page.click('button[type="submit"]');
+        await page.waitForURL(/\/dashboard/, { timeout: 30000 });
+      }
+
       await page.goto(`${FRONTEND_URL}${path}`, { waitUntil: 'networkidle', timeout: 45000 });
       const url = new URL(page.url());
       const redirected = url.pathname === '/dashboard' || url.pathname === '/dashboard/';
@@ -322,9 +330,17 @@ async function runUiChecks() {
       }
     }
 
+    if (!page.url().includes('/dashboard')) {
+      await page.goto(`${FRONTEND_URL}/login`, { waitUntil: 'networkidle' });
+      await page.fill('#email', SALES_EMAIL);
+      await page.fill('#password', SALES_PASSWORD);
+      await page.click('button[type="submit"]');
+      await page.waitForURL(/\/dashboard/, { timeout: 30000 });
+    }
+
     await page.goto(`${FRONTEND_URL}/dashboard`, { waitUntil: 'networkidle' });
-    const logoutButton = page.locator('aside nav button').filter({ hasText: /تسجيل الخروج|Logout|Déconnexion/i }).last();
-    await logoutButton.click({ timeout: 15000 });
+    await page.locator('header button.group').first().click();
+    await page.locator('header button').filter({ hasText: /تسجيل الخروج|Logout|Déconnexion/i }).click({ timeout: 15000 });
     await page.waitForURL(/\/login/, { timeout: 15000 });
     results.ui.logout = 'ok';
   } catch (err) {

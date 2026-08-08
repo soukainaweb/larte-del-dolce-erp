@@ -135,7 +135,7 @@ export const translateRoleLabel = (role) => {
 export const normalizeRole = (role) => {
   const slug = getBackendRoleSlug(role);
   const frontendKey = mapRoleToFrontendKey(role);
-  const display_name = getRoleDisplayName(role);
+  const display_name = translateRoleLabel(role);
 
   return {
     ...(typeof role === 'object' && role !== null ? role : {}),
