@@ -1,9 +1,26 @@
 // src/services/userServicePage.js
 import api from "./api";
+import {
+  buildUserPayload,
+  ensureArray,
+  unwrapData,
+} from "../utils/apiHelpers";
 
 // ==========================================
 // User Management API Service
 // ==========================================
+
+let cachedUserRoles = null;
+
+const loadRoleCatalog = async () => {
+  if (cachedUserRoles) {
+    return cachedUserRoles;
+  }
+
+  const response = await getUserRoles();
+  cachedUserRoles = ensureArray(unwrapData(response));
+  return cachedUserRoles;
+};
 
 /**
  * Fetch all users with optional filters, sorting, and pagination
@@ -25,18 +42,12 @@ export const getUserById = (id) => {
 
 /**
  * Create a new user
- * @param {Object} data - User form data
- * @param {string} data.firstName - First name
- * @param {string} data.lastName - Last name
- * @param {string} data.email - Email address (unique)
- * @param {string} data.phone - Phone number
- * @param {string} data.role - User role
- * @param {string} data.status - Status (active, inactive, suspended, locked)
- * @param {string} data.password - Password (optional, will be auto-generated if not provided)
+ * @param {Object} data - User form data (camelCase UI fields supported)
  * @returns {Promise} - Axios response
  */
-export const createUser = (data) => {
-  return api.post("/users", data);
+export const createUser = async (data) => {
+  const roles = await loadRoleCatalog();
+  return api.post("/users", buildUserPayload(data, roles));
 };
 
 /**
@@ -45,8 +56,9 @@ export const createUser = (data) => {
  * @param {Object} data - Updated user data
  * @returns {Promise} - Axios response
  */
-export const updateUser = (id, data) => {
-  return api.put(`/users/${id}`, data);
+export const updateUser = async (id, data) => {
+  const roles = await loadRoleCatalog();
+  return api.put(`/users/${id}`, buildUserPayload(data, roles));
 };
 
 /**
@@ -91,11 +103,13 @@ export const updateUserStatus = (id, data) => {
  * Update user role
  * @param {number|string} id - User ID
  * @param {Object} data - Role update data
- * @param {string} data.role - New role
+ * @param {number|string} data.role_id - New role ID
  * @returns {Promise} - Axios response
  */
 export const updateUserRole = (id, data) => {
-  return api.patch(`/users/${id}/role`, data);
+  return api.patch(`/users/${id}/role`, {
+    role_id: data.role_id ?? data.roleId ?? data.role,
+  });
 };
 
 /**
@@ -154,7 +168,6 @@ export const resendInvitation = (id) => {
   return api.post(`/users/${id}/resend-invitation`);
 };
 
-// Export par défaut pour faciliter l'importation
 export default {
   getUsers,
   getUserById,

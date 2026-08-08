@@ -8,6 +8,7 @@ use App\Support\UserStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class UserService
 {
@@ -42,7 +43,7 @@ class UserService
 
         $user = User::create(array_merge($names, [
             'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'password' => Hash::make($data['password'] ?? Str::password(12)),
             'role_id' => $data['role_id'],
             'phone' => $data['phone'] ?? null,
             'status' => UserStatus::normalize($data['status'] ?? null, UserStatus::OFFLINE),

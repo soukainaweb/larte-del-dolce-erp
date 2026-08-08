@@ -20,7 +20,7 @@ class StoreUserRequest extends FormRequest
             'first_name' => 'nullable|string|max:100',
             'last_name' => 'nullable|string|max:100',
             'email' => 'required|email|unique:users',
-            'password' => 'required|min:8',
+            'password' => 'nullable|string|min:8',
             'role_id' => 'required|exists:roles,id',
             'phone' => 'nullable|string|max:20',
             'status' => ['nullable', Rule::in(UserStatus::all())],

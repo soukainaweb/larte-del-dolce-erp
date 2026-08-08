@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { getRoles } from '../../../services/roleService';
 import { usePageI18n } from '../../../hooks/usePageI18n';
+import { normalizeRoleList, ensureArray } from '../../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY
@@ -808,21 +809,19 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
-  const [localUsers, setLocalUsers] = useState(initialUsers || []);
+  const [localUsers, setLocalUsers] = useState(() => ensureArray(initialUsers));
   const [roles, setRoles] = useState([]);
 
   // Mettre à jour les utilisateurs locaux quand les props changent
   useEffect(() => {
-    if (initialUsers) {
-      setLocalUsers(initialUsers);
-    }
+    setLocalUsers(ensureArray(initialUsers));
   }, [initialUsers]);
 
   useEffect(() => {
     getRoles({ per_page: 100 })
       .then((res) => {
-        const data = res.data?.data?.data ?? res.data?.data ?? res.data ?? [];
-        setRoles(Array.isArray(data) ? data : []);
+        const { items } = normalizeRoleList(res.data);
+        setRoles(items);
       })
       .catch(() => setRoles([]));
   }, []);
@@ -838,7 +837,7 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
 
   // Filtrer et trier les utilisateurs
   const filteredUsers = useMemo(() => {
-    let filtered = localUsers;
+    let filtered = ensureArray(localUsers);
 
     // Filtrer par rôle si un rôle est sélectionné
     if (role && role.id) {
