@@ -38,6 +38,11 @@ class UserCreateTest extends TestCase
             ->assertJsonPath('data.email', 'muhamedelseed203@gmail.com')
             ->assertJsonPath('data.role_id', $salesRole->id);
 
+        $this->assertDatabaseHas('users', [
+            'email' => 'muhamedelseed203@gmail.com',
+            'must_change_password' => true,
+        ]);
+
         $temporaryPassword = $response->json('data.temporary_password');
         $this->assertNotEmpty($temporaryPassword);
         $this->assertGreaterThanOrEqual(10, strlen($temporaryPassword));

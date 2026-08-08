@@ -81,7 +81,7 @@ Route::get('/test', function () {
 // AUTHENTICATED ROUTES
 // ==================================================
 
-Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+Route::middleware(['auth:sanctum', 'password.changed', 'throttle:api'])->group(function () {
 
 
 
@@ -366,6 +366,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::put('/{user}', [UserController::class, 'update'])->middleware('permission:users.update');
         Route::patch('/{user}/status', [UserController::class, 'updateStatus'])->middleware('permission:users.update');
         Route::patch('/{user}/role', [UserController::class, 'updateRole'])->middleware('permission:users.update');
+        Route::post('/{user}/reset-password', [UserController::class, 'resetPassword'])->middleware('permission:users.update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
     });
 

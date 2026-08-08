@@ -22,6 +22,7 @@ class User extends Authenticatable implements CanResetPasswordContract
         'last_name',
         'email',
         'password',
+        'must_change_password',
         'phone',
         'avatar',
         'birth_date',
@@ -68,6 +69,7 @@ class User extends Authenticatable implements CanResetPasswordContract
             'hiring_date' => 'date',
             'last_login_at' => 'datetime',
             'two_factor_enabled' => 'boolean',
+            'must_change_password' => 'boolean',
             'password' => 'hashed',
         ];
     }

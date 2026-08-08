@@ -54,13 +54,22 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
-        if (!Hash::check($request->validated('current_password'), $user->password)) {
-            return $this->error('Wrong current password', ['current_password' => ['Wrong current password']], 422);
+        if (! Hash::check($request->validated('current_password'), $user->getAuthPassword())) {
+            return $this->error(
+                'كلمة المرور الحالية غير صحيحة.',
+                ['current_password' => ['كلمة المرور الحالية غير صحيحة.']],
+                422
+            );
         }
 
-        $user->update(['password' => Hash::make($request->validated('password'))]);
+        $user->update([
+            'password' => $request->validated('password'),
+            'must_change_password' => false,
+        ]);
 
-        return $this->success(null, 'Password changed');
+        return $this->success([
+            'user' => $user->fresh()->load('role.permissions'),
+        ], 'تم تغيير كلمة المرور بنجاح');
     }
 
     public function uploadAvatar(UploadAvatarRequest $request)

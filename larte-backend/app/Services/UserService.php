@@ -53,6 +53,7 @@ class UserService
             'role_id' => $data['role_id'],
             'phone' => $data['phone'] ?? null,
             'status' => UserStatus::normalize($data['status'] ?? null, UserStatus::ACTIVE),
+            'must_change_password' => true,
         ]))->load('role');
 
         ActivityLogger::logModelEvent($user, 'created', sprintf('Utilisateur %s créé', $user->email));
@@ -164,6 +165,27 @@ class UserService
     public function sendPasswordReset(string $email): string
     {
         return Password::sendResetLink(['email' => $email]);
+    }
+
+    public function resetPassword(User $user): array
+    {
+        $temporaryPassword = Str::password(16, symbols: true);
+
+        $user->update([
+            'password' => $temporaryPassword,
+            'must_change_password' => true,
+        ]);
+
+        ActivityLogger::log(
+            module: 'users',
+            action: 'password_reset',
+            description: sprintf('Mot de passe réinitialisé pour %s', $user->email),
+        );
+
+        return [
+            'user' => $user->fresh()->load('role'),
+            'temporary_password' => $temporaryPassword,
+        ];
     }
 
     private function userPayload(array $data): array

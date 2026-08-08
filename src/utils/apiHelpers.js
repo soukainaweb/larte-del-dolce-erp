@@ -95,6 +95,7 @@ export const normalizeUser = (rawUser) => {
     permissions,
     status: rawUser.status || 'Online',
     avatar: rawUser.avatar || '',
+    mustChangePassword: Boolean(rawUser.must_change_password ?? rawUser.mustChangePassword),
   };
 };
 
