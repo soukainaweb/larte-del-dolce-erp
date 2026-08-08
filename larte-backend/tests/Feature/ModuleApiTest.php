@@ -56,6 +56,7 @@ class ModuleApiTest extends TestCase
         $this->seed();
 
         $this->authGet('/api/suppliers')->assertOk()->assertJsonPath('success', true);
+        $this->authGet('/api/suppliers/statistics')->assertOk()->assertJsonPath('success', true);
         $this->authGet('/api/suppliers/export')->assertOk()->assertJsonPath('success', true);
         $this->authGet('/api/suppliers/types')->assertOk()->assertJsonPath('success', true);
     }

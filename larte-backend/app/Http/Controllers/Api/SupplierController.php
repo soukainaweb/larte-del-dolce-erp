@@ -56,7 +56,7 @@ class SupplierController extends Controller
     {
         $this->authorize('update', $supplier);
 
-        $request->validate(['status' => 'required|in:active,inactive,blocked']);
+        $request->validate(['status' => 'required|in:active,inactive']);
 
         return $this->success($this->supplierService->toggleStatus($supplier, $request->status), 'Statut mis à jour avec succès');
     }
