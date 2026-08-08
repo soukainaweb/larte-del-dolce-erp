@@ -17,6 +17,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { usePageI18n } from '../../../hooks/usePageI18n';
+import { ensureArray } from '../../../utils/apiHelpers';
 
 const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, onRemoveUser }) => {
   const { t, tc, commonStatus } = usePageI18n('roles');
@@ -25,7 +26,8 @@ const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, o
 
   if (!isOpen || !role) return null;
 
-  const filteredUsers = users.filter(u =>
+  const safeUsers = ensureArray(users);
+  const filteredUsers = safeUsers.filter(u =>
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );

@@ -41,8 +41,20 @@ import {
   getRoleStatistics,
   exportRoles,
   getRoleStatuses,
-  getPermissionModules
+  getPermissionModules,
+  getPermissions,
 } from '../../services/roleService';
+import {
+  normalizeRoleList,
+  normalizeRoleRecord,
+  normalizeRoleStatistics,
+  normalizeUserList,
+  permissionsToModuleMap,
+  moduleMapToPermissionIds,
+  unwrapPaginated,
+  ensureArray,
+  getApiErrorMessage,
+} from '../../utils/apiHelpers';
 
 // Components
 import RoleCard from './components/RoleCard';
@@ -173,6 +185,7 @@ const RolesPermissionsPage = () => {
   // Permissions state for the selected role
   const [rolePermissions, setRolePermissions] = useState({});
   const [permissionModules, setPermissionModules] = useState([]);
+  const [allPermissions, setAllPermissions] = useState([]);
 
   // Toast helpers
   const showToast = (message, type = 'success') => {
@@ -198,12 +211,12 @@ const RolesPermissionsPage = () => {
         sort_order: 'desc'
       };
       const response = await getRoles(params);
-      const data = response.data.data || [];
-      setRoles(data);
-      setTotalCount(response.data.meta?.total || data.length);
+      const { items, meta } = normalizeRoleList(response.data);
+      setRoles(items);
+      setTotalCount(meta.total ?? items.length);
     } catch (error) {
       console.error('Error fetching roles:', error);
-      showToast(t('errors.loadFailed'), 'error');
+      showToast(getApiErrorMessage(error, t('errors.loadFailed')), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -215,18 +228,19 @@ const RolesPermissionsPage = () => {
 
   const fetchUsersForRole = async (roleId) => {
     try {
-      const response = await getRoleUsers(roleId);
-      setUsers(response.data.data || []);
+      const response = await getRoleUsers(roleId, { per_page: 100 });
+      const { items } = normalizeUserList(response.data);
+      setUsers(items);
     } catch (error) {
       console.error('Error fetching role users:', error);
+      setUsers([]);
     }
   };
 
   const fetchStats = async () => {
     try {
       const response = await getRoleStatistics();
-      const data = response.data.data || {};
-      setStats(data);
+      setStats(normalizeRoleStatistics(response.data));
     } catch (error) {
       console.error('Error fetching role statistics:', error);
     }
@@ -235,15 +249,28 @@ const RolesPermissionsPage = () => {
   const fetchPermissionModules = async () => {
     try {
       const response = await getPermissionModules();
-      setPermissionModules(response.data.data || []);
+      setPermissionModules(ensureArray(response.data?.data));
     } catch (error) {
       console.error('Error fetching permission modules:', error);
+      setPermissionModules([]);
+    }
+  };
+
+  const fetchAllPermissions = async () => {
+    try {
+      const response = await getPermissions({ per_page: 500 });
+      const { items } = unwrapPaginated(response.data);
+      setAllPermissions(ensureArray(items));
+    } catch (error) {
+      console.error('Error fetching permissions catalog:', error);
+      setAllPermissions([]);
     }
   };
 
   useEffect(() => {
     fetchStats();
     fetchPermissionModules();
+    fetchAllPermissions();
   }, []);
 
   // Stats
@@ -252,6 +279,7 @@ const RolesPermissionsPage = () => {
     totalPermissions: 0,
     totalUsers: 0,
     activePermissions: 0,
+    activeRoles: 0,
     pendingRequests: 0
   });
 
@@ -328,7 +356,7 @@ const RolesPermissionsPage = () => {
     setIsSaving(true);
     try {
       const response = await updateRole(selectedRole.id, formData);
-      const updatedRole = response.data.data;
+      const updatedRole = normalizeRoleRecord(response.data.data);
       setRoles(prev => prev.map(r =>
         r.id === selectedRole.id ? updatedRole : r
       ));
@@ -349,7 +377,7 @@ const RolesPermissionsPage = () => {
     setIsSaving(true);
     try {
       const response = await createRole(formData);
-      const newRole = response.data.data;
+      const newRole = normalizeRoleRecord(response.data.data);
       setRoles(prev => [newRole, ...prev]);
       setIsCreateModalOpen(false);
       await fetchStats();
@@ -367,7 +395,7 @@ const RolesPermissionsPage = () => {
     setIsSaving(true);
     try {
       const response = await duplicateRole(selectedRole.id, formData);
-      const newRole = response.data.data;
+      const newRole = normalizeRoleRecord(response.data.data);
       setRoles(prev => [newRole, ...prev]);
       setIsDuplicateModalOpen(false);
       setSelectedRole(null);
@@ -441,19 +469,21 @@ const RolesPermissionsPage = () => {
     setSelectedRole(role);
     try {
       const response = await getRolePermissions(role.id);
-      setRolePermissions(response.data.data || {});
+      const permissionList = ensureArray(response.data?.data);
+      setRolePermissions(permissionsToModuleMap(permissionList));
       setIsPermissionsModalOpen(true);
     } catch (error) {
       console.error('Error fetching role permissions:', error);
-      showToast(t('errors.loadFailed'), 'error');
+      showToast(getApiErrorMessage(error, t('errors.loadFailed')), 'error');
     }
   };
 
   const handleSavePermissions = async (permissions) => {
     setIsSaving(true);
     try {
-      const response = await updateRolePermissions(selectedRole.id, { permissions });
-      const updatedRole = response.data.data;
+      const permissionIds = moduleMapToPermissionIds(permissions, allPermissions);
+      const response = await updateRolePermissions(selectedRole.id, { permissions: permissionIds });
+      const updatedRole = normalizeRoleRecord(response.data.data);
       setRoles(prev => prev.map(r =>
         r.id === selectedRole.id ? updatedRole : r
       ));
@@ -570,7 +600,7 @@ const RolesPermissionsPage = () => {
           title={t('roles.kpi.totalRoles')}
           value={stats.totalRoles}
           color="blue"
-          subtitle={`${roles.filter(r => r.status === 'active').length} ${tc('active')}`}
+          subtitle={`${stats.activeRoles} ${tc('active')}`}
         />
         <StatCard
           icon={Shield}

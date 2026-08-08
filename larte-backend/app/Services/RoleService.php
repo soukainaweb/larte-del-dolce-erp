@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -97,6 +98,11 @@ class RoleService
             'total' => Role::count(),
             'active' => Role::where('status', 'active')->count(),
             'inactive' => Role::where('status', 'inactive')->count(),
+            'total_roles' => Role::count(),
+            'total_permissions' => Permission::count(),
+            'total_users' => User::count(),
+            'active_permissions' => Permission::where('status', 'active')->count(),
+            'pending_requests' => 0,
         ];
     }
 

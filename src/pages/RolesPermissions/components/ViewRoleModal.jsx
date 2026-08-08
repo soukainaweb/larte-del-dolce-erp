@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { getRoleUsers } from '../../../services/roleService';
 import { usePageI18n } from '../../../hooks/usePageI18n';
+import { normalizeUserList } from '../../../utils/apiHelpers';
 
 const ViewRoleModal = ({ isOpen, onClose, role, onEdit, onUsers, onPermissions }) => {
   const { t, tc, commonStatus } = usePageI18n('roles');
@@ -44,11 +45,11 @@ const ViewRoleModal = ({ isOpen, onClose, role, onEdit, onUsers, onPermissions }
     let cancelled = false;
     setUsersLoading(true);
 
-    getRoleUsers(role.id)
+    getRoleUsers(role.id, { per_page: 100 })
       .then((res) => {
         if (cancelled) return;
-        const data = res.data?.data?.data ?? res.data?.data ?? res.data ?? [];
-        setRoleUsers(Array.isArray(data) ? data : []);
+        const { items } = normalizeUserList(res.data);
+        setRoleUsers(items);
       })
       .catch(() => {
         if (!cancelled) setRoleUsers([]);
