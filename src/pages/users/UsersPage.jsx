@@ -39,7 +39,8 @@ import {
   sendPasswordReset,
   resendInvitation
 } from '../../services/userServicePage';  // ← Changé de 'userServicePage' à 'userService'
-import { unwrapData, normalizeUserList, normalizeUserRecord } from '../../utils/apiHelpers';
+import { unwrapData, normalizeUserList, normalizeUserRecord, extractFieldErrors, getApiErrorMessage, ensureArray } from '../../utils/apiHelpers';
+import { dispatchAppToast } from '../../utils/toastBus';
 import useEntityDeepLink from '../../hooks/useEntityDeepLink';
 
 // ===> Supprimer 'userServicePage' et utiliser 'userService' à la place
@@ -204,7 +205,7 @@ const UserTableRow = ({ user, onEdit, onDelete, onView, index }) => {
 // ==========================================
 // USER MODAL
 // ==========================================
-const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
+const UserModal = ({ isOpen, onClose, onSave, user, isLoading, availableRoles = [], fieldErrors = null }) => {
   const { t, commonStatus, tc } = usePageI18n('users');
 
   const [formData, setFormData] = useState({
@@ -212,20 +213,28 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
     lastName: '',
     email: '',
     phone: '',
-    role: 'Viewer',
+    roleId: '',
     status: 'active'
   });
 
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    if (fieldErrors) {
+      setErrors((prev) => ({ ...prev, ...fieldErrors }));
+    }
+  }, [fieldErrors]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
     if (user) {
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
         phone: user.phone || '',
-        role: user.role || 'Viewer',
+        roleId: user.roleId ? String(user.roleId) : '',
         status: user.status || 'active'
       });
     } else {
@@ -234,11 +243,12 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
         lastName: '',
         email: '',
         phone: '',
-        role: 'Viewer',
+        roleId: availableRoles[0]?.id ? String(availableRoles[0].id) : '',
         status: 'active'
       });
     }
-  }, [user]);
+    setErrors({});
+  }, [user, isOpen, availableRoles]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -255,7 +265,7 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
     if (!formData.lastName) newErrors.lastName = tc('required');
     if (!formData.email) newErrors.email = tc('required');
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = tc('emailInvalid');
-    if (!formData.role) newErrors.role = tc('required');
+    if (!formData.roleId) newErrors.roleId = tc('required');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -345,25 +355,21 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading }) => {
           <div>
             <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('role')}</label>
             <select
-              name="role"
-              value={formData.role}
+              name="roleId"
+              value={formData.roleId}
               onChange={handleChange}
               className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all ${
-                errors.role ? 'border-rose-500' : 'border-[#ECE8E1]'
+                errors.roleId ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}
             >
-              <option value="Administrator">Administrator</option>
-              <option value="Accountant">Accountant</option>
-              <option value="Sales Representative">Sales Representative</option>
-              <option value="Production Manager">Production Manager</option>
-              <option value="Factory Employee">Factory Employee</option>
-              <option value="Warehouse Manager">Warehouse Manager</option>
-              <option value="Delivery Driver">Delivery Driver</option>
-              <option value="Finance Manager">Finance Manager</option>
-              <option value="Manager">Manager</option>
-              <option value="Viewer">Viewer</option>
+              <option value="">{t('roles.usersManagement.selectRole', { defaultValue: tc('role') })}</option>
+              {availableRoles.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.display_name || role.name}
+                </option>
+              ))}
             </select>
-            {errors.role && <p className="text-xs text-rose-500 mt-1">{errors.role}</p>}
+            {errors.roleId && <p className="text-xs text-rose-500 mt-1">{errors.roleId}</p>}
           </div>
 
           <div>
@@ -548,6 +554,8 @@ const UsersPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [availableRoles, setAvailableRoles] = useState([]);
+  const [formErrors, setFormErrors] = useState(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -555,11 +563,12 @@ const UsersPage = () => {
   const [totalCount, setTotalCount] = useState(0);
 
   // Load users
-  const fetchUsers = async () => {
+  const fetchUsers = async (overridePage) => {
     setIsLoading(true);
     try {
+      const page = overridePage ?? currentPage;
       const params = {
-        page: currentPage,
+        page,
         per_page: itemsPerPage,
         search: searchTerm || undefined,
         role: roleFilter !== 'all' ? roleFilter : undefined,
@@ -626,6 +635,9 @@ const UsersPage = () => {
 
   useEffect(() => {
     fetchStatistics();
+    getUserRoles()
+      .then((response) => setAvailableRoles(ensureArray(unwrapData(response))))
+      .catch(() => setAvailableRoles([]));
   }, []);
 
   // Filter users (client-side for demo, API already handles filters)
@@ -684,19 +696,25 @@ const UsersPage = () => {
   // Handlers
   const handleCreateUser = async (formData) => {
     setIsSaving(true);
+    setFormErrors(null);
     try {
       const response = await createUser(formData);
       const newUser = normalizeUserRecord(unwrapData(response));
       if (newUser) {
-        setUsers((prev) => {
-          const list = Array.isArray(prev) ? prev : [];
-          return [newUser, ...list];
-        });
+        setCurrentPage(1);
+        await fetchUsers(1);
       }
       setIsCreateModalOpen(false);
       await fetchStatistics();
+      dispatchAppToast(t('users.success.created', { defaultValue: 'تم إنشاء المستخدم بنجاح' }), 'success');
     } catch (error) {
       console.error('Error creating user:', error);
+      const fieldErrors = extractFieldErrors(error);
+      if (fieldErrors) {
+        setFormErrors(fieldErrors);
+      } else {
+        dispatchAppToast(getApiErrorMessage(error, t('errors.saveFailed')), 'error');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -704,6 +722,7 @@ const UsersPage = () => {
 
   const handleEditUser = async (formData) => {
     setIsSaving(true);
+    setFormErrors(null);
     try {
       const response = await updateUser(selectedUser.id, formData);
       const updatedUser = normalizeUserRecord(unwrapData(response));
@@ -716,8 +735,15 @@ const UsersPage = () => {
       setIsEditModalOpen(false);
       setSelectedUser(null);
       await fetchStatistics();
+      dispatchAppToast(t('users.success.updated', { defaultValue: 'تم تحديث المستخدم بنجاح' }), 'success');
     } catch (error) {
       console.error('Error updating user:', error);
+      const fieldErrors = extractFieldErrors(error);
+      if (fieldErrors) {
+        setFormErrors(fieldErrors);
+      } else {
+        dispatchAppToast(getApiErrorMessage(error, t('errors.saveFailed')), 'error');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -750,11 +776,7 @@ const UsersPage = () => {
     setCurrentPage(1);
   }, [searchTerm, roleFilter, statusFilter]);
 
-  const uniqueRoles = useMemo(() => {
-    const list = Array.isArray(users) ? users : [];
-    const roles = new Set(list.map((u) => u?.role).filter(Boolean));
-    return Array.from(roles);
-  }, [users]);
+  const uniqueRoles = useMemo(() => availableRoles, [availableRoles]);
 
   return (
     <div className="w-full min-h-screen bg-[#F8F7F4] text-[#202020] p-6" style={{ fontFamily: FONT_BODY }}>
@@ -781,7 +803,10 @@ const UsersPage = () => {
             onError={handleExportError}
           />
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => {
+              setFormErrors(null);
+              setIsCreateModalOpen(true);
+            }}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <UserPlus size={18} />
@@ -817,8 +842,8 @@ const UsersPage = () => {
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
               <option value="all">{tc('allRoles')}</option>
-              {uniqueRoles.map(role => (
-                <option key={role} value={role}>{role}</option>
+              {uniqueRoles.map((role) => (
+                <option key={role.id} value={role.id}>{role.display_name || role.name}</option>
               ))}
             </select>
             <select
@@ -986,9 +1011,14 @@ const UsersPage = () => {
           <UserModal
             key="create-modal"
             isOpen={isCreateModalOpen}
-            onClose={() => setIsCreateModalOpen(false)}
+            onClose={() => {
+              setFormErrors(null);
+              setIsCreateModalOpen(false);
+            }}
             onSave={handleCreateUser}
             isLoading={isSaving}
+            availableRoles={availableRoles}
+            fieldErrors={formErrors}
           />
         )}
 
@@ -997,12 +1027,15 @@ const UsersPage = () => {
             key="edit-modal"
             isOpen={isEditModalOpen}
             onClose={() => {
+              setFormErrors(null);
               setIsEditModalOpen(false);
               setSelectedUser(null);
             }}
             onSave={handleEditUser}
             user={selectedUser}
             isLoading={isSaving}
+            availableRoles={availableRoles}
+            fieldErrors={formErrors}
           />
         )}
 

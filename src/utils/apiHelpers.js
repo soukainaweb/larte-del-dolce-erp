@@ -117,10 +117,92 @@ export const normalizeUserRecord = (rawUser) => {
     lastName: base.lastName,
     fullName: base.fullName,
     role: roleLabel,
+    roleId: rawUser.role_id ?? rawUser.roleId ?? rawUser.role?.id ?? null,
     status: rawUser.status || base.status || 'offline',
     createdAt: rawUser.created_at || rawUser.createdAt || null,
     phone: rawUser.phone || base.phone || '',
   };
+};
+
+/**
+ * Resolve a role selection value to a database role ID.
+ */
+export const resolveRoleId = (value, roles = []) => {
+  if (value == null || value === '') return null;
+
+  const numeric = Number(value);
+  if (!Number.isNaN(numeric) && numeric > 0) {
+    const byId = roles.find((role) => Number(role.id) === numeric);
+    if (byId) return numeric;
+  }
+
+  const label = String(value).trim().toLowerCase();
+  const match = ensureArray(roles).find((role) => {
+    const displayName = String(role.display_name || '').trim().toLowerCase();
+    const slug = String(role.name || '').trim().toLowerCase();
+    return displayName === label || slug === label || String(role.id) === label;
+  });
+
+  return match?.id ?? null;
+};
+
+/**
+ * Build a Laravel-compatible user create/update payload from UI form data.
+ */
+export const buildUserPayload = (formData, roles = []) => {
+  const firstName = formData.first_name ?? formData.firstName ?? '';
+  const lastName = formData.last_name ?? formData.lastName ?? '';
+  const roleId = resolveRoleId(formData.role_id ?? formData.roleId ?? formData.role, roles);
+
+  const payload = {
+    first_name: firstName,
+    last_name: lastName,
+    email: formData.email?.trim(),
+    phone: formData.phone || null,
+    status: formData.status || 'active',
+  };
+
+  if (roleId) {
+    payload.role_id = roleId;
+  }
+
+  if (formData.password) {
+    payload.password = formData.password;
+  }
+
+  return payload;
+};
+
+/**
+ * Map Laravel 422 field errors to UI form field keys.
+ */
+export const extractFieldErrors = (error, fieldMap = {}) => {
+  const defaultMap = {
+    first_name: 'firstName',
+    last_name: 'lastName',
+    role_id: 'roleId',
+    password: 'password',
+    email: 'email',
+    phone: 'phone',
+    status: 'status',
+  };
+  const map = { ...defaultMap, ...fieldMap };
+  const errors = error?.response?.data?.errors;
+
+  if (!errors || typeof errors !== 'object') {
+    return null;
+  }
+
+  const result = {};
+  Object.entries(errors).forEach(([field, messages]) => {
+    const key = map[field] || field;
+    const message = Array.isArray(messages) ? messages[0] : messages;
+    if (message) {
+      result[key] = translateApiErrorMessage(message);
+    }
+  });
+
+  return Object.keys(result).length ? result : null;
 };
 
 /**
