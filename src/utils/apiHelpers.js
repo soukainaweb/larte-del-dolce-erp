@@ -195,7 +195,20 @@ export const extractValidationMessage = (data) => {
 /**
  * Ensure value is always an array (safe default for API list states).
  */
-export const ensureArray = (value) => (Array.isArray(value) ? value : []);
+export const ensureArray = (value) => {
+  if (Array.isArray(value)) return value;
+  if (value == null) return [];
+  if (typeof value === 'object') return Object.values(value);
+  return [];
+};
+
+/**
+ * Safely call Array.reduce — returns initialValue when input is not an array.
+ */
+export const safeReduce = (value, reducer, initialValue) => {
+  if (!Array.isArray(value)) return initialValue;
+  return value.reduce(reducer, initialValue);
+};
 
 /**
  * Safely extract a list array from an API response body.
@@ -269,6 +282,14 @@ export const getApiErrorMessage = (error, fallback) => {
 
   if (!error) return defaultFallback;
 
+  if (error.configMissing) {
+    return error.message || i18n.t('errors.apiNotConfigured');
+  }
+
+  if (error.endpointMessage) {
+    return error.endpointMessage;
+  }
+
   if (error.timeoutMessage) {
     return translateApiErrorMessage(error.timeoutMessage);
   }
@@ -303,7 +324,19 @@ export const getApiErrorMessage = (error, fallback) => {
   }
 
   if (status === 404) {
-    return translateApiErrorMessage(data?.message) || i18n.t('errors.notFound');
+    const message = translateApiErrorMessage(data?.message);
+    const requestUrl = String(error.config?.url || '');
+    const contentType = String(error.response?.headers?.['content-type'] || '');
+
+    if (/^\/?(login|password\/)/.test(requestUrl)) {
+      return message || i18n.t('errors.loginServiceUnavailable');
+    }
+
+    if (contentType.includes('text/html') || data?.message === 'Endpoint not found') {
+      return message || i18n.t('errors.endpointNotFound');
+    }
+
+    return message || i18n.t('errors.notFound');
   }
 
   if (status === 405) {

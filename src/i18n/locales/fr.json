@@ -165,17 +165,103 @@
   },
   "meetings": {
     "title": "Réunions",
-    "subtitle": "Planifier et gérer les réunions clients",
+    "subtitle": "Planifier et rejoindre des réunions vidéo intégrées",
     "addTitle": "Ajouter une réunion",
     "editTitle": "Modifier la réunion",
     "searchPlaceholder": "Rechercher des réunions...",
     "empty": "Aucune réunion",
     "confirmDelete": "Supprimer cette réunion ?",
-    "fields": { "title": "Titre", "time": "Heure" },
-    "status": { "scheduled": "Planifiée", "completed": "Terminée", "cancelled": "Annulée" },
+    "fields": {
+      "title": "Titre",
+      "time": "Heure",
+      "invitees": "Inviter des participants"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "scheduled": "Planifiée",
+      "live": "En direct",
+      "finished": "Terminée",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    },
+    "invitationStatus": {
+      "pending": "En attente",
+      "accepted": "Acceptée",
+      "declined": "Refusée"
+    },
+    "actions": {
+      "saveDraft": "Enregistrer brouillon",
+      "schedule": "Planifier et inviter",
+      "cancel": "Annuler la réunion"
+    },
+    "confirmCancel": "Annuler cette réunion ?",
     "kpi": { "total": "Total réunions" },
-    "messages": { "created": "Réunion créée", "updated": "Réunion mise à jour", "deleted": "Réunion supprimée" },
-    "errors": { "load": "Échec du chargement", "save": "Échec de l'enregistrement", "delete": "Échec de la suppression" }
+    "messages": {
+      "draftCreated": "Réunion enregistrée comme brouillon",
+      "scheduled": "Réunion planifiée et invitations envoyées",
+      "updated": "Réunion mise à jour",
+      "deleted": "Réunion supprimée",
+      "cancelled": "Réunion annulée"
+    },
+    "errors": {
+      "load": "Échec du chargement",
+      "save": "Échec de l'enregistrement",
+      "delete": "Échec de la suppression"
+    },
+    "room": {
+      "loading": "Chargement de la salle...",
+      "accessDenied": "Vous n'êtes pas invité à cette réunion",
+      "backToList": "Retour aux réunions",
+      "meetingEnded": "Cette réunion est terminée",
+      "startMeeting": "Démarrer la réunion",
+      "joinMeeting": "Rejoindre la réunion",
+      "hostWaiting": "Vous êtes l'hôte. Démarrez la réunion quand vous êtes prêt.",
+      "waitingForHost": "En attente du démarrage par l'hôte...",
+      "started": "La réunion est en direct",
+      "ended": "Réunion terminée pour tous",
+      "confirmEnd": "Terminer la réunion pour tous les participants ?",
+      "muteAll": "Couper le micro",
+      "mutedAll": "Tous les micros coupés",
+      "endMeeting": "Terminer",
+      "participants": "Participants",
+      "host": "Hôte",
+      "participant": "Participant",
+      "remove": "Retirer",
+      "guest": "Invité"
+    },
+    "details": {
+      "title": "Détails de la réunion",
+      "subtitle": "Informations, participants et historique",
+      "notFound": "Réunion introuvable ou accès refusé",
+      "information": "Informations",
+      "organizer": "Organisateur",
+      "participants": "Participants",
+      "invitationStatus": "Statut d'invitation",
+      "history": "Historique",
+      "name": "Nom",
+      "role": "Rôle",
+      "noParticipants": "Aucun participant invité",
+      "noHistory": "Aucune activité enregistrée",
+      "system": "Système",
+      "startedAt": "Démarrée à",
+      "endedAt": "Terminée à",
+      "calendar": "Ajouter au calendrier",
+      "addGoogleCalendar": "Ajouter à Google Calendar",
+      "downloadIcs": "Télécharger le fichier ICS",
+      "icsDownloaded": "Fichier calendrier téléchargé",
+      "videoRoom": "Salle vidéo",
+      "videoRoomHint": "Rejoignez la réunion vidéo intégrée lorsqu'elle est en direct."
+    },
+    "activity": {
+      "created": "Réunion créée",
+      "updated": "Réunion mise à jour",
+      "scheduled": "Réunion planifiée",
+      "invitation_sent": "Invitation envoyée",
+      "started": "Réunion démarrée",
+      "ended": "Réunion terminée",
+      "cancelled": "Réunion annulée",
+      "joined": "Participant rejoint"
+    }
   },
   "samples": {
     "title": "Échantillons",

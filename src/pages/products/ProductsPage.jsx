@@ -1,5 +1,6 @@
 // src/pages/Products/ProductsPage.jsx
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package,
@@ -27,6 +28,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
+import useEntityDeepLink from '../../hooks/useEntityDeepLink';
 import ExportButtons from '../../components/ExportButtons';
 import {
   getProducts,
@@ -691,6 +693,21 @@ const ProductsPage = () => {
   useEffect(() => {
     fetchProducts();
   }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  useEntityDeepLink({
+    items: products,
+    viewStateKey: 'viewProductId',
+    editStateKey: 'editProductId',
+    fetchById: getProductById,
+    onView: (product) => {
+      setSelectedProduct(product);
+      setIsDetailsModalOpen(true);
+    },
+    onEdit: (product) => {
+      setSelectedProduct(product);
+      setIsEditModalOpen(true);
+    },
+  });
 
   // Fetch KPIs from statistics API
   const [kpis, setKpis] = useState({

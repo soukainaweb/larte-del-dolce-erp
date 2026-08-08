@@ -179,17 +179,103 @@
   },
   "meetings": {
     "title": "Meetings",
-    "subtitle": "Schedule and manage client meetings",
+    "subtitle": "Schedule and join embedded video meetings",
     "addTitle": "Add meeting",
     "editTitle": "Edit meeting",
     "searchPlaceholder": "Search meetings...",
     "empty": "No meetings found",
     "confirmDelete": "Delete this meeting?",
-    "fields": { "title": "Meeting title", "time": "Time" },
-    "status": { "scheduled": "Scheduled", "completed": "Completed", "cancelled": "Cancelled" },
+    "fields": {
+      "title": "Meeting title",
+      "time": "Time",
+      "invitees": "Invite participants"
+    },
+    "status": {
+      "draft": "Draft",
+      "scheduled": "Scheduled",
+      "live": "Live",
+      "finished": "Finished",
+      "completed": "Finished",
+      "cancelled": "Cancelled"
+    },
+    "invitationStatus": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "declined": "Declined"
+    },
+    "actions": {
+      "saveDraft": "Save draft",
+      "schedule": "Schedule & invite",
+      "cancel": "Cancel meeting"
+    },
+    "confirmCancel": "Cancel this meeting?",
     "kpi": { "total": "Total meetings" },
-    "messages": { "created": "Meeting created", "updated": "Meeting updated", "deleted": "Meeting deleted" },
-    "errors": { "load": "Failed to load meetings", "save": "Failed to save meeting", "delete": "Failed to delete meeting" }
+    "messages": {
+      "draftCreated": "Meeting saved as draft",
+      "scheduled": "Meeting scheduled and invitations sent",
+      "updated": "Meeting updated",
+      "deleted": "Meeting deleted",
+      "cancelled": "Meeting cancelled"
+    },
+    "errors": {
+      "load": "Failed to load meetings",
+      "save": "Failed to save meeting",
+      "delete": "Failed to delete meeting"
+    },
+    "room": {
+      "loading": "Loading meeting room...",
+      "accessDenied": "You are not invited to this meeting",
+      "backToList": "Back to meetings",
+      "meetingEnded": "This meeting has ended",
+      "startMeeting": "Start Meeting",
+      "joinMeeting": "Join Meeting",
+      "hostWaiting": "You are the host. Start the meeting when ready.",
+      "waitingForHost": "Waiting for the host to start the meeting...",
+      "started": "Meeting is now live",
+      "ended": "Meeting ended for everyone",
+      "confirmEnd": "End this meeting for all participants?",
+      "muteAll": "Mute all",
+      "mutedAll": "All participants muted",
+      "endMeeting": "End meeting",
+      "participants": "Participants",
+      "host": "Host",
+      "participant": "Participant",
+      "remove": "Remove",
+      "guest": "Guest"
+    },
+    "details": {
+      "title": "Meeting details",
+      "subtitle": "View meeting information, participants, and activity",
+      "notFound": "Meeting not found or access denied",
+      "information": "Meeting information",
+      "organizer": "Organizer",
+      "participants": "Participants",
+      "invitationStatus": "Invitation status",
+      "history": "Meeting history",
+      "name": "Name",
+      "role": "Role",
+      "noParticipants": "No participants invited yet",
+      "noHistory": "No activity recorded yet",
+      "system": "System",
+      "startedAt": "Started at",
+      "endedAt": "Ended at",
+      "calendar": "Add to calendar",
+      "addGoogleCalendar": "Add to Google Calendar",
+      "downloadIcs": "Download ICS file",
+      "icsDownloaded": "Calendar file downloaded",
+      "videoRoom": "Video room",
+      "videoRoomHint": "Join the embedded video meeting when it is live."
+    },
+    "activity": {
+      "created": "Meeting created",
+      "updated": "Meeting updated",
+      "scheduled": "Meeting scheduled",
+      "invitation_sent": "Invitation sent",
+      "started": "Meeting started",
+      "ended": "Meeting ended",
+      "cancelled": "Meeting cancelled",
+      "joined": "Participant joined"
+    }
   },
   "samples": {
     "title": "Samples",

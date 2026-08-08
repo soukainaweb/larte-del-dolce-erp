@@ -54,12 +54,7 @@ class SalesScope
             return $query;
         }
 
-        $userId = self::userId($user);
-
-        return $query->where(function (Builder $q) use ($userId) {
-            $q->where('created_by', $userId)
-                ->orWhereHas('order', fn (Builder $oq) => $oq->where('user_id', $userId));
-        });
+        return $query->where('created_by', self::userId($user));
     }
 
     public static function applySampleScope(Builder $query, ?User $user = null): Builder
@@ -101,21 +96,7 @@ class SalesScope
             return true;
         }
 
-        $userId = self::userId($user);
-
-        if ((int) $meeting->created_by === (int) $userId) {
-            return true;
-        }
-
-        if ($meeting->order_id) {
-            if (! $meeting->relationLoaded('order')) {
-                $meeting->load('order');
-            }
-
-            return $meeting->order && (int) $meeting->order->user_id === (int) $userId;
-        }
-
-        return false;
+        return (int) $meeting->created_by === (int) self::userId($user);
     }
 
     public static function ownsSample(Sample $sample, ?User $user = null): bool

@@ -8,7 +8,7 @@ import { getNotifications, getUnreadCount, markNotificationAsRead } from '../../
 import { findSearchRoute, getActiveMenuId } from '../../../utils/searchRoutes';
 import { getNotificationRoute } from '../../../utils/notificationRoutes';
 import { getRoleDisplayName } from '../../../utils/roleMapping';
-import { resolveRoleKey } from '../../../utils/permissions';
+import { resolveRoleKey, resolvePermissionList } from '../../../utils/permissions';
 
 import Header from '../Header/Header';
 import Sidebar from '../Sidebar/Sidebar';
@@ -211,8 +211,8 @@ const DashboardLayout = () => {
     console.log('user', user);
     console.log('roleKey (AuthContext)', roleKey);
     console.log('sidebarRole (resolved)', sidebarRole);
-    console.log('permissions', permissions);
-    console.log('permissions count', permissions?.length ?? 0);
+    console.log('permissions', resolvePermissionList(permissions));
+    console.log('permissions count', resolvePermissionList(permissions).length);
     console.groupEnd();
   }, [user, roleKey, sidebarRole, permissions]);
 

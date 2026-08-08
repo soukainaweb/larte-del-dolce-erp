@@ -48,6 +48,9 @@ const EXACT_MESSAGES = {
   'This action is unauthorized.': 'ليس لديك الصلاحيات اللازمة.',
   'Invalid credentials.': 'بيانات الدخول غير صحيحة.',
   'These credentials do not match our records.': 'بيانات الدخول غير صحيحة.',
+  'Resource not found': 'العنصر المطلوب غير موجود.',
+  'Endpoint not found': 'مسار واجهة البرمجة غير موجود. تحقق من إعدادات الخادم.',
+  'Not Found': 'المورد غير موجود.',
   // French Laravel fallbacks
   'Le champ email est obligatoire.': 'حقل البريد الإلكتروني مطلوب.',
   'Le champ nom est obligatoire.': 'حقل الاسم مطلوب.',

@@ -50,7 +50,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import dashboardService from '../../services/dashboardService';
 import orderService from '../../services/orderService';
-import { getApiErrorMessage } from '../../utils/apiHelpers';
+import { unwrapData, toArray, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
 
 
 // ==========================================
@@ -238,7 +238,8 @@ const AnimatedNumber = ({ value, isCurrency }) => {
 // CUSTOM MINI CHART
 // ==========================================
 const MicroChart = ({ data, isPositive }) => {
-  if (!data || data.length === 0) return null;
+  const series = ensureArray(data);
+  if (!series.length) return null;
   
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 36 });
@@ -268,15 +269,15 @@ const MicroChart = ({ data, isPositive }) => {
 
   const { width, height } = dimensions;
   const padding = 2;
-  const max = Math.max(...data);
-  const min = Math.min(...data);
+  const max = Math.max(...series);
+  const min = Math.min(...series);
   const range = max - min === 0 ? 1 : max - min;
 
-  const points = data.map((val, index) => {
+  const points = series.map((val, index) => {
     const x =
-  data.length === 1
+  series.length === 1
     ? width / 2
-    : padding + (index / (data.length - 1)) * (width - padding * 2);
+    : padding + (index / (series.length - 1)) * (width - padding * 2);
     const y = height - padding - ((val - min) / range) * (height - padding * 2);
     return `${x},${y}`;
   }).join(' ');
@@ -343,12 +344,18 @@ const ActivityTooltip = ({ active, payload, label }) => {
 // Analytics Chart
 // ==========================================
 const AnalyticsChart = ({ labels, series1, series2, series3, series4 }) => {
-  const rows = labels.map((label, i) => ({
+  const safeLabels = ensureArray(labels);
+  const safeSeries1 = ensureArray(series1);
+  const safeSeries2 = ensureArray(series2);
+  const safeSeries3 = ensureArray(series3);
+  const safeSeries4 = ensureArray(series4);
+
+  const rows = safeLabels.map((label, i) => ({
     label,
-    revenue: series1?.[i] ?? 0,
-    orders: series2?.[i] ?? 0,
-    production: series3?.[i] ?? 0,
-    invoices: series4?.[i] ?? 0,
+    revenue: safeSeries1[i] ?? 0,
+    orders: safeSeries2[i] ?? 0,
+    production: safeSeries3[i] ?? 0,
+    invoices: safeSeries4[i] ?? 0,
   }));
 
   return (
@@ -805,7 +812,7 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
               </div>
 
               <div className="mt-2 pt-1 border-t border-[#F8F7F4]">
-                {item?.trend?.length ? (
+                {Array.isArray(item?.trend) && item.trend.length ? (
                   <MicroChart data={item.trend} isPositive={item.isPositive} />
                 ) : (
                   <span className="text-[10px] text-[#B9B4AC] italic">{t('dashboard.noDataAvailable')}</span>

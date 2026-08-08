@@ -41,6 +41,7 @@ import {
 } from '../../services/customerService';
 import { unwrapData, normalizeCustomerList, normalizeCustomerRecord, getApiErrorMessage } from '../../utils/apiHelpers';
 import { useToast } from '../../contexts/ToastContext';
+import useEntityDeepLink from '../../hooks/useEntityDeepLink';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -665,6 +666,21 @@ const CustomersPage = () => {
     setIsCreateModalOpen(true);
     navigate(location.pathname, { replace: true, state: {} });
   }, [location.state?.openAddModal, navigate, location.pathname]);
+
+  useEntityDeepLink({
+    items: clients,
+    viewStateKey: 'viewCustomerId',
+    editStateKey: 'editCustomerId',
+    fetchById: getCustomerById,
+    onView: (client) => {
+      setSelectedClient(normalizeCustomerRecord(client));
+      setIsDetailsModalOpen(true);
+    },
+    onEdit: (client) => {
+      setSelectedClient(normalizeCustomerRecord(client));
+      setIsEditModalOpen(true);
+    },
+  });
 
   // Fetch KPIs from statistics API
   const [kpis, setKpis] = useState({

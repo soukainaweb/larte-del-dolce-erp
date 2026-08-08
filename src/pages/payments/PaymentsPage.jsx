@@ -1,5 +1,6 @@
 // src/pages/Payments/PaymentsPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CreditCard,
@@ -53,6 +54,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import { useTranslation } from 'react-i18next';
 import ExportButtons from '../../components/ExportButtons';
+import useEntityDeepLink from '../../hooks/useEntityDeepLink';
 import {
   getPayments,
   getPaymentById,
@@ -771,6 +773,21 @@ const PaymentsPage = () => {
   useEffect(() => {
     fetchPayments();
   }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  useEntityDeepLink({
+    items: payments,
+    viewStateKey: 'viewPaymentId',
+    editStateKey: 'editPaymentId',
+    fetchById: getPaymentById,
+    onView: (payment) => {
+      setSelectedPayment(payment);
+      setIsViewModalOpen(true);
+    },
+    onEdit: (payment) => {
+      setSelectedPayment(payment);
+      setIsEditModalOpen(true);
+    },
+  });
 
   // Fetch KPIs from statistics API
   const [kpis, setKpis] = useState({

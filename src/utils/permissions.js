@@ -1,7 +1,7 @@
 /**
  * Frontend permission helpers — mirrors backend User::hasPermission admin bypass.
  */
-import { getBackendRoleSlug, mapRoleToFrontendKey } from './roleMapping';
+import { getBackendRoleSlug, mapRoleToFrontendKey, normalizePermissionNames } from './roleMapping';
 
 export const FULL_ACCESS_ROLE = 'admin';
 
@@ -41,6 +41,11 @@ export const hasFullAccessRole = isAdminRole;
 export const hasPermission = (permission, permissions = [], roleKey = null) => {
   if (!permission) return true;
   if (isAdminRole(roleKey)) return true;
-  if (!Array.isArray(permissions) || permissions.length === 0) return true;
-  return permissions.includes(permission);
+
+  const permissionList = normalizePermissionNames(permissions);
+  if (permissionList.length === 0) return true;
+  return permissionList.includes(permission);
 };
+
+/** Always returns a string[] regardless of backend / cache shape. */
+export const resolvePermissionList = (permissions) => normalizePermissionNames(permissions);

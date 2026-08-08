@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { arSA } from 'date-fns/locale';
+import { hasPermission } from '../../../utils/permissions';
 
 const dropdownVariants = {
   hidden: { opacity: 0, y: 12, scale: 0.96 },
@@ -120,7 +121,7 @@ const Header = React.memo(({
   }, [isMobile, isTablet, onMenuClick, onToggleSidebar]);
 
   const profileActions = useMemo(() => {
-    const can = (perm) => !perm || permissions.length === 0 || permissions.includes(perm);
+    const can = (perm) => hasPermission(perm, permissions, user?.role);
     return [
       {
         label: t('header.myProfile'),
@@ -143,7 +144,7 @@ const Header = React.memo(({
         action: () => { closeDropdowns(); navigate('/dashboard/settings'); },
       },
     ].filter(Boolean);
-  }, [permissions, t, navigate, closeDropdowns]);
+  }, [permissions, user?.role, t, navigate, closeDropdowns]);
 
   const formatNotifTime = (dateStr) => {
     if (!dateStr) return '';
