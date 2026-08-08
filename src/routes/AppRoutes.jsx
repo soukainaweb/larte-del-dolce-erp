@@ -148,7 +148,7 @@ const AppRoutes = () => {
         </ProtectedRoute>
       }>
         {/* Pages principales */}
-        <Route index element={<DashboardHome />} />
+        <Route index element={<PermissionRoute permission="dashboard.view"><DashboardHome /></PermissionRoute>} />
         <Route path="profile" element={<MyProfile />} />
         <Route path="users" element={<PermissionRoute permission="users.view"><UsersPage /></PermissionRoute>} />
         <Route path="customers" element={<PermissionRoute permission="customers.view"><CustomersPage /></PermissionRoute>} />
@@ -172,7 +172,7 @@ const AppRoutes = () => {
         <Route path="finance" element={<PermissionRoute permission="finance.view"><FinancePage /></PermissionRoute>} />
         <Route path="reports" element={<PermissionRoute permission="reports.view"><ReportsPage /></PermissionRoute>} />
         <Route path="analytics" element={<PermissionRoute permission="reports.view"><AnalyticsPage /></PermissionRoute>} />
-        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="notifications" element={<PermissionRoute permission="notifications.view"><NotificationsPage /></PermissionRoute>} />
         <Route path="roles" element={<PermissionRoute permission="roles.view"><RolesPermissionsPage /></PermissionRoute>} />
         <Route path="roles/*" element={<PermissionRoute permission="roles.view"><RolesPermissionsPage /></PermissionRoute>} />
 
@@ -185,21 +185,21 @@ const AppRoutes = () => {
         <Route path="settings/*" element={<PermissionRoute permission="settings.view"><SettingsPage /></PermissionRoute>} />
 
         {/* Entity detail deep-links → list page + modal */}
-        <Route path="orders/:id" element={<EntityDetailRedirect module="order" />} />
-        <Route path="customers/:id" element={<EntityDetailRedirect module="customer" />} />
-        <Route path="products/:id" element={<EntityDetailRedirect module="product" />} />
-        <Route path="production/:id" element={<EntityDetailRedirect module="production" />} />
-        <Route path="deliveries/:id" element={<EntityDetailRedirect module="delivery" />} />
-        <Route path="invoices/:id" element={<EntityDetailRedirect module="invoice" />} />
-        <Route path="payments/:id" element={<EntityDetailRedirect module="payment" />} />
-        <Route path="users/:id" element={<EntityDetailRedirect module="user" />} />
+        <Route path="orders/:id" element={<PermissionRoute permission="orders.view"><EntityDetailRedirect module="order" /></PermissionRoute>} />
+        <Route path="customers/:id" element={<PermissionRoute permission="customers.view"><EntityDetailRedirect module="customer" /></PermissionRoute>} />
+        <Route path="products/:id" element={<PermissionRoute permission="products.view"><EntityDetailRedirect module="product" /></PermissionRoute>} />
+        <Route path="production/:id" element={<PermissionRoute permission="productions.view"><EntityDetailRedirect module="production" /></PermissionRoute>} />
+        <Route path="deliveries/:id" element={<PermissionRoute permission="deliveries.view"><EntityDetailRedirect module="delivery" /></PermissionRoute>} />
+        <Route path="invoices/:id" element={<PermissionRoute permission="finance.view"><EntityDetailRedirect module="invoice" /></PermissionRoute>} />
+        <Route path="payments/:id" element={<PermissionRoute permission="payments.view"><EntityDetailRedirect module="payment" /></PermissionRoute>} />
+        <Route path="users/:id" element={<PermissionRoute permission="users.view"><EntityDetailRedirect module="user" /></PermissionRoute>} />
 
         {/* Legacy aliases → canonical modules */}
-        <Route path="classifications" element={<Navigate to="/dashboard/categories" replace />} />
-        <Route path="classifications/:id" element={<Navigate to="/dashboard/categories" replace />} />
-        <Route path="employees" element={<Navigate to="/dashboard/users" replace />} />
-        <Route path="employees/:id" element={<EntityDetailRedirect module="user" />} />
-        <Route path="calendar" element={<Navigate to="/dashboard/meetings" replace />} />
+        <Route path="classifications" element={<PermissionRoute permission="categories.view"><Navigate to="/dashboard/categories" replace /></PermissionRoute>} />
+        <Route path="classifications/:id" element={<PermissionRoute permission="categories.view"><Navigate to="/dashboard/categories" replace /></PermissionRoute>} />
+        <Route path="employees" element={<PermissionRoute permission="users.view"><Navigate to="/dashboard/users" replace /></PermissionRoute>} />
+        <Route path="employees/:id" element={<PermissionRoute permission="users.view"><EntityDetailRedirect module="user" /></PermissionRoute>} />
+        <Route path="calendar" element={<PermissionRoute permission="meetings.view"><Navigate to="/dashboard/meetings" replace /></PermissionRoute>} />
       </Route>
 
       {/* Redirects */}

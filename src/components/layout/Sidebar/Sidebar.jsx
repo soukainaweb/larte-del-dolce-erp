@@ -102,19 +102,21 @@ const FULL_ACCESS_ROLES = [ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.MANAGER];
 const isItemVisible = (item, role, permissions) => {
   if (item.visible === false) return false;
 
-  const roleKey = resolveRoleKey(role);
   if (isAdminRole(role)) return true;
 
   const permissionList = resolvePermissionList(permissions);
 
-  // Permission-first: when the user has explicit permissions, honor them.
-  if (item.permission && permissionList.length > 0) {
-    return permissionList.includes(item.permission);
+  if (item.permission) {
+    if (permissionList.length > 0) {
+      return permissionList.includes(item.permission);
+    }
+    const roleKey = resolveRoleKey(role);
+    if (!item.roles || item.roles.length === 0) return false;
+    if (FULL_ACCESS_ROLES.includes(roleKey)) return true;
+    return item.roles.includes(roleKey);
   }
 
-  if (!item.roles || item.roles.length === 0) return true;
-  if (FULL_ACCESS_ROLES.includes(roleKey)) return true;
-  return item.roles.includes(roleKey);
+  return true;
 };
 
 // ==================================================
@@ -130,7 +132,7 @@ const DASHBOARD_ITEM = {
   roles: [],
   badge: null,
   children: null,
-  permission: null,
+  permission: 'dashboard.view',
   visible: true,
 };
 
@@ -228,7 +230,7 @@ const DEFAULT_MENU_CONFIG = [
     roles: [...ALL_CORE_ROLES, ROLES.PRODUCTION_MANAGER, ROLES.FACTORY_EMPLOYEE],
     badge: null,
     children: null,
-    permission: 'production.view',
+    permission: 'productions.view',
     visible: true,
     group: 'gestion',
   },
@@ -254,7 +256,7 @@ const DEFAULT_MENU_CONFIG = [
     roles: [...ALL_CORE_ROLES, ROLES.WAREHOUSE_MANAGER],
     badge: null,
     children: null,
-    permission: 'warehouse.view',
+    permission: 'warehouses.view',
     visible: true,
     group: 'stock',
   },
@@ -379,7 +381,7 @@ const DEFAULT_MENU_CONFIG = [
     roles: ALL_CORE_ROLES,
     badge: null,
     children: null,
-    permission: 'analytics.view',
+    permission: 'reports.view',
     visible: true,
     group: 'rapports',
   },
@@ -393,7 +395,7 @@ const DEFAULT_MENU_CONFIG = [
     roles: [],
     badge: 8,
     children: null,
-    permission: null,
+    permission: 'notifications.view',
     visible: true,
     group: 'parametres',
   },
@@ -418,7 +420,7 @@ const DEFAULT_MENU_CONFIG = [
     roles: [ROLES.ADMIN, ROLES.ACCOUNTANT],
     badge: null,
     children: null,
-    permission: 'activity.view',
+    permission: 'users.view',
     visible: true,
     group: 'parametres',
   },
