@@ -72,6 +72,15 @@ class MeetingController extends Controller
         return $this->success($this->meetingService->statuses());
     }
 
+    public function invitees(Request $request)
+    {
+        $this->authorize('create', Meeting::class);
+
+        return $this->success(
+            $this->meetingService->eligibleInvitees($request->user(), $request->all())
+        );
+    }
+
     public function schedule(Meeting $meeting)
     {
         $this->authorize('schedule', $meeting);

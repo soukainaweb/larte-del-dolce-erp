@@ -344,4 +344,61 @@ class MeetingApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true);
     }
+
+    public function test_invitees_endpoint_returns_eligible_users_for_admin(): void
+    {
+        $this->seed();
+
+        $response = $this->actingAsAdmin()->getJson('/api/meetings/invitees');
+
+        $response->assertOk()
+            ->assertJsonPath('success', true);
+
+        $invitees = $response->json('data');
+        $this->assertIsArray($invitees);
+        $this->assertNotEmpty($invitees);
+        $this->assertArrayHasKey('id', $invitees[0]);
+        $this->assertArrayHasKey('email', $invitees[0]);
+    }
+
+    public function test_sales_user_can_fetch_meeting_invitees_without_users_view(): void
+    {
+        $this->seed();
+
+        $this->actingAsSalesDemo()->getJson('/api/users')->assertForbidden();
+
+        $response = $this->actingAsSalesDemo()->getJson('/api/meetings/invitees');
+
+        $response->assertOk()->assertJsonPath('success', true);
+        $this->assertIsArray($response->json('data'));
+    }
+
+    public function test_create_meeting_with_customer_and_order_relationships(): void
+    {
+        $this->seed();
+        Mail::fake();
+
+        $customer = \App\Models\Customer::firstOrFail();
+        $order = \App\Models\Order::firstOrFail();
+        $manager = User::where('email', 'manager@larte.com')->firstOrFail();
+
+        $response = $this->actingAsAdmin()->postJson('/api/meetings', $this->meetingPayload([
+            'customer_id' => $customer->id,
+            'order_id' => $order->id,
+            'publish' => true,
+            'invitee_user_ids' => [$manager->id],
+        ]));
+
+        $response->assertCreated()
+            ->assertJsonPath('data.customer_id', $customer->id)
+            ->assertJsonPath('data.order_id', $order->id)
+            ->assertJsonPath('data.status', Meeting::STATUS_SCHEDULED);
+
+        $meetingId = $response->json('data.id');
+        $this->assertDatabaseHas('meetings', [
+            'id' => $meetingId,
+            'customer_id' => $customer->id,
+            'order_id' => $order->id,
+        ]);
+    }
 }

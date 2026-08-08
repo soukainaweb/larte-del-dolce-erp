@@ -10,6 +10,7 @@ use App\Models\Notification;
 use App\Models\User;
 use App\Support\MeetingIcsGenerator;
 use App\Support\SalesScope;
+use App\Support\UserStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Mail;
 
@@ -55,6 +56,8 @@ class MeetingService
         $publish = (bool) ($data['publish'] ?? false);
         unset($data['invitee_user_ids'], $data['publish']);
 
+        $this->assertEligibleInvitees($inviteeUserIds);
+
         $data['created_by'] = auth()->id();
         $data['status'] = Meeting::STATUS_DRAFT;
 
@@ -78,6 +81,7 @@ class MeetingService
         $meeting->update($data);
 
         if (is_array($inviteeUserIds)) {
+            $this->assertEligibleInvitees($inviteeUserIds);
             $resendInvites = $meeting->status !== Meeting::STATUS_DRAFT;
             $this->syncInvitees($meeting, $inviteeUserIds, $resendInvites);
         }
@@ -220,6 +224,84 @@ class MeetingService
             ['value' => Meeting::STATUS_FINISHED, 'label' => 'Finished'],
             ['value' => Meeting::STATUS_CANCELLED, 'label' => 'Cancelled'],
         ];
+    }
+
+    /**
+     * Active users eligible to be invited to a meeting (for the Add Meeting form).
+     * Users with users.view see all active accounts; others see users with meetings.view.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function eligibleInvitees(User $actor, array $filters = []): array
+    {
+        $query = User::query()
+            ->with('role:id,name,display_name')
+            ->whereNotIn('status', UserStatus::blockedForLogin());
+
+        if (! $actor->hasPermission('users.view')) {
+            $query->whereHas('role.permissions', function ($q) {
+                $q->where('name', 'meetings.view');
+            });
+        }
+
+        if (! empty($filters['search'])) {
+            $term = $filters['search'];
+            $query->where(function ($q) use ($term) {
+                $q->where('email', 'LIKE', "%{$term}%")
+                    ->orWhere('first_name', 'LIKE', "%{$term}%")
+                    ->orWhere('last_name', 'LIKE', "%{$term}%");
+            });
+        }
+
+        $limit = min((int) ($filters['per_page'] ?? 200), 500);
+
+        return $query
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->limit($limit)
+            ->get(['id', 'first_name', 'last_name', 'email', 'role_id', 'status'])
+            ->map(fn (User $user) => [
+                'id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'full_name' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
+                'status' => $user->status,
+                'role' => $user->role ? [
+                    'id' => $user->role->id,
+                    'name' => $user->role->name,
+                    'display_name' => $user->role->display_name,
+                ] : null,
+            ])
+            ->values()
+            ->all();
+    }
+
+    protected function assertEligibleInvitees(array $inviteeUserIds): void
+    {
+        if ($inviteeUserIds === []) {
+            return;
+        }
+
+        $actor = auth()->user();
+        if (! $actor) {
+            return;
+        }
+
+        $eligibleIds = collect($this->eligibleInvitees($actor, ['per_page' => 500]))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $invalid = collect($inviteeUserIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0 && ! in_array($id, $eligibleIds, true));
+
+        if ($invalid->isNotEmpty()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'invitee_user_ids' => ['One or more selected participants are not eligible for this meeting.'],
+            ]);
+        }
     }
 
     protected function syncInvitees(Meeting $meeting, array $inviteeUserIds, bool $notify = false): void

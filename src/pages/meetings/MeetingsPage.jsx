@@ -8,13 +8,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { unwrapData, unwrapPaginated, getApiErrorMessage } from '../../utils/apiHelpers';
+import { unwrapData, unwrapPaginated, getApiErrorMessage, extractFieldErrors, normalizeCustomerList } from '../../utils/apiHelpers';
 import { isAdminRole } from '../../utils/permissions';
 import {
   getMeetings, createMeeting, updateMeeting, deleteMeeting, getMeetingStatistics, startMeeting, scheduleMeeting,
+  getMeetingInvitees,
 } from '../../services/meetingService';
 import { getCustomers } from '../../services/customerService';
-import { getUsers } from '../../services/userServicePage';
 import orderService from '../../services/orderService';
 
 const FONT_HEADING = "'Cormorant Garamond', serif";
@@ -54,9 +54,31 @@ const canManageMeeting = (meeting, user) => {
   return Number(meeting.created_by) === Number(user.id);
 };
 
-const MeetingModal = ({ isOpen, onClose, onSave, item, customers, orders, users, isLoading, t }) => {
+const formatCustomerLabel = (customer) => {
+  const name = customer?.name || customer?.company_name || `#${customer?.id}`;
+  const extra = [customer?.email, customer?.phone].filter(Boolean).join(' · ');
+  return extra ? `${name} (${extra})` : name;
+};
+
+const formatOrderLabel = (order) => {
+  const number = order?.order_number || order?.orderNumber || `#${order?.id}`;
+  const customer = order?.customer?.name || order?.customer_name || '';
+  const status = order?.status ? ` — ${order.status}` : '';
+  return customer ? `${number} · ${customer}${status}` : `${number}${status}`;
+};
+
+const formatUserLabel = (user) => {
+  const name = user?.fullName || user?.full_name
+    || `${user?.firstName || user?.first_name || ''} ${user?.lastName || user?.last_name || ''}`.trim();
+  return name ? `${name} (${user?.email || ''})` : (user?.email || `#${user?.id}`);
+};
+
+const MeetingModal = ({ isOpen, onClose, onSave, item, customers, orders, users, formLoading, isLoading, serverErrors, t }) => {
   const [form, setForm] = useState(emptyForm());
   const [errors, setErrors] = useState({});
+  const [participantSearch, setParticipantSearch] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [orderSearch, setOrderSearch] = useState('');
 
   useEffect(() => {
     if (item) {
@@ -73,7 +95,37 @@ const MeetingModal = ({ isOpen, onClose, onSave, item, customers, orders, users,
       setForm(emptyForm());
     }
     setErrors({});
+    setParticipantSearch('');
+    setCustomerSearch('');
+    setOrderSearch('');
   }, [item, isOpen]);
+
+  useEffect(() => {
+    if (serverErrors && Object.keys(serverErrors).length) {
+      setErrors((prev) => ({ ...prev, ...serverErrors }));
+    }
+  }, [serverErrors]);
+
+  const filteredCustomers = useMemo(() => {
+    const list = Array.isArray(customers) ? customers : [];
+    const q = customerSearch.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((c) => formatCustomerLabel(c).toLowerCase().includes(q));
+  }, [customers, customerSearch]);
+
+  const filteredOrders = useMemo(() => {
+    const list = Array.isArray(orders) ? orders : [];
+    const q = orderSearch.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((o) => formatOrderLabel(o).toLowerCase().includes(q));
+  }, [orders, orderSearch]);
+
+  const filteredUsers = useMemo(() => {
+    const list = Array.isArray(users) ? users : [];
+    const q = participantSearch.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((u) => formatUserLabel(u).toLowerCase().includes(q));
+  }, [users, participantSearch]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -132,47 +184,86 @@ const MeetingModal = ({ isOpen, onClose, onSave, item, customers, orders, users,
             <div>
               <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase">{t('common.date')} *</label>
               <input type="date" name="meeting_date" value={form.meeting_date} onChange={handleChange}
-                className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg" />
+                className={`w-full px-3 py-2 text-sm border rounded-lg ${errors.meeting_date ? 'border-rose-500' : 'border-[#ECE8E1]'}`} />
+              {errors.meeting_date && <p className="text-xs text-rose-500 mt-1">{errors.meeting_date}</p>}
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase">{t('meetings.fields.time')} *</label>
               <input type="time" name="meeting_time" value={form.meeting_time} onChange={handleChange}
-                className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg" />
+                className={`w-full px-3 py-2 text-sm border rounded-lg ${errors.meeting_time ? 'border-rose-500' : 'border-[#ECE8E1]'}`} />
+              {errors.meeting_time && <p className="text-xs text-rose-500 mt-1">{errors.meeting_time}</p>}
             </div>
           </div>
           <div>
             <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase">{t('nav.customers')}</label>
-            <select name="customer_id" value={form.customer_id} onChange={handleChange}
-              className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg">
-              <option value="">{t('common.selectOption')}</option>
-              {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {customers.length > 8 && (
+              <input
+                type="search"
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                placeholder={t('common.search')}
+                className="w-full mb-2 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg"
+              />
+            )}
+            <select name="customer_id" value={form.customer_id} onChange={handleChange} disabled={formLoading}
+              className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg disabled:opacity-60">
+              <option value="">{formLoading ? t('common.loading') : t('common.selectOption')}</option>
+              {filteredCustomers.map((c) => (
+                <option key={c.id} value={c.id}>{formatCustomerLabel(c)}</option>
+              ))}
             </select>
+            {!formLoading && filteredCustomers.length === 0 && (
+              <p className="text-xs text-[#6D6D6D] mt-1">{t('meetings.emptyCustomers', 'لا يوجد عملاء')}</p>
+            )}
           </div>
           <div>
             <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase">{t('nav.orders')}</label>
-            <select name="order_id" value={form.order_id} onChange={handleChange}
-              className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg">
-              <option value="">{t('common.selectOption')}</option>
-              {orders.map((o) => <option key={o.id} value={o.id}>{o.order_number || o.orderNumber || `#${o.id}`}</option>)}
+            {orders.length > 8 && (
+              <input
+                type="search"
+                value={orderSearch}
+                onChange={(e) => setOrderSearch(e.target.value)}
+                placeholder={t('common.search')}
+                className="w-full mb-2 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg"
+              />
+            )}
+            <select name="order_id" value={form.order_id} onChange={handleChange} disabled={formLoading}
+              className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg disabled:opacity-60">
+              <option value="">{formLoading ? t('common.loading') : t('common.selectOption')}</option>
+              {filteredOrders.map((o) => (
+                <option key={o.id} value={o.id}>{formatOrderLabel(o)}</option>
+              ))}
             </select>
+            {!formLoading && filteredOrders.length === 0 && (
+              <p className="text-xs text-[#6D6D6D] mt-1">{t('meetings.emptyOrders', 'لا يوجد طلبات')}</p>
+            )}
           </div>
           <div>
             <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase">{t('meetings.fields.invitees')}</label>
+            <input
+              type="search"
+              value={participantSearch}
+              onChange={(e) => setParticipantSearch(e.target.value)}
+              placeholder={t('common.search')}
+              className="w-full mb-2 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg"
+            />
             <div className="max-h-40 overflow-y-auto border border-[#ECE8E1] rounded-lg p-2 space-y-1">
-              {users.map((u) => {
-                const label = u.fullName || `${u.firstName || u.first_name || ''} ${u.lastName || u.last_name || ''}`.trim() || u.email;
-                return (
-                  <label key={u.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#F8F7F4] cursor-pointer text-sm">
-                    <input
-                      type="checkbox"
-                      checked={(form.invitee_user_ids || []).includes(u.id)}
-                      onChange={() => toggleInvitee(u.id)}
-                    />
-                    <span className="truncate">{label}</span>
-                  </label>
-                );
-              })}
+              {formLoading ? (
+                <p className="text-sm text-[#6D6D6D] px-2 py-1">{t('common.loading')}</p>
+              ) : filteredUsers.length === 0 ? (
+                <p className="text-sm text-[#6D6D6D] px-2 py-1">{t('meetings.emptyParticipants', 'لا يوجد مشاركون')}</p>
+              ) : filteredUsers.map((u) => (
+                <label key={u.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#F8F7F4] cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={(form.invitee_user_ids || []).includes(u.id)}
+                    onChange={() => toggleInvitee(u.id)}
+                  />
+                  <span className="truncate">{formatUserLabel(u)}</span>
+                </label>
+              ))}
             </div>
+            {errors.invitee_user_ids && <p className="text-xs text-rose-500 mt-1">{errors.invitee_user_ids}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase">{t('common.notes')}</label>
@@ -216,6 +307,32 @@ const MeetingsPage = () => {
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
   const [schedulingId, setSchedulingId] = useState(null);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+
+  const fetchFormOptions = async () => {
+    setFormLoading(true);
+    try {
+      const [customersRes, ordersRes, inviteesRes] = await Promise.all([
+        getCustomers({ per_page: 200 }),
+        orderService.getOrders({ per_page: 200 }),
+        getMeetingInvitees({ per_page: 200 }),
+      ]);
+      const { items: customerItems } = normalizeCustomerList(customersRes);
+      const orderItems = Array.isArray(ordersRes?.data) ? ordersRes.data : [];
+      const inviteeItems = unwrapData(inviteesRes) || [];
+      setCustomers(customerItems);
+      setOrders(orderItems);
+      setUsers(Array.isArray(inviteeItems) ? inviteeItems : []);
+    } catch (err) {
+      showToast(getApiErrorMessage(err, t('meetings.errors.loadFormOptions', 'تعذر تحميل بيانات النموذج')), 'error');
+      setCustomers([]);
+      setOrders([]);
+      setUsers([]);
+    } finally {
+      setFormLoading(false);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -237,29 +354,36 @@ const MeetingsPage = () => {
   };
 
   useEffect(() => { fetchData(); }, [page, search, statusFilter]);
+
   useEffect(() => {
     getMeetingStatistics().then((r) => setStats(unwrapData(r) || {})).catch(() => {});
-    getCustomers({ per_page: 200 }).then((r) => {
-      const { items } = unwrapPaginated(r);
-      setCustomers(items);
-    }).catch(() => {});
-    orderService.getOrders({ per_page: 200 }).then((r) => setOrders(r.data || [])).catch(() => {});
-    getUsers({ per_page: 200 }).then((r) => {
-      const { items } = unwrapPaginated(r);
-      setUsers(items);
-    }).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (modal === 'form') {
+      setFormErrors({});
+      fetchFormOptions();
+    }
+  }, [modal]);
 
   const totalPages = Math.max(1, Math.ceil(total / perPage));
 
   const handleSave = async (payload, publish = false) => {
     setSaving(true);
+    setFormErrors({});
     try {
+      const body = {
+        ...payload,
+        customer_id: payload.customer_id ? Number(payload.customer_id) : null,
+        order_id: payload.order_id ? Number(payload.order_id) : null,
+        invitee_user_ids: (payload.invitee_user_ids || []).map((id) => Number(id)).filter(Boolean),
+        publish: Boolean(publish),
+      };
       if (selected) {
-        await updateMeeting(selected.id, payload);
+        await updateMeeting(selected.id, body);
         showToast(publish ? t('meetings.messages.scheduled') : t('meetings.messages.updated'), 'success');
       } else {
-        await createMeeting(payload);
+        await createMeeting(body);
         showToast(publish ? t('meetings.messages.scheduled') : t('meetings.messages.draftCreated'), 'success');
       }
       setModal(null);
@@ -267,7 +391,13 @@ const MeetingsPage = () => {
       fetchData();
       getMeetingStatistics().then((r) => setStats(unwrapData(r) || {}));
     } catch (err) {
-      showToast(getApiErrorMessage(err, t('meetings.errors.save')), 'error');
+      const fieldErrors = extractFieldErrors(err);
+      if (fieldErrors) {
+        setFormErrors(fieldErrors);
+        showToast(t('meetings.errors.validation', 'يرجى تصحيح الأخطاء في النموذج'), 'error');
+      } else {
+        showToast(getApiErrorMessage(err, t('meetings.errors.save')), 'error');
+      }
     } finally {
       setSaving(false);
     }
@@ -441,6 +571,7 @@ const MeetingsPage = () => {
       <AnimatePresence>
         {modal === 'form' && (
           <MeetingModal isOpen customers={customers} orders={orders} users={users} item={selected}
+            formLoading={formLoading} serverErrors={formErrors}
             onClose={() => { setModal(null); setSelected(null); }} onSave={handleSave} isLoading={saving} t={t} />
         )}
       </AnimatePresence>
