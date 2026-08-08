@@ -106,9 +106,12 @@ const isItemVisible = (item, role, permissions) => {
   if (isAdminRole(role)) return true;
 
   const permissionList = resolvePermissionList(permissions);
+
+  // Permission-first: when the user has explicit permissions, honor them.
   if (item.permission && permissionList.length > 0) {
-    if (!permissionList.includes(item.permission)) return false;
+    return permissionList.includes(item.permission);
   }
+
   if (!item.roles || item.roles.length === 0) return true;
   if (FULL_ACCESS_ROLES.includes(roleKey)) return true;
   return item.roles.includes(roleKey);
@@ -138,7 +141,7 @@ const DEFAULT_MENU_CONFIG = [
     title: 'Utilisateurs',
     icon: UsersRound,
     route: '/dashboard/users',
-    roles: [ROLES.ADMIN],
+    roles: [ROLES.ADMIN, ROLES.MANAGER],
     badge: null,
     children: null,
     permission: 'users.view',
@@ -174,7 +177,7 @@ const DEFAULT_MENU_CONFIG = [
     title: 'Produits',
     icon: Package,
     route: '/dashboard/products',
-    roles: [...ALL_CORE_ROLES, ROLES.PRODUCTION_MANAGER, ROLES.WAREHOUSE_MANAGER],
+    roles: [...ALL_CORE_ROLES, ROLES.SALES_REP, ROLES.PRODUCTION_MANAGER, ROLES.WAREHOUSE_MANAGER],
     badge: null,
     children: null,
     permission: 'products.view',

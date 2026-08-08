@@ -1,4 +1,4 @@
-import { normalizeRole, extractUserPermissions } from './roleMapping';
+import { normalizeRole, extractUserPermissions, getBackendRoleSlug, translateRoleLabel } from './roleMapping';
 import i18n from '../i18n';
 import { translateApiErrorMessage } from './apiErrorTranslator';
 import {
@@ -105,10 +105,7 @@ export const normalizeUserRecord = (rawUser) => {
   if (!rawUser) return null;
 
   const base = normalizeUser(rawUser);
-  const roleLabel =
-    typeof rawUser.role === 'object' && rawUser.role
-      ? rawUser.role.display_name || rawUser.role.name || base.role
-      : base.role || rawUser.role || '—';
+  const roleLabel = translateRoleLabel(rawUser.role);
 
   return {
     ...rawUser,
@@ -117,6 +114,7 @@ export const normalizeUserRecord = (rawUser) => {
     lastName: base.lastName,
     fullName: base.fullName,
     role: roleLabel,
+    roleSlug: getBackendRoleSlug(rawUser.role) || rawUser.role?.name || '',
     roleId: rawUser.role_id ?? rawUser.roleId ?? rawUser.role?.id ?? null,
     status: rawUser.status || base.status || 'offline',
     createdAt: rawUser.created_at || rawUser.createdAt || null,

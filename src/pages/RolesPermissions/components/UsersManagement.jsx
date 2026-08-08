@@ -1,5 +1,7 @@
 // src/pages/RolesPermissions/components/UsersManagement.jsx
+// NOTE: User account creation is handled exclusively on /dashboard/users.
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User,
@@ -799,10 +801,15 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, description, confirmT
 // ==========================================
 const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
   const { t, tc } = usePageI18n('roles');
+  const navigate = useNavigate();
+  const goToCreateUser = () => {
+    navigate('/dashboard/users', {
+      state: role?.id ? { openCreate: true, presetRoleId: role.id } : { openCreate: true },
+    });
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewDrawerOpen, setIsViewDrawerOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -910,30 +917,6 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
     }, 800);
   };
 
-  const handleAddUser = (formData) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const newUser = {
-        id: localUsers.length + 1,
-        name: formData.name,
-        email: formData.email,
-        department: formData.department || 'Général',
-        position: 'Employé',
-        roleId: parseInt(formData.roleId),
-        status: formData.status,
-        lastLogin: tc('today'),
-        assignedDate: formData.assignedDate || new Date().toLocaleDateString('ar-SA'),
-        permissions: formData.permissions || [],
-        notes: formData.notes
-      };
-      const updatedUsers = [newUser, ...localUsers];
-      setLocalUsers(updatedUsers);
-      if (onUpdate) onUpdate(updatedUsers);
-      setIsAddModalOpen(false);
-      setIsLoading(false);
-      showToast(t('roles.usersManagement.userAdded'), 'success');
-    }, 800);
-  };
 
   const handleSaveEdit = (formData) => {
     setIsLoading(true);
@@ -998,11 +981,12 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
             <option value="lastLogin">{t('roles.usersManagement.sortLastLogin')}</option>
           </select>
           <button
-            onClick={() => setIsAddModalOpen(true)}
+            type="button"
+            onClick={goToCreateUser}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] text-white font-medium hover:shadow-lg transition-all text-sm"
           >
             <Plus size={18} />
-            {t('roles.usersManagement.addUser')}
+            {t('roles.usersManagement.goToUsersPage')}
           </button>
         </div>
       </div>
@@ -1031,11 +1015,12 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
               </p>
             </div>
             <button
-              onClick={() => setIsAddModalOpen(true)}
+              type="button"
+              onClick={goToCreateUser}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] text-white font-medium hover:shadow-lg transition-all"
             >
               <Plus size={18} />
-              {t('roles.usersManagement.addUser')}
+              {t('roles.usersManagement.goToUsersPage')}
             </button>
           </div>
         </div>
@@ -1083,14 +1068,7 @@ const UsersManagement = ({ role, users: initialUsers, onUpdate }) => {
           isLoading={isLoading}
         />
 
-        {/* Add Modal */}
-        <AddUserModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onAdd={handleAddUser}
-          roles={roles}
-          isLoading={isLoading}
-        />
+        {/* Add-user flow: /dashboard/users only — see goToCreateUser */}
 
         {/* Confirm Remove Modal */}
         <ConfirmModal

@@ -7,7 +7,7 @@ import { useToast } from '../../../contexts/ToastContext';
 import { getNotifications, getUnreadCount, markNotificationAsRead } from '../../../services/notificationService';
 import { findSearchRoute, getActiveMenuId } from '../../../utils/searchRoutes';
 import { getNotificationRoute } from '../../../utils/notificationRoutes';
-import { getRoleDisplayName } from '../../../utils/roleMapping';
+import { getRoleDisplayName, translateRoleLabel } from '../../../utils/roleMapping';
 import { resolveRoleKey, resolvePermissionList } from '../../../utils/permissions';
 
 import Header from '../Header/Header';
@@ -249,7 +249,7 @@ const DashboardLayout = () => {
           isCollapsed={isCollapsed}
           user={{
             ...user,
-            role: user?.role ? { ...user.role, display_name: getRoleDisplayName(user.role) } : user?.role,
+            role: user?.role ? { ...user.role, display_name: translateRoleLabel(user.role) } : user?.role,
           }}
           permissions={permissions}
           notifications={notifications}

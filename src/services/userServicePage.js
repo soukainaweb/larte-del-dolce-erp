@@ -47,7 +47,10 @@ export const getUserById = (id) => {
  */
 export const createUser = async (data) => {
   const roles = await loadRoleCatalog();
-  return api.post("/users", buildUserPayload(data, roles));
+  const payload = buildUserPayload(data, roles);
+  const response = await api.post("/users", payload);
+  response.generatedPassword = !data.password ? payload.password : null;
+  return response;
 };
 
 /**
