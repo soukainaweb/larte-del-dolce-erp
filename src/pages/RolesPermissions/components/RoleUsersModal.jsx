@@ -1,5 +1,6 @@
 // src/pages/RolesPermissions/components/RoleUsersModal.jsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -21,8 +22,8 @@ import { ensureArray } from '../../../utils/apiHelpers';
 
 const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, onRemoveUser }) => {
   const { t, tc, commonStatus } = usePageI18n('roles');
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   if (!isOpen || !role) return null;
 
@@ -79,11 +80,17 @@ const RoleUsersModal = ({ isOpen, onClose, role, users, onAddUser, onEditUser, o
               />
             </div>
             <button
-              onClick={() => setIsAddModalOpen(true)}
+              type="button"
+              onClick={() => {
+                onClose();
+                navigate('/dashboard/users', {
+                  state: { openCreate: true, presetRoleId: role.id },
+                });
+              }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C8A45D] to-[#B08A4A] text-white font-medium hover:shadow-lg transition-all text-sm"
             >
               <Plus size={18} />
-              {t('roles.usersManagement.addUser')}
+              {t('roles.usersManagement.goToUsersPage')}
             </button>
           </div>
 

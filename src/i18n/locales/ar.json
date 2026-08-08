@@ -1947,11 +1947,28 @@
     "export": {
       "title": "قائمة المستخدمين",
       "subtitle": "{{count}} مستخدم"
+    },
+    "success": {
+      "created": "تم إنشاء المستخدم بنجاح",
+      "createdWithPassword": "تم إنشاء المستخدم بنجاح. كلمة المرور المؤقتة: {{password}}",
+      "updated": "تم تحديث المستخدم بنجاح"
     }
   },
   "roles": {
     "title": "الأدوار والصلاحيات",
     "subtitle": "التحكم في الوصول",
+    "labels": {
+      "admin": "المسؤول",
+      "manager": "المدير",
+      "accountant": "المحاسب",
+      "sales": "المندوب",
+      "viewer": "مشاهد",
+      "delivery": "سائق التوصيل",
+      "productionManager": "مسؤول الإنتاج",
+      "factoryEmployee": "عامل المصنع",
+      "warehouseManager": "مسؤول المستودع",
+      "financeManager": "مسؤول المالية"
+    },
     "search": "البحث عن دور...",
     "addRole": "دور جديد",
     "kpi": {
@@ -1971,6 +1988,8 @@
       "title": "إدارة المستخدمين",
       "searchPlaceholder": "البحث عن مستخدم...",
       "addUser": "إضافة مستخدم",
+      "createUserHint": "لإنشاء حساب مستخدم جديد، انتقل إلى صفحة المستخدمين.",
+      "goToUsersPage": "فتح صفحة المستخدمين",
       "editUser": "تعديل المستخدم",
       "userDetails": "تفاصيل المستخدم",
       "removeUser": "إزالة المستخدم",

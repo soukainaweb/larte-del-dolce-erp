@@ -71,7 +71,7 @@ class DefaultRolePermissions
                 'samples.view', 'samples.create', 'samples.update', 'samples.delete',
                 'waste_returns.view', 'waste_returns.create', 'waste_returns.update',
                 'purchases.view', 'purchases.create', 'purchases.update',
-                'users.view',
+                'users.view', 'users.create', 'users.update',
             ]),
             'accountant' => array_merge(self::BASELINE, [
                 'reports.view', 'finance.view',

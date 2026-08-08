@@ -22,6 +22,8 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
+import { hasPermission } from '../../utils/permissions';
+import { translateRoleLabel } from '../../utils/roleMapping';
 // src/pages/Users/UsersPage.jsx
 // CHANGER CETTE LIGNE :
 import {
@@ -71,25 +73,25 @@ const StatusBadge = ({ status }) => {
 // ==========================================
 // ROLE BADGE
 // ==========================================
-const RoleBadge = ({ role }) => {
+const RoleBadge = ({ role, roleSlug }) => {
+  const label = translateRoleLabel(roleSlug || role);
   const roleColors = {
+    المسؤول: 'bg-[#B8863B]/10 text-[#B8863B] border-[#B8863B]/30',
+    المدير: 'bg-slate-50 text-slate-700 border-slate-200',
+    المحاسب: 'bg-blue-50 text-blue-700 border-blue-200',
+    المندوب: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     Administrator: 'bg-[#B8863B]/10 text-[#B8863B] border-[#B8863B]/30',
     Accountant: 'bg-blue-50 text-blue-700 border-blue-200',
     'Sales Representative': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'Production Manager': 'bg-purple-50 text-purple-700 border-purple-200',
-    'Factory Employee': 'bg-amber-50 text-amber-700 border-amber-200',
-    'Warehouse Manager': 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    'Delivery Driver': 'bg-cyan-50 text-cyan-700 border-cyan-200',
-    'Finance Manager': 'bg-rose-50 text-rose-700 border-rose-200',
     Manager: 'bg-slate-50 text-slate-700 border-slate-200',
-    Viewer: 'bg-gray-50 text-gray-600 border-gray-200'
+    Viewer: 'bg-gray-50 text-gray-600 border-gray-200',
   };
 
-  const color = roleColors[role] || roleColors.Viewer;
+  const color = roleColors[label] || roleColors.Manager || roleColors.Viewer;
 
   return (
     <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${color}`}>
-      {role}
+      {label}
     </span>
   );
 };
@@ -115,7 +117,7 @@ const UserCardComponent = ({ user, onEdit, onDelete, onView }) => {
         <StatusBadge status={user.status} />
       </div>
       <div className="flex flex-wrap gap-2">
-        <RoleBadge role={user.role} />
+        <RoleBadge role={user.role} roleSlug={user.roleSlug} />
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#ECE8E1]">
         <div className="text-xs text-[#6D6D6D]">
@@ -165,7 +167,7 @@ const UserTableRow = ({ user, onEdit, onDelete, onView, index }) => {
       </td>
       <td className="px-4 py-3 text-sm text-[#6D6D6D]">{user.email}</td>
       <td className="px-4 py-3">
-        <RoleBadge role={user.role} />
+        <RoleBadge role={user.role} roleSlug={user.roleSlug} />
       </td>
       <td className="px-4 py-3">
         <StatusBadge status={user.status} />
@@ -205,7 +207,7 @@ const UserTableRow = ({ user, onEdit, onDelete, onView, index }) => {
 // ==========================================
 // USER MODAL
 // ==========================================
-const UserModal = ({ isOpen, onClose, onSave, user, isLoading, availableRoles = [], fieldErrors = null }) => {
+const UserModal = ({ isOpen, onClose, onSave, user, isLoading, availableRoles = [], fieldErrors = null, presetRoleId = null }) => {
   const { t, commonStatus, tc } = usePageI18n('users');
 
   const [formData, setFormData] = useState({
@@ -248,7 +250,12 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading, availableRoles = 
       });
     }
     setErrors({});
-  }, [user, isOpen, availableRoles]);
+  }, [user, isOpen, availableRoles, presetRoleId]);
+
+  useEffect(() => {
+    if (!isOpen || user || !presetRoleId) return;
+    setFormData((prev) => ({ ...prev, roleId: String(presetRoleId) }));
+  }, [isOpen, user, presetRoleId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -365,7 +372,7 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading, availableRoles = 
               <option value="">{t('roles.usersManagement.selectRole', { defaultValue: tc('role') })}</option>
               {availableRoles.map((role) => (
                 <option key={role.id} value={role.id}>
-                  {role.display_name || role.name}
+                  {translateRoleLabel(role)}
                 </option>
               ))}
             </select>
@@ -491,7 +498,7 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
             <div>
               <p className="text-lg font-semibold text-[#3D2F24]">{user.firstName} {user.lastName}</p>
               <div className="flex items-center gap-2 mt-1">
-                <RoleBadge role={user.role} />
+                <RoleBadge role={user.role} roleSlug={user.roleSlug} />
                 <StatusBadge status={user.status} />
               </div>
             </div>
@@ -534,7 +541,8 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
 // MAIN USERS PAGE
 // ==========================================
 const UsersPage = () => {
-  const { user } = useAuth();
+  const { user, permissions, roleKey } = useAuth();
+  const canCreateUsers = hasPermission('users.create', permissions, user?.role ?? roleKey);
   const { title, subtitle, searchPlaceholder, t, commonStatus, actions, tc } = usePageI18n('users');
   const location = useLocation();
   const navigate = useNavigate();
@@ -556,6 +564,7 @@ const UsersPage = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [availableRoles, setAvailableRoles] = useState([]);
   const [formErrors, setFormErrors] = useState(null);
+  const [createPresetRoleId, setCreatePresetRoleId] = useState(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -699,6 +708,7 @@ const UsersPage = () => {
     setFormErrors(null);
     try {
       const response = await createUser(formData);
+      const generatedPassword = response.generatedPassword;
       const newUser = normalizeUserRecord(unwrapData(response));
       if (newUser) {
         setCurrentPage(1);
@@ -706,7 +716,14 @@ const UsersPage = () => {
       }
       setIsCreateModalOpen(false);
       await fetchStatistics();
-      dispatchAppToast(t('users.success.created', { defaultValue: 'تم إنشاء المستخدم بنجاح' }), 'success');
+      if (generatedPassword) {
+        dispatchAppToast(
+          t('users.success.createdWithPassword', { password: generatedPassword }),
+          'success'
+        );
+      } else {
+        dispatchAppToast(t('users.success.created'), 'success');
+      }
     } catch (error) {
       console.error('Error creating user:', error);
       const fieldErrors = extractFieldErrors(error);
@@ -773,6 +790,15 @@ const UsersPage = () => {
   };
 
   useEffect(() => {
+    if (location.state?.openCreate && canCreateUsers) {
+      setFormErrors(null);
+      setCreatePresetRoleId(location.state?.presetRoleId ?? null);
+      setIsCreateModalOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, canCreateUsers, location.pathname, navigate]);
+
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, roleFilter, statusFilter]);
 
@@ -802,6 +828,7 @@ const UsersPage = () => {
             onSuccess={handleExportSuccess}
             onError={handleExportError}
           />
+          {canCreateUsers && (
           <button
             onClick={() => {
               setFormErrors(null);
@@ -812,6 +839,7 @@ const UsersPage = () => {
             <UserPlus size={18} />
             {t('users.addUser')}
           </button>
+          )}
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border border-[#ECE8E1] bg-white hover:bg-[#F8F7F4] transition-colors"
@@ -843,7 +871,7 @@ const UsersPage = () => {
             >
               <option value="all">{tc('allRoles')}</option>
               {uniqueRoles.map((role) => (
-                <option key={role.id} value={role.id}>{role.display_name || role.name}</option>
+                <option key={role.id} value={role.id}>{translateRoleLabel(role)}</option>
               ))}
             </select>
             <select
@@ -1013,12 +1041,14 @@ const UsersPage = () => {
             isOpen={isCreateModalOpen}
             onClose={() => {
               setFormErrors(null);
+              setCreatePresetRoleId(null);
               setIsCreateModalOpen(false);
             }}
             onSave={handleCreateUser}
             isLoading={isSaving}
             availableRoles={availableRoles}
             fieldErrors={formErrors}
+            presetRoleId={createPresetRoleId}
           />
         )}
 

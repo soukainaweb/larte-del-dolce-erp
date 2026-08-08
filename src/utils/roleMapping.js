@@ -4,6 +4,23 @@
  * Backend (RoleSeeder): admin, manager, accountant, sales, viewer, delivery
  * Frontend sidebar (ROLES): admin, manager, accountant, sales_rep, viewer, delivery_driver, ...
  */
+import i18n from '../i18n';
+
+/** i18n keys for Arabic/localized role labels (slug → translation key) */
+export const ROLE_LABEL_KEYS = Object.freeze({
+  admin: 'roles.labels.admin',
+  manager: 'roles.labels.manager',
+  accountant: 'roles.labels.accountant',
+  sales: 'roles.labels.sales',
+  sales_rep: 'roles.labels.sales',
+  viewer: 'roles.labels.viewer',
+  delivery: 'roles.labels.delivery',
+  delivery_driver: 'roles.labels.delivery',
+  production_manager: 'roles.labels.productionManager',
+  factory_employee: 'roles.labels.factoryEmployee',
+  warehouse_manager: 'roles.labels.warehouseManager',
+  finance_manager: 'roles.labels.financeManager',
+});
 
 /** Backend slug → frontend sidebar role key */
 export const BACKEND_TO_FRONTEND_ROLE = Object.freeze({
@@ -95,6 +112,19 @@ export const getRoleDisplayName = (role) => {
   if (role.display_name) return role.display_name;
   const slug = role.name || '';
   return ROLE_DISPLAY_NAMES[slug] || slug || 'Utilisateur';
+};
+
+/**
+ * User-facing role label with i18n (Arabic UI shows المندوب, المدير, etc.).
+ * Keeps backend slugs/IDs internal — only used for display.
+ */
+export const translateRoleLabel = (role) => {
+  const slug = getBackendRoleSlug(role);
+  const key = ROLE_LABEL_KEYS[slug];
+  if (key) {
+    return i18n.t(key, { defaultValue: getRoleDisplayName(role) });
+  }
+  return getRoleDisplayName(role);
 };
 
 /**
