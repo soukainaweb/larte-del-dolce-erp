@@ -872,6 +872,7 @@ const NotificationsPage = () => {
         )
       );
       await fetchStatistics();
+      window.dispatchEvent(new Event('notifications:refresh'));
       showToast(
         notification.isRead 
           ? '📬 Notification marquée comme non lue'
@@ -906,6 +907,7 @@ const NotificationsPage = () => {
         prev.map(n => ({ ...n, isRead: true }))
       );
       await fetchStatistics();
+      window.dispatchEvent(new Event('notifications:refresh'));
       showToast('✅ Toutes les notifications ont été marquées comme lues', 'success');
     } catch (error) {
       console.error('Error marking all as read:', error);
@@ -988,6 +990,7 @@ const NotificationsPage = () => {
         )
       );
       await fetchStatistics();
+      window.dispatchEvent(new Event('notifications:refresh'));
       showToast('✅ Notification marquée comme lue', 'success');
     } catch (error) {
       console.error('Error marking as read:', error);

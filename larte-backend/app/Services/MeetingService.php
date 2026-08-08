@@ -65,6 +65,15 @@ class MeetingService
         $this->syncInvitees($meeting, $inviteeUserIds, false);
         $this->logActivity($meeting, MeetingActivity::ACTION_CREATED, 'Meeting created as draft');
 
+        $creator = User::find(auth()->id());
+        if ($creator) {
+            app(EntityCreatedNotificationService::class)->notify(
+                'meeting',
+                $meeting->fresh()->load(['customer', 'order', 'creator', 'invitees.user']),
+                $creator,
+            );
+        }
+
         if ($publish) {
             return $this->schedule($meeting);
         }

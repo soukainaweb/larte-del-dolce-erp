@@ -46,6 +46,7 @@ class CustomerService
         $customer = Customer::create($data);
 
         ActivityLogger::logModelEvent($customer, 'created', sprintf('Client %s créé', $customer->name));
+        app(EntityCreatedNotificationService::class)->notify('customer', $customer);
 
         return $customer;
     }

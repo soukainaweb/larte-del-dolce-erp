@@ -393,7 +393,7 @@ const DEFAULT_MENU_CONFIG = [
     icon: Bell,
     route: '/dashboard/notifications',
     roles: [],
-    badge: 8,
+    badge: null,
     children: null,
     permission: 'notifications.view',
     visible: true,
@@ -745,6 +745,7 @@ const Sidebar = ({
   onLogout = () => {},
   language = 'ar',
   className = '',
+  unreadNotificationCount = 0,
 }) => {
   const { t } = useTranslation();
   const isRTL = true;
@@ -758,8 +759,11 @@ const Sidebar = ({
     menuItems.map((item) => ({
       ...item,
       title: getNavLabel(t, item.id),
+      badge: item.id === 'notifications' && unreadNotificationCount > 0
+        ? unreadNotificationCount
+        : item.badge,
     })),
-  [menuItems, t, language]);
+  [menuItems, t, language, unreadNotificationCount]);
 
   const handleNavigate = useCallback(
     (item) => {

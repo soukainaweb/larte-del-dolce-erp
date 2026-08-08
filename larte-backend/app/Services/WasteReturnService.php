@@ -48,7 +48,10 @@ class WasteReturnService
                 $product->decrement('stock_quantity', (int) $data['quantity']);
             }
 
-            return $record->load(['product', 'creator']);
+            $record = $record->load(['product', 'creator']);
+            app(EntityCreatedNotificationService::class)->notify('waste_return', $record);
+
+            return $record;
         });
     }
 

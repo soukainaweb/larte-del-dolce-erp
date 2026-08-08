@@ -56,7 +56,12 @@ const DashboardLayout = () => {
     if (isAuthenticated) {
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 60000);
-      return () => clearInterval(interval);
+      const handleRefresh = () => fetchNotifications();
+      window.addEventListener('notifications:refresh', handleRefresh);
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('notifications:refresh', handleRefresh);
+      };
     }
   }, [isAuthenticated, fetchNotifications]);
 
@@ -234,6 +239,7 @@ const DashboardLayout = () => {
         onLogout={handleLogout}
         onHelp={handleHelp}
         onDocumentation={handleDocumentation}
+        unreadNotificationCount={unreadCount}
         language="ar"
         appName={t('common.appName')}
         appSuffix={t('common.erp')}

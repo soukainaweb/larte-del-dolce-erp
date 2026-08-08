@@ -47,7 +47,10 @@ class PurchaseService
                 Product::whereKey($data['product_id'])->increment('stock_quantity', (int) $data['quantity']);
             }
 
-            return $purchase->load(['product', 'supplier', 'creator']);
+            $purchase = $purchase->load(['product', 'supplier', 'creator']);
+            app(EntityCreatedNotificationService::class)->notify('purchase', $purchase);
+
+            return $purchase;
         });
     }
 

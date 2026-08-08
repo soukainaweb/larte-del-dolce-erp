@@ -57,6 +57,7 @@ class UserService
         ]))->load('role');
 
         ActivityLogger::logModelEvent($user, 'created', sprintf('Utilisateur %s créé', $user->email));
+        app(EntityCreatedNotificationService::class)->notify('user', $user);
 
         return [
             'user' => $user,

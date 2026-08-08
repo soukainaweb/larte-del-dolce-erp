@@ -32,7 +32,10 @@ class CategoryService
         $data['slug'] = Str::slug($data['name']) . '-' . Str::random(4);
         $data['created_by'] = auth()->id();
 
-        return Category::create($data);
+        $category = Category::create($data);
+        app(EntityCreatedNotificationService::class)->notify('category', $category);
+
+        return $category;
     }
 
     public function update(Category $category, array $data): Category

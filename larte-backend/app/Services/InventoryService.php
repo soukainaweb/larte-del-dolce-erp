@@ -34,7 +34,10 @@ class InventoryService
 
     public function create(array $data): Inventory
     {
-        return Inventory::create($data)->load(['product', 'warehouse']);
+        $inventory = Inventory::create($data)->load(['product', 'warehouse']);
+        app(EntityCreatedNotificationService::class)->notify('inventory', $inventory);
+
+        return $inventory;
     }
 
     public function update(Inventory $inventory, array $data): Inventory

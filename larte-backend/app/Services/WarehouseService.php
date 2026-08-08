@@ -26,7 +26,10 @@ class WarehouseService
 
     public function create(array $data): Warehouse
     {
-        return Warehouse::create($data)->load('manager');
+        $warehouse = Warehouse::create($data)->load('manager');
+        app(EntityCreatedNotificationService::class)->notify('warehouse', $warehouse);
+
+        return $warehouse;
     }
 
     public function update(Warehouse $warehouse, array $data): Warehouse

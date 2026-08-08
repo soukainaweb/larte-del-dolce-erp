@@ -57,6 +57,8 @@ class InvoiceService
             description: sprintf('Facture %s créée', $invoiceNumber),
         );
 
+        app(EntityCreatedNotificationService::class)->notify('invoice', $invoice);
+
         return $invoice;
     }
 
