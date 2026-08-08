@@ -158,11 +158,17 @@ import {
   getNotificationRoute, 
   getModuleLabel, 
   getModuleIcon,
+  resolveNotificationIcon,
   hasDetailRoute 
 } from '../../utils/notificationRoutes';
 import {
+  fetchNotificationPage,
+  unwrapNotificationStatistics,
+  getApiErrorMessage,
+  ensureArray,
+} from '../../utils/apiHelpers';
+import {
   getNotifications,
-  getNotificationById,
   markNotificationAsRead,
   markMultipleAsRead,
   markAllAsRead,
@@ -170,12 +176,7 @@ import {
   deleteMultipleNotifications,
   deleteAllReadNotifications,
   getNotificationStatistics,
-  exportNotifications,
-  getNotificationModules,
-  getNotificationPriorities,
-  getUnreadCount
 } from '../../services/notificationService';
-import { safeArray, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
 
 // ==========================================
 // CONSTANTES
@@ -291,7 +292,7 @@ const NotificationItem = ({
     critical: t('notifications.kpi.critical')
   };
 
-  const Icon = notification.icon;
+  const Icon = resolveNotificationIcon(notification);
   const moduleLabel = getModuleLabel(notification);
   const route = getNotificationRoute(notification);
 
@@ -419,7 +420,7 @@ const NotificationDetailModal = ({ isOpen, onClose, notification, onMarkRead }) 
     critical: 'bg-red-800 text-white'
   };
 
-  const Icon = notification.icon;
+  const Icon = resolveNotificationIcon(notification);
   const route = getNotificationRoute(notification);
   const moduleLabel = getModuleLabel(notification);
 
@@ -738,7 +739,7 @@ const NotificationsPage = () => {
     status: 'all'
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(8);
+  const [pageSize] = useState(10);
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [toast, setToast] = useState({ isOpen: false, message: '', type: 'success' });
@@ -753,22 +754,18 @@ const NotificationsPage = () => {
         page: currentPage,
         per_page: pageSize,
         search: searchTerm || undefined,
-        module: filters.module !== 'Tous' ? filters.module : undefined,
-        priority: filters.priority !== 'all' ? filters.priority : undefined,
         status: filters.status !== 'all' ? filters.status : undefined,
-        period: filters.period !== 'all' ? filters.period : undefined,
         sort_by: 'created_at',
         sort_order: 'desc'
       };
-      const response = await getNotifications(params);
-      const res = response?.data;
-      const list = safeArray(res);
-      setNotifications(list);
-      setTotalCount(res?.meta?.total ?? list.length);
+      const { items, meta } = await fetchNotificationPage(getNotifications, params);
+      setNotifications(items);
+      setTotalCount(Number(meta.total ?? items.length));
     } catch (error) {
       console.error('Error fetching notifications:', error);
       showToast(getApiErrorMessage(error, t('errors.loadFailed')), 'error');
       setNotifications([]);
+      setTotalCount(0);
     } finally {
       setIsLoading(false);
     }
@@ -786,13 +783,7 @@ const NotificationsPage = () => {
       const response = await getNotificationStatistics({
         period: filters.period !== 'all' ? filters.period : undefined
       });
-      const data = response.data.data || {};
-      setStats({
-        total: data.total || 0,
-        unread: data.unread || 0,
-        critical: data.critical || 0,
-        today: data.today || 0
-      });
+      setStats(unwrapNotificationStatistics(response));
     } catch (error) {
       console.error('Error fetching notification statistics:', error);
     }
@@ -800,10 +791,16 @@ const NotificationsPage = () => {
 
   useEffect(() => {
     fetchStatistics();
-  }, [filters.period]);
+  }, [filters.period, filters.status]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filters.status]);
 
   // Pagination
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
+  const rangeStart = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const rangeEnd = totalCount === 0 ? 0 : Math.min(currentPage * pageSize, totalCount);
 
   // ==========================================
   // EXPORT CONFIGURATION
@@ -1172,6 +1169,10 @@ const NotificationsPage = () => {
           value={stats.total}
           color="blue"
           subtitle="Toutes"
+          onClick={() => {
+            setFilters((prev) => ({ ...prev, status: 'all' }));
+            setCurrentPage(1);
+          }}
         />
         <KPICard
           icon={BellRing}
@@ -1179,6 +1180,10 @@ const NotificationsPage = () => {
           value={stats.unread}
           color="amber"
           subtitle="À lire"
+          onClick={() => {
+            setFilters((prev) => ({ ...prev, status: 'unread' }));
+            setCurrentPage(1);
+          }}
         />
         <KPICard
           icon={AlertCircle}
@@ -1234,7 +1239,7 @@ const NotificationsPage = () => {
           </div>
           <div className="flex items-center gap-1 md:gap-2 text-[9px] md:text-xs text-[#6D6D6D]">
             <span className="hidden sm:inline">Affichage de </span>
-            <span>{(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalCount)}</span>
+            <span>{rangeStart} - {rangeEnd}</span>
             <span className="hidden sm:inline">sur {totalCount}</span>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
 import { getNotifications, markNotificationAsRead } from '../../../services/notificationService';
+import { fetchNotificationPage } from '../../../utils/apiHelpers';
 import { useUnreadNotificationCount, dispatchNotificationsRefresh } from '../../../hooks/useUnreadNotificationCount';
 import { findSearchRoute, getActiveMenuId } from '../../../utils/searchRoutes';
 import { getNotificationRoute } from '../../../utils/notificationRoutes';
@@ -39,9 +40,11 @@ const DashboardLayout = () => {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const listRes = await getNotifications({ per_page: 5, status: 'unread' });
-      const list = listRes.data?.data?.data || listRes.data?.data || listRes.data || [];
-      setNotifications(Array.isArray(list) ? list : []);
+      const { items } = await fetchNotificationPage(getNotifications, {
+        per_page: 5,
+        status: 'unread',
+      });
+      setNotifications(items);
     } catch {
       setNotifications([]);
     }

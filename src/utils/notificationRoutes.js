@@ -1,5 +1,26 @@
 // src/utils/notificationRoutes.js
 
+import {
+  Bell,
+  ShoppingBag,
+  User,
+  Package,
+  Layers,
+  Tag,
+  FileText,
+  CreditCard,
+  Factory,
+  Truck,
+  Users,
+  UserRound,
+  BarChart3,
+  Settings,
+  Activity,
+  Calendar,
+  ShoppingCart,
+  Wallet,
+} from 'lucide-react';
+
 /**
  * Mapping des types de notifications vers leurs routes
  * TOUTES LES ROUTES SONT PRÉFIXÉES PAR /dashboard
@@ -258,6 +279,35 @@ export const getModuleIcon = (notification) => {
     system: 'Settings'
   };
   return icons[notification.type] || 'Bell';
+};
+
+const MODULE_ICON_COMPONENTS = {
+  Bell,
+  ShoppingBag,
+  User,
+  Package,
+  Layers,
+  Tag,
+  FileText,
+  CreditCard,
+  Factory,
+  Truck,
+  Users,
+  UserRound,
+  BarChart3,
+  Settings,
+  Activity,
+  Calendar,
+  ShoppingCart,
+  Wallet,
+};
+
+/**
+ * Resolve the Lucide icon component for a notification.
+ */
+export const resolveNotificationIcon = (notification) => {
+  const iconName = getModuleIcon(notification);
+  return MODULE_ICON_COMPONENTS[iconName] || Bell;
 };
 
 /**

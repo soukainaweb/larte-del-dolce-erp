@@ -405,11 +405,85 @@ export const safeReduce = (value, reducer, initialValue) => {
  * Handles Laravel envelopes and paginated payloads.
  */
 export const safeArray = (payload) => {
-  const data = payload?.data !== undefined && (payload?.status !== undefined || payload?.headers !== undefined)
-    ? payload.data
-    : payload;
+  const { items } = unwrapPaginated(payload);
+  return items;
+};
 
-  return Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+/**
+ * Normalize a notification record from the API for UI consumption.
+ */
+export const normalizeNotificationRecord = (raw) => {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const createdAt = raw.created_at ? new Date(raw.created_at) : null;
+  const message = raw.message ?? raw.description ?? '';
+  const routeMatch = message.match(/(https?:\/\/[^\s]+|\/dashboard\/[^\s]+)/);
+  let route = raw.route ?? null;
+  let entityId = raw.entity_id ?? raw.entityId ?? null;
+
+  if (routeMatch) {
+    try {
+      const parsed = new URL(routeMatch[1], 'http://local');
+      route = parsed.pathname + parsed.search;
+    } catch {
+      route = routeMatch[1].startsWith('/') ? routeMatch[1] : route;
+    }
+
+    if (!entityId) {
+      const idMatch = route.match(/\/(\d+)(?:\?|$)/);
+      entityId = idMatch ? idMatch[1] : entityId;
+    }
+  }
+
+  return {
+    ...raw,
+    title: raw.title || '—',
+    description: message,
+    message,
+    type: raw.type || 'system',
+    module: raw.type || 'system',
+    isRead: Boolean(raw.is_read ?? raw.isRead),
+    priority: raw.priority || 'medium',
+    createdBy: raw.created_by
+      ?? (raw.user
+        ? `${raw.user.first_name || ''} ${raw.user.last_name || ''}`.trim() || raw.user.email
+        : 'Système'),
+    createdAt: createdAt
+      ? createdAt.toLocaleDateString('ar-SA')
+      : '—',
+    time: createdAt
+      ? createdAt.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })
+      : '—',
+    entityId,
+    route,
+  };
+};
+
+/**
+ * Fetch notifications list with pagination metadata.
+ */
+export const fetchNotificationPage = async (getNotifications, params = {}) => {
+  const response = await getNotifications(params);
+  const { items, meta } = unwrapPaginated(response);
+
+  return {
+    items: items.map(normalizeNotificationRecord).filter(Boolean),
+    meta,
+  };
+};
+
+/**
+ * Unwrap notification statistics payload.
+ */
+export const unwrapNotificationStatistics = (payload) => {
+  const data = unwrapData(payload) || {};
+
+  return {
+    total: Number(data.total ?? 0),
+    unread: Number(data.unread ?? 0),
+    critical: Number(data.critical ?? 0),
+    today: Number(data.today ?? 0),
+  };
 };
 
 const ACTIVITY_DATE_LOCALE = 'ar-SA';

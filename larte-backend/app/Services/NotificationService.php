@@ -12,8 +12,22 @@ class NotificationService
         $userId = $userId ?? auth()->id();
         $query = Notification::where('user_id', $userId);
 
-        if (isset($filters['is_read'])) {
+        if (! empty($filters['status']) && $filters['status'] !== 'all') {
+            if ($filters['status'] === 'unread') {
+                $query->where('is_read', false);
+            } elseif ($filters['status'] === 'read') {
+                $query->where('is_read', true);
+            }
+        } elseif (isset($filters['is_read'])) {
             $query->where('is_read', filter_var($filters['is_read'], FILTER_VALIDATE_BOOLEAN));
+        }
+
+        if (! empty($filters['search'])) {
+            $search = trim((string) $filters['search']);
+            $query->where(function ($builder) use ($search) {
+                $builder->where('title', 'like', "%{$search}%")
+                    ->orWhere('message', 'like', "%{$search}%");
+            });
         }
 
         return $query->orderByDesc('created_at')->paginate($filters['per_page'] ?? 10);
