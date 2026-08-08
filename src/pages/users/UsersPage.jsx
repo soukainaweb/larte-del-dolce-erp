@@ -34,6 +34,7 @@ import {
   createUser,
   updateUser,
   deleteUser,
+  resetUserPassword,
   updateUserStatus,
   updateUserRole,
   getUserStatistics,
@@ -547,7 +548,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, user, isLoading }) => {
 // ==========================================
 // USER DETAILS MODAL
 // ==========================================
-const UserDetailsModal = ({ isOpen, onClose, user }) => {
+const UserDetailsModal = ({ isOpen, onClose, user, onResetPassword, canResetPassword, isResetting }) => {
   const { t, tc } = usePageI18n('users');
 
   if (!isOpen || !user) return null;
@@ -607,6 +608,17 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
             </div>
           </div>
 
+          {canResetPassword && (
+            <button
+              type="button"
+              onClick={() => onResetPassword?.(user)}
+              disabled={isResetting}
+              className="w-full py-2.5 text-sm font-medium text-[#B8863B] border border-[#B8863B]/30 rounded-lg hover:bg-[#B8863B]/5 transition-colors disabled:opacity-50"
+            >
+              {isResetting ? tc('loading') : t('users.actions.resetPassword')}
+            </button>
+          )}
+
           <button
             onClick={onClose}
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
@@ -625,6 +637,7 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
 const UsersPage = () => {
   const { user, permissions, roleKey } = useAuth();
   const canCreateUsers = hasPermission('users.create', permissions, user?.role ?? roleKey);
+  const canUpdateUsers = hasPermission('users.update', permissions, user?.role ?? roleKey);
   const { title, subtitle, searchPlaceholder, t, commonStatus, actions, tc } = usePageI18n('users');
   const location = useLocation();
   const navigate = useNavigate();
@@ -649,6 +662,7 @@ const UsersPage = () => {
   const [createPresetRoleId, setCreatePresetRoleId] = useState(null);
   const [createdUserInfo, setCreatedUserInfo] = useState(null);
   const [isCreatedSuccessOpen, setIsCreatedSuccessOpen] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -851,6 +865,31 @@ const UsersPage = () => {
       }
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleResetPassword = async (targetUser) => {
+    setIsResettingPassword(true);
+    try {
+      const response = await resetUserPassword(targetUser.id);
+      const body = unwrapData(response);
+      const temporaryPassword = body?.temporary_password ?? response.temporaryPassword;
+      setIsDetailsModalOpen(false);
+      setSelectedUser(null);
+      if (temporaryPassword) {
+        setCreatedUserInfo({
+          email: targetUser.email,
+          temporaryPassword,
+          role: targetUser.role,
+        });
+        setIsCreatedSuccessOpen(true);
+      } else {
+        dispatchAppToast(t('users.success.passwordReset'), 'success');
+      }
+    } catch (error) {
+      dispatchAppToast(getApiErrorMessage(error, t('errors.saveFailed')), 'error');
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -1180,6 +1219,9 @@ const UsersPage = () => {
               setSelectedUser(null);
             }}
             user={selectedUser}
+            onResetPassword={handleResetPassword}
+            canResetPassword={canUpdateUsers}
+            isResetting={isResettingPassword}
           />
         )}
 

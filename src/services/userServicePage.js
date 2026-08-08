@@ -75,6 +75,16 @@ export const deleteUser = (id) => {
 };
 
 /**
+ * Admin/Manager reset user password — generates new temporary password.
+ */
+export const resetUserPassword = async (id) => {
+  const response = await api.post(`/users/${id}/reset-password`);
+  const body = unwrapData(response.data);
+  response.temporaryPassword = body?.temporary_password ?? null;
+  return response;
+};
+
+/**
  * Force delete a user (permanent)
  * @param {number|string} id - User ID
  * @returns {Promise} - Axios response

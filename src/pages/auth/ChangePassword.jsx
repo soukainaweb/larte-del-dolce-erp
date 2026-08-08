@@ -1,6 +1,6 @@
 // src/pages/auth/ChangePassword.jsx
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -10,20 +10,27 @@ import {
   FaEyeSlash,
   FaShieldAlt,
   FaCheckCircle,
-  FaTimes,
-  FaArrowLeft,
+  FaSignOutAlt,
 } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { changePassword } from '../../services/authService';
+import { extractUserFromResponse, getApiErrorMessage, normalizeUser } from '../../utils/apiHelpers';
+import AuthBrandPanel from '../../components/auth/AuthBrandPanel';
+import AuthLogoMark from '../../components/auth/AuthLogoMark';
 
 const ChangePassword = () => {
   const { t } = useTranslation();
+  const { logout, updateUser, user } = useAuth();
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [passwordRules, setPasswordRules] = useState({
@@ -31,8 +38,9 @@ const ChangePassword = () => {
     uppercase: false,
     lowercase: false,
     number: false,
-    special: false,
   });
+
+  const isMandatory = Boolean(user?.mustChangePassword);
 
   const schema = useMemo(
     () =>
@@ -45,7 +53,7 @@ const ChangePassword = () => {
           .matches(/[A-Z]/, t('auth.uppercaseRequired'))
           .matches(/[a-z]/, t('auth.lowercaseRequired'))
           .matches(/[0-9]/, t('auth.numberRequired'))
-          .matches(/[!@#$%^&*(),.?":{}|<>]/, t('auth.specialRequired')),
+          .notOneOf([yup.ref('currentPassword')], t('auth.newPasswordMustDiffer')),
         confirmPassword: yup
           .string()
           .required(t('auth.confirmPasswordRequired'))
@@ -59,7 +67,6 @@ const ChangePassword = () => {
     handleSubmit,
     watch,
     formState: { errors },
-    reset,
   } = useForm({
     resolver: yupResolver(schema),
     mode: 'onChange',
@@ -68,37 +75,30 @@ const ChangePassword = () => {
   const newPassword = watch('newPassword', '');
 
   const calculateStrength = (password) => {
-    let strength = 0;
     const rules = {
       length: password.length >= 8,
       uppercase: /[A-Z]/.test(password),
       lowercase: /[a-z]/.test(password),
       number: /[0-9]/.test(password),
-      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
     };
 
     setPasswordRules(rules);
-
-    Object.values(rules).forEach((rule) => {
-      if (rule) strength += 20;
-    });
-
-    setPasswordStrength(strength);
+    setPasswordStrength(Object.values(rules).filter(Boolean).length * 25);
   };
 
   const getStrengthLabel = (score) => {
     if (score === 0) return t('auth.strengthVeryWeak');
-    if (score <= 20) return t('auth.strengthWeak');
-    if (score <= 40) return t('auth.strengthMedium');
-    if (score <= 60) return t('auth.strengthStrong');
+    if (score <= 25) return t('auth.strengthWeak');
+    if (score <= 50) return t('auth.strengthMedium');
+    if (score <= 75) return t('auth.strengthStrong');
     return t('auth.strengthVeryStrong');
   };
 
   const getStrengthColor = (score) => {
     if (score === 0) return 'bg-[#E8DDD1]';
-    if (score <= 20) return 'bg-[#D8B67A]';
-    if (score <= 40) return 'bg-[#C89B5A]';
-    if (score <= 60) return 'bg-[#B8863B]';
+    if (score <= 25) return 'bg-[#D8B67A]';
+    if (score <= 50) return 'bg-[#C89B5A]';
+    if (score <= 75) return 'bg-[#B8863B]';
     return 'bg-[#9E6C30]';
   };
 
@@ -108,7 +108,6 @@ const ChangePassword = () => {
       { key: 'uppercase', label: t('auth.ruleUppercase') },
       { key: 'lowercase', label: t('auth.ruleLowercase') },
       { key: 'number', label: t('auth.ruleNumber') },
-      { key: 'special', label: t('auth.ruleSpecial') },
     ],
     [t]
   );
@@ -116,123 +115,111 @@ const ChangePassword = () => {
   const onSubmit = async (data) => {
     setIsLoading(true);
     setError('');
+
     try {
-      await changePassword({
+      const response = await changePassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
-        newPassword_confirmation: data.confirmPassword,
+        confirmPassword: data.confirmPassword,
       });
-      setIsSuccess(true);
-      reset();
-      setPasswordStrength(0);
-      setPasswordRules({
-        length: false,
-        uppercase: false,
-        lowercase: false,
-        number: false,
-        special: false,
-      });
+
+      const updatedUser = extractUserFromResponse(response);
+      if (updatedUser) {
+        updateUser(normalizeUser(updatedUser));
+      } else {
+        updateUser({ ...user, mustChangePassword: false, must_change_password: false });
+      }
+
+      showToast(t('auth.passwordUpdated'), 'success');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
-      console.error('Change password error:', err);
-      setError(err.response?.data?.message || t('auth.changePasswordError'));
+      setError(getApiErrorMessage(err, t('auth.changePasswordError')));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        staggerChildren: 0.1,
-      },
-    },
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.4 },
-    },
-  };
+  const inputClass = (hasError) =>
+    `w-full h-[54px] ps-12 pe-12 rounded-[18px] border ${
+      hasError ? 'border-rose-500' : 'border-[#E8DDD1]'
+    } bg-white focus:border-[#B8863B] focus:ring-2 focus:ring-[#B8863B]/20 focus:outline-none transition-all duration-300 text-[#3D2F24] placeholder-[#B0A8A0] text-start`;
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen w-full bg-[#FAF7F2] flex items-center justify-center p-4 sm:p-6 lg:p-8 font-inter relative overflow-hidden" dir="rtl">
+      <div className="absolute top-[-20%] end-[-10%] w-[500px] h-[500px] rounded-full bg-[#B8863B]/6 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-20%] start-[-10%] w-[500px] h-[500px] rounded-full bg-[#C89B5A]/8 blur-3xl pointer-events-none" />
+
       <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-        className="bg-white rounded-2xl shadow-xl shadow-gray-100/50 overflow-hidden border border-gray-100"
+        className="w-full max-w-[1280px] bg-white/95 backdrop-blur-sm rounded-[22px] shadow-[0_30px_80px_rgba(61,47,36,0.1)] overflow-hidden flex flex-col lg:flex-row border border-[#E8DDD1]/50"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
       >
-        <motion.div variants={itemVariants} className="px-8 pt-8 pb-6 border-b border-gray-100">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#B88646] to-[#9E6C30] flex items-center justify-center shadow-lg shadow-[#B88646]/25 flex-shrink-0">
-              <FaShieldAlt className="text-white text-2xl" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{t('auth.changePassword')}</h1>
-              <p className="text-sm text-gray-500 mt-1">{t('auth.changePasswordSubtitle')}</p>
-            </div>
-          </div>
-        </motion.div>
+        <AuthBrandPanel subtitle={isMandatory ? t('auth.mustChangePasswordSubtitle') : t('auth.changePasswordSubtitle')} />
 
-        <motion.div variants={itemVariants} className="p-8">
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm text-center"
-            >
-              {error}
-            </motion.div>
-          )}
+        <div className="flex-1 p-8 sm:p-10 lg:p-12 xl:p-16 flex flex-col justify-center">
+          <div className="max-w-md mx-auto w-full">
+            <div className="flex justify-center mb-6 lg:hidden">
+              <AuthLogoMark />
+            </div>
 
-          {!isSuccess ? (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#B88646] to-[#9E6C30] flex items-center justify-center shadow-lg shadow-[#B88646]/25 flex-shrink-0">
+                <FaShieldAlt className="text-white text-xl" />
+              </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  {t('auth.currentPassword')}
-                </label>
+                <h1 className="text-2xl font-bold text-[#3D2F24]">{t('auth.changePassword')}</h1>
+                <p className="text-sm text-[#6D6D6D] mt-1">
+                  {isMandatory ? t('auth.mustChangePasswordMessage') : t('auth.changePasswordSubtitle')}
+                </p>
+              </div>
+            </div>
+
+            {isMandatory && (
+              <div className="mt-4 mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm leading-relaxed">
+                {t('auth.mustChangePasswordBanner')}
+              </div>
+            )}
+
+            {error && (
+              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm text-center" role="alert">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 mt-6">
+              <div>
+                <label className="block text-sm font-medium text-[#3D2F24] mb-1.5">{t('auth.currentPassword')}</label>
                 <div className="relative">
-                  <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+                  <FaLock className="absolute start-4 top-1/2 -translate-y-1/2 text-[#B0A8A0] text-lg" />
                   <input
                     type={showCurrentPassword ? 'text' : 'password'}
                     {...register('currentPassword')}
                     placeholder={t('common.placeholders.currentPassword')}
-                    className={`w-full h-[54px] pl-12 pr-12 rounded-xl border ${
-                      errors.currentPassword ? 'border-red-500' : 'border-gray-200'
-                    } bg-gray-50/50 focus:bg-white focus:border-[#B88646] focus:ring-2 focus:ring-[#B88646]/20 focus:outline-none transition-all duration-300 text-gray-900 placeholder-gray-400 text-start`}
+                    className={inputClass(errors.currentPassword)}
                   />
                   <button
                     type="button"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                    className="absolute end-4 top-1/2 -translate-y-1/2 text-[#B0A8A0] hover:text-[#6D6D6D]"
                   >
                     {showCurrentPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
                   </button>
                 </div>
                 {errors.currentPassword && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-red-500 text-sm mt-1.5"
-                  >
-                    {errors.currentPassword.message}
-                  </motion.p>
+                  <p className="text-rose-500 text-sm mt-1.5">{errors.currentPassword.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  {t('auth.newPassword')}
-                </label>
+                <label className="block text-sm font-medium text-[#3D2F24] mb-1.5">{t('auth.newPassword')}</label>
                 <div className="relative">
-                  <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+                  <FaLock className="absolute start-4 top-1/2 -translate-y-1/2 text-[#B0A8A0] text-lg" />
                   <input
                     type={showNewPassword ? 'text' : 'password'}
                     {...register('newPassword')}
@@ -241,162 +228,93 @@ const ChangePassword = () => {
                       register('newPassword').onChange(e);
                       calculateStrength(e.target.value);
                     }}
-                    className={`w-full h-[54px] pl-12 pr-12 rounded-xl border ${
-                      errors.newPassword ? 'border-red-500' : 'border-gray-200'
-                    } bg-gray-50/50 focus:bg-white focus:border-[#B88646] focus:ring-2 focus:ring-[#B88646]/20 focus:outline-none transition-all duration-300 text-gray-900 placeholder-gray-400 text-start`}
+                    className={inputClass(errors.newPassword)}
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                    className="absolute end-4 top-1/2 -translate-y-1/2 text-[#B0A8A0] hover:text-[#6D6D6D]"
                   >
                     {showNewPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
                   </button>
                 </div>
                 {errors.newPassword && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-red-500 text-sm mt-1.5"
-                  >
-                    {errors.newPassword.message}
-                  </motion.p>
+                  <p className="text-rose-500 text-sm mt-1.5">{errors.newPassword.message}</p>
                 )}
 
                 {newPassword.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="mt-3 space-y-2"
-                  >
+                  <div className="mt-3 space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">
-                        {t('auth.passwordStrength')}
-                      </span>
-                      <span className={`text-sm font-semibold ${
-                        passwordStrength > 60 ? 'text-[#B8863B]' :
-                        passwordStrength > 40 ? 'text-[#C89B5A]' :
-                        passwordStrength > 20 ? 'text-[#D8B67A]' :
-                        'text-[#7A6855]'
-                      }`}>
-                        {getStrengthLabel(passwordStrength)}
-                      </span>
+                      <span className="text-sm font-medium text-[#3D2F24]">{t('auth.passwordStrength')}</span>
+                      <span className="text-sm font-semibold text-[#B8863B]">{getStrengthLabel(passwordStrength)}</span>
                     </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${passwordStrength}%` }}
-                        transition={{ duration: 0.5 }}
+                    <div className="h-2 bg-[#ECE8E1] rounded-full overflow-hidden">
+                      <div
                         className={`h-full rounded-full transition-all ${getStrengthColor(passwordStrength)}`}
+                        style={{ width: `${passwordStrength}%` }}
                       />
                     </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                       {passwordRuleItems.map((rule) => (
                         <div key={rule.key} className="flex items-center gap-2 text-sm">
                           {passwordRules[rule.key] ? (
-                            <FaCheckCircle className="text-green-500 text-sm flex-shrink-0" />
+                            <FaCheckCircle className="text-emerald-500 text-sm flex-shrink-0" />
                           ) : (
-                            <div className="w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                            <div className="w-4 h-4 rounded-full border-2 border-[#D8D2C8] flex-shrink-0" />
                           )}
-                          <span className={passwordRules[rule.key] ? 'text-green-600' : 'text-gray-500'}>
+                          <span className={passwordRules[rule.key] ? 'text-emerald-600' : 'text-[#6D6D6D]'}>
                             {rule.label}
                           </span>
                         </div>
                       ))}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  {t('auth.confirmPassword')}
-                </label>
+                <label className="block text-sm font-medium text-[#3D2F24] mb-1.5">{t('auth.confirmPassword')}</label>
                 <div className="relative">
-                  <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+                  <FaLock className="absolute start-4 top-1/2 -translate-y-1/2 text-[#B0A8A0] text-lg" />
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
                     {...register('confirmPassword')}
                     placeholder={t('common.placeholders.confirmNewPassword')}
-                    className={`w-full h-[54px] pl-12 pr-12 rounded-xl border ${
-                      errors.confirmPassword ? 'border-red-500' : 'border-gray-200'
-                    } bg-gray-50/50 focus:bg-white focus:border-[#B88646] focus:ring-2 focus:ring-[#B88646]/20 focus:outline-none transition-all duration-300 text-gray-900 placeholder-gray-400 text-start`}
+                    className={inputClass(errors.confirmPassword)}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                    className="absolute end-4 top-1/2 -translate-y-1/2 text-[#B0A8A0] hover:text-[#6D6D6D]"
                   >
                     {showConfirmPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-red-500 text-sm mt-1.5"
-                  >
-                    {errors.confirmPassword.message}
-                  </motion.p>
+                  <p className="text-rose-500 text-sm mt-1.5">{errors.confirmPassword.message}</p>
                 )}
               </div>
 
-              <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-3 pt-4">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 h-[54px] rounded-xl bg-gradient-to-r from-[#B88646] to-[#9E6C30] text-white font-semibold text-lg shadow-lg shadow-[#B88646]/25 hover:shadow-xl hover:shadow-[#B88646]/35 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 h-[54px] rounded-[18px] bg-gradient-to-r from-[#B88646] to-[#9E6C30] text-white font-semibold shadow-lg shadow-[#B88646]/25 hover:shadow-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {isLoading ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      {t('auth.updatingPassword')}
-                    </>
-                  ) : (
-                    t('auth.changePassword')
-                  )}
-                </motion.button>
-
-                <Link
-                  to="/dashboard/profile"
-                  className="flex-1 h-[54px] rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 flex items-center justify-center gap-2"
+                  {isLoading ? t('auth.updatingPassword') : t('auth.changePassword')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex-1 h-[54px] rounded-[18px] border-2 border-[#E8DDD1] text-[#3D2F24] font-semibold hover:bg-[#F8F7F4] transition-all flex items-center justify-center gap-2"
                 >
-                  <FaTimes className="text-lg" />
-                  {t('common.cancel')}
-                </Link>
-              </motion.div>
-            </form>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-12"
-            >
-              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-                <FaCheckCircle className="text-green-500 text-4xl" />
+                  <FaSignOutAlt />
+                  {t('auth.logout')}
+                </button>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                {t('auth.passwordUpdated')}
-              </h2>
-              <p className="text-gray-500 text-sm max-w-md mx-auto mb-8">
-                {t('auth.passwordUpdatedDetail')}
-              </p>
-              <Link
-                to="/profile"
-                className="inline-flex items-center gap-2 text-[#B88646] hover:text-[#9E6C30] font-semibold transition-colors duration-200"
-              >
-                <FaArrowLeft className="text-sm" />
-                {t('auth.backToProfile')}
-              </Link>
-            </motion.div>
-          )}
-        </motion.div>
+            </form>
+          </div>
+        </div>
       </motion.div>
     </div>
   );

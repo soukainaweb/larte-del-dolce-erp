@@ -51,7 +51,7 @@ import PermissionRoute from '../components/auth/PermissionRoute';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return <AuthLoadingScreen />;
@@ -61,26 +61,65 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
+  if (user?.mustChangePassword) {
+    return <Navigate to="/change-password" replace />;
+  }
+
   return children;
 };
 
-const PublicAuthRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+const MustChangePasswordRoute = ({ children }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return <AuthLoadingScreen />;
   }
 
-  if (isAuthenticated) {
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user && !user.mustChangePassword) {
     return <Navigate to="/dashboard" replace />;
   }
 
   return children;
 };
 
+const PublicAuthRoute = ({ children }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return <AuthLoadingScreen />;
+  }
+
+  if (isAuthenticated) {
+    if (user?.mustChangePassword) {
+      return <Navigate to="/change-password" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
+const HomeRedirect = () => {
+  const { isAuthenticated, user } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user?.mustChangePassword) {
+    return <Navigate to="/change-password" replace />;
+  }
+
+  return <Navigate to="/dashboard" replace />;
+};
+
 // App Routes
 const AppRoutes = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return <AuthLoadingScreen />;
@@ -96,7 +135,11 @@ const AppRoutes = () => {
       } />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/change-password" element={<ChangePassword />} />
+      <Route path="/change-password" element={
+        <MustChangePasswordRoute>
+          <ChangePassword />
+        </MustChangePasswordRoute>
+      } />
 
       {/* Protected Routes - DashboardLayout */}
       <Route path="/dashboard" element={
@@ -160,12 +203,8 @@ const AppRoutes = () => {
       </Route>
 
       {/* Redirects */}
-      <Route path="/" element={
-        <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
-      } />
-      <Route path="*" element={
-        <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
-      } />
+      <Route path="/" element={<HomeRedirect />} />
+      <Route path="*" element={<HomeRedirect />} />
     </Routes>
   );
 };

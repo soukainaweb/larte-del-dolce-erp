@@ -51,7 +51,12 @@ const Login = () => {
 
       login(userData, token);
       showToast(t('auth.loginSuccess'), 'success');
-      navigate('/dashboard', { replace: true });
+
+      const mustChangePassword = Boolean(
+        userData?.must_change_password ?? userData?.mustChangePassword
+      );
+
+      navigate(mustChangePassword ? '/change-password' : '/dashboard', { replace: true });
     } catch (err) {
       const errorMessage = getApiErrorMessage(err, t('auth.loginError'));
       setError(errorMessage);

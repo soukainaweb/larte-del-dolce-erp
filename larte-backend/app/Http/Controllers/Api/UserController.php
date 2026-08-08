@@ -127,4 +127,20 @@ class UserController extends Controller
 
         return $this->success(null, 'Lien de réinitialisation envoyé');
     }
+
+    public function resetPassword(User $user)
+    {
+        $this->authorize('update', $user);
+
+        $result = $this->userService->resetPassword($user);
+        $resetUser = $result['user'];
+
+        return $this->success(
+            array_merge($resetUser->toArray(), [
+                'role' => $resetUser->role,
+                'temporary_password' => $result['temporary_password'],
+            ]),
+            'تم إعادة تعيين كلمة المرور بنجاح'
+        );
+    }
 }
