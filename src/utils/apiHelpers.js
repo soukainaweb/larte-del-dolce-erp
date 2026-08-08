@@ -169,6 +169,119 @@ export const normalizeCustomerList = (payload) => {
   };
 };
 
+const ROLE_PERMISSION_ACTIONS = ['view', 'create', 'edit', 'delete', 'export', 'validate', 'approve'];
+
+/**
+ * Normalize a role record for list/card UI (camelCase + display labels).
+ */
+export const normalizeRoleRecord = (rawRole) => {
+  if (!rawRole) return null;
+
+  const formatDate = (value) => {
+    if (!value) return '—';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString('ar-SA');
+  };
+
+  return {
+    ...rawRole,
+    name: rawRole.display_name || rawRole.name || '—',
+    slug: rawRole.name,
+    users: rawRole.users ?? rawRole.users_count ?? 0,
+    permissions: rawRole.permissions ?? rawRole.permissions_count ?? 0,
+    createdAt: rawRole.created_at || rawRole.createdAt || formatDate(rawRole.created_at),
+    updatedAt: rawRole.updated_at || rawRole.updatedAt || formatDate(rawRole.updated_at),
+    createdBy: rawRole.created_by || rawRole.createdBy || '—',
+    status: rawRole.status || 'inactive',
+  };
+};
+
+/**
+ * Unwrap and normalize a paginated roles API response.
+ */
+export const normalizeRoleList = (payload) => {
+  const { items, meta } = unwrapPaginated(payload);
+  const list = Array.isArray(items) ? items : [];
+
+  return {
+    items: list.map(normalizeRoleRecord).filter(Boolean),
+    meta,
+  };
+};
+
+/**
+ * Normalize role statistics KPI payload from Laravel API.
+ */
+export const normalizeRoleStatistics = (payload) => {
+  const data = unwrapData(payload) || {};
+
+  return {
+    totalRoles: data.totalRoles ?? data.total_roles ?? data.total ?? 0,
+    totalPermissions: data.totalPermissions ?? data.total_permissions ?? 0,
+    totalUsers: data.totalUsers ?? data.total_users ?? 0,
+    activePermissions: data.activePermissions ?? data.active_permissions ?? 0,
+    activeRoles: data.activeRoles ?? data.active ?? 0,
+    pendingRequests: data.pendingRequests ?? data.pending_requests ?? 0,
+  };
+};
+
+/**
+ * Convert API permission records/names into the module map used by PermissionsModal.
+ */
+export const permissionsToModuleMap = (permissions) => {
+  const map = {};
+
+  ensureArray(permissions).forEach((entry) => {
+    const name = typeof entry === 'string' ? entry : entry?.name;
+    if (!name) return;
+
+    const [module, action] = String(name).split('.');
+    if (!module || !action) return;
+
+    if (!map[module]) {
+      map[module] = {};
+      ROLE_PERMISSION_ACTIONS.forEach((actionId) => {
+        map[module][actionId] = false;
+      });
+    }
+
+    const mappedAction = PERMISSION_ACTION_MAP[action.toLowerCase()] || action.toLowerCase();
+    if (ROLE_PERMISSION_ACTIONS.includes(mappedAction)) {
+      map[module][mappedAction] = true;
+    }
+  });
+
+  return map;
+};
+
+/**
+ * Convert PermissionsModal module map back to permission IDs.
+ */
+export const moduleMapToPermissionIds = (moduleMap, allPermissions) => {
+  const ids = [];
+  const permissionList = ensureArray(allPermissions);
+  const actionToApiName = {
+    edit: 'update',
+  };
+
+  Object.entries(moduleMap || {}).forEach(([module, actions]) => {
+    if (!actions || typeof actions !== 'object') return;
+
+    Object.entries(actions).forEach(([action, enabled]) => {
+      if (!enabled) return;
+
+      const apiAction = actionToApiName[action] || action;
+      const permissionName = `${module}.${apiAction}`;
+      const match = permissionList.find((permission) => permission?.name === permissionName);
+      if (match?.id != null) {
+        ids.push(match.id);
+      }
+    });
+  });
+
+  return ids;
+};
+
 /**
  * Extract the first validation error message from a Laravel 422 payload.
  * Prefers Arabic messages when the API returns them.

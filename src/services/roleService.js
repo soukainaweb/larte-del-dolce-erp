@@ -118,7 +118,9 @@ export const getRoleUsers = (id, params = {}) => {
  * @returns {Promise} - Axios response
  */
 export const addUserToRole = (roleId, data) => {
-  return api.post(`/roles/${roleId}/users`, data);
+  return api.post(`/roles/${roleId}/users`, {
+    user_id: data.user_id ?? data.userId,
+  });
 };
 
 /**
