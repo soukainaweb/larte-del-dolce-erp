@@ -152,6 +152,7 @@ import {
 
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
+import { dispatchNotificationsRefresh } from '../../hooks/useUnreadNotificationCount';
 import ExportButtons from '../../components/ExportButtons';
 import { 
   getNotificationRoute, 
@@ -872,7 +873,7 @@ const NotificationsPage = () => {
         )
       );
       await fetchStatistics();
-      window.dispatchEvent(new Event('notifications:refresh'));
+      dispatchNotificationsRefresh();
       showToast(
         notification.isRead 
           ? '📬 Notification marquée comme non lue'
@@ -907,7 +908,7 @@ const NotificationsPage = () => {
         prev.map(n => ({ ...n, isRead: true }))
       );
       await fetchStatistics();
-      window.dispatchEvent(new Event('notifications:refresh'));
+      dispatchNotificationsRefresh();
       showToast('✅ Toutes les notifications ont été marquées comme lues', 'success');
     } catch (error) {
       console.error('Error marking all as read:', error);
@@ -990,7 +991,7 @@ const NotificationsPage = () => {
         )
       );
       await fetchStatistics();
-      window.dispatchEvent(new Event('notifications:refresh'));
+      dispatchNotificationsRefresh();
       showToast('✅ Notification marquée comme lue', 'success');
     } catch (error) {
       console.error('Error marking as read:', error);

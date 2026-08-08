@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import brandLogo from '../../../constants/brandAssets';
 import { isAdminRole, resolveRoleKey, resolvePermissionList } from '../../../utils/permissions';
+import { hasMenuBadge, resolveNotificationsMenuBadge } from '../../../utils/notificationBadge';
 
 const REQUIRED_ADMIN_MENU_IDS = [
   'meetings',
@@ -589,6 +590,7 @@ const SidebarHeader = memo(function SidebarHeader({
 const MenuItem = memo(function MenuItem({ item, isCollapsed, activeItemId, onNavigate }) {
   const Icon = item.icon || LayoutDashboard;
   const isActive = item.id === activeItemId;
+  const showBadge = hasMenuBadge(item.badge);
 
   const handleClick = useCallback(() => {
     onNavigate(item);
@@ -629,7 +631,7 @@ const MenuItem = memo(function MenuItem({ item, isCollapsed, activeItemId, onNav
       {!isCollapsed ? (
         <>
           <span className="flex-1 truncate text-start">{item.title}</span>
-          {item.badge ? (
+          {showBadge ? (
             <span
               className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold"
               style={{
@@ -647,7 +649,7 @@ const MenuItem = memo(function MenuItem({ item, isCollapsed, activeItemId, onNav
             />
           )}
         </>
-      ) : item.badge ? (
+      ) : showBadge ? (
         <span
           className="absolute right-2 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white"
           style={{ backgroundColor: COLORS.badge }}
@@ -759,8 +761,8 @@ const Sidebar = ({
     menuItems.map((item) => ({
       ...item,
       title: getNavLabel(t, item.id),
-      badge: item.id === 'notifications' && unreadNotificationCount > 0
-        ? unreadNotificationCount
+      badge: item.id === 'notifications'
+        ? resolveNotificationsMenuBadge(unreadNotificationCount)
         : item.badge,
     })),
   [menuItems, t, language, unreadNotificationCount]);
