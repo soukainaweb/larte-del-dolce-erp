@@ -41,4 +41,20 @@ class RolePermissionSyncTest extends TestCase
         $this->assertNotContains('products.view', $permissionNames);
         $this->assertContains('orders.view', $permissionNames);
     }
+
+    public function test_sales_role_does_not_have_orders_update_after_sync(): void
+    {
+        $this->seed();
+
+        DefaultRolePermissions::assignAllRoles();
+
+        $sales = User::where('email', 'other.sales@larte.com')->first();
+        $this->assertNotNull($sales);
+
+        $permissionNames = $sales->role->permissions()->pluck('name')->all();
+
+        $this->assertContains('orders.create', $permissionNames);
+        $this->assertNotContains('orders.update', $permissionNames);
+        $this->assertNotContains('orders.delete', $permissionNames);
+    }
 }

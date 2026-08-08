@@ -105,6 +105,21 @@ async function main() {
   results.api.showOrder = showOrder.status;
   if (!showOrder.ok) fail('Created order not retrievable');
 
+  const putBlocked = await api(`/orders/${orderId}`, {
+    method: 'PUT',
+    token: sales.token,
+    body: { notes: 'blocked' },
+  });
+  results.api.salesPutOrder = putBlocked.status;
+  if (putBlocked.status !== 403) fail(`Sales PUT order expected 403, got ${putBlocked.status}`);
+
+  const deleteBlocked = await api(`/orders/${orderId}`, {
+    method: 'DELETE',
+    token: sales.token,
+  });
+  results.api.salesDeleteOrder = deleteBlocked.status;
+  if (deleteBlocked.status !== 403) fail(`Sales DELETE order expected 403, got ${deleteBlocked.status}`);
+
   const managerNotifsAfter = unwrapList((await api('/notifications?per_page=50', { token: manager.token })).json);
   const orderNotif = managerNotifsAfter.find((n) => n.type === 'order' && (n.message || '').includes(orderNumber || ''));
   results.api.managerOrderNotification = Boolean(orderNotif);
@@ -144,6 +159,12 @@ async function main() {
     results.steps.customerOptions = await customerSelect.locator('option').count();
     results.steps.modalOpen = await customerSelect.isVisible();
     if (results.steps.customerOptions <= 1) fail('Customer dropdown empty in UI');
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+    const actionButtons = await page.locator('tbody tr').first().locator('td').last().locator('button').count();
+    results.steps.orderActionButtons = actionButtons;
+    if (actionButtons > 1) fail('Sales rep should not see edit/delete buttons on orders');
   } catch (err) {
     fail(`UI smoke failed: ${err.message}`);
   } finally {

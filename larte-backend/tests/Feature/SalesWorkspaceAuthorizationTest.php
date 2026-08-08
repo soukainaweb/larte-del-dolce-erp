@@ -26,6 +26,9 @@ class SalesWorkspaceAuthorizationTest extends TestCase
 
         $this->assertContains('dashboard.view', $expected);
         $this->assertContains('orders.view', $expected);
+        $this->assertContains('orders.create', $expected);
+        $this->assertNotContains('orders.update', $expected);
+        $this->assertNotContains('orders.delete', $expected);
         $this->assertContains('customers.view', $expected);
         $this->assertNotContains('products.view', $expected);
         $this->assertContains('meetings.view', $expected);

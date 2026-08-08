@@ -55,6 +55,7 @@ import { transferOrder, getOrderTransfers } from '../../services/orderTransferSe
 import OrderFormModal from '../../components/orders/OrderFormModal';
 import { getUsers } from '../../services/userServicePage';
 import { getApiErrorMessage } from '../../utils/apiHelpers';
+import { hasPermission } from '../../utils/permissions';
 import { useToast } from '../../contexts/ToastContext';
 import { exportPDF } from '../../services/export/pdfExport';
 import { exportExcel } from '../../services/export/excelExport';
@@ -179,7 +180,7 @@ const KPICard = ({ icon: Icon, title, value, color }) => {
 // ==========================================
 // ORDER CARD (Mobile)
 // ==========================================
-const OrderCard = ({ order, onView, onEdit, onDelete }) => {
+const OrderCard = ({ order, onView, onEdit, onDelete, canEdit = false, canDelete = false }) => {
   const { t, tc, statusLabel, commonStatus } = usePageI18n('orders');
   return (
     <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 space-y-3">
@@ -234,12 +235,16 @@ const OrderCard = ({ order, onView, onEdit, onDelete }) => {
           <button onClick={() => onView(order)} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
+          {canEdit && (
           <button onClick={() => onEdit(order)} className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors">
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
+          )}
+          {canDelete && (
           <button onClick={() => onDelete(order)} className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors">
             <Trash2 size={16} className="text-rose-500" />
           </button>
+          )}
         </div>
       </div>
     </div>
@@ -249,7 +254,7 @@ const OrderCard = ({ order, onView, onEdit, onDelete }) => {
 // ==========================================
 // ORDER TABLE ROW (Desktop)
 // ==========================================
-const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
+const OrderTableRow = ({ order, onView, onEdit, onDelete, index, canEdit = false, canDelete = false }) => {
   const { t, tc, actions, statusLabel, commonStatus } = usePageI18n('orders');
   return (
     <motion.tr
@@ -288,6 +293,7 @@ const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
           >
             <Eye size={16} className="text-[#6D6D6D]" />
           </button>
+          {canEdit && (
           <button
             onClick={() => onEdit(order)}
             className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
@@ -295,6 +301,8 @@ const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
           >
             <Edit2 size={16} className="text-[#6D6D6D]" />
           </button>
+          )}
+          {canDelete && (
           <button
             onClick={() => onDelete(order)}
             className="p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
@@ -302,6 +310,7 @@ const OrderTableRow = ({ order, onView, onEdit, onDelete, index }) => {
           >
             <Trash2 size={16} className="text-rose-500" />
           </button>
+          )}
         </div>
       </td>
     </motion.tr>
@@ -909,9 +918,12 @@ const TransferHistoryModal = ({ isOpen, onClose, transfers, t }) => {
 // MAIN ORDERS PAGE
 // ==========================================
 const OrdersPage = () => {
-  const { user, roleKey } = useAuth();
+  const { user, roleKey, permissions, isLoading: authLoading } = useAuth();
   const { showToast } = useToast();
   const isSalesRep = roleKey === 'sales_rep';
+  const canUpdateOrder = !authLoading && hasPermission('orders.update', permissions, user?.role ?? roleKey);
+  const canDeleteOrder = !authLoading && hasPermission('orders.delete', permissions, user?.role ?? roleKey);
+  const canCreateOrder = !authLoading && hasPermission('orders.create', permissions, user?.role ?? roleKey);
   const { t: tGlobal } = useTranslation();
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('orders');
   const location = useLocation();
@@ -1328,7 +1340,8 @@ const OrdersPage = () => {
           )}
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
+            disabled={!canCreateOrder}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all disabled:opacity-50"
           >
             <Plus size={18} />
             {t('orders.addOrder')}
@@ -1443,15 +1456,19 @@ const OrdersPage = () => {
                         key={order.id}
                         order={order}
                         index={index}
+                        canEdit={canUpdateOrder}
+                        canDelete={canDeleteOrder}
                         onView={(o) => {
                           setSelectedOrder(o);
                           setIsDetailsModalOpen(true);
                         }}
                         onEdit={(o) => {
+                          if (!canUpdateOrder) return;
                           setSelectedOrder(o);
                           setIsEditModalOpen(true);
                         }}
                         onDelete={(o) => {
+                          if (!canDeleteOrder) return;
                           setSelectedOrder(o);
                           setIsDeleteModalOpen(true);
                         }}
@@ -1475,15 +1492,19 @@ const OrdersPage = () => {
                 <OrderCard
                   key={order.id}
                   order={order}
+                  canEdit={canUpdateOrder}
+                  canDelete={canDeleteOrder}
                   onView={(o) => {
                     setSelectedOrder(o);
                     setIsDetailsModalOpen(true);
                   }}
                   onEdit={(o) => {
+                    if (!canUpdateOrder) return;
                     setSelectedOrder(o);
                     setIsEditModalOpen(true);
                   }}
                   onDelete={(o) => {
+                    if (!canDeleteOrder) return;
                     setSelectedOrder(o);
                     setIsDeleteModalOpen(true);
                   }}
@@ -1548,7 +1569,7 @@ const OrdersPage = () => {
           />
         )}
 
-        {isEditModalOpen && selectedOrder && (
+        {isEditModalOpen && selectedOrder && canUpdateOrder && (
           <OrderModal
             key="edit-modal"
             isOpen={isEditModalOpen}
@@ -1562,7 +1583,7 @@ const OrdersPage = () => {
           />
         )}
 
-        {isDeleteModalOpen && selectedOrder && (
+        {isDeleteModalOpen && selectedOrder && canDeleteOrder && (
           <DeleteModal
             key="delete-modal"
             isOpen={isDeleteModalOpen}

@@ -236,6 +236,32 @@ async function runApiChecks(token, permissions) {
       fail(`Unauthorized API ${check.path} returned ${res.status}, expected ${check.expect}`);
     }
   }
+
+  const ordersRes = await apiJson('/orders?per_page=1', { token });
+  const orderId = ordersRes.json?.data?.data?.[0]?.id;
+  if (orderId) {
+    const putRes = await apiJson(`/orders/${orderId}`, {
+      method: 'PUT',
+      token,
+      body: { notes: 'blocked update' },
+    });
+    results.api[`PUT /orders/${orderId}`] = putRes.status;
+    if (putRes.status !== 403) {
+      fail(`Sales PUT /orders/${orderId} returned ${putRes.status}, expected 403`);
+    }
+
+    const deleteRes = await apiJson(`/orders/${orderId}`, { method: 'DELETE', token });
+    results.api[`DELETE /orders/${orderId}`] = deleteRes.status;
+    if (deleteRes.status !== 403) {
+      fail(`Sales DELETE /orders/${orderId} returned ${deleteRes.status}, expected 403`);
+    }
+  }
+
+  const formOpts = await apiJson('/orders/form-options', { token });
+  results.api['/orders/form-options'] = formOpts.status;
+  if (formOpts.status !== 200 && formOpts.status !== 404) {
+    fail(`Sales GET /orders/form-options returned ${formOpts.status}`);
+  }
 }
 
 async function loginViaApi() {
@@ -314,6 +340,16 @@ async function runUiChecks() {
         fail(`Authorized page ${path} did not load — got ${url}`);
       }
     }
+
+    await page.goto(`${FRONTEND_URL}/dashboard/orders`, { waitUntil: 'networkidle', timeout: 45000 });
+    await page.waitForTimeout(1500);
+    const firstRowButtons = page.locator('tbody tr').first().locator('td').last().locator('button');
+    results.ui.orderActionButtonCount = await firstRowButtons.count();
+    if (results.ui.orderActionButtonCount > 1) {
+      fail(`Sales rep should not see edit/delete on orders (found ${results.ui.orderActionButtonCount} action buttons)`);
+    }
+    results.ui.addOrderVisible = await page.getByRole('button', { name: /طلب جديد|New Order/i }).count() > 0;
+    if (!results.ui.addOrderVisible) fail('Sales rep should see Add Order button');
 
     for (const path of UNAUTHORIZED_PATHS) {
       await page.goto(`${FRONTEND_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });

@@ -12,7 +12,7 @@ const AUDIT_PASSWORD = process.env.E2E_AUDIT_PASSWORD || 'SalesAuditPass1!';
 
 const EXPECTED_PERMISSIONS = [
   'dashboard.view', 'notifications.view',
-  'orders.view', 'orders.create', 'orders.update',
+  'orders.view', 'orders.create',
   'customers.view', 'customers.create', 'customers.update',
   'meetings.view', 'meetings.create', 'meetings.update',
   'samples.view', 'samples.create', 'samples.update',

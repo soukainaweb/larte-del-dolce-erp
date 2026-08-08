@@ -82,7 +82,7 @@ class DefaultRolePermissions
                 'orders.view', 'customers.view',
             ]),
             'sales' => array_merge(self::BASELINE, [
-                'orders.view', 'orders.create', 'orders.update',
+                'orders.view', 'orders.create',
                 'customers.view', 'customers.create', 'customers.update',
                 'meetings.view', 'meetings.create', 'meetings.update',
                 'samples.view', 'samples.create', 'samples.update',
