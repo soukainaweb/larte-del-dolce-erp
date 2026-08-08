@@ -53,8 +53,14 @@ export const AuthProvider = ({ children }) => {
           clearSession();
         }
       } catch (err) {
+        const status = err?.response?.status;
         console.error('Session bootstrap failed:', err);
-        clearSession();
+
+        // Only invalidate the session when the token is rejected.
+        // Transient errors (429 rate limit, 5xx, network) must not log the user out.
+        if (status === 401) {
+          clearSession();
+        }
       } finally {
         setLoading(false);
       }
