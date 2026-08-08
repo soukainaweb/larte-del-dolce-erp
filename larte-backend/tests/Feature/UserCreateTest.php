@@ -40,7 +40,7 @@ class UserCreateTest extends TestCase
 
         $temporaryPassword = $response->json('data.temporary_password');
         $this->assertNotEmpty($temporaryPassword);
-        $this->assertGreaterThanOrEqual(8, strlen($temporaryPassword));
+        $this->assertGreaterThanOrEqual(10, strlen($temporaryPassword));
 
         $this->assertDatabaseHas('users', [
             'email' => 'muhamedelseed203@gmail.com',
@@ -169,5 +169,39 @@ class UserCreateTest extends TestCase
 
         $loginResponse->assertOk()
             ->assertJsonPath('success', true);
+    }
+
+    public function test_temporary_password_is_not_returned_by_user_list_or_show(): void
+    {
+        $this->seed();
+
+        $admin = $this->adminUser();
+        $salesRole = Role::where('name', 'sales')->firstOrFail();
+
+        $createResponse = $this->actingAs($admin, 'sanctum')->postJson('/api/users', [
+            'first_name' => 'Hidden',
+            'last_name' => 'Password',
+            'email' => 'hidden.password@example.com',
+            'role_id' => $salesRole->id,
+            'status' => 'active',
+        ]);
+
+        $createResponse->assertCreated();
+        $userId = $createResponse->json('data.id');
+        $this->assertNotEmpty($createResponse->json('data.temporary_password'));
+
+        $listResponse = $this->actingAs($admin, 'sanctum')->getJson('/api/users?search=hidden.password');
+        $listResponse->assertOk();
+        foreach ($listResponse->json('data.data') as $user) {
+            $this->assertArrayNotHasKey('temporary_password', $user);
+            $this->assertArrayNotHasKey('password', $user);
+        }
+
+        $showResponse = $this->actingAs($admin, 'sanctum')->getJson("/api/users/{$userId}");
+        $showResponse->assertOk()
+            ->assertJsonMissing(['data' => ['temporary_password' => $createResponse->json('data.temporary_password')]])
+            ->assertJsonMissing(['data' => ['password' => $createResponse->json('data.temporary_password')]]);
+        $this->assertArrayNotHasKey('temporary_password', $showResponse->json('data'));
+        $this->assertArrayNotHasKey('password', $showResponse->json('data'));
     }
 }

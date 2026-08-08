@@ -396,6 +396,12 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading, availableRoles = 
             </select>
           </div>
 
+          {!user && (
+            <p className="text-xs text-[#6D6D6D] bg-[#F8F7F4] border border-[#ECE8E1] rounded-lg px-3 py-2 leading-relaxed">
+              {t('users.modals.autoPasswordHint')}
+            </p>
+          )}
+
           <div className="flex gap-3 pt-4 border-t border-[#ECE8E1]">
             <button
               type="button"
