@@ -7,6 +7,7 @@ export const updateMeeting = (id, data) => api.put(`/meetings/${id}`, data);
 export const deleteMeeting = (id) => api.delete(`/meetings/${id}`);
 export const getMeetingStatistics = (params = {}) => api.get('/meetings/statistics', { params });
 export const getMeetingStatuses = () => api.get('/meetings/statuses');
+export const getMeetingInvitees = (params = {}) => api.get('/meetings/invitees', { params });
 export const scheduleMeeting = (id) => api.post(`/meetings/${id}/schedule`);
 export const cancelMeeting = (id) => api.post(`/meetings/${id}/cancel`);
 export const startMeeting = (id) => api.post(`/meetings/${id}/start`);

@@ -622,6 +622,7 @@ Route::middleware(['auth:sanctum', 'password.changed', 'throttle:api'])->group(f
     Route::prefix('meetings')->middleware('permission:meetings.view')->group(function () {
         Route::get('/statistics', [MeetingController::class, 'statistics']);
         Route::get('/statuses', [MeetingController::class, 'statuses']);
+        Route::get('/invitees', [MeetingController::class, 'invitees'])->middleware('permission:meetings.create');
         Route::get('/', [MeetingController::class, 'index']);
         Route::post('/', [MeetingController::class, 'store'])->middleware('permission:meetings.create');
         Route::get('/{meeting}/history', [MeetingController::class, 'history']);
