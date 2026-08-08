@@ -6,17 +6,21 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\Customer;
 use App\Support\SalesScope;
 use App\Support\OrderWorkflow;
 use App\Support\StatusMapper;
 use App\Support\NumberGenerator;
+use App\Support\UserStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    public function __construct(private OrderWorkflowService $workflowService)
-    {
+    public function __construct(
+        private OrderWorkflowService $workflowService,
+        private OrderWorkflowNotificationService $orderNotifications,
+    ) {
     }
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -54,27 +58,95 @@ class OrderService
         );
     }
 
+    public function formOptions(User $actor): array
+    {
+        $customersQuery = Customer::query()
+            ->where('status', 'active')
+            ->orderBy('name');
+        SalesScope::applyCustomerScope($customersQuery, $actor);
+
+        $productsQuery = Product::query()
+            ->where('status', 'active')
+            ->orderBy('name');
+
+        $salesRepsQuery = User::query()
+            ->with('role:id,name')
+            ->whereHas('role', fn ($q) => $q->where('name', 'sales'))
+            ->whereNotIn('status', UserStatus::blockedForLogin())
+            ->orderBy('first_name')
+            ->orderBy('last_name');
+
+        if (SalesScope::isSalesRep($actor)) {
+            $salesRepsQuery->where('id', $actor->id);
+        }
+
+        return [
+            'customers' => $customersQuery
+                ->limit(200)
+                ->get(['id', 'name', 'email', 'phone'])
+                ->map(fn (Customer $c) => [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'email' => $c->email,
+                    'phone' => $c->phone,
+                ])
+                ->values()
+                ->all(),
+            'products' => $productsQuery
+                ->limit(200)
+                ->get(['id', 'name', 'sku', 'price'])
+                ->map(fn (Product $p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'sku' => $p->sku,
+                    'price' => (float) $p->price,
+                ])
+                ->values()
+                ->all(),
+            'sales_reps' => $salesRepsQuery
+                ->limit(100)
+                ->get(['id', 'first_name', 'last_name', 'email'])
+                ->map(fn (User $u) => [
+                    'id' => $u->id,
+                    'first_name' => $u->first_name,
+                    'last_name' => $u->last_name,
+                    'email' => $u->email,
+                    'full_name' => trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')),
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
     public function create(array $data, int $userId): array
     {
         return DB::transaction(function () use ($data, $userId) {
+            $actor = User::findOrFail($userId);
+            $salesRepId = $this->resolveSalesRepId($data['sales_rep_id'] ?? null, $actor);
+            unset($data['sales_rep_id']);
+
             $orderNumber = NumberGenerator::next('ORD', Order::class, 'order_number');
             $initialStatus = OrderWorkflow::canonical($data['status'] ?? OrderWorkflow::SUBMITTED);
 
             $order = Order::create([
                 'order_number' => $orderNumber,
                 'customer_id' => $data['customer_id'],
-                'user_id' => $userId,
+                'user_id' => $salesRepId,
                 'status' => $initialStatus,
                 'payment_status' => 'unpaid',
+                'priority' => $data['priority'] ?? 'medium',
+                'delivery_date' => $data['delivery_date'] ?? null,
+                'delivery_time' => $data['delivery_time'] ?? null,
+                'payment_method' => $data['payment_method'] ?? null,
                 'notes' => $data['notes'] ?? null,
             ]);
 
-            $subtotal = $this->syncItems($order, $data['items']);
-            $order->update(['total_amount' => $subtotal]);
+            $total = $this->syncItems($order, $data['items']);
+            $order->update(['total_amount' => $total]);
 
             $this->workflowService->recordInitialStatus(
                 $order->fresh(),
-                User::find($userId),
+                $actor,
                 'Commande créée'
             );
 
@@ -85,8 +157,31 @@ class OrderService
                 userId: $userId,
             );
 
-            return StatusMapper::transformOrder($order->fresh()->load(['customer', 'items.product']));
+            $order = $order->fresh()->load(['customer', 'user', 'items.product']);
+            $this->orderNotifications->notifyOrderCreated($order, $actor);
+
+            return StatusMapper::transformOrder($order);
         });
+    }
+
+    protected function resolveSalesRepId(?int $salesRepId, User $actor): int
+    {
+        if (SalesScope::isSalesRep($actor)) {
+            return (int) $actor->id;
+        }
+
+        if ($salesRepId) {
+            $rep = User::query()
+                ->where('id', $salesRepId)
+                ->whereHas('role', fn ($q) => $q->where('name', 'sales'))
+                ->first();
+
+            if ($rep) {
+                return (int) $rep->id;
+            }
+        }
+
+        return (int) $actor->id;
     }
 
     public function update(Order $order, array $data): array
@@ -291,24 +386,30 @@ class OrderService
 
     private function syncItems(Order $order, array $items): float
     {
-        $subtotal = 0;
+        $total = 0;
 
         foreach ($items as $item) {
             $product = Product::findOrFail($item['product_id']);
-            $lineTotal = $product->price * $item['quantity'];
+            $quantity = max(1, (int) $item['quantity']);
+            $price = isset($item['price']) ? max(0, (float) $item['price']) : (float) $product->price;
+            $discount = min(100, max(0, (float) ($item['discount'] ?? 0)));
+            $lineSubtotal = $price * $quantity;
+            $lineDiscount = $lineSubtotal * ($discount / 100);
+            $lineTotal = $lineSubtotal - $lineDiscount;
 
             OrderItem::create([
                 'order_id' => $order->id,
                 'product_id' => $product->id,
-                'quantity' => $item['quantity'],
-                'price' => $product->price,
-                'subtotal' => $lineTotal,
+                'quantity' => $quantity,
+                'price' => $price,
+                'discount' => $discount,
+                'subtotal' => round($lineTotal, 2),
             ]);
 
-            $subtotal += $lineTotal;
+            $total += $lineTotal;
         }
 
-        return $subtotal;
+        return round($total, 2);
     }
 
     private function recalculateTotal(Order $order): void

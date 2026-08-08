@@ -33,6 +33,10 @@ export const ROUTE_MAPPING = {
     detail: '/dashboard/meetings/:id',
     list: '/dashboard/meetings'
   },
+  sample: {
+    detail: '/dashboard/samples',
+    list: '/dashboard/samples'
+  },
   invoice: {
     detail: '/dashboard/invoices/:id',
     list: '/dashboard/invoices'

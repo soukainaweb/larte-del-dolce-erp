@@ -3,12 +3,16 @@
 namespace App\Services;
 
 use App\Models\Sample;
+use App\Models\User;
 use App\Support\NumberGenerator;
 use App\Support\SalesScope;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class SampleService
 {
+    public function __construct(private OrderWorkflowNotificationService $notifications)
+    {
+    }
     public function list(array $filters = []): LengthAwarePaginator
     {
         $query = Sample::with(['product', 'salesperson', 'creator']);
@@ -44,7 +48,14 @@ class SampleService
             $data['salesperson_id'] = auth()->id();
         }
 
-        return Sample::create($data)->load(['product', 'salesperson', 'creator']);
+        $sample = Sample::create($data)->load(['product', 'salesperson', 'creator']);
+        $creator = User::find(auth()->id());
+
+        if ($creator) {
+            $this->notifications->notifySampleCreated($sample, $creator);
+        }
+
+        return $sample;
     }
 
     public function update(Sample $sample, array $data): Sample
