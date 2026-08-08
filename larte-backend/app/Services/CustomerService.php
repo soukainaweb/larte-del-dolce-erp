@@ -17,7 +17,8 @@ class CustomerService
             $query->where(function ($q) use ($term) {
                 $q->where('name', 'LIKE', "%{$term}%")
                     ->orWhere('email', 'LIKE', "%{$term}%")
-                    ->orWhere('phone', 'LIKE', "%{$term}%");
+                    ->orWhere('phone', 'LIKE', "%{$term}%")
+                    ->orWhere('city', 'LIKE', "%{$term}%");
             });
         }
 
@@ -39,6 +40,8 @@ class CustomerService
         if (SalesScope::isSalesRep()) {
             $data['user_id'] = auth()->id();
         }
+
+        $data['status'] = $data['status'] ?? 'active';
 
         $customer = Customer::create($data);
 
@@ -93,6 +96,7 @@ class CustomerService
             'Email' => $c->email,
             'Téléphone' => $c->phone,
             'Adresse' => $c->address,
+            'Ville' => $c->city,
             'Commandes' => $c->orders_count,
             'Statut' => $c->status,
             'Date création' => $c->created_at->format('Y-m-d H:i'),

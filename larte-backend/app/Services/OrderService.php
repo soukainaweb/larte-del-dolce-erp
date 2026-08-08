@@ -83,12 +83,14 @@ class OrderService
         return [
             'customers' => $customersQuery
                 ->limit(200)
-                ->get(['id', 'name', 'email', 'phone'])
+                ->get(['id', 'name', 'email', 'phone', 'address', 'city'])
                 ->map(fn (Customer $c) => [
                     'id' => $c->id,
                     'name' => $c->name,
                     'email' => $c->email,
                     'phone' => $c->phone,
+                    'address' => $c->address,
+                    'city' => $c->city,
                 ])
                 ->values()
                 ->all(),

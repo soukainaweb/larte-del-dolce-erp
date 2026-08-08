@@ -790,10 +790,26 @@
     "loading": "جاري تحميل الطلبات...",
     "fields": {
       "addProduct": "إضافة منتج",
+      "addCustomer": "+ إضافة عميل",
+      "selectCustomer": "اختر عميلاً...",
       "deliveryTime": "وقت التوصيل",
       "paymentMethod": "طريقة الدفع",
       "quantity": "الكمية",
       "discount": "الخصم (%)"
+    },
+    "paymentMethods": {
+      "cash": "نقداً",
+      "card": "بطاقة بنكية",
+      "transfer": "تحويل",
+      "credit": "أجل"
+    },
+    "customerModal": {
+      "title": "إضافة عميل",
+      "name": "اسم العميل",
+      "address": "العنوان",
+      "city": "المدينة",
+      "save": "حفظ العميل",
+      "success": "تمت إضافة العميل بنجاح"
     },
     "summary": {
       "title": "ملخص",

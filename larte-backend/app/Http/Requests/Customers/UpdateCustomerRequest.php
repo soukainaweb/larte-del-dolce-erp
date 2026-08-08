@@ -17,10 +17,20 @@ class UpdateCustomerRequest extends FormRequest
 
         return [
             'name' => 'sometimes|string|max:200',
-            'phone' => 'sometimes|string|max:20',
+            'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|unique:customers,email,' . $customerId,
-            'address' => 'nullable|string',
+            'address' => 'sometimes|string|max:500',
+            'city' => 'sometimes|string|max:120',
             'status' => 'sometimes|in:active,inactive,blocked',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'اسم العميل مطلوب',
+            'address.required' => 'العنوان مطلوب',
+            'city.required' => 'المدينة مطلوبة',
         ];
     }
 }
