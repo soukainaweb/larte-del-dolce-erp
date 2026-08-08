@@ -68,11 +68,30 @@ async function main() {
   results.api.salesProducts = salesProducts.status;
   if (salesProducts.status !== 403) fail(`Sales GET /products expected 403, got ${salesProducts.status}`);
 
-  const formOpts = await api('/orders/form-options', { token: sales.token });
+  let formOpts = await api('/orders/form-options', { token: sales.token });
   results.api.salesFormOptions = formOpts.status;
-  const opts = formOpts.json?.data || {};
+  let opts = formOpts.json?.data || {};
   if (formOpts.status !== 200) fail('Sales form-options failed');
   if (!Array.isArray(opts.products) || opts.products.length === 0) fail('No products in form-options');
+
+  if (!Array.isArray(opts.customers) || opts.customers.length === 0) {
+    results.steps.initialCustomers = 0;
+    const seedCustomer = await api('/customers', {
+      method: 'POST',
+      token: sales.token,
+      body: {
+        name: `E2E Customer ${Date.now()}`,
+        email: `e2e.cust.${Date.now()}@example.com`,
+        phone: '0500000000',
+        type: 'individual',
+        status: 'active',
+      },
+    });
+    results.api.seedCustomer = seedCustomer.status;
+    if (!seedCustomer.ok) fail(`Seed customer failed: ${seedCustomer.status}`);
+    formOpts = await api('/orders/form-options', { token: sales.token });
+    opts = formOpts.json?.data || {};
+  }
   if (!Array.isArray(opts.customers) || opts.customers.length === 0) fail('No customers in form-options');
 
   const managerNotifsBefore = unwrapList((await api('/notifications?per_page=50', { token: manager.token })).json).length;
@@ -149,9 +168,12 @@ async function main() {
     await page.waitForURL(/\/dashboard/, { timeout: 30000 });
 
     await page.goto(`${FRONTEND}/dashboard/orders`, { waitUntil: 'networkidle', timeout: 60000 });
+    await page.waitForTimeout(2000);
     results.steps.ordersPage = page.url().includes('/dashboard/orders');
 
-    await page.getByRole('button', { name: /طلب جديد|New Order/i }).first().click();
+    const addOrderBtn = page.getByRole('button', { name: /طلب جديد|New Order|Nouvelle commande/i }).first();
+    await addOrderBtn.waitFor({ state: 'visible', timeout: 30000 });
+    await addOrderBtn.click();
     await page.waitForTimeout(2500);
 
     const customerSelect = page.locator('select[name="customer_id"]');

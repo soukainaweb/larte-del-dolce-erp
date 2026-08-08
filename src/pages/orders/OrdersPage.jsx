@@ -1071,7 +1071,10 @@ const OrdersPage = () => {
     const ready = orders.filter(o => o.status === 'ready').length;
     const delivered = orders.filter(o => o.status === 'delivered').length;
     const cancelled = orders.filter(o => o.status === 'cancelled').length;
-    const revenue = orders.reduce((sum, o) => sum + (o.status !== 'cancelled' ? o.total : 0), 0);
+    const revenue = orders.reduce(
+      (sum, o) => sum + (o.status !== 'cancelled' ? Number(o.total ?? o.total_amount ?? 0) : 0),
+      0,
+    );
 
     return { total, pending, validated, inProduction, ready, delivered, cancelled, revenue };
   }, [orders]);
