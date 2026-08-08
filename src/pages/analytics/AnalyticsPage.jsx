@@ -134,6 +134,7 @@ import {
   getAlerts,
   exportAnalytics
 } from '../../services/analyticsService';
+import { ensureArray } from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -912,21 +913,21 @@ const AnalyticsPage = () => {
         ]);
 
       setMetrics(metricsRes.data.data || {});
-      setSalesData(salesRes.data.data || []);
-      setOrderData(orderRes.data.data || []);
-      setProductionData(productionRes.data.data || []);
-      setFinancialData(financialRes.data.data || []);
-      setCustomerData(customerRes.data.data || []);
-      setProductData(productRes.data.data || []);
-      setDeliveryData(deliveryRes.data.data || []);
-      setSalesRepsData(repsRes.data.data || []);
-      setRegionData(regionRes.data.data || []);
-      setYearlyData(yearlyRes.data.data || []);
-      setForecastData(forecastRes.data.data || []);
-      setKpiComparison(kpiRes.data.data || []);
-      setRadarData(radarRes.data.data || []);
-      setActivities(activitiesRes.data.data || []);
-      setAlerts(alertsRes.data.data || []);
+      setSalesData(ensureArray(salesRes.data.data));
+      setOrderData(ensureArray(orderRes.data.data));
+      setProductionData(ensureArray(productionRes.data.data));
+      setFinancialData(ensureArray(financialRes.data.data));
+      setCustomerData(ensureArray(customerRes.data.data));
+      setProductData(ensureArray(productRes.data.data));
+      setDeliveryData(ensureArray(deliveryRes.data.data));
+      setSalesRepsData(ensureArray(repsRes.data.data));
+      setRegionData(ensureArray(regionRes.data.data));
+      setYearlyData(ensureArray(yearlyRes.data.data));
+      setForecastData(ensureArray(forecastRes.data.data));
+      setKpiComparison(ensureArray(kpiRes.data.data));
+      setRadarData(ensureArray(radarRes.data.data));
+      setActivities(ensureArray(activitiesRes.data.data));
+      setAlerts(ensureArray(alertsRes.data.data));
     } catch (error) {
       console.error('Error loading analytics data:', error);
       showToast(t('analytics.messages.loadError'), 'error');
@@ -943,28 +944,35 @@ const AnalyticsPage = () => {
   // KPI CALCULATIONS
   // ==========================================
   const kpis = useMemo(() => {
-    const totalRevenue = financialData.reduce((sum, d) => sum + d.revenue, 0);
-    const totalProfit = financialData.reduce((sum, d) => sum + d.profit, 0);
-    const totalOrders = salesData.reduce((sum, d) => sum + d.orders, 0);
-    const completedOrders = orderData.find(d => d.name === t('analytics.kpi.completedOrders') || d.name === 'Terminées')?.value || 0;
-    const pendingOrders = orderData.find(d => d.name === t('common.pending'))?.value || 0;
+    const financial = ensureArray(financialData);
+    const sales = ensureArray(salesData);
+    const orders = ensureArray(orderData);
+    const products = ensureArray(productData);
+    const deliveries = ensureArray(deliveryData);
+    const production = ensureArray(productionData);
+
+    const totalRevenue = financial.reduce((sum, d) => sum + (d.revenue || 0), 0);
+    const totalProfit = financial.reduce((sum, d) => sum + (d.profit || 0), 0);
+    const totalOrders = sales.reduce((sum, d) => sum + (d.orders || 0), 0);
+    const completedOrders = orders.find(d => d.name === t('analytics.kpi.completedOrders') || d.name === 'Terminées')?.value || 0;
+    const pendingOrders = orders.find(d => d.name === t('common.pending'))?.value || 0;
     const totalCustomers = metrics.totalCustomers || 0;
     const newCustomers = metrics.newCustomers || 0;
-    const totalProductsSold = productData.reduce((sum, d) => sum + d.sales, 0);
+    const totalProductsSold = products.reduce((sum, d) => sum + (d.sales || 0), 0);
     const paidInvoices = metrics.paidInvoices || 0;
     const unpaidInvoices = metrics.unpaidInvoices || 0;
-    const totalDeliveries = deliveryData.reduce((sum, d) => sum + d.delivered, 0);
-    const totalProduction = productionData.reduce((sum, d) => sum + d.produced, 0);
+    const totalDeliveries = deliveries.reduce((sum, d) => sum + (d.delivered || 0), 0);
+    const totalProduction = production.reduce((sum, d) => sum + (d.produced || 0), 0);
 
-    const lastMonth = financialData[financialData.length - 1];
-    const prevMonth = financialData[financialData.length - 2];
+    const lastMonth = financial[financial.length - 1];
+    const prevMonth = financial[financial.length - 2];
     const monthlyGrowth = prevMonth?.revenue > 0 
       ? ((lastMonth?.revenue - prevMonth?.revenue) / prevMonth?.revenue) * 100 
       : 0;
 
-    const revenueTrend = financialData.map(d => ({ value: d.revenue }));
-    const orderTrend = salesData.map(d => ({ value: d.orders }));
-    const profitTrend = financialData.map(d => ({ value: d.profit }));
+    const revenueTrend = financial.map(d => ({ value: d.revenue || 0 }));
+    const orderTrend = sales.map(d => ({ value: d.orders || 0 }));
+    const profitTrend = financial.map(d => ({ value: d.profit || 0 }));
 
     return {
       totalRevenue,
@@ -1378,7 +1386,7 @@ const AnalyticsPage = () => {
   const renderProduction = () => (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <KPICard icon={FactoryIcon} title={t('analytics.kpi.dailyProduction')} value={productionData.reduce((s, d) => s + d.produced, 0)} change={12.5} color="amber" />
+        <KPICard icon={FactoryIcon} title={t('analytics.kpi.dailyProduction')} value={ensureArray(productionData).reduce((s, d) => s + (d.produced || 0), 0)} change={12.5} color="amber" />
         <KPICard icon={CheckCircle} title={t('analytics.kpi.finishedProducts')} value={kpis.totalProduction} change={10.2} color="green" />
         <KPICard icon={Timer} title={t('analytics.kpi.avgTime')} value="4.5h" change={-3.1} color="blue" />
         <KPICard icon={Award} title={t('analytics.kpi.yield')} value="94%" change={2.8} color="purple" />
@@ -1412,7 +1420,7 @@ const AnalyticsPage = () => {
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <KPICard icon={DollarSign} title={t('analytics.kpi.revenue')} value={kpis.totalRevenue} change={kpis.monthlyGrowth} color="gold" isCurrency />
-        <KPICard icon={CreditCard} title={t('analytics.kpi.expenses')} value={financialData.reduce((s, d) => s + d.expenses, 0)} change={5.3} color="rose" isCurrency />
+        <KPICard icon={CreditCard} title={t('analytics.kpi.expenses')} value={ensureArray(financialData).reduce((s, d) => s + (d.expenses || 0), 0)} change={5.3} color="rose" isCurrency />
         <KPICard icon={TrendingUp} title={t('analytics.kpi.netProfit')} value={kpis.totalProfit} change={12.8} color="green" isCurrency />
         <KPICard icon={CheckCircle} title={t('analytics.kpi.paymentsReceived')} value={kpis.paidInvoices} change={6.3} color="emerald" />
       </div>
