@@ -326,12 +326,7 @@ async function runUiChecks() {
       }
     }
 
-    await page.goto(`${FRONTEND_URL}/login`, { waitUntil: 'networkidle' });
-    await page.fill('#email', SALES_EMAIL);
-    await page.fill('#password', SALES_PASSWORD);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/\/dashboard/, { timeout: 30000 });
-
+    await page.goto(`${FRONTEND_URL}/dashboard`, { waitUntil: 'domcontentloaded', timeout: 45000 });
     await page.getByRole('button', { name: /تسجيل الخروج|Logout|Déconnexion/i }).click({ timeout: 15000 });
     await page.waitForURL(/\/login/, { timeout: 15000 });
     results.ui.logout = 'ok';
