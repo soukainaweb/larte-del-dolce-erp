@@ -130,7 +130,7 @@ const UNAUTHORIZED_PATHS = [
   '/dashboard/inventory',
   '/dashboard/suppliers',
   '/dashboard/production',
-  '/dashboard/warehouses',
+  '/dashboard/warehouse',
   '/dashboard/reports',
   '/dashboard/analytics',
   '/dashboard/payments',
@@ -313,15 +313,8 @@ async function runUiChecks() {
     }
 
     for (const path of UNAUTHORIZED_PATHS) {
-      if (!page.url().includes('/dashboard')) {
-        await page.goto(`${FRONTEND_URL}/login`, { waitUntil: 'networkidle' });
-        await page.fill('#email', SALES_EMAIL);
-        await page.fill('#password', SALES_PASSWORD);
-        await page.click('button[type="submit"]');
-        await page.waitForURL(/\/dashboard/, { timeout: 30000 });
-      }
-
-      await page.goto(`${FRONTEND_URL}${path}`, { waitUntil: 'networkidle', timeout: 45000 });
+      await page.goto(`${FRONTEND_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      await page.waitForTimeout(500);
       const url = new URL(page.url());
       const redirected = url.pathname === '/dashboard' || url.pathname === '/dashboard/';
       results.unauthorizedRedirects[path] = redirected ? 'redirected' : url.pathname;
@@ -330,17 +323,13 @@ async function runUiChecks() {
       }
     }
 
-    if (!page.url().includes('/dashboard')) {
-      await page.goto(`${FRONTEND_URL}/login`, { waitUntil: 'networkidle' });
-      await page.fill('#email', SALES_EMAIL);
-      await page.fill('#password', SALES_PASSWORD);
-      await page.click('button[type="submit"]');
-      await page.waitForURL(/\/dashboard/, { timeout: 30000 });
-    }
+    await page.goto(`${FRONTEND_URL}/login`, { waitUntil: 'networkidle' });
+    await page.fill('#email', SALES_EMAIL);
+    await page.fill('#password', SALES_PASSWORD);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/dashboard/, { timeout: 30000 });
 
-    await page.goto(`${FRONTEND_URL}/dashboard`, { waitUntil: 'networkidle' });
-    await page.locator('header button.group').first().click();
-    await page.locator('header button').filter({ hasText: /تسجيل الخروج|Logout|Déconnexion/i }).click({ timeout: 15000 });
+    await page.getByRole('button', { name: /تسجيل الخروج|Logout|Déconnexion/i }).click({ timeout: 15000 });
     await page.waitForURL(/\/login/, { timeout: 15000 });
     results.ui.logout = 'ok';
   } catch (err) {
