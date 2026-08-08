@@ -179,7 +179,7 @@ const DEFAULT_MENU_CONFIG = [
     title: 'Produits',
     icon: Package,
     route: '/dashboard/products',
-    roles: [...ALL_CORE_ROLES, ROLES.SALES_REP, ROLES.PRODUCTION_MANAGER, ROLES.WAREHOUSE_MANAGER],
+    roles: [...ALL_CORE_ROLES, ROLES.PRODUCTION_MANAGER, ROLES.WAREHOUSE_MANAGER],
     badge: null,
     children: null,
     permission: 'products.view',

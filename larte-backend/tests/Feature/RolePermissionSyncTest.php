@@ -24,5 +24,21 @@ class RolePermissionSyncTest extends TestCase
 
         $this->assertContains('meetings.view', $permissionNames);
         $this->assertContains('meetings.create', $permissionNames);
+        $this->assertContains('products.view', $permissionNames);
+    }
+
+    public function test_sales_role_does_not_have_products_view_after_sync(): void
+    {
+        $this->seed();
+
+        DefaultRolePermissions::assignAllRoles();
+
+        $sales = User::where('email', 'other.sales@larte.com')->first();
+        $this->assertNotNull($sales);
+
+        $permissionNames = $sales->role->permissions()->pluck('name')->all();
+
+        $this->assertNotContains('products.view', $permissionNames);
+        $this->assertContains('orders.view', $permissionNames);
     }
 }
