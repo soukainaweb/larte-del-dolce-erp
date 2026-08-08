@@ -795,7 +795,8 @@
       "deliveryTime": "وقت التوصيل",
       "paymentMethod": "طريقة الدفع",
       "quantity": "الكمية",
-      "discount": "الخصم (%)"
+      "discount": "الخصم (%)",
+      "rejectionReason": "سبب الرفض..."
     },
     "paymentMethods": {
       "cash": "نقداً",
@@ -821,10 +822,22 @@
       "customerRequired": "العميل مطلوب",
       "repRequired": "مندوب المبيعات مطلوب",
       "productsRequired": "منتج واحد على الأقل مطلوب",
-      "productNameRequired": "يجب أن يحتوي جميع المنتجات على اسم"
+      "productNameRequired": "يجب أن يحتوي جميع المنتجات على اسم",
+      "rejectionReasonRequired": "سبب الرفض مطلوب (3 أحرف على الأقل)"
+    },
+    "actions": {
+      "approve": "✅ الموافقة",
+      "reject": "❌ الرفض",
+      "rejectTitle": "رفض الطلب",
+      "rejectMessage": "رفض الطلب {{orderNumber}}",
+      "confirmReject": "تأكيد الرفض",
+      "approveSuccess": "تمت الموافقة على الطلب",
+      "rejectSuccess": "تم رفض الطلب"
     },
     "errors": {
-      "load": "خطأ في تحميل الطلبات"
+      "load": "خطأ في تحميل الطلبات",
+      "approve": "فشلت الموافقة على الطلب",
+      "reject": "فشل رفض الطلب"
     },
     "kpi": {
       "total": "إجمالي الطلبات",

@@ -8,10 +8,10 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\PasswordResetService;
 use App\Support\UserStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -19,6 +19,10 @@ class AuthController extends Controller
     private const INVALID_CREDENTIALS_MESSAGE = 'بيانات الاعتماد غير صحيحة';
 
     private const BLOCKED_ACCOUNT_MESSAGE = 'حسابك معطل أو موقوف. يرجى التواصل مع المسؤول.';
+
+    public function __construct(private PasswordResetService $passwordResetService)
+    {
+    }
 
     public function login(LoginRequest $request)
     {
@@ -106,47 +110,73 @@ class AuthController extends Controller
 
     public function forgotPassword(ForgotPasswordRequest $request)
     {
-        $status = Password::sendResetLink($request->only('email'));
+        $email = mb_strtolower(trim((string) $request->input('email')));
 
-        if ($status !== Password::RESET_LINK_SENT) {
-            return $this->error(__($status), [], 422);
+        try {
+            $this->passwordResetService->sendResetLink($email);
+        } catch (\Illuminate\Database\QueryException $e) {
+            report($e);
+
+            return $this->error('حدث خطأ في الخادم. يرجى المحاولة لاحقاً.', [], 500);
+        } catch (\Symfony\Component\Mailer\Exception\TransportExceptionInterface $e) {
+            report($e);
+
+            return $this->error(
+                'تعذر إرسال البريد الإلكتروني. يرجى التحقق من إعدادات البريد أو التواصل مع المسؤول.',
+                [],
+                503
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $this->error('حدث خطأ في الخادم. يرجى المحاولة لاحقاً.', [], 500);
         }
 
         $this->logAuthEvent(
             action: 'password_reset_requested',
-            description: 'Password reset link requested for ' . $request->input('email'),
+            description: 'Password reset link requested for ' . $email,
             level: 'info',
             status: 'success',
-            userId: User::where('email', $request->input('email'))->value('id'),
+            userId: User::query()->whereRaw('LOWER(email) = ?', [$email])->value('id'),
             ip: $request->ip(),
         );
 
-        return $this->success(null, 'Reset link sent to your email');
+        return $this->success(
+            null,
+            'إذا كان البريد الإلكتروني مسجلاً لدينا، سيتم إرسال رابط إعادة التعيين.'
+        );
     }
 
     public function resetPassword(ResetPasswordRequest $request)
     {
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function (User $user, string $password) {
-                $user->forceFill(['password' => $password])->save();
-            }
-        );
+        try {
+            $reset = $this->passwordResetService->resetPassword(
+                (string) $request->input('email'),
+                (string) $request->input('token'),
+                (string) $request->input('password'),
+            );
+        } catch (\Throwable $e) {
+            report($e);
 
-        if ($status !== Password::PASSWORD_RESET) {
-            return $this->error(__($status), [], 422);
+            return $this->error('حدث خطأ في الخادم. يرجى المحاولة لاحقاً.', [], 500);
         }
+
+        if (! $reset) {
+            return $this->error(__('passwords.token'), [], 422);
+        }
+
+        $email = mb_strtolower(trim((string) $request->input('email')));
 
         $this->logAuthEvent(
             action: 'password_reset',
-            description: 'Password reset completed for ' . $request->input('email'),
+            description: 'Password reset completed for ' . $email,
             level: 'info',
             status: 'success',
-            userId: User::where('email', $request->input('email'))->value('id'),
+            userId: User::query()->whereRaw('LOWER(email) = ?', [$email])->value('id'),
             ip: $request->ip(),
         );
 
-        return $this->success(null, 'Password reset successfully');
+        return $this->success(null, 'تم إعادة تعيين كلمة المرور بنجاح');
     }
 
     /**

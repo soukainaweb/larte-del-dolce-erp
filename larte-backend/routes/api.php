@@ -599,6 +599,7 @@ Route::middleware(['auth:sanctum', 'password.changed', 'throttle:api'])->group(f
         Route::patch('/{order}/status', [OrderController::class, 'updateStatus'])->middleware('permission:orders.update');
         Route::patch('/{order}/payment', [OrderController::class, 'updatePayment'])->middleware('permission:orders.update');
         Route::post('/{order}/validate', [OrderController::class, 'validateOrder'])->middleware('permission:orders.update');
+        Route::post('/{order}/reject', [OrderController::class, 'reject'])->middleware('permission:orders.update');
         Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->middleware('permission:orders.update');
         Route::post('/{order}/start-production', [OrderController::class, 'startProduction'])->middleware('permission:orders.update');
         Route::get('/{order}/products', [OrderController::class, 'products']);

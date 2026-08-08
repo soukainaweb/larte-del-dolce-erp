@@ -204,7 +204,17 @@ class OrderService
         return $this->workflowService->transition(
             $order,
             OrderWorkflow::APPROVED,
-            'Commande validée',
+            'تمت الموافقة على الطلب',
+            $user
+        );
+    }
+
+    public function reject(Order $order, string $reason, ?User $user = null): array
+    {
+        return $this->workflowService->transition(
+            $order,
+            OrderWorkflow::REJECTED,
+            $reason,
             $user
         );
     }

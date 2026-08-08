@@ -69,6 +69,105 @@ class OrderWorkflowNotificationService
         }
     }
 
+    public function notifyOrderApproved(Order $order, User $approver): void
+    {
+        $order->loadMissing(['customer', 'user']);
+        $orderUrl = $this->orderUrl($order);
+        $approverName = $this->displayName($approver);
+        $customerName = $order->customer->name ?? '—';
+
+        if ($order->user_id && (int) $order->user_id !== (int) $approver->id) {
+            $salesRep = User::find($order->user_id);
+            if ($salesRep) {
+                $this->createNotification($salesRep, [
+                    'type' => 'order',
+                    'title' => 'تمت الموافقة على الطلب',
+                    'message' => sprintf(
+                        "تمت الموافقة على طلبك بواسطة %s.\nرقم الطلب: %s\nالعميل: %s\n%s",
+                        $approverName,
+                        $order->order_number,
+                        $customerName,
+                        $orderUrl,
+                    ),
+                ]);
+            }
+        }
+
+        foreach ($this->activeUsersWithPermission('productions.view') as $user) {
+            if ((int) $user->id === (int) $approver->id) {
+                continue;
+            }
+            $this->createNotification($user, [
+                'type' => 'order',
+                'title' => 'طلب معتمد للمصنع',
+                'message' => sprintf(
+                    "تمت الموافقة على طلب جديد وجاهز للمتابعة.\nرقم الطلب: %s\nالعميل: %s\n%s",
+                    $order->order_number,
+                    $customerName,
+                    $orderUrl,
+                ),
+            ]);
+        }
+
+        foreach ($this->activeUsersByRole('accountant') as $user) {
+            if ((int) $user->id === (int) $approver->id) {
+                continue;
+            }
+            $this->createNotification($user, [
+                'type' => 'order',
+                'title' => 'طلب معتمد',
+                'message' => sprintf(
+                    "تمت الموافقة على طلب جديد.\nرقم الطلب: %s\n%s",
+                    $order->order_number,
+                    $orderUrl,
+                ),
+            ]);
+        }
+    }
+
+    public function notifyOrderRejected(Order $order, User $rejector, ?string $reason = null): void
+    {
+        $order->loadMissing(['customer', 'user']);
+        $orderUrl = $this->orderUrl($order);
+        $rejectorName = $this->displayName($rejector);
+        $customerName = $order->customer->name ?? '—';
+        $reasonText = trim((string) $reason) ?: '—';
+
+        if ($order->user_id && (int) $order->user_id !== (int) $rejector->id) {
+            $salesRep = User::find($order->user_id);
+            if ($salesRep) {
+                $this->createNotification($salesRep, [
+                    'type' => 'order',
+                    'title' => 'تم رفض الطلب',
+                    'message' => sprintf(
+                        "تم رفض طلبك بواسطة %s.\nرقم الطلب: %s\nالعميل: %s\nالسبب: %s\n%s",
+                        $rejectorName,
+                        $order->order_number,
+                        $customerName,
+                        $reasonText,
+                        $orderUrl,
+                    ),
+                ]);
+            }
+        }
+
+        foreach ($this->activeUsersByRole('manager') as $user) {
+            if ((int) $user->id === (int) $rejector->id) {
+                continue;
+            }
+            $this->createNotification($user, [
+                'type' => 'order',
+                'title' => 'طلب مرفوض',
+                'message' => sprintf(
+                    "تم رفض طلب.\nرقم الطلب: %s\nالسبب: %s\n%s",
+                    $order->order_number,
+                    $reasonText,
+                    $orderUrl,
+                ),
+            ]);
+        }
+    }
+
     public function notifySampleCreated(Sample $sample, User $creator): void
     {
         $sample->loadMissing(['product', 'salesperson']);

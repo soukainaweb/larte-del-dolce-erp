@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Orders\CancelOrderRequest;
+use App\Http\Requests\Orders\RejectOrderRequest;
 use App\Http\Requests\Orders\StoreOrderProductRequest;
 use App\Http\Requests\Orders\StoreOrderRequest;
 use App\Http\Requests\Orders\UpdateOrderPaymentRequest;
@@ -107,7 +108,21 @@ class OrderController extends Controller
         try {
             return $this->success(
                 $this->orderService->validate($order),
-                'Commande validée'
+                'تمت الموافقة على الطلب'
+            );
+        } catch (InvalidArgumentException|\RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
+
+    public function reject(RejectOrderRequest $request, Order $order)
+    {
+        $this->authorize('transition', [$order, 'rejected']);
+
+        try {
+            return $this->success(
+                $this->orderService->reject($order, $request->validated('reason')),
+                'تم رفض الطلب'
             );
         } catch (InvalidArgumentException|\RuntimeException $e) {
             return $this->error($e->getMessage(), 422);

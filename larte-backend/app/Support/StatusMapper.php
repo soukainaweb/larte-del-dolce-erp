@@ -107,6 +107,20 @@ class StatusMapper
             $data['payment_status'] = self::paymentFromDb($data['payment_status']);
         }
 
+        if ($order instanceof \App\Models\Order) {
+            $order->loadMissing(['customer', 'user']);
+            if ($order->customer) {
+                $data['customer_name'] = $order->customer->name;
+                $data['customer_phone'] = $order->customer->phone;
+            }
+            if ($order->user) {
+                $data['sales_rep_name'] = trim(($order->user->first_name ?? '') . ' ' . ($order->user->last_name ?? ''));
+            }
+        } elseif (isset($data['customer']) && is_array($data['customer'])) {
+            $data['customer_name'] = $data['customer']['name'] ?? null;
+            $data['customer_phone'] = $data['customer']['phone'] ?? null;
+        }
+
         return $data;
     }
 
