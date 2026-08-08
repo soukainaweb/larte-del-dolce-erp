@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Supplier;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Schema;
 
 class SupplierService
 {
@@ -11,21 +12,17 @@ class SupplierService
     {
         $query = Supplier::query();
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $term = $filters['search'];
             $query->where(function ($q) use ($term) {
-                $q->where('company_name', 'LIKE', "%{$term}%")
-                    ->orWhere('contact_name', 'LIKE', "%{$term}%")
-                    ->orWhere('email', 'LIKE', "%{$term}%");
+                $q->where('name', 'LIKE', "%{$term}%")
+                    ->orWhere('email', 'LIKE', "%{$term}%")
+                    ->orWhere('phone', 'LIKE', "%{$term}%");
             });
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
-        }
-
-        if (!empty($filters['city'])) {
-            $query->where('city', $filters['city']);
         }
 
         return $query->paginate($filters['per_page'] ?? 10);
@@ -33,12 +30,12 @@ class SupplierService
 
     public function create(array $data): Supplier
     {
-        return Supplier::create($data);
+        return Supplier::create($this->normalizePayload($data));
     }
 
     public function update(Supplier $supplier, array $data): Supplier
     {
-        $supplier->update($data);
+        $supplier->update($this->normalizePayload($data));
 
         return $supplier->fresh();
     }
@@ -57,23 +54,32 @@ class SupplierService
 
     public function statistics(): array
     {
-        return [
+        $stats = [
             'total' => Supplier::count(),
             'active' => Supplier::where('status', 'active')->count(),
             'inactive' => Supplier::where('status', 'inactive')->count(),
-            'blocked' => Supplier::where('status', 'blocked')->count(),
-            'by_city' => Supplier::selectRaw('city, count(*) as count')->groupBy('city')->get(),
         ];
+
+        if (Schema::hasColumn('suppliers', 'status')) {
+            $stats['blocked'] = Supplier::where('status', 'blocked')->count();
+        } else {
+            $stats['blocked'] = 0;
+        }
+
+        $stats['by_city'] = Schema::hasColumn('suppliers', 'city')
+            ? Supplier::selectRaw('city, count(*) as count')->groupBy('city')->get()
+            : collect();
+
+        return $stats;
     }
 
     public function export()
     {
         return Supplier::all()->map(fn ($s) => [
-            'Entreprise' => $s->company_name,
-            'Contact' => $s->contact_name,
+            'Nom' => $s->name,
             'Email' => $s->email,
             'Téléphone' => $s->phone,
-            'Ville' => $s->city,
+            'Adresse' => $s->address,
             'Statut' => $s->status,
         ]);
     }
@@ -90,6 +96,23 @@ class SupplierService
 
     public function statuses(): array
     {
-        return ['active', 'inactive', 'blocked'];
+        return ['active', 'inactive'];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function normalizePayload(array $data): array
+    {
+        $payload = [
+            'name' => $data['name'] ?? $data['company_name'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'email' => $data['email'] ?? null,
+            'address' => $data['address'] ?? null,
+            'status' => $data['status'] ?? 'active',
+        ];
+
+        return array_filter($payload, fn ($value) => $value !== null);
     }
 }
