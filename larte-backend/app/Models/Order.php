@@ -19,16 +19,24 @@ class Order extends Model
         'status',
         'total_amount',
         'payment_status',
+        'priority',
+        'delivery_date',
+        'delivery_time',
+        'payment_method',
         'notes',
 
     ];
 
 
-    protected $casts = [
+    protected function casts(): array
+    {
 
-        'total_amount' => 'decimal:2',
+        return [
+            'total_amount' => 'decimal:2',
+            'delivery_date' => 'date',
+        ];
 
-    ];
+    }
 
 
 

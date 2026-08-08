@@ -6,6 +6,37 @@ import { unwrapData, unwrapPaginated } from '../utils/apiHelpers';
  * Service de gestion des commandes
  * Compatible avec l'API Laravel
  */
+export const buildCreateOrderPayload = (form) => {
+  const items = (form.items || [])
+    .filter((line) => line.product_id)
+    .map((line) => ({
+      product_id: Number(line.product_id),
+      quantity: Math.max(1, parseInt(line.quantity, 10) || 1),
+      price: Math.max(0, Number(line.price) || 0),
+      discount: Math.min(100, Math.max(0, Number(line.discount) || 0)),
+    }));
+
+  const payload = {
+    customer_id: Number(form.customer_id),
+    items,
+    priority: form.priority || 'medium',
+    payment_method: form.payment_method || 'cash',
+    notes: form.notes?.trim() || null,
+  };
+
+  if (form.sales_rep_id) {
+    payload.sales_rep_id = Number(form.sales_rep_id);
+  }
+  if (form.delivery_date) {
+    payload.delivery_date = form.delivery_date;
+  }
+  if (form.delivery_time) {
+    payload.delivery_time = form.delivery_time.length === 5 ? form.delivery_time : form.delivery_time.slice(0, 5);
+  }
+
+  return payload;
+};
+
 const orderService = {
   /**
    * Récupérer la liste des commandes avec pagination et filtres
@@ -68,28 +99,25 @@ const orderService = {
   },
 
   /**
+   * Form options for order creation (customers, products, sales reps).
+   * Uses orders.create permission — does not require products.view.
+   */
+  getOrderFormOptions: async () => {
+    const response = await api.get('/orders/form-options');
+    return unwrapData(response) || {};
+  },
+
+  buildCreateOrderPayload,
+
+  /**
    * Créer une nouvelle commande
-   * @param {Object} data - Données de la commande
-   * @param {string} data.customer - Nom du client
-   * @param {string} data.rep - Commercial
-   * @param {string} data.priority - Priorité (low, medium, high)
-   * @param {string} data.deliveryDate - Date de livraison
-   * @param {string} data.deliveryTime - Heure de livraison
-   * @param {string} data.notes - Notes
-   * @param {Array} data.products - Liste des produits
-   * @param {string} data.paymentMethod - Méthode de paiement
-   * @param {string} data.paymentStatus - Statut de paiement
-   * @param {number} data.total - Total de la commande
-   * @returns {Promise} Promise avec la réponse de l'API
    */
   createOrder: async (data) => {
-    try {
-      const response = await api.post('/orders', data);
-      return { data: unwrapData(response), success: true };
-    } catch (error) {
-      console.error('Error creating order:', error);
-      throw error;
-    }
+    const payload = (data && data.customer_id && Array.isArray(data.items))
+      ? data
+      : buildCreateOrderPayload(data);
+    const response = await api.post('/orders', payload);
+    return { data: unwrapData(response), success: true };
   },
 
   /**

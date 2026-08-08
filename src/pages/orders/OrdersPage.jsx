@@ -52,6 +52,7 @@ import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
 import orderService from '../../services/orderService';
 import { transferOrder, getOrderTransfers } from '../../services/orderTransferService';
+import OrderFormModal from '../../components/orders/OrderFormModal';
 import { getUsers } from '../../services/userServicePage';
 import { getApiErrorMessage } from '../../utils/apiHelpers';
 import { useToast } from '../../contexts/ToastContext';
@@ -1209,17 +1210,9 @@ const OrdersPage = () => {
   // ==========================================
   // CRUD HANDLERS
   // ==========================================
-  const handleCreateOrder = async (formData) => {
-    setIsSaving(true);
-    try {
-      const response = await orderService.createOrder(formData);
-      setOrders(prev => [response.data, ...prev]);
-      setIsCreateModalOpen(false);
-    } catch (error) {
-      console.error('Error creating order:', error);
-    } finally {
-      setIsSaving(false);
-    }
+  const handleOrderCreated = () => {
+    setIsCreateModalOpen(false);
+    fetchOrders();
   };
 
   const handleEditOrder = async (formData) => {
@@ -1543,12 +1536,15 @@ const OrdersPage = () => {
       {/* Modals */}
       <AnimatePresence mode="wait">
         {isCreateModalOpen && (
-          <OrderModal
+          <OrderFormModal
             key="create-modal"
             isOpen={isCreateModalOpen}
             onClose={() => setIsCreateModalOpen(false)}
-            onSave={handleCreateOrder}
+            onSaved={handleOrderCreated}
             isLoading={isSaving}
+            isSalesRep={isSalesRep}
+            currentUserId={user?.id}
+            showToast={showToast}
           />
         )}
 

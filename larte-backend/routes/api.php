@@ -589,6 +589,7 @@ Route::middleware(['auth:sanctum', 'password.changed', 'throttle:api'])->group(f
         Route::get('/statistics', [OrderController::class, 'statistics']);
         Route::get('/export', [OrderController::class, 'export']);
         Route::get('/history', [OrderController::class, 'history']);
+        Route::get('/form-options', [OrderController::class, 'formOptions'])->middleware('permission:orders.create');
         Route::get('/', [OrderController::class, 'index']);
         Route::post('/', [OrderController::class, 'store'])->middleware('permission:orders.create');
         Route::get('/{order}', [OrderController::class, 'show']);

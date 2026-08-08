@@ -37,10 +37,17 @@ class OrderController extends Controller
         try {
             $order = $this->orderService->create($request->validated(), auth()->id());
 
-            return $this->success($order, 'Commande créée avec succès', 201);
+            return $this->success($order, 'تم إنشاء الطلب بنجاح', 201);
         } catch (\Throwable $e) {
             return $this->error($e->getMessage(), 422);
         }
+    }
+
+    public function formOptions()
+    {
+        $this->authorize('create', Order::class);
+
+        return $this->success($this->orderService->formOptions(auth()->user()));
     }
 
     public function show(Order $order)
