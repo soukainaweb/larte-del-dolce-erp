@@ -49,7 +49,8 @@ export const createUser = async (data) => {
   const roles = await loadRoleCatalog();
   const payload = buildUserPayload(data, roles);
   const response = await api.post("/users", payload);
-  response.generatedPassword = !data.password ? payload.password : null;
+  const body = unwrapData(response.data);
+  response.temporaryPassword = body?.temporary_password ?? null;
   return response;
 };
 

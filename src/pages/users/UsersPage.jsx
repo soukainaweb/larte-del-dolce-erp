@@ -17,7 +17,9 @@ import {
   Download,
   Eye,
   Edit2,
-  Trash2
+  Trash2,
+  Copy,
+  Check
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
@@ -417,6 +419,80 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading, availableRoles = 
 };
 
 // ==========================================
+// USER CREATED SUCCESS MODAL
+// ==========================================
+const UserCreatedSuccessModal = ({ isOpen, onClose, info }) => {
+  const { t, tc } = usePageI18n('users');
+  const [copied, setCopied] = useState(false);
+
+  if (!isOpen || !info) return null;
+
+  const handleCopy = async () => {
+    if (!info.temporaryPassword) return;
+    try {
+      await navigator.clipboard.writeText(info.temporaryPassword);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden"
+      >
+        <div className="px-6 py-5 border-b border-[#ECE8E1] bg-emerald-50">
+          <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
+            {t('users.success.title')}
+          </h3>
+          <p className="text-sm text-[#6D6D6D] mt-1">{t('users.success.subtitle')}</p>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <p className="text-xs font-semibold text-[#6D6D6D] uppercase tracking-wide">{t('users.success.emailLabel')}</p>
+            <p className="text-sm font-medium text-[#3D2F24] mt-1 break-all">{info.email}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-[#6D6D6D] uppercase tracking-wide">{t('users.success.passwordLabel')}</p>
+            <div className="mt-1 flex items-center gap-2">
+              <code className="flex-1 text-sm font-mono bg-[#F8F7F4] border border-[#ECE8E1] rounded-lg px-3 py-2 break-all select-all">
+                {info.temporaryPassword}
+              </code>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="shrink-0 p-2.5 rounded-lg border border-[#ECE8E1] hover:bg-[#F8F7F4] transition-colors"
+                title={t('users.success.copyPassword')}
+              >
+                {copied ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} className="text-[#6D6D6D]" />}
+              </button>
+            </div>
+            {copied && <p className="text-xs text-emerald-600 mt-1">{t('users.success.copied')}</p>}
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-[#6D6D6D] uppercase tracking-wide">{t('users.success.roleLabel')}</p>
+            <p className="text-sm font-medium text-[#3D2F24] mt-1">{info.role}</p>
+          </div>
+        </div>
+        <div className="px-6 pb-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-all"
+          >
+            {t('users.success.done')}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// ==========================================
 // DELETE MODAL
 // ==========================================
 const DeleteModal = ({ isOpen, onClose, onConfirm, user, isLoading }) => {
@@ -565,6 +641,8 @@ const UsersPage = () => {
   const [availableRoles, setAvailableRoles] = useState([]);
   const [formErrors, setFormErrors] = useState(null);
   const [createPresetRoleId, setCreatePresetRoleId] = useState(null);
+  const [createdUserInfo, setCreatedUserInfo] = useState(null);
+  const [isCreatedSuccessOpen, setIsCreatedSuccessOpen] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -708,19 +786,23 @@ const UsersPage = () => {
     setFormErrors(null);
     try {
       const response = await createUser(formData);
-      const generatedPassword = response.generatedPassword;
-      const newUser = normalizeUserRecord(unwrapData(response));
+      const body = unwrapData(response);
+      const temporaryPassword = body?.temporary_password ?? response.temporaryPassword;
+      const newUser = normalizeUserRecord(body);
       if (newUser) {
         setCurrentPage(1);
         await fetchUsers(1);
       }
       setIsCreateModalOpen(false);
+      setCreatePresetRoleId(null);
       await fetchStatistics();
-      if (generatedPassword) {
-        dispatchAppToast(
-          t('users.success.createdWithPassword', { password: generatedPassword }),
-          'success'
-        );
+      if (temporaryPassword && newUser) {
+        setCreatedUserInfo({
+          email: newUser.email,
+          temporaryPassword,
+          role: newUser.role,
+        });
+        setIsCreatedSuccessOpen(true);
       } else {
         dispatchAppToast(t('users.success.created'), 'success');
       }
@@ -1092,6 +1174,18 @@ const UsersPage = () => {
               setSelectedUser(null);
             }}
             user={selectedUser}
+          />
+        )}
+
+        {isCreatedSuccessOpen && createdUserInfo && (
+          <UserCreatedSuccessModal
+            key="created-success-modal"
+            isOpen={isCreatedSuccessOpen}
+            onClose={() => {
+              setIsCreatedSuccessOpen(false);
+              setCreatedUserInfo(null);
+            }}
+            info={createdUserInfo}
           />
         )}
       </AnimatePresence>
