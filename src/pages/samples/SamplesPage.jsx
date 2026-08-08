@@ -42,7 +42,7 @@ const SampleModal = ({ isOpen, onClose, onSave, item, products, users, isLoading
 
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4">
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="border-b px-6 py-4 flex justify-between"><h3 className="text-lg font-bold" style={{ fontFamily: FONT_HEADING }}>{item ? t('samples.editTitle') : t('samples.addTitle')}</h3><button type="button" onClick={onClose}><X size={20} /></button></div>
         <form onSubmit={(e) => { e.preventDefault(); onSave({ ...form, product_id: form.product_id || null, salesperson_id: form.salesperson_id || null, quantity: Number(form.quantity) }); }} className="p-6 space-y-4">

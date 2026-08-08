@@ -154,7 +154,7 @@ const PurchasesPage = () => {
       {totalPages > 1 && <div className="flex justify-center gap-2 mt-4"><button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft /></button><span>{page}/{totalPages}</span><button type="button" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}><ChevronRight /></button></div>}
       <AnimatePresence>
         {modal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4">
             <motion.form initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} onSubmit={handleSave} className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between"><h3 className="text-lg font-bold" style={{ fontFamily: FONT_HEADING }}>{selected ? t('purchases.editTitle') : t('purchases.addTitle')}</h3><button type="button" onClick={() => setModal(false)}><X size={20} /></button></div>
               <input required value={form.material_name} onChange={(e) => setForm({ ...form, material_name: e.target.value })} placeholder={t('purchases.fields.material')} className="w-full px-3 py-2 text-sm border rounded-lg" />

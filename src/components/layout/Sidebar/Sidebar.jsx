@@ -871,7 +871,7 @@ const Sidebar = ({
             exit={{ opacity: 0 }}
             transition={TRANSITION}
             onClick={onCloseMobile}
-            className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+            className="fixed inset-0 z-layout-sidebar-backdrop bg-black/30 lg:hidden"
             aria-hidden="true"
           />
         ) : null}
@@ -880,7 +880,7 @@ const Sidebar = ({
       {/* Sidebar Desktop */}
       <aside
         dir={isRTL ? 'rtl' : 'ltr'}
-        className={`sticky top-0 z-30 hidden h-screen shrink-0 flex-col bg-white shadow-none transition-[width] duration-300 ease-out lg:flex ${
+        className={`sticky top-0 z-layout-sidebar hidden h-screen shrink-0 flex-col bg-white shadow-none transition-[width] duration-300 ease-out lg:flex ${
           isRTL ? 'border-l' : 'border-r'
         } ${className}`}
         style={{
@@ -906,7 +906,7 @@ const Sidebar = ({
       {/* Sidebar Mobile */}
       <aside
         dir={isRTL ? 'rtl' : 'ltr'}
-        className={`fixed inset-y-0 z-50 flex w-[300px] max-w-[85vw] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
+        className={`fixed inset-y-0 z-layout-sidebar-drawer flex w-[300px] max-w-[85vw] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
           isRTL ? 'right-0 border-l' : 'left-0 border-r'
         } ${
           isMobileOpen ? 'translate-x-0' : isRTL ? 'translate-x-full' : '-translate-x-full'

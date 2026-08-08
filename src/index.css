@@ -73,3 +73,18 @@ html[dir="rtl"] body {
         grid-template-columns: 1fr !important;
     }
 }
+
+/*
+ * Application layering (lowest → highest):
+ * content → sidebar/header → modals → nested modals → toasts
+ * See tailwind.config.js theme.extend.zIndex
+ */
+@layer components {
+    .modal-overlay {
+        @apply fixed inset-0 z-modal flex items-center justify-center bg-black/50 backdrop-blur-sm;
+    }
+
+    .modal-overlay-nested {
+        @apply fixed inset-0 z-modal-nested flex items-center justify-center bg-black/50 backdrop-blur-sm;
+    }
+}
