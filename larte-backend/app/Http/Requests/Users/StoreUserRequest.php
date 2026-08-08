@@ -19,7 +19,11 @@ class StoreUserRequest extends FormRequest
             'name' => 'required_without_all:first_name,last_name|string|max:255',
             'first_name' => 'nullable|string|max:100',
             'last_name' => 'nullable|string|max:100',
-            'email' => 'required|email|unique:users',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')->whereNull('deleted_at'),
+            ],
             'password' => 'prohibited',
             'role_id' => 'required|exists:roles,id',
             'phone' => 'nullable|string|max:20',

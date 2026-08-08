@@ -38,11 +38,17 @@ class UserService
 
     public function create(array $data): array
     {
+        $email = mb_strtolower(trim($data['email']));
+        $trashedUser = User::onlyTrashed()->whereRaw('LOWER(email) = ?', [$email])->first();
+        if ($trashedUser) {
+            $trashedUser->forceDelete();
+        }
+
         $names = $this->userPayload($data);
         $temporaryPassword = Str::password(16, symbols: true);
 
         $user = User::create(array_merge($names, [
-            'email' => $data['email'],
+            'email' => $email,
             'password' => $temporaryPassword,
             'role_id' => $data['role_id'],
             'phone' => $data['phone'] ?? null,

@@ -129,4 +129,45 @@ class UserCreateTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['email']);
     }
+
+    public function test_admin_can_recreate_user_after_soft_delete(): void
+    {
+        $this->seed();
+
+        $admin = $this->adminUser();
+        $salesRole = Role::where('name', 'sales')->firstOrFail();
+
+        $existing = User::create([
+            'first_name' => 'Old',
+            'last_name' => 'User',
+            'email' => 'recreated@example.com',
+            'password' => 'password123',
+            'role_id' => $salesRole->id,
+            'status' => 'active',
+        ]);
+        $existing->delete();
+
+        $response = $this->actingAs($admin, 'sanctum')->postJson('/api/users', [
+            'first_name' => 'Mohamed',
+            'last_name' => 'said',
+            'email' => 'recreated@example.com',
+            'phone' => '0609720264',
+            'role_id' => $salesRole->id,
+            'status' => 'active',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.email', 'recreated@example.com');
+
+        $temporaryPassword = $response->json('data.temporary_password');
+        $this->assertNotEmpty($temporaryPassword);
+
+        $loginResponse = $this->postJson('/api/login', [
+            'email' => 'recreated@example.com',
+            'password' => $temporaryPassword,
+        ]);
+
+        $loginResponse->assertOk()
+            ->assertJsonPath('success', true);
+    }
 }
