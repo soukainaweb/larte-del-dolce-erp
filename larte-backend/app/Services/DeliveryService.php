@@ -39,7 +39,7 @@ class DeliveryService
     {
         $deliveryNumber = 'LIV-' . date('Ymd') . '-' . str_pad(Delivery::count() + 1, 4, '0', STR_PAD_LEFT);
 
-        return Delivery::create([
+        $delivery = Delivery::create([
             'order_id' => $data['order_id'],
             'delivery_number' => $deliveryNumber,
             'driver_id' => $data['driver_id'] ?? null,
@@ -49,6 +49,10 @@ class DeliveryService
             'notes' => $data['notes'] ?? null,
             'status' => $data['status'] ?? 'pending',
         ])->load(['order', 'driver', 'vehicle']);
+
+        app(EntityCreatedNotificationService::class)->notify('delivery', $delivery);
+
+        return $delivery;
     }
 
     public function update(Delivery $delivery, array $data): Delivery
@@ -92,7 +96,10 @@ class DeliveryService
 
     public function createVehicle(array $data): Vehicle
     {
-        return Vehicle::create($data);
+        $vehicle = Vehicle::create($data);
+        app(EntityCreatedNotificationService::class)->notify('vehicle', $vehicle);
+
+        return $vehicle;
     }
 
     public function updateVehicle(Vehicle $vehicle, array $data): Vehicle

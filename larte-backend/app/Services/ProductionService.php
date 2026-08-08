@@ -82,7 +82,10 @@ class ProductionService
                 Order::where('id', $data['order_id'])->update(['status' => StatusMapper::orderToDb('production')]);
             }
 
-            return $production->load(['order', 'assignedTo', 'items.product']);
+            $production = $production->load(['order', 'assignedTo', 'items.product']);
+            app(EntityCreatedNotificationService::class)->notify('production', $production);
+
+            return $production;
         });
     }
 

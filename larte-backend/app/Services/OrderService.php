@@ -19,7 +19,7 @@ class OrderService
 {
     public function __construct(
         private OrderWorkflowService $workflowService,
-        private OrderWorkflowNotificationService $orderNotifications,
+        private EntityCreatedNotificationService $entityNotifications,
     ) {
     }
 
@@ -160,7 +160,7 @@ class OrderService
             );
 
             $order = $order->fresh()->load(['customer', 'user', 'items.product']);
-            $this->orderNotifications->notifyOrderCreated($order, $actor);
+            $this->entityNotifications->notify('order', $order, $actor);
 
             return StatusMapper::transformOrder($order);
         });

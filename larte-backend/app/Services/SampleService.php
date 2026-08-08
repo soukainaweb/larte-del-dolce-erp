@@ -10,7 +10,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class SampleService
 {
-    public function __construct(private OrderWorkflowNotificationService $notifications)
+    public function __construct(private EntityCreatedNotificationService $entityNotifications)
     {
     }
     public function list(array $filters = []): LengthAwarePaginator
@@ -52,7 +52,7 @@ class SampleService
         $creator = User::find(auth()->id());
 
         if ($creator) {
-            $this->notifications->notifySampleCreated($sample, $creator);
+            $this->entityNotifications->notify('sample', $sample, $creator);
         }
 
         return $sample;

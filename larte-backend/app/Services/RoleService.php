@@ -33,6 +33,7 @@ class RoleService
         $role = Role::create($data);
 
         ActivityLogger::logModelEvent($role, 'created', sprintf('Rôle %s créé', $role->display_name ?? $role->name));
+        app(EntityCreatedNotificationService::class)->notify('role', $role);
 
         return $role;
     }

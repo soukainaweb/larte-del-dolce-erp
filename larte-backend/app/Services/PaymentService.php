@@ -55,7 +55,10 @@ class PaymentService
 
         $this->syncInvoiceStatus($payment);
 
-        return $this->transform($payment->load('invoice'));
+        $payment->load('invoice');
+        app(EntityCreatedNotificationService::class)->notify('payment', $payment);
+
+        return $this->transform($payment);
     }
 
     public function update(Payment $payment, array $data): Payment

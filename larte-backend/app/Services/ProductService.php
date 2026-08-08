@@ -46,6 +46,7 @@ class ProductService
         $product = Product::create($data)->load('category');
 
         ActivityLogger::logModelEvent($product, 'created', sprintf('Produit %s créé', $product->name));
+        app(EntityCreatedNotificationService::class)->notify('product', $product);
 
         return $product;
     }

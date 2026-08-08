@@ -30,7 +30,10 @@ class SupplierService
 
     public function create(array $data): Supplier
     {
-        return Supplier::create($this->normalizePayload($data));
+        $supplier = Supplier::create($this->normalizePayload($data));
+        app(EntityCreatedNotificationService::class)->notify('supplier', $supplier);
+
+        return $supplier;
     }
 
     public function update(Supplier $supplier, array $data): Supplier

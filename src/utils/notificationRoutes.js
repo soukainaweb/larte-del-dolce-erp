@@ -33,6 +33,38 @@ export const ROUTE_MAPPING = {
     detail: '/dashboard/meetings/:id',
     list: '/dashboard/meetings'
   },
+  meetings: {
+    detail: '/dashboard/meetings/:id',
+    list: '/dashboard/meetings'
+  },
+  supplier: {
+    detail: '/dashboard/suppliers/:id',
+    list: '/dashboard/suppliers'
+  },
+  warehouse: {
+    detail: '/dashboard/warehouse/:id',
+    list: '/dashboard/warehouse'
+  },
+  expense: {
+    detail: '/dashboard/expenses/:id',
+    list: '/dashboard/expenses'
+  },
+  purchase: {
+    detail: '/dashboard/purchases/:id',
+    list: '/dashboard/purchases'
+  },
+  waste_return: {
+    detail: '/dashboard/waste-returns/:id',
+    list: '/dashboard/waste-returns'
+  },
+  role: {
+    detail: '/dashboard/roles/:id',
+    list: '/dashboard/roles'
+  },
+  permission: {
+    detail: '/dashboard/roles',
+    list: '/dashboard/roles'
+  },
   sample: {
     detail: '/dashboard/samples',
     list: '/dashboard/samples'
@@ -172,6 +204,16 @@ export const getModuleLabel = (notification) => {
     notification: 'Notifications',
     activity: "Journal d'activité",
     calendar: 'Calendrier',
+    meeting: 'Réunions',
+    meetings: 'Réunions',
+    sample: 'Échantillons',
+    supplier: 'Fournisseurs',
+    warehouse: 'Entrepôts',
+    expense: 'Dépenses',
+    purchase: 'Achats',
+    waste_return: 'Déchets & retours',
+    role: 'Rôles',
+    permission: 'Permissions',
     system: 'Système'
   };
   return labels[notification.type] || notification.type || 'Général';
@@ -203,6 +245,16 @@ export const getModuleIcon = (notification) => {
     notification: 'Bell',
     activity: 'Activity',
     calendar: 'Calendar',
+    meeting: 'Calendar',
+    meetings: 'Calendar',
+    sample: 'FlaskConical',
+    supplier: 'ShoppingCart',
+    warehouse: 'Warehouse',
+    expense: 'Wallet',
+    purchase: 'Briefcase',
+    waste_return: 'Recycle',
+    role: 'ShieldCheck',
+    permission: 'ShieldCheck',
     system: 'Settings'
   };
   return icons[notification.type] || 'Bell';

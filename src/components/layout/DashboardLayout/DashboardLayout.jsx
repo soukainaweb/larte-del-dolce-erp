@@ -4,7 +4,8 @@ import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
-import { getNotifications, getUnreadCount, markNotificationAsRead } from '../../../services/notificationService';
+import { getNotifications, markNotificationAsRead } from '../../../services/notificationService';
+import { useUnreadNotificationCount, dispatchNotificationsRefresh } from '../../../hooks/useUnreadNotificationCount';
 import { findSearchRoute, getActiveMenuId } from '../../../utils/searchRoutes';
 import { getNotificationRoute } from '../../../utils/notificationRoutes';
 import { getRoleDisplayName, translateRoleLabel } from '../../../utils/roleMapping';
@@ -34,31 +35,37 @@ const DashboardLayout = () => {
     window.innerWidth < BREAKPOINTS.TABLET
   );
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { unreadCount, setUnreadCount, refreshUnreadCount } = useUnreadNotificationCount(isAuthenticated);
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const [listRes, countRes] = await Promise.all([
-        getNotifications({ per_page: 5, status: 'unread' }),
-        getUnreadCount(),
-      ]);
+      const listRes = await getNotifications({ per_page: 5, status: 'unread' });
       const list = listRes.data?.data?.data || listRes.data?.data || listRes.data || [];
       setNotifications(Array.isArray(list) ? list : []);
-      const count = countRes.data?.data?.count ?? countRes.data?.count ?? countRes.data?.data ?? 0;
-      setUnreadCount(typeof count === 'number' ? count : 0);
     } catch {
       setNotifications([]);
-      setUnreadCount(0);
     }
   }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 60000);
-      return () => clearInterval(interval);
+      refreshUnreadCount();
+      const interval = setInterval(() => {
+        fetchNotifications();
+        refreshUnreadCount();
+      }, 60000);
+      const handleRefresh = () => {
+        fetchNotifications();
+        refreshUnreadCount();
+      };
+      window.addEventListener('notifications:refresh', handleRefresh);
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('notifications:refresh', handleRefresh);
+      };
     }
-  }, [isAuthenticated, fetchNotifications]);
+  }, [isAuthenticated, fetchNotifications, refreshUnreadCount]);
 
   const handleResize = useCallback(() => {
     const width = window.innerWidth;
@@ -116,6 +123,7 @@ const DashboardLayout = () => {
       if (notification?.id && !notification.read_at && !notification.is_read) {
         await markNotificationAsRead(notification.id);
         setUnreadCount((c) => Math.max(0, c - 1));
+        dispatchNotificationsRefresh();
       }
       const route = getNotificationRoute(notification);
       navigate(route);
@@ -234,6 +242,7 @@ const DashboardLayout = () => {
         onLogout={handleLogout}
         onHelp={handleHelp}
         onDocumentation={handleDocumentation}
+        unreadNotificationCount={unreadCount}
         language="ar"
         appName={t('common.appName')}
         appSuffix={t('common.erp')}

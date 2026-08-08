@@ -32,13 +32,17 @@ class ExpenseService
 
     public function create(array $data): Expense
     {
-        return Expense::create([
+        $expense = Expense::create([
             'user_id' => auth()->id(),
             'category' => $data['category'],
             'description' => $data['description'],
             'amount' => $data['amount'],
             'expense_date' => $data['expense_date'],
         ])->load('user');
+
+        app(EntityCreatedNotificationService::class)->notify('expense', $expense);
+
+        return $expense;
     }
 
     public function update(Expense $expense, array $data): Expense

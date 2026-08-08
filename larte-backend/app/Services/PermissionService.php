@@ -32,7 +32,10 @@ class PermissionService
 
     public function create(array $data): Permission
     {
-        return Permission::create($data);
+        $permission = Permission::create($data);
+        app(EntityCreatedNotificationService::class)->notify('permission', $permission);
+
+        return $permission;
     }
 
     public function update(Permission $permission, array $data): Permission
