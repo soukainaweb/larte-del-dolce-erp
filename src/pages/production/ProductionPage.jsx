@@ -32,9 +32,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
 import { useToast } from '../../contexts/ToastContext';
+import useEntityDeepLink from '../../hooks/useEntityDeepLink';
 import { safeArray, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
 import {
   getProductions,
+  getProductionById,
   createProduction,
   updateProduction,
   deleteProduction,
@@ -722,6 +724,21 @@ const ProductionPage = () => {
     setIsCreateModalOpen(true);
     navigate(location.pathname, { replace: true, state: {} });
   }, [location.state?.openAddModal, navigate, location.pathname]);
+
+  useEntityDeepLink({
+    items: productions,
+    viewStateKey: 'viewProductionId',
+    editStateKey: 'editProductionId',
+    fetchById: getProductionById,
+    onView: (production) => {
+      setSelectedProduction(production);
+      setIsDetailsModalOpen(true);
+    },
+    onEdit: (production) => {
+      setSelectedProduction(production);
+      setIsEditModalOpen(true);
+    },
+  });
 
   // Calculate KPIs from API statistics
   const [kpis, setKpis] = useState({

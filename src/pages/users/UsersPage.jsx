@@ -40,6 +40,7 @@ import {
   resendInvitation
 } from '../../services/userServicePage';  // ← Changé de 'userServicePage' à 'userService'
 import { unwrapData, normalizeUserList, normalizeUserRecord } from '../../utils/apiHelpers';
+import useEntityDeepLink from '../../hooks/useEntityDeepLink';
 
 // ===> Supprimer 'userServicePage' et utiliser 'userService' à la place
 
@@ -583,32 +584,20 @@ const UsersPage = () => {
     fetchUsers();
   }, [currentPage, itemsPerPage, searchTerm, roleFilter, statusFilter]);
 
-  useEffect(() => {
-    const editUserId = location.state?.editUserId;
-    if (!editUserId) return;
-
-    const openEditFromNavigation = async () => {
-      const existing = users.find((u) => u.id === editUserId);
-      if (existing) {
-        setSelectedUser(existing);
-        setIsEditModalOpen(true);
-      } else {
-        try {
-          const response = await getUserById(editUserId);
-          const user = unwrapData(response);
-          if (user) {
-            setSelectedUser(user);
-            setIsEditModalOpen(true);
-          }
-        } catch (error) {
-          console.error('Error loading user for edit:', error);
-        }
-      }
-      navigate(location.pathname, { replace: true, state: {} });
-    };
-
-    openEditFromNavigation();
-  }, [location.state?.editUserId, users]);
+  useEntityDeepLink({
+    items: users,
+    viewStateKey: 'viewUserId',
+    editStateKey: 'editUserId',
+    fetchById: getUserById,
+    onView: (userRecord) => {
+      setSelectedUser(normalizeUserRecord(userRecord));
+      setIsDetailsModalOpen(true);
+    },
+    onEdit: (userRecord) => {
+      setSelectedUser(normalizeUserRecord(userRecord));
+      setIsEditModalOpen(true);
+    },
+  });
 
   // Fetch statistics
   const [kpis, setKpis] = useState({

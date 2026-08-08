@@ -65,6 +65,7 @@ import {
   getPaymentMethods
 } from '../../services/invoiceService';
 import { useToast } from '../../contexts/ToastContext';
+import useEntityDeepLink from '../../hooks/useEntityDeepLink';
 import { safeArray, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
 
 // ==========================================
@@ -984,6 +985,21 @@ const InvoicesPage = () => {
     setIsCreateModalOpen(true);
     navigate(location.pathname, { replace: true, state: {} });
   }, [location.state?.openAddModal, navigate, location.pathname]);
+
+  useEntityDeepLink({
+    items: invoices,
+    viewStateKey: 'viewInvoiceId',
+    editStateKey: 'editInvoiceId',
+    fetchById: getInvoiceById,
+    onView: (invoice) => {
+      setSelectedInvoice(invoice);
+      setIsViewModalOpen(true);
+    },
+    onEdit: (invoice) => {
+      setSelectedInvoice(invoice);
+      setIsEditModalOpen(true);
+    },
+  });
 
   // Fetch KPIs from statistics API
   const [kpis, setKpis] = useState({

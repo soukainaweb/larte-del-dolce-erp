@@ -46,7 +46,7 @@ import ActivityLogPage from '../pages/activitylog/ActivityLogPage';
 import SettingsPage from '../pages/settings/SettingsPage';
 
 // Composant de fallback
-import ModuleFallback from '../components/ModuleFallback';
+import EntityDetailRedirect from '../components/EntityDetailRedirect';
 import PermissionRoute from '../components/auth/PermissionRoute';
 
 // Protected Route Component
@@ -141,21 +141,22 @@ const AppRoutes = () => {
         <Route path="settings" element={<PermissionRoute permission="settings.view"><SettingsPage /></PermissionRoute>} />
         <Route path="settings/*" element={<PermissionRoute permission="settings.view"><SettingsPage /></PermissionRoute>} />
 
-        {/* Routes de détail - Fallback */}
-        <Route path="orders/:id" element={<ModuleFallback module="order" />} />
-        <Route path="customers/:id" element={<ModuleFallback module="customer" />} />
-        <Route path="products/:id" element={<ModuleFallback module="product" />} />
-        <Route path="production/:id" element={<ModuleFallback module="production" />} />
-        <Route path="deliveries/:id" element={<ModuleFallback module="delivery" />} />
-        <Route path="invoices/:id" element={<ModuleFallback module="invoice" />} />
-        <Route path="payments/:id" element={<ModuleFallback module="payment" />} />
-        <Route path="users/:id" element={<ModuleFallback module="user" />} />
+        {/* Entity detail deep-links → list page + modal */}
+        <Route path="orders/:id" element={<EntityDetailRedirect module="order" />} />
+        <Route path="customers/:id" element={<EntityDetailRedirect module="customer" />} />
+        <Route path="products/:id" element={<EntityDetailRedirect module="product" />} />
+        <Route path="production/:id" element={<EntityDetailRedirect module="production" />} />
+        <Route path="deliveries/:id" element={<EntityDetailRedirect module="delivery" />} />
+        <Route path="invoices/:id" element={<EntityDetailRedirect module="invoice" />} />
+        <Route path="payments/:id" element={<EntityDetailRedirect module="payment" />} />
+        <Route path="users/:id" element={<EntityDetailRedirect module="user" />} />
 
-        {/* Routes manquantes - Fallback */}
-        <Route path="classifications" element={<ModuleFallback module="classification" />} />
-        <Route path="classifications/:id" element={<ModuleFallback module="classification" />} />
-        <Route path="employees" element={<ModuleFallback module="employees" />} />
-        <Route path="calendar" element={<ModuleFallback module="calendar" />} />
+        {/* Legacy aliases → canonical modules */}
+        <Route path="classifications" element={<Navigate to="/dashboard/categories" replace />} />
+        <Route path="classifications/:id" element={<Navigate to="/dashboard/categories" replace />} />
+        <Route path="employees" element={<Navigate to="/dashboard/users" replace />} />
+        <Route path="employees/:id" element={<EntityDetailRedirect module="user" />} />
+        <Route path="calendar" element={<Navigate to="/dashboard/meetings" replace />} />
       </Route>
 
       {/* Redirects */}

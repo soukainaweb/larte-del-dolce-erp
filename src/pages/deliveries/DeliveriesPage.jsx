@@ -1,5 +1,6 @@
 // src/pages/Deliveries/DeliveriesPage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Truck,
@@ -51,6 +52,7 @@ import { usePageI18n } from '../../hooks/usePageI18n';
 import { useToast } from '../../contexts/ToastContext';
 import ExportButtons from '../../components/ExportButtons';
 import deliveryService from '../../services/deliveryService';
+import useEntityDeepLink from '../../hooks/useEntityDeepLink';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -879,6 +881,21 @@ const DeliveriesPage = () => {
   useEffect(() => {
     fetchDeliveries();
   }, [fetchDeliveries]);
+
+  useEntityDeepLink({
+    items: deliveries,
+    viewStateKey: 'viewDeliveryId',
+    editStateKey: 'editDeliveryId',
+    fetchById: (id) => deliveryService.getDeliveryById(id),
+    onView: (delivery) => {
+      setSelectedDelivery(delivery);
+      setIsViewModalOpen(true);
+    },
+    onEdit: (delivery) => {
+      setSelectedDelivery(delivery);
+      setIsEditModalOpen(true);
+    },
+  });
 
   // Calculate KPIs
   const kpis = useMemo(() => {

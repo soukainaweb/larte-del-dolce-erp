@@ -26,8 +26,12 @@ export const ROUTE_MAPPING = {
     list: '/dashboard/categories'
   },
   classification: {
-    detail: '/dashboard/classifications/:id',
-    list: '/dashboard/classifications'
+    detail: '/dashboard/categories/:id',
+    list: '/dashboard/categories'
+  },
+  meeting: {
+    detail: '/dashboard/meetings/:id',
+    list: '/dashboard/meetings'
   },
   invoice: {
     detail: '/dashboard/invoices/:id',
@@ -50,8 +54,8 @@ export const ROUTE_MAPPING = {
     list: '/dashboard/users'
   },
   employee: {
-    detail: '/dashboard/employees/:id',
-    list: '/dashboard/employees'
+    detail: '/dashboard/users/:id',
+    list: '/dashboard/users'
   },
   report: {
     detail: '/dashboard/reports/:id',
@@ -78,8 +82,8 @@ export const ROUTE_MAPPING = {
     list: '/dashboard/activity-logs'
   },
   calendar: {
-    detail: '/dashboard/calendar',
-    list: '/dashboard/calendar'
+    detail: '/dashboard/meetings',
+    list: '/dashboard/meetings'
   },
   system: {
     detail: '/dashboard/settings',
