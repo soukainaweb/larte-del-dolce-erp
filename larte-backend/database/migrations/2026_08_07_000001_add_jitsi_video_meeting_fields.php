@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\SqliteColumnMigrator;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,15 @@ return new class extends Migration
         DB::table('meetings')->where('status', 'completed')->update(['status' => 'finished']);
 
         $driver = Schema::getConnection()->getDriverName();
-        if ($driver === 'mysql') {
+        if ($driver === 'sqlite') {
+            SqliteColumnMigrator::replaceCheckedEnumColumn(
+                'meetings',
+                'status',
+                20,
+                'scheduled',
+                ['meetings_meeting_date_status_index' => ['meeting_date', 'status']],
+            );
+        } elseif ($driver === 'mysql') {
             DB::statement(
                 "ALTER TABLE meetings MODIFY COLUMN status ENUM('scheduled', 'live', 'finished', 'cancelled') NOT NULL DEFAULT 'scheduled'"
             );

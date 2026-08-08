@@ -8,6 +8,52 @@ use Illuminate\Support\Facades\Schema;
 
 final class SqliteColumnMigrator
 {
+    public static function replaceCheckedEnumColumn(
+        string $table,
+        string $column,
+        int $length,
+        string $default,
+        array $indexes = [],
+    ): void {
+        if (DB::getDriverName() !== 'sqlite') {
+            return;
+        }
+
+        if (! Schema::hasColumn($table, $column) || ! self::hasCheckConstraint($table, $column)) {
+            return;
+        }
+
+        foreach ($indexes as $indexName => $indexColumns) {
+            if (self::hasIndex($table, $indexName)) {
+                Schema::table($table, function (Blueprint $blueprint) use ($indexName) {
+                    $blueprint->dropIndex($indexName);
+                });
+            }
+        }
+
+        $temp = $column . '_enum_new';
+
+        Schema::table($table, function (Blueprint $blueprint) use ($temp, $length, $default) {
+            $blueprint->string($temp, $length)->default($default);
+        });
+
+        DB::table($table)->update([$temp => DB::raw($column)]);
+
+        Schema::table($table, function (Blueprint $blueprint) use ($column) {
+            $blueprint->dropColumn($column);
+        });
+
+        Schema::table($table, function (Blueprint $blueprint) use ($temp, $column) {
+            $blueprint->renameColumn($temp, $column);
+        });
+
+        foreach ($indexes as $indexName => $indexColumns) {
+            Schema::table($table, function (Blueprint $blueprint) use ($indexName, $indexColumns) {
+                $blueprint->index($indexColumns, $indexName);
+            });
+        }
+    }
+
     public static function replaceStringColumn(
         string $table,
         string $column,
@@ -71,6 +117,18 @@ final class SqliteColumnMigrator
         $pattern = '/"' . preg_quote($column, '/') . '"\s+varchar\s*\(\s*' . $length . '\s*\)/i';
 
         return ! preg_match($pattern, $sql);
+    }
+
+    private static function hasCheckConstraint(string $table, string $column): bool
+    {
+        $row = DB::selectOne(
+            'SELECT sql FROM sqlite_master WHERE type = ? AND name = ?',
+            ['table', $table]
+        );
+
+        $sql = (string) ($row->sql ?? '');
+
+        return (bool) preg_match('/"' . preg_quote($column, '/') . '"[^,]*check/is', $sql);
     }
 
     private static function hasIndex(string $table, string $indexName): bool
