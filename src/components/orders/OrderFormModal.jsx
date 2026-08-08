@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2, UserPlus, X } from 'lucide-react';
 import { usePageI18n } from '../../hooks/usePageI18n';
+import { useAuth } from '../../contexts/AuthContext';
+import { hasPermission } from '../../utils/permissions';
 import orderService from '../../services/orderService';
+import AddCustomerModal from './AddCustomerModal';
 import { extractFieldErrors, getApiErrorMessage } from '../../utils/apiHelpers';
 
 const FONT_HEADING = "'Cormorant Garamond', serif";
@@ -40,8 +43,25 @@ const calcLine = (line) => {
 };
 
 const formatCustomerLabel = (c) => {
-  const extra = [c?.email, c?.phone].filter(Boolean).join(' · ');
-  return extra ? `${c.name} (${extra})` : c.name;
+  const lines = [c?.name].filter(Boolean);
+  const details = [c?.city, c?.phone, c?.email].filter(Boolean);
+  if (details.length) {
+    return `${lines[0]}\n${details.join(' · ')}`;
+  }
+  return lines[0] || '—';
+};
+
+const customerMatchesSearch = (customer, query) => {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  const haystack = [
+    customer?.name,
+    customer?.city,
+    customer?.phone,
+    customer?.email,
+    customer?.address,
+  ].filter(Boolean).join(' ').toLowerCase();
+  return haystack.includes(q);
 };
 
 const formatRepLabel = (u) => {
@@ -59,7 +79,9 @@ const OrderFormModal = ({
   currentUserId,
   showToast,
 }) => {
+  const { user, roleKey, permissions } = useAuth();
   const { t, tc } = usePageI18n('orders');
+  const canCreateCustomer = hasPermission('customers.create', permissions, user?.role ?? roleKey);
   const [form, setForm] = useState(emptyForm(isSalesRep ? String(currentUserId || '') : ''));
   const [errors, setErrors] = useState({});
   const [optionsLoading, setOptionsLoading] = useState(false);
@@ -68,37 +90,41 @@ const OrderFormModal = ({
   const [salesReps, setSalesReps] = useState([]);
   const [customerSearch, setCustomerSearch] = useState('');
   const [productSearch, setProductSearch] = useState('');
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+
+  const loadFormOptions = async () => {
+    setOptionsLoading(true);
+    try {
+      const opts = await orderService.getOrderFormOptions();
+      setCustomers(Array.isArray(opts.customers) ? opts.customers : []);
+      setProducts(Array.isArray(opts.products) ? opts.products : []);
+      setSalesReps(Array.isArray(opts.sales_reps) ? opts.sales_reps : []);
+      if (isSalesRep && currentUserId) {
+        setForm((prev) => ({ ...prev, sales_rep_id: String(currentUserId) }));
+      }
+    } catch (err) {
+      showToast?.(getApiErrorMessage(err, t('orders.errors.loadFormOptions', 'تعذر تحميل بيانات النموذج')), 'error');
+      setCustomers([]);
+      setProducts([]);
+      setSalesReps([]);
+    } finally {
+      setOptionsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!isOpen) return;
     setErrors({});
     setCustomerSearch('');
     setProductSearch('');
+    setIsAddCustomerOpen(false);
     setForm(emptyForm(isSalesRep ? String(currentUserId || '') : ''));
-    setOptionsLoading(true);
-    orderService.getOrderFormOptions()
-      .then((opts) => {
-        setCustomers(Array.isArray(opts.customers) ? opts.customers : []);
-        setProducts(Array.isArray(opts.products) ? opts.products : []);
-        setSalesReps(Array.isArray(opts.sales_reps) ? opts.sales_reps : []);
-        if (isSalesRep && currentUserId) {
-          setForm((prev) => ({ ...prev, sales_rep_id: String(currentUserId) }));
-        }
-      })
-      .catch((err) => {
-        showToast?.(getApiErrorMessage(err, t('orders.errors.loadFormOptions', 'تعذر تحميل بيانات النموذج')), 'error');
-        setCustomers([]);
-        setProducts([]);
-        setSalesReps([]);
-      })
-      .finally(() => setOptionsLoading(false));
+    loadFormOptions();
   }, [isOpen, isSalesRep, currentUserId]);
 
   const filteredCustomers = useMemo(() => {
     const list = Array.isArray(customers) ? customers : [];
-    const q = customerSearch.trim().toLowerCase();
-    if (!q) return list;
-    return list.filter((c) => formatCustomerLabel(c).toLowerCase().includes(q));
+    return list.filter((c) => customerMatchesSearch(c, customerSearch));
   }, [customers, customerSearch]);
 
   const filteredProducts = useMemo(() => {
@@ -170,6 +196,29 @@ const OrderFormModal = ({
     return Object.keys(next).length === 0;
   };
 
+  const handleCustomerCreated = async (customer) => {
+    if (customer?.id) {
+      setForm((prev) => ({ ...prev, customer_id: String(customer.id) }));
+      setErrors((prev) => ({ ...prev, customer_id: '' }));
+    }
+    try {
+      const opts = await orderService.getOrderFormOptions();
+      const nextCustomers = Array.isArray(opts.customers) ? opts.customers : [];
+      setCustomers(nextCustomers);
+      if (customer?.id) {
+        setForm((prev) => ({ ...prev, customer_id: String(customer.id) }));
+      }
+    } catch (err) {
+      if (customer?.id) {
+        setCustomers((prev) => {
+          const exists = prev.some((c) => String(c.id) === String(customer.id));
+          return exists ? prev : [...prev, customer];
+        });
+      }
+      showToast?.(getApiErrorMessage(err, t('orders.errors.loadFormOptions', 'تعذر تحديث قائمة العملاء')), 'error');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
@@ -200,7 +249,7 @@ const OrderFormModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4" dir="rtl">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -221,15 +270,13 @@ const OrderFormModal = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase">{t('orders.table.customer')} *</label>
-                {filteredCustomers.length > 8 && (
-                  <input
-                    type="search"
-                    value={customerSearch}
-                    onChange={(e) => setCustomerSearch(e.target.value)}
-                    placeholder={tc('search')}
-                    className="w-full mb-2 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg"
-                  />
-                )}
+                <input
+                  type="search"
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  placeholder={tc('search')}
+                  className="w-full mb-2 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg"
+                />
                 <select
                   name="customer_id"
                   value={form.customer_id}
@@ -237,12 +284,23 @@ const OrderFormModal = ({
                   disabled={optionsLoading}
                   className={`w-full px-3 py-2 text-sm border rounded-lg ${errors.customer_id ? 'border-rose-500' : 'border-[#ECE8E1]'}`}
                 >
-                  <option value="">{optionsLoading ? tc('loading') : tc('selectOption')}</option>
+                  <option value="">{optionsLoading ? tc('loading') : t('orders.fields.selectCustomer', 'اختر عميلاً...')}</option>
                   {filteredCustomers.map((c) => (
-                    <option key={c.id} value={c.id}>{formatCustomerLabel(c)}</option>
+                    <option key={c.id} value={c.id}>{formatCustomerLabel(c).replace('\n', ' — ')}</option>
                   ))}
                 </select>
                 {errors.customer_id && <p className="text-xs text-rose-500 mt-1">{errors.customer_id}</p>}
+                {canCreateCustomer && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddCustomerOpen(true)}
+                    disabled={optionsLoading}
+                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#B8863B] border border-[#B8863B]/30 rounded-lg hover:bg-[#F8F5EF] disabled:opacity-50"
+                  >
+                    <UserPlus size={14} />
+                    {t('orders.fields.addCustomer', '+ إضافة عميل')}
+                  </button>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase">{t('orders.table.rep')} *</label>
@@ -285,10 +343,10 @@ const OrderFormModal = ({
               <div>
                 <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase">{t('orders.fields.paymentMethod')}</label>
                 <select name="payment_method" value={form.payment_method} onChange={handleChange} className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg">
-                  <option value="cash">{t('common.paymentMethods.cash')}</option>
-                  <option value="card">{t('common.paymentMethods.card')}</option>
-                  <option value="transfer">{t('common.paymentMethods.transfer')}</option>
-                  <option value="credit">{t('common.paymentMethods.credit')}</option>
+                  <option value="cash">{t('orders.paymentMethods.cash', 'نقداً')}</option>
+                  <option value="card">{t('orders.paymentMethods.card', 'بطاقة بنكية')}</option>
+                  <option value="transfer">{t('orders.paymentMethods.transfer', 'تحويل')}</option>
+                  <option value="credit">{t('orders.paymentMethods.credit', 'أجل')}</option>
                 </select>
               </div>
             </div>
@@ -393,6 +451,13 @@ const OrderFormModal = ({
           </div>
         </form>
       </motion.div>
+
+      <AddCustomerModal
+        isOpen={isAddCustomerOpen}
+        onClose={() => setIsAddCustomerOpen(false)}
+        onCreated={handleCustomerCreated}
+        showToast={showToast}
+      />
     </div>
   );
 };

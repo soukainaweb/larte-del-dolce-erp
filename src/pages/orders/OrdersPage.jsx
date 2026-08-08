@@ -531,7 +531,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, isLoading }) => {
                   <option value="cash">{t('common.paymentMethods.cash')}</option>
                   <option value="card">{t('common.paymentMethods.card')}</option>
                   <option value="transfer">{t('common.paymentMethods.transfer')}</option>
-                  <option value="credit">{t('common.paymentMethods.credit')}</option>
+                  <option value="credit">{t('orders.paymentMethods.credit', 'أجل')}</option>
                 </select>
               </div>
             </div>

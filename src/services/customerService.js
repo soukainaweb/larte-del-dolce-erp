@@ -1,5 +1,6 @@
 // src/services/customerService.js
 import api from "./api";
+import { unwrapData, normalizeCustomerRecord } from "../utils/apiHelpers";
 
 // ==========================================
 // Customer API Service
@@ -41,6 +42,21 @@ export const getCustomerById = (id) => {
  */
 export const createCustomer = (data) => {
   return api.post("/customers", data);
+};
+
+/**
+ * Create a customer from the order form (name, address, city).
+ * @param {{ name: string, address: string, city: string }} data
+ * @returns {Promise<object>} Normalized customer record
+ */
+export const createCustomerQuick = async (data) => {
+  const response = await api.post("/customers", {
+    name: data.name?.trim(),
+    address: data.address?.trim(),
+    city: data.city?.trim(),
+    status: "active",
+  });
+  return normalizeCustomerRecord(unwrapData(response));
 };
 
 /**

@@ -81,17 +81,33 @@ async function main() {
       token: sales.token,
       body: {
         name: `E2E Customer ${Date.now()}`,
-        email: `e2e.cust.${Date.now()}@example.com`,
-        phone: '0500000000',
-        type: 'individual',
-        status: 'active',
+        address: 'شارع الاختبار 1',
+        city: 'الرياض',
       },
     });
     results.api.seedCustomer = seedCustomer.status;
-    if (!seedCustomer.ok) fail(`Seed customer failed: ${seedCustomer.status}`);
+    if (!seedCustomer.ok) fail(`Seed customer failed: ${seedCustomer.status} ${JSON.stringify(seedCustomer.json?.errors || seedCustomer.json?.message)}`);
     formOpts = await api('/orders/form-options', { token: sales.token });
     opts = formOpts.json?.data || {};
   }
+
+  const quickCustomer = await api('/customers', {
+    method: 'POST',
+    token: sales.token,
+    body: {
+      name: `E2E Quick ${Date.now()}`,
+      address: 'حي النخيل',
+      city: 'جدة',
+    },
+  });
+  results.api.createQuickCustomer = quickCustomer.status;
+  if (!quickCustomer.ok) fail(`Quick customer create failed: ${quickCustomer.status}`);
+  const quickCustomerId = quickCustomer.json?.data?.id;
+  formOpts = await api('/orders/form-options', { token: sales.token });
+  opts = formOpts.json?.data || {};
+  const quickInOptions = (opts.customers || []).some((c) => String(c.id) === String(quickCustomerId));
+  results.api.quickCustomerInFormOptions = quickInOptions;
+  if (!quickInOptions) fail('New customer missing from form-options');
   if (!Array.isArray(opts.customers) || opts.customers.length === 0) fail('No customers in form-options');
 
   const managerNotifsBefore = unwrapList((await api('/notifications?per_page=50', { token: manager.token })).json).length;
@@ -182,7 +198,28 @@ async function main() {
     results.steps.modalOpen = await customerSelect.isVisible();
     if (results.steps.customerOptions <= 1) fail('Customer dropdown empty in UI');
 
-    await page.keyboard.press('Escape');
+    const addCustomerBtn = page.getByRole('button', { name: /إضافة عميل|Add Customer/i });
+    results.steps.addCustomerVisible = await addCustomerBtn.count() > 0;
+    if (!results.steps.addCustomerVisible) fail('Add customer button not visible');
+
+    const paymentSelect = page.locator('select[name="payment_method"]');
+    const paymentLabels = await paymentSelect.locator('option').allTextContents();
+    results.steps.paymentMethodCreditLabel = paymentLabels.some((label) => label.includes('أجل'));
+    results.steps.paymentMethodCreditRemoved = !paymentLabels.some((label) => label.includes('ائتمان'));
+    if (!results.steps.paymentMethodCreditLabel) fail('Payment method "أجل" not found');
+    if (!results.steps.paymentMethodCreditRemoved) fail('Payment method still shows "ائتمان"');
+
+    await addCustomerBtn.click();
+    await page.waitForTimeout(500);
+    const customerName = `E2E UI Customer ${Date.now()}`;
+    await page.locator('input[name="name"]').last().fill(customerName);
+    await page.locator('input[name="address"]').last().fill('شارع الواجهة');
+    await page.locator('input[name="city"]').last().fill('الرياض');
+    await page.getByRole('button', { name: /حفظ العميل|Save Customer/i }).click();
+    await page.waitForTimeout(2000);
+    const selectedCustomer = await customerSelect.inputValue();
+    results.steps.autoSelectNewCustomer = Boolean(selectedCustomer);
+    if (!selectedCustomer) fail('New customer was not auto-selected after creation');
     await page.waitForTimeout(500);
     const actionButtons = await page.locator('tbody tr').first().locator('td').last().locator('button').count();
     results.steps.orderActionButtons = actionButtons;
