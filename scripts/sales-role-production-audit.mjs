@@ -14,15 +14,15 @@ const EXPECTED_PERMISSIONS = [
   'dashboard.view', 'notifications.view',
   'orders.view', 'orders.create', 'orders.update',
   'customers.view', 'customers.create', 'customers.update',
-  'products.view',
   'meetings.view', 'meetings.create', 'meetings.update',
   'samples.view', 'samples.create', 'samples.update',
 ].sort();
 
-const AUTHORIZED_API = ['/orders?per_page=1', '/customers?per_page=1', '/products?per_page=1', '/meetings?per_page=1', '/samples?per_page=1', '/notifications?per_page=1'];
-const UNAUTHORIZED_API = ['/users?per_page=1', '/roles', '/settings', '/inventory?per_page=1', '/suppliers?per_page=1', '/productions?per_page=1', '/reports/sales-overview', '/activity-logs?per_page=1', '/finance/metrics'];
+const AUTHORIZED_API = ['/orders?per_page=1', '/customers?per_page=1', '/meetings?per_page=1', '/samples?per_page=1', '/notifications?per_page=1'];
+const UNAUTHORIZED_API = ['/products?per_page=1', '/users?per_page=1', '/roles', '/settings', '/inventory?per_page=1', '/suppliers?per_page=1', '/productions?per_page=1', '/reports/sales-overview', '/activity-logs?per_page=1', '/finance/metrics'];
 
 const UNAUTHORIZED_PATHS = [
+  '/dashboard/products', '/dashboard/products/1',
   '/dashboard/users', '/dashboard/roles', '/dashboard/settings', '/dashboard/inventory',
   '/dashboard/suppliers', '/dashboard/production', '/dashboard/warehouse', '/dashboard/reports',
   '/dashboard/analytics', '/dashboard/payments', '/dashboard/expenses', '/dashboard/finance',
@@ -157,10 +157,20 @@ async function auditSalesUser({ email, password, userId }, token, runUi = false)
       await page.waitForTimeout(800);
       userResult.ui.usersBlocked = new URL(page.url()).pathname === '/dashboard';
 
+      await page.goto(`${FRONTEND}/dashboard/products`, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(800);
+      userResult.ui.productsBlocked = new URL(page.url()).pathname === '/dashboard';
+
+      await page.goto(`${FRONTEND}/dashboard/products/1`, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(800);
+      userResult.ui.productDetailBlocked = new URL(page.url()).pathname === '/dashboard';
+
       await page.goto(`${FRONTEND}/dashboard/samples`, { waitUntil: 'networkidle' });
       userResult.ui.samplesOk = page.url().includes('/dashboard/samples');
 
       if (!userResult.ui.usersBlocked) fail(`${email}: /dashboard/users not blocked`);
+      if (!userResult.ui.productsBlocked) fail(`${email}: /dashboard/products not blocked`);
+      if (!userResult.ui.productDetailBlocked) fail(`${email}: /dashboard/products/1 not blocked`);
       if (!userResult.ui.samplesOk) fail(`${email}: /dashboard/samples not accessible`);
     } finally {
       await browser.close();

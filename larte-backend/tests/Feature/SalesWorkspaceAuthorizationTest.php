@@ -27,7 +27,7 @@ class SalesWorkspaceAuthorizationTest extends TestCase
         $this->assertContains('dashboard.view', $expected);
         $this->assertContains('orders.view', $expected);
         $this->assertContains('customers.view', $expected);
-        $this->assertContains('products.view', $expected);
+        $this->assertNotContains('products.view', $expected);
         $this->assertContains('meetings.view', $expected);
         $this->assertContains('samples.view', $expected);
         $this->assertNotContains('users.view', $expected);
@@ -40,15 +40,32 @@ class SalesWorkspaceAuthorizationTest extends TestCase
 
         $this->getJson('/api/orders')->assertOk()->assertJsonPath('success', true);
         $this->getJson('/api/customers')->assertOk()->assertJsonPath('success', true);
-        $this->getJson('/api/products')->assertOk()->assertJsonPath('success', true);
         $this->getJson('/api/meetings')->assertOk()->assertJsonPath('success', true);
         $this->getJson('/api/samples')->assertOk()->assertJsonPath('success', true);
+    }
+
+    public function test_sales_user_is_forbidden_from_products_api(): void
+    {
+        Sanctum::actingAs($this->salesUser());
+
+        $this->getJson('/api/products')->assertForbidden();
+        $this->getJson('/api/products/1')->assertForbidden();
+    }
+
+    public function test_manager_can_access_products_api(): void
+    {
+        $this->seed();
+
+        Sanctum::actingAs(User::where('email', 'manager@larte.com')->firstOrFail());
+
+        $this->getJson('/api/products')->assertOk()->assertJsonPath('success', true);
     }
 
     public function test_sales_user_is_forbidden_from_admin_endpoints(): void
     {
         Sanctum::actingAs($this->salesUser());
 
+        $this->getJson('/api/products')->assertForbidden();
         $this->getJson('/api/users')->assertForbidden();
         $this->getJson('/api/roles')->assertForbidden();
         $this->getJson('/api/settings')->assertForbidden();

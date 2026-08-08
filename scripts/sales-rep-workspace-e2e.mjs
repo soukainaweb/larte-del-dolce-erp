@@ -116,7 +116,6 @@ const AUTHORIZED_PATHS = [
   '/dashboard',
   '/dashboard/customers',
   '/dashboard/orders',
-  '/dashboard/products',
   '/dashboard/meetings',
   '/dashboard/notifications',
   '/dashboard/profile',
@@ -124,6 +123,8 @@ const AUTHORIZED_PATHS = [
 ];
 
 const UNAUTHORIZED_PATHS = [
+  '/dashboard/products',
+  '/dashboard/products/1',
   '/dashboard/users',
   '/dashboard/roles',
   '/dashboard/settings',
@@ -141,7 +142,6 @@ const EXPECTED_SIDEBAR_IDS = [
   'dashboard',
   'customers',
   'orders',
-  'products',
   'meetings',
   'samples',
   'notifications',
@@ -149,6 +149,7 @@ const EXPECTED_SIDEBAR_IDS = [
 ];
 
 const HIDDEN_SIDEBAR_IDS = [
+  'products',
   'users',
   'roles',
   'settings',
@@ -204,12 +205,13 @@ async function runApiChecks(token, permissions) {
   const authorized = [
     { path: '/orders?per_page=1', perm: 'orders.view', expect: 200 },
     { path: '/customers?per_page=1', perm: 'customers.view', expect: 200 },
-    { path: '/products?per_page=1', perm: 'products.view', expect: 200 },
     { path: '/meetings?per_page=1', perm: 'meetings.view', expect: 200 },
+    { path: '/samples?per_page=1', perm: 'samples.view', expect: 200 },
     { path: '/notifications?per_page=1', perm: 'notifications.view', expect: 200 },
   ];
 
   const unauthorized = [
+    { path: '/products?per_page=1', perm: 'products.view', expect: 403 },
     { path: '/users?per_page=1', perm: 'users.view', expect: 403 },
     { path: '/roles', perm: 'roles.view', expect: 403 },
     { path: '/settings', perm: 'settings.view', expect: 403 },
@@ -279,6 +281,7 @@ async function runUiChecks() {
 
     for (const id of HIDDEN_SIDEBAR_IDS) {
       const selectors = {
+        products: /المنتج|Produit|Products/i,
         users: /المستخدم|Utilisateur|Users/i,
         roles: /الأدوار|Rôles|Roles/i,
         settings: /الإعدادات|Paramètres|Settings/i,

@@ -86,7 +86,6 @@ class DefaultRolePermissions
                 'customers.view', 'customers.create', 'customers.update',
                 'meetings.view', 'meetings.create', 'meetings.update',
                 'samples.view', 'samples.create', 'samples.update',
-                'products.view',
             ]),
             'viewer' => self::viewerPermissions(),
             'delivery' => array_merge(self::BASELINE, [
