@@ -37,6 +37,32 @@ export const buildCreateOrderPayload = (form) => {
   return payload;
 };
 
+export const normalizeOrder = (order) => {
+  if (!order) return order;
+
+  const items = order.products ?? order.items ?? [];
+  const customerName = typeof order.customer === 'string'
+    ? order.customer
+    : (order.customer?.name ?? order.customer_name ?? '—');
+  const repName = order.rep
+    ?? (order.user ? `${order.user.first_name || ''} ${order.user.last_name || ''}`.trim() : '—');
+
+  return {
+    ...order,
+    orderNumber: order.orderNumber ?? order.order_number ?? `#${order.id}`,
+    total: Number(order.total ?? order.total_amount ?? 0),
+    paymentStatus: order.paymentStatus ?? order.payment_status,
+    createdAt: order.createdAt ?? order.created_at,
+    customer: customerName,
+    rep: repName || '—',
+    products: items.map((item) => ({
+      ...item,
+      name: item.name ?? item.product?.name ?? '—',
+      total: Number(item.total ?? item.subtotal ?? 0),
+    })),
+  };
+};
+
 const orderService = {
   /**
    * Récupérer la liste des commandes avec pagination et filtres
@@ -76,7 +102,7 @@ const orderService = {
       const url = `/orders${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       const response = await api.get(url);
       const { items, meta } = unwrapPaginated(response);
-      return { data: items, meta, success: true };
+      return { data: items.map(normalizeOrder), meta, success: true };
     } catch (error) {
       console.error('Error fetching orders:', error);
       throw error;
@@ -91,7 +117,7 @@ const orderService = {
   getOrderById: async (id) => {
     try {
       const response = await api.get(`/orders/${id}`);
-      return { data: unwrapData(response), success: true };
+      return { data: normalizeOrder(unwrapData(response)), success: true };
     } catch (error) {
       console.error(`Error fetching order ${id}:`, error);
       throw error;
@@ -117,7 +143,7 @@ const orderService = {
       ? data
       : buildCreateOrderPayload(data);
     const response = await api.post('/orders', payload);
-    return { data: unwrapData(response), success: true };
+    return { data: normalizeOrder(unwrapData(response)), success: true };
   },
 
   /**
