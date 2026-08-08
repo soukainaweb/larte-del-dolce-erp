@@ -164,13 +164,6 @@ export const buildUserPayload = (formData, roles = []) => {
     payload.role_id = roleId;
   }
 
-  if (formData.password) {
-    payload.password = formData.password;
-  } else {
-    // Temporary password for admin-created accounts; user should reset via email.
-    payload.password = `Temp${Date.now().toString(36)}!9Aa`;
-  }
-
   return payload;
 };
 

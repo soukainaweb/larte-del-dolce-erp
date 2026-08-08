@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Models\Role;
 use App\Support\UserStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
@@ -37,21 +36,25 @@ class UserService
         return $query->paginate($filters['per_page'] ?? 10);
     }
 
-    public function create(array $data): User
+    public function create(array $data): array
     {
         $names = $this->userPayload($data);
+        $temporaryPassword = Str::password(16, symbols: true);
 
         $user = User::create(array_merge($names, [
             'email' => $data['email'],
-            'password' => Hash::make($data['password'] ?? Str::password(12)),
+            'password' => $temporaryPassword,
             'role_id' => $data['role_id'],
             'phone' => $data['phone'] ?? null,
-            'status' => UserStatus::normalize($data['status'] ?? null, UserStatus::OFFLINE),
+            'status' => UserStatus::normalize($data['status'] ?? null, UserStatus::ACTIVE),
         ]))->load('role');
 
         ActivityLogger::logModelEvent($user, 'created', sprintf('Utilisateur %s créé', $user->email));
 
-        return $user;
+        return [
+            'user' => $user,
+            'temporary_password' => $temporaryPassword,
+        ];
     }
 
     public function update(User $user, array $data): User
@@ -69,7 +72,7 @@ class UserService
         $payload = array_merge($payload, $this->userPayload($data));
 
         if (!empty($data['password'])) {
-            $payload['password'] = Hash::make($data['password']);
+            $payload['password'] = $data['password'];
         }
 
         $user->update($payload);

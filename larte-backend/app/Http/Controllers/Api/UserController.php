@@ -30,8 +30,14 @@ class UserController extends Controller
     {
         $this->authorize('create', User::class);
 
+        $result = $this->userService->create($request->validated());
+        $user = $result['user'];
+
         return $this->success(
-            $this->userService->create($request->validated()),
+            array_merge($user->toArray(), [
+                'role' => $user->role,
+                'temporary_password' => $result['temporary_password'],
+            ]),
             'Utilisateur créé avec succès',
             201
         );
