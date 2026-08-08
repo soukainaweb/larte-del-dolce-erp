@@ -282,6 +282,14 @@ export const getApiErrorMessage = (error, fallback) => {
 
   if (!error) return defaultFallback;
 
+  if (error.configMissing) {
+    return error.message || i18n.t('errors.apiNotConfigured');
+  }
+
+  if (error.endpointMessage) {
+    return error.endpointMessage;
+  }
+
   if (error.timeoutMessage) {
     return translateApiErrorMessage(error.timeoutMessage);
   }
@@ -316,7 +324,19 @@ export const getApiErrorMessage = (error, fallback) => {
   }
 
   if (status === 404) {
-    return translateApiErrorMessage(data?.message) || i18n.t('errors.notFound');
+    const message = translateApiErrorMessage(data?.message);
+    const requestUrl = String(error.config?.url || '');
+    const contentType = String(error.response?.headers?.['content-type'] || '');
+
+    if (/^\/?(login|password\/)/.test(requestUrl)) {
+      return message || i18n.t('errors.loginServiceUnavailable');
+    }
+
+    if (contentType.includes('text/html') || data?.message === 'Endpoint not found') {
+      return message || i18n.t('errors.endpointNotFound');
+    }
+
+    return message || i18n.t('errors.notFound');
   }
 
   if (status === 405) {

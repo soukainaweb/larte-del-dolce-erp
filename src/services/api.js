@@ -6,11 +6,11 @@ import { dispatchAppToast } from '../utils/toastBus';
 import { extractValidationMessage } from '../utils/apiHelpers';
 import { translateApiErrorMessage } from '../utils/apiErrorTranslator';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || '';
 
-if (!API_BASE_URL && import.meta.env.DEV) {
-  console.warn(
-    'VITE_API_URL is not set. Add it to .env (see .env.example).'
+if (!API_BASE_URL) {
+  console.error(
+    '[API] VITE_API_URL is not set. Copy .env.example to .env and set the backend API URL.'
   );
 }
 
@@ -27,6 +27,17 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
+    if (!API_BASE_URL) {
+      const configError = new Error(
+        i18n.t('errors.apiNotConfigured', {
+          defaultValue:
+            'عنوان واجهة البرمجة (VITE_API_URL) غير مُعدّ. انسخ .env.example إلى .env واضبط عنوان الخادم.',
+        })
+      );
+      configError.configMissing = true;
+      return Promise.reject(configError);
+    }
+
     const token = getStoredToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -93,6 +104,27 @@ api.interceptors.response.use(
         : i18n.t('errors.networkError');
       error.timeoutMessage = timeoutMessage;
       error.message = timeoutMessage;
+    }
+
+    if (status === 404) {
+      const contentType = String(error.response?.headers?.['content-type'] || '');
+      const requestUrl = String(error.config?.url || '');
+      const isHtmlResponse = contentType.includes('text/html');
+      const isAuthRequest = /^\/?(login|password\/)/.test(requestUrl);
+
+      if (isHtmlResponse || isAuthRequest) {
+        const endpointMessage = isAuthRequest
+          ? i18n.t('errors.loginServiceUnavailable', {
+              defaultValue:
+                'خدمة تسجيل الدخول غير متاحة. تحقق من تشغيل الخادم وإعدادات API.',
+            })
+          : i18n.t('errors.endpointNotFound', {
+              defaultValue:
+                'مسار واجهة البرمجة غير موجود. تحقق من عنوان API (VITE_API_URL).',
+            });
+        error.endpointMessage = endpointMessage;
+        error.message = endpointMessage;
+      }
     }
 
     return Promise.reject(error);
