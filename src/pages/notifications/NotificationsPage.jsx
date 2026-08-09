@@ -163,11 +163,6 @@ import {
 } from '../../utils/notificationRoutes';
 import {
   fetchNotificationPage,
-  unwrapNotificationStatistics,
-  getApiErrorMessage,
-  ensureArray,
-} from '../../utils/apiHelpers';
-import {
   getNotifications,
   markNotificationAsRead,
   markMultipleAsRead,
@@ -176,7 +171,12 @@ import {
   deleteMultipleNotifications,
   deleteAllReadNotifications,
   getNotificationStatistics,
+  unwrapNotificationStatistics,
 } from '../../services/notificationService';
+import {
+  getApiErrorMessage,
+  ensureArray,
+} from '../../utils/apiHelpers';
 
 // ==========================================
 // CONSTANTES
@@ -758,7 +758,7 @@ const NotificationsPage = () => {
         sort_by: 'created_at',
         sort_order: 'desc'
       };
-      const { items, meta } = await fetchNotificationPage(getNotifications, params);
+      const { items, meta } = await fetchNotificationPage(params);
       setNotifications(items);
       setTotalCount(Number(meta.total ?? items.length));
     } catch (error) {
@@ -797,7 +797,28 @@ const NotificationsPage = () => {
     setCurrentPage(1);
   }, [searchTerm, filters.status]);
 
-  // Pagination
+  const isUnreadFilter = filters.status === 'unread';
+  const isFilteredList = Boolean(
+    searchTerm
+    || filters.module !== 'Tous'
+    || filters.priority !== 'all'
+    || isUnreadFilter,
+  );
+
+  const emptyListTitle = stats.total === 0
+    ? t('notifications.noNotifications')
+    : isUnreadFilter
+      ? t('notifications.noUnread', 'لا توجد إشعارات غير مقروءة')
+      : t('notifications.noNotifications');
+
+  const emptyListMessage = stats.total === 0
+    ? t('notifications.emptyAll', 'ستظهر الإشعارات الجديدة هنا')
+    : isUnreadFilter && stats.unread === 0
+      ? t('notifications.allRead', 'جميع الإشعارات مقروءة')
+      : isFilteredList
+        ? t('notifications.emptyFiltered')
+        : t('notifications.loadError', 'تعذر تحميل الإشعارات. يرجى التحديث.');
+
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const rangeStart = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = totalCount === 0 ? 0 : Math.min(currentPage * pageSize, totalCount);
@@ -1211,6 +1232,38 @@ const NotificationsPage = () => {
         onApply={() => setIsFilterOpen(false)}
       />
 
+      {/* ===== QUICK FILTERS ===== */}
+      <div className="flex items-center gap-2 mb-4 md:mb-6">
+        <button
+          type="button"
+          onClick={() => {
+            setFilters((prev) => ({ ...prev, status: 'all' }));
+            setCurrentPage(1);
+          }}
+          className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+            filters.status === 'all'
+              ? 'bg-[#B8863B] text-white border-[#B8863B]'
+              : 'bg-white text-[#6D6D6D] border-[#ECE8E1] hover:bg-[#F8F7F4]'
+          }`}
+        >
+          Toutes
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setFilters((prev) => ({ ...prev, status: 'unread' }));
+            setCurrentPage(1);
+          }}
+          className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+            filters.status === 'unread'
+              ? 'bg-[#B8863B] text-white border-[#B8863B]'
+              : 'bg-white text-[#6D6D6D] border-[#ECE8E1] hover:bg-[#F8F7F4]'
+          }`}
+        >
+          Non lues
+        </button>
+      </div>
+
       {/* ===== LISTE DES NOTIFICATIONS ===== */}
       <div className="bg-white border border-[#ECE8E1] rounded-xl overflow-hidden">
         <div className="p-2 md:p-4 border-b border-[#ECE8E1] flex items-center justify-between bg-[#F8F7F4]">
@@ -1248,12 +1301,17 @@ const NotificationsPage = () => {
           {notifications.length === 0 ? (
             <div className="p-8 md:p-12 text-center">
               <BellOff size={36} className="md:w-12 md:h-12 text-[#D1CBC0] mx-auto mb-2 md:mb-3" />
-              <h3 className="text-base md:text-lg font-bold text-[#3D2F24]">{t('notifications.noNotifications')}</h3>
-              <p className="text-xs md:text-sm text-[#6D6D6D]">
-                {searchTerm || filters.module !== 'Tous' || filters.priority !== 'all' 
-                  ? t('notifications.emptyFiltered')
-                  : t('notifications.allRead')}
-              </p>
+              <h3 className="text-base md:text-lg font-bold text-[#3D2F24]">{emptyListTitle}</h3>
+              <p className="text-xs md:text-sm text-[#6D6D6D]">{emptyListMessage}</p>
+              {!isFilteredList && stats.total > 0 && notifications.length === 0 && (
+                <button
+                  type="button"
+                  onClick={handleRefresh}
+                  className="mt-4 px-4 py-2 text-sm font-medium text-white bg-[#B8863B] rounded-lg hover:bg-[#A07532]"
+                >
+                  {actions.refresh}
+                </button>
+              )}
             </div>
           ) : (
             ensureArray(notifications).map((notification) => (

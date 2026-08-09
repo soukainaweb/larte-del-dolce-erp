@@ -4,8 +4,7 @@ import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
-import { getNotifications, markNotificationAsRead } from '../../../services/notificationService';
-import { fetchNotificationPage } from '../../../utils/apiHelpers';
+import { fetchNotificationPage, markNotificationAsRead } from '../../../services/notificationService';
 import { useUnreadNotificationCount, dispatchNotificationsRefresh } from '../../../hooks/useUnreadNotificationCount';
 import { findSearchRoute, getActiveMenuId } from '../../../utils/searchRoutes';
 import { getNotificationRoute } from '../../../utils/notificationRoutes';
@@ -40,7 +39,7 @@ const DashboardLayout = () => {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const { items } = await fetchNotificationPage(getNotifications, {
+      const { items } = await fetchNotificationPage({
         per_page: 5,
         status: 'unread',
       });

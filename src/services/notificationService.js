@@ -1,5 +1,31 @@
 // src/services/notificationService.js
 import api from "./api";
+import {
+  fetchNotificationPage as fetchNotificationPageHelper,
+  unwrapNotificationStatistics,
+  unwrapPaginated,
+  normalizeNotificationRecord,
+} from "../utils/apiHelpers";
+
+// Re-export shared notification parsers for a single import surface.
+export {
+  unwrapNotificationStatistics,
+  unwrapPaginated,
+  normalizeNotificationRecord,
+};
+
+/**
+ * Fetch a paginated notification list with normalized items and meta.
+ */
+export const fetchNotificationPage = async (params = {}) => {
+  const response = await getNotifications(params);
+  const { items, meta } = unwrapPaginated(response);
+
+  return {
+    items: items.map(normalizeNotificationRecord).filter(Boolean),
+    meta,
+  };
+};
 
 // ==========================================
 // Notification API Service
@@ -143,6 +169,7 @@ export const createNotification = (data) => {
 // ==========================================
 export default {
   getNotifications,
+  fetchNotificationPage,
   getNotificationById,
   markNotificationAsRead,
   markMultipleAsRead,

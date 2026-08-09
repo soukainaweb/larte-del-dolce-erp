@@ -77,6 +77,39 @@ class NotificationListTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data.data')
             ->assertJsonPath('data.total', 1);
+
+        $this->getJson('/api/notifications')
+            ->assertOk()
+            ->assertJsonCount(2, 'data.data')
+            ->assertJsonPath('data.total', 2);
+    }
+
+    public function test_read_notification_is_included_in_default_list(): void
+    {
+        $manager = User::where('email', 'manager@larte.com')->firstOrFail();
+
+        Notification::where('user_id', $manager->id)->delete();
+
+        Notification::create([
+            'user_id' => $manager->id,
+            'title' => 'Only read notification',
+            'message' => 'Already read',
+            'type' => 'order',
+            'is_read' => true,
+        ]);
+
+        Sanctum::actingAs($manager);
+
+        $this->getJson('/api/notifications/statistics')
+            ->assertOk()
+            ->assertJsonPath('data.total', 1)
+            ->assertJsonPath('data.unread', 0);
+
+        $this->getJson('/api/notifications?per_page=10&page=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.total', 1)
+            ->assertJsonPath('data.data.0.title', 'Only read notification');
     }
 
     public function test_user_only_sees_own_notifications(): void
