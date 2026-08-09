@@ -83,4 +83,9 @@ class Order extends Model
     {
         return $this->hasMany(Meeting::class);
     }
+
+    public function approvals()
+    {
+        return $this->hasMany(OrderApproval::class);
+    }
 }

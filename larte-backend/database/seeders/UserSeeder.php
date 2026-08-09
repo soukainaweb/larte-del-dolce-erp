@@ -46,5 +46,33 @@ class UserSeeder extends Seeder
                 'status' => 'online',
             ]
         );
+
+        $accountantRole = Role::where('name', 'accountant')->first();
+        if ($accountantRole) {
+            User::updateOrCreate(
+                ['email' => 'accountant@larte.com'],
+                [
+                    'first_name' => 'Accountant',
+                    'last_name' => 'User',
+                    'password' => '123456',
+                    'role_id' => $accountantRole->id,
+                    'status' => 'online',
+                ]
+            );
+        }
+
+        $responsibleRole = Role::where('name', 'responsible')->first();
+        if ($responsibleRole) {
+            User::updateOrCreate(
+                ['email' => 'responsible@larte.com'],
+                [
+                    'first_name' => 'Responsible',
+                    'last_name' => 'User',
+                    'password' => '123456',
+                    'role_id' => $responsibleRole->id,
+                    'status' => 'online',
+                ]
+            );
+        }
     }
 }

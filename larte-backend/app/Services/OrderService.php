@@ -7,6 +7,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Customer;
+use App\Support\OrderApprovalStage;
 use App\Support\SalesScope;
 use App\Support\OrderWorkflow;
 use App\Support\StatusMapper;
@@ -20,6 +21,7 @@ class OrderService
     public function __construct(
         private OrderWorkflowService $workflowService,
         private EntityCreatedNotificationService $entityNotifications,
+        private OrderApprovalService $approvalService,
     ) {
     }
 
@@ -128,7 +130,7 @@ class OrderService
             unset($data['sales_rep_id']);
 
             $orderNumber = NumberGenerator::next('ORD', Order::class, 'order_number');
-            $initialStatus = OrderWorkflow::canonical($data['status'] ?? OrderWorkflow::SUBMITTED);
+            $initialStatus = OrderWorkflow::PENDING_ACCOUNTANT;
 
             $order = Order::create([
                 'order_number' => $orderNumber,
@@ -149,8 +151,10 @@ class OrderService
             $this->workflowService->recordInitialStatus(
                 $order->fresh(),
                 $actor,
-                'Commande créée'
+                'Order submitted'
             );
+
+            $this->approvalService->recordSubmitted($order->fresh(), $actor);
 
             ActivityLogger::log(
                 module: 'orders',
@@ -199,14 +203,33 @@ class OrderService
         return StatusMapper::transformOrder($order->fresh()->load(['customer', 'items.product']));
     }
 
+    public function show(Order $order, ?User $viewer = null): array
+    {
+        $viewer ??= auth()->user();
+        $order->load(['customer', 'user', 'items.product', 'approvals.user']);
+        $data = StatusMapper::transformOrder($order);
+        $data['approval_history'] = $this->approvalService->approvalHistory($order);
+        $data['approval_progress'] = $this->approvalService->approvalProgress($order);
+        $data['can_approve'] = $viewer ? $this->approvalService->canUserApprove($viewer, $order) : false;
+        $data['can_reject'] = $data['can_approve'];
+        $data['rejection'] = $this->approvalService->latestRejection($order);
+
+        return $data;
+    }
+
+    public function approve(Order $order, ?User $user = null): array
+    {
+        return $this->approvalService->approve($order, $user);
+    }
+
+    public function reject(Order $order, string $reason, ?User $user = null): array
+    {
+        return $this->approvalService->reject($order, $reason, $user);
+    }
+
     public function validate(Order $order, ?User $user = null): array
     {
-        return $this->workflowService->transition(
-            $order,
-            OrderWorkflow::APPROVED,
-            'Commande validée',
-            $user
-        );
+        return $this->approvalService->approve($order, $user);
     }
 
     public function cancel(Order $order, ?string $reason = null, ?User $user = null): array
@@ -338,7 +361,11 @@ class OrderService
         return [
             'total' => (clone $query)->count(),
             'draft' => (clone $query)->where('status', OrderWorkflow::DRAFT)->count(),
-            'pending' => (clone $query)->where('status', OrderWorkflow::SUBMITTED)->count(),
+            'pending' => (clone $query)->whereIn('status', [
+                OrderWorkflow::PENDING_ACCOUNTANT,
+                OrderWorkflow::PENDING_MANAGER,
+                OrderWorkflow::PENDING_RESPONSIBLE,
+            ])->count(),
             'validated' => (clone $query)->where('status', OrderWorkflow::APPROVED)->count(),
             'in_production' => (clone $query)->where('status', OrderWorkflow::PREPARING)->count(),
             'ready' => (clone $query)->where('status', OrderWorkflow::READY)->count(),

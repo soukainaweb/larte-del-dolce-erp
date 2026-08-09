@@ -9,6 +9,7 @@ use App\Http\Requests\Orders\StoreOrderRequest;
 use App\Http\Requests\Orders\UpdateOrderPaymentRequest;
 use App\Http\Requests\Orders\UpdateOrderProductRequest;
 use App\Http\Requests\Orders\UpdateOrderRequest;
+use App\Http\Requests\Orders\RejectOrderRequest;
 use App\Http\Requests\Orders\UpdateOrderStatusRequest;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -54,7 +55,7 @@ class OrderController extends Controller
     {
         $this->authorize('view', $order);
 
-        return $this->success(StatusMapper::transformOrder($order->load(['customer', 'user', 'items.product'])));
+        return $this->success($this->orderService->show($order, auth()->user()));
     }
 
     public function update(UpdateOrderRequest $request, Order $order)
@@ -100,18 +101,53 @@ class OrderController extends Controller
         }
     }
 
-    public function validateOrder(Order $order)
+    public function approveOrder(Order $order)
     {
-        $this->authorize('transition', [$order, 'validated']);
+        $this->authorize('approve', $order);
 
         try {
             return $this->success(
-                $this->orderService->validate($order),
-                'Commande validée'
+                $this->orderService->approve($order),
+                'تمت الموافقة على الطلب'
             );
         } catch (InvalidArgumentException|\RuntimeException $e) {
             return $this->error($e->getMessage(), 422);
         }
+    }
+
+    public function reject(RejectOrderRequest $request, Order $order)
+    {
+        $this->authorize('reject', $order);
+
+        try {
+            return $this->success(
+                $this->orderService->reject($order, $request->validated('reason')),
+                'تم رفض الطلب'
+            );
+        } catch (InvalidArgumentException|\RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
+
+    public function validateOrder(Order $order)
+    {
+        $this->authorize('approve', $order);
+
+        try {
+            return $this->success(
+                $this->orderService->validate($order),
+                'تمت الموافقة على الطلب'
+            );
+        } catch (InvalidArgumentException|\RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
+
+    public function approvalHistory(Order $order)
+    {
+        $this->authorize('view', $order);
+
+        return $this->success($this->orderService->show($order, auth()->user())['approval_history'] ?? []);
     }
 
     public function cancel(CancelOrderRequest $request, Order $order)

@@ -50,7 +50,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
-import orderService from '../../services/orderService';
+import orderService, { normalizeOrder } from '../../services/orderService';
 import { transferOrder, getOrderTransfers } from '../../services/orderTransferService';
 import OrderFormModal from '../../components/orders/OrderFormModal';
 import { getUsers } from '../../services/userServicePage';
@@ -83,6 +83,9 @@ const StatusBadge = ({ status }) => {
   const classes = {
     draft: 'bg-gray-50 text-gray-600 border-gray-200',
     pending: 'bg-amber-50 text-amber-700 border-amber-200',
+    pending_accountant: 'bg-amber-50 text-amber-700 border-amber-200',
+    pending_manager: 'bg-orange-50 text-orange-700 border-orange-200',
+    pending_responsible: 'bg-yellow-50 text-yellow-800 border-yellow-200',
     validated: 'bg-blue-50 text-blue-700 border-blue-200',
     in_production: 'bg-purple-50 text-purple-700 border-purple-200',
     ready: 'bg-indigo-50 text-indigo-700 border-indigo-200',
@@ -108,6 +111,143 @@ const StatusBadge = ({ status }) => {
     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${classes[key] || classes.draft}`}>
       {statusLabel(key)}
     </span>
+  );
+};
+
+const APPROVAL_PENDING_STATUSES = ['pending', 'pending_accountant', 'pending_manager', 'pending_responsible'];
+
+const formatApprovalDate = (value) => {
+  if (!value) return null;
+  return new Date(value).toLocaleString(DATE_LOCALE, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const ApprovalTimeline = ({ progress = [], t }) => {
+  if (!progress.length) return null;
+
+  const stepIcon = (state) => {
+    if (state === 'completed') return <CheckCircle size={16} className="text-emerald-500 shrink-0" />;
+    if (state === 'rejected') return <XCircle size={16} className="text-rose-500 shrink-0" />;
+    if (state === 'current') return <Clock size={16} className="text-amber-500 shrink-0" />;
+    return <div className="w-4 h-4 rounded-full border-2 border-[#D9D4CB] shrink-0" />;
+  };
+
+  return (
+    <div className="space-y-3">
+      {progress.map((step) => {
+        const stageLabel = t(`orders.approval.stages.${step.key}`, step.label || step.key);
+        const stateLabel = t(`orders.approval.states.${step.state}`, step.state);
+        const subtitle = step.state === 'rejected'
+          ? stateLabel
+          : step.state === 'completed'
+            ? (step.key === 'representative'
+              ? t('orders.approval.orderSubmitted')
+              : step.key === 'approved'
+                ? t('orders.approval.approvedReady')
+                : stateLabel)
+            : step.state === 'current'
+              ? t('orders.approval.waitingForApproval')
+              : stateLabel;
+
+        return (
+          <div key={step.key} className="flex gap-3">
+            <div className="pt-0.5">{stepIcon(step.state)}</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-[#3D2F24]">{stageLabel}</p>
+                {step.acted_at && (
+                  <span className="text-[10px] text-[#6D6D6D] whitespace-nowrap">
+                    {formatApprovalDate(step.acted_at)}
+                  </span>
+                )}
+              </div>
+              <p className={`text-xs ${step.state === 'rejected' ? 'text-rose-600' : 'text-[#6D6D6D]'}`}>
+                {step.actor?.name ? `${step.actor.name} — ${subtitle}` : subtitle}
+              </p>
+              {step.state === 'rejected' && step.reason && (
+                <p className="text-xs text-rose-700 mt-1 bg-rose-50 border border-rose-100 rounded-lg px-2 py-1">
+                  {step.reason}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const RejectOrderModal = ({ isOpen, onClose, onConfirm, isLoading, t, tc }) => {
+  const [reason, setReason] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) {
+      setReason('');
+      setError('');
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleConfirm = () => {
+    const trimmed = reason.trim();
+    if (trimmed.length < 3) {
+      setError(t('orders.approval.rejectReasonRequired'));
+      return;
+    }
+    onConfirm(trimmed);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+      >
+        <h4 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
+          {t('orders.approval.rejectTitle')}
+        </h4>
+        <label className="block text-xs font-semibold text-[#6D6D6D] mt-4 mb-1.5 uppercase tracking-wide">
+          {t('orders.approval.rejectReason')} *
+        </label>
+        <textarea
+          value={reason}
+          onChange={(e) => {
+            setReason(e.target.value);
+            if (error) setError('');
+          }}
+          rows={4}
+          className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 resize-none ${
+            error ? 'border-rose-500' : 'border-[#ECE8E1]'
+          }`}
+        />
+        {error && <p className="text-xs text-rose-500 mt-1">{error}</p>}
+        <div className="flex gap-3 mt-5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4]"
+          >
+            {tc('cancel')}
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={isLoading}
+            className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 disabled:opacity-50"
+          >
+            {isLoading ? tc('saving') : t('orders.approval.confirmReject')}
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 
@@ -716,98 +856,283 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, order, isLoading }) => {
 // ==========================================
 // ORDER DETAILS MODAL
 // ==========================================
-const OrderDetailsModal = ({ isOpen, onClose, order }) => {
-  const { t, tc, statusLabel, commonStatus } = usePageI18n('orders');
-  if (!isOpen || !order) return null;
+const OrderDetailsModal = ({
+  isOpen,
+  onClose,
+  order: initialOrder,
+  onOrderUpdated,
+  showToast,
+}) => {
+  const { t, tc, statusLabel } = usePageI18n('orders');
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+
+  const loadOrder = useCallback(async () => {
+    if (!initialOrder?.id) return;
+    setLoading(true);
+    try {
+      const response = await orderService.getOrderById(initialOrder.id);
+      setOrder(response.data);
+    } catch (error) {
+      console.error('Error loading order details:', error);
+      showToast?.(getApiErrorMessage(error, t('orders.errors.load')), 'error');
+      setOrder(normalizeOrder(initialOrder));
+    } finally {
+      setLoading(false);
+    }
+  }, [initialOrder, showToast, t]);
+
+  useEffect(() => {
+    if (isOpen && initialOrder?.id) {
+      loadOrder();
+    } else if (!isOpen) {
+      setOrder(null);
+      setShowRejectModal(false);
+      setShowApproveConfirm(false);
+    }
+  }, [isOpen, initialOrder?.id, loadOrder]);
+
+  const handleApprove = async () => {
+    if (!order?.id) return;
+    setActionLoading(true);
+    try {
+      const response = await orderService.approveOrder(order.id);
+      setOrder(response.data);
+      onOrderUpdated?.(response.data);
+      setShowApproveConfirm(false);
+      showToast?.(t('orders.approval.approvedSuccess'), 'success');
+    } catch (error) {
+      showToast?.(getApiErrorMessage(error, t('orders.errors.load')), 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async (reason) => {
+    if (!order?.id) return;
+    setActionLoading(true);
+    try {
+      const response = await orderService.rejectOrder(order.id, reason);
+      setOrder(response.data);
+      onOrderUpdated?.(response.data);
+      setShowRejectModal(false);
+      showToast?.(t('orders.approval.rejectedSuccess'), 'success');
+    } catch (error) {
+      showToast?.(getApiErrorMessage(error, t('orders.errors.load')), 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (!isOpen || !initialOrder) return null;
+
+  const displayOrder = order || normalizeOrder(initialOrder);
+  const currentStep = displayOrder.approval_progress?.find((step) => step.state === 'current');
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
-      >
-        <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails de la commande
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
-          >
-            <X size={20} className="text-[#6D6D6D]" />
-          </button>
-        </div>
+    <>
+      <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        >
+          <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+            <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
+              {t('orders.modals.detailsTitle')}
+            </h3>
+            <button
+              onClick={onClose}
+              className="p-1.5 hover:bg-[#F8F7F4] rounded-lg transition-colors"
+            >
+              <X size={20} className="text-[#6D6D6D]" />
+            </button>
+          </div>
 
-        <div className="p-6 space-y-4">
-          {/* Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-[#ECE8E1]">
-            <div>
-              <p className="text-xl font-bold text-[#3D2F24]">{order.orderNumber}</p>
-              <p className="text-sm text-[#6D6D6D]">{order.customer}</p>
-            </div>
-            <div className="text-right">
-              <StatusBadge status={order.status} />
-              <div className="mt-1">
-                <PriorityBadge priority={order.priority} />
+          <div className="p-6 space-y-4">
+            {loading && !order ? (
+              <div className="py-10 text-center">
+                <div className="w-8 h-8 border-4 border-[#B8863B] border-t-transparent rounded-full animate-spin mx-auto" />
               </div>
-            </div>
-          </div>
-
-          {/* Info Grid */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">{t('orders.table.rep')}</p>
-              <p className="font-medium text-[#3D2F24]">{order.rep}</p>
-            </div>
-            <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Date de création</p>
-              <p className="font-medium text-[#3D2F24]">{new Date(order.createdAt).toLocaleDateString(DATE_LOCALE)}</p>
-            </div>
-            <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Paiement</p>
-              <PaymentBadge status={order.paymentStatus} />
-            </div>
-            <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">{tc('total')}</p>
-              <p className="text-lg font-bold text-[#3D2F24]">{order.total.toLocaleString()} {CURRENCY_SYMBOL}</p>
-            </div>
-          </div>
-
-          {/* Products */}
-          <div className="bg-[#F8F7F4] rounded-lg p-4">
-            <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{tc('product')}</h4>
-            <div className="space-y-2">
-              {order.products && order.products.map((p, i) => (
-                <div key={i} className="flex justify-between items-center bg-white rounded-lg p-2 border border-[#ECE8E1]">
+            ) : (
+              <>
+                <div className="flex items-center justify-between pb-4 border-b border-[#ECE8E1]">
                   <div>
-                    <p className="text-sm font-medium text-[#3D2F24]">{p.name}</p>
-                    <p className="text-xs text-[#6D6D6D]">Quantité: {p.quantity}</p>
+                    <p className="text-xl font-bold text-[#3D2F24]">{displayOrder.orderNumber}</p>
+                    <p className="text-sm text-[#6D6D6D]">{displayOrder.customer}</p>
                   </div>
-                  <p className="text-sm font-bold text-[#3D2F24]">{p.total?.toFixed(2)} {CURRENCY_SYMBOL}</p>
+                  <div className="text-right">
+                    <StatusBadge status={displayOrder.status} />
+                    <div className="mt-1">
+                      <PriorityBadge priority={displayOrder.priority} />
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
+
+                {(displayOrder.approval_progress?.length > 0 || displayOrder.rejection) && (
+                  <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1]">
+                    <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{t('orders.approval.timeline')}</h4>
+                    <ApprovalTimeline progress={displayOrder.approval_progress || []} t={t} />
+                    {currentStep && displayOrder.status !== 'rejected' && (
+                      <p className="text-xs text-[#6D6D6D] mt-3 pt-3 border-t border-[#ECE8E1]">
+                        {t('orders.approval.currentResponsible')}:{' '}
+                        <span className="font-semibold text-[#3D2F24]">
+                          {t(`orders.approval.stages.${currentStep.key}`, currentStep.label)}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {displayOrder.rejection && (
+                  <div className="bg-rose-50 border border-rose-100 rounded-xl p-4">
+                    <h4 className="text-sm font-bold text-rose-700 mb-2">{statusLabel('rejected')}</h4>
+                    <div className="space-y-1 text-sm text-rose-800">
+                      {displayOrder.rejection.rejected_by && (
+                        <p>{t('orders.approval.rejectedBy')}: {displayOrder.rejection.rejected_by}</p>
+                      )}
+                      {displayOrder.rejection.stage && (
+                        <p>{t('orders.approval.rejectionStage')}: {displayOrder.rejection.stage}</p>
+                      )}
+                      {displayOrder.rejection.reason && (
+                        <p>{t('orders.approval.rejectionReason')}: {displayOrder.rejection.reason}</p>
+                      )}
+                      {displayOrder.rejection.rejected_at && (
+                        <p>{t('orders.approval.rejectionDate')}: {formatApprovalDate(displayOrder.rejection.rejected_at)}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-[#F8F7F4] rounded-lg p-3">
+                    <p className="text-xs text-[#6D6D6D]">{t('orders.table.rep')}</p>
+                    <p className="font-medium text-[#3D2F24]">{displayOrder.rep}</p>
+                  </div>
+                  <div className="bg-[#F8F7F4] rounded-lg p-3">
+                    <p className="text-xs text-[#6D6D6D]">{tc('date')}</p>
+                    <p className="font-medium text-[#3D2F24]">
+                      {new Date(displayOrder.createdAt).toLocaleDateString(DATE_LOCALE)}
+                    </p>
+                  </div>
+                  <div className="bg-[#F8F7F4] rounded-lg p-3">
+                    <p className="text-xs text-[#6D6D6D]">{tc('status')}</p>
+                    <PaymentBadge status={displayOrder.paymentStatus} />
+                  </div>
+                  <div className="bg-[#F8F7F4] rounded-lg p-3">
+                    <p className="text-xs text-[#6D6D6D]">{tc('total')}</p>
+                    <p className="text-lg font-bold text-[#3D2F24]">
+                      {displayOrder.total.toLocaleString()} {CURRENCY_SYMBOL}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-[#F8F7F4] rounded-lg p-4">
+                  <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{tc('product')}</h4>
+                  <div className="space-y-2">
+                    {displayOrder.products && displayOrder.products.map((p, i) => (
+                      <div key={i} className="flex justify-between items-center bg-white rounded-lg p-2 border border-[#ECE8E1]">
+                        <div>
+                          <p className="text-sm font-medium text-[#3D2F24]">{p.name}</p>
+                          <p className="text-xs text-[#6D6D6D]">{t('orders.fields.quantity')}: {p.quantity}</p>
+                        </div>
+                        <p className="text-sm font-bold text-[#3D2F24]">{p.total?.toFixed(2)} {CURRENCY_SYMBOL}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {displayOrder.notes && (
+                  <div className="bg-[#F8F7F4] rounded-lg p-4">
+                    <h4 className="text-sm font-bold text-[#3D2F24] mb-2">{tc('notes')}</h4>
+                    <p className="text-sm text-[#6D6D6D]">{displayOrder.notes}</p>
+                  </div>
+                )}
+
+                {(displayOrder.can_approve || displayOrder.can_reject) && (
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    {displayOrder.can_approve && (
+                      <button
+                        type="button"
+                        onClick={() => setShowApproveConfirm(true)}
+                        disabled={actionLoading}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        <UserCheck size={16} />
+                        {t('orders.approval.approve')}
+                      </button>
+                    )}
+                    {displayOrder.can_reject && (
+                      <button
+                        type="button"
+                        onClick={() => setShowRejectModal(true)}
+                        disabled={actionLoading}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 disabled:opacity-50"
+                      >
+                        <UserX size={16} />
+                        {t('orders.approval.reject')}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  onClick={onClose}
+                  className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
+                >
+                  {tc('close')}
+                </button>
+              </>
+            )}
           </div>
+        </motion.div>
+      </div>
 
-          {/* Notes */}
-          {order.notes && (
-            <div className="bg-[#F8F7F4] rounded-lg p-4">
-              <h4 className="text-sm font-bold text-[#3D2F24] mb-2">{tc('notes')}</h4>
-              <p className="text-sm text-[#6D6D6D]">{order.notes}</p>
-            </div>
-          )}
-
-          <button
-            onClick={onClose}
-            className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
+      {showApproveConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
           >
-            Fermer
-          </button>
+            <h4 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
+              {t('orders.approval.approveConfirmTitle')}
+            </h4>
+            <p className="text-sm text-[#6D6D6D] mt-2">{t('orders.approval.approveConfirmMessage')}</p>
+            <div className="flex gap-3 mt-5">
+              <button
+                type="button"
+                onClick={() => setShowApproveConfirm(false)}
+                className="flex-1 py-2.5 text-sm font-medium text-[#6D6D6D] border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4]"
+              >
+                {tc('cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleApprove}
+                disabled={actionLoading}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {actionLoading ? tc('saving') : t('orders.approval.approve')}
+              </button>
+            </div>
+          </motion.div>
         </div>
-      </motion.div>
-    </div>
+      )}
+
+      <RejectOrderModal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        onConfirm={handleReject}
+        isLoading={actionLoading}
+        t={t}
+        tc={tc}
+      />
+    </>
   );
 };
 
@@ -1065,7 +1390,7 @@ const OrdersPage = () => {
   // ==========================================
   const kpis = useMemo(() => {
     const total = orders.length;
-    const pending = orders.filter(o => o.status === 'pending').length;
+    const pending = orders.filter(o => APPROVAL_PENDING_STATUSES.includes(o.status)).length;
     const validated = orders.filter(o => o.status === 'validated').length;
     const inProduction = orders.filter(o => o.status === 'in_production').length;
     const ready = orders.filter(o => o.status === 'ready').length;
@@ -1225,6 +1550,11 @@ const OrdersPage = () => {
   // ==========================================
   // CRUD HANDLERS
   // ==========================================
+  const handleOrderUpdated = (updatedOrder) => {
+    setOrders(prev => prev.map(o => (o.id === updatedOrder.id ? updatedOrder : o)));
+    setSelectedOrder(updatedOrder);
+  };
+
   const handleOrderCreated = () => {
     setIsCreateModalOpen(false);
     fetchOrders();
@@ -1609,6 +1939,8 @@ const OrdersPage = () => {
               setSelectedOrder(null);
             }}
             order={selectedOrder}
+            onOrderUpdated={handleOrderUpdated}
+            showToast={showToast}
           />
         )}
 

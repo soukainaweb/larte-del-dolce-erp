@@ -1,7 +1,7 @@
 /**
  * Centralized mapping between Laravel backend role slugs and frontend role keys / display names.
  *
- * Backend (RoleSeeder): admin, manager, accountant, sales, viewer, delivery
+ * Backend (RoleSeeder): admin, manager, accountant, responsible, sales, viewer, delivery
  * Frontend sidebar (ROLES): admin, manager, accountant, sales_rep, viewer, delivery_driver, ...
  */
 import i18n from '../i18n';
@@ -16,6 +16,7 @@ export const ROLE_LABEL_KEYS = Object.freeze({
   viewer: 'roles.labels.viewer',
   delivery: 'roles.labels.delivery',
   delivery_driver: 'roles.labels.delivery',
+  responsible: 'roles.labels.responsible',
   production_manager: 'roles.labels.productionManager',
   factory_employee: 'roles.labels.factoryEmployee',
   warehouse_manager: 'roles.labels.warehouseManager',
@@ -32,6 +33,7 @@ export const BACKEND_TO_FRONTEND_ROLE = Object.freeze({
   viewer: 'viewer',
   delivery: 'delivery_driver',
   delivery_driver: 'delivery_driver',
+  responsible: 'responsible',
   production_manager: 'production_manager',
   factory_employee: 'factory_employee',
   warehouse_manager: 'warehouse_manager',
@@ -48,6 +50,7 @@ export const ROLE_DISPLAY_NAMES = Object.freeze({
   viewer: 'Viewer',
   delivery: 'Delivery Driver',
   delivery_driver: 'Delivery Driver',
+  responsible: 'Responsible',
   production_manager: 'Production Manager',
   factory_employee: 'Factory Employee',
   warehouse_manager: 'Warehouse Manager',
@@ -62,6 +65,7 @@ export const DISPLAY_TO_BACKEND_ROLE = Object.freeze({
   'Sales Representative': 'sales',
   Viewer: 'viewer',
   'Delivery Driver': 'delivery',
+  Responsible: 'responsible',
   'Production Manager': 'production_manager',
   'Factory Employee': 'factory_employee',
   'Warehouse Manager': 'warehouse_manager',

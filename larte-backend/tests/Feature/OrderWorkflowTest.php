@@ -28,7 +28,7 @@ class OrderWorkflowTest extends TestCase
         return $this->admin->createToken('test')->plainTextToken;
     }
 
-    private function createOrder(string $status = OrderWorkflow::SUBMITTED): Order
+    private function createOrder(string $status = OrderWorkflow::PENDING_ACCOUNTANT): Order
     {
         $customer = Customer::create([
             'name' => 'Test Client',
@@ -50,42 +50,36 @@ class OrderWorkflowTest extends TestCase
 
     public function test_order_status_is_mapped_for_frontend(): void
     {
-        $order = $this->createOrder(OrderWorkflow::SUBMITTED);
+        $order = $this->createOrder(OrderWorkflow::PENDING_ACCOUNTANT);
 
         $response = $this->withToken($this->token())
             ->getJson("/api/orders/{$order->id}");
 
         $response->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.status', 'pending');
+            ->assertJsonPath('data.status', 'pending_accountant');
     }
 
-    public function test_validate_order_transitions_submitted_to_approved(): void
+    public function test_admin_approve_at_accountant_stage_moves_to_pending_manager(): void
     {
-        $order = $this->createOrder(OrderWorkflow::SUBMITTED);
+        $order = $this->createOrder(OrderWorkflow::PENDING_ACCOUNTANT);
 
         $response = $this->withToken($this->token())
-            ->postJson("/api/orders/{$order->id}/validate");
+            ->postJson("/api/orders/{$order->id}/approve");
 
         $response->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.status', 'validated');
+            ->assertJsonPath('data.status', 'pending_manager');
 
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
-            'status' => OrderWorkflow::APPROVED,
-        ]);
-
-        $this->assertDatabaseHas('order_status_histories', [
-            'order_id' => $order->id,
-            'from_status' => OrderWorkflow::SUBMITTED,
-            'to_status' => OrderWorkflow::APPROVED,
+            'status' => OrderWorkflow::PENDING_MANAGER,
         ]);
     }
 
     public function test_invalid_status_transition_is_rejected(): void
     {
-        $order = $this->createOrder(OrderWorkflow::SUBMITTED);
+        $order = $this->createOrder(OrderWorkflow::PENDING_ACCOUNTANT);
 
         $response = $this->withToken($this->token())
             ->patchJson("/api/orders/{$order->id}/status", ['status' => 'delivered']);
@@ -96,10 +90,10 @@ class OrderWorkflowTest extends TestCase
 
     public function test_status_history_endpoint_returns_entries(): void
     {
-        $order = $this->createOrder(OrderWorkflow::SUBMITTED);
+        $order = $this->createOrder(OrderWorkflow::PENDING_ACCOUNTANT);
 
         $this->withToken($this->token())
-            ->postJson("/api/orders/{$order->id}/validate")
+            ->postJson("/api/orders/{$order->id}/approve")
             ->assertOk();
 
         $response = $this->withToken($this->token())
@@ -110,17 +104,16 @@ class OrderWorkflowTest extends TestCase
 
         $history = $response->json('data');
         $this->assertNotEmpty($history);
-        $this->assertSame('pending', $history[0]['from_status']);
-        $this->assertSame('validated', $history[0]['to_status']);
+        $this->assertSame('pending_accountant', $history[0]['from_status']);
+        $this->assertSame('pending_manager', $history[0]['to_status']);
     }
 
-    public function test_full_workflow_transitions(): void
+    public function test_full_execution_workflow_transitions(): void
     {
-        $order = $this->createOrder(OrderWorkflow::SUBMITTED);
+        $order = $this->createOrder(OrderWorkflow::APPROVED);
         $token = $this->token();
 
         $steps = [
-            ['action' => 'validate', 'expected' => 'validated', 'db' => OrderWorkflow::APPROVED],
             ['status' => 'in_production', 'expected' => 'in_production', 'db' => OrderWorkflow::PREPARING],
             ['status' => 'ready', 'expected' => 'ready', 'db' => OrderWorkflow::READY],
             ['status' => 'in_delivery', 'expected' => 'in_delivery', 'db' => OrderWorkflow::ASSIGNED],
@@ -128,13 +121,9 @@ class OrderWorkflowTest extends TestCase
         ];
 
         foreach ($steps as $step) {
-            if (isset($step['action']) && $step['action'] === 'validate') {
-                $response = $this->withToken($token)->postJson("/api/orders/{$order->id}/validate");
-            } else {
-                $response = $this->withToken($token)->patchJson("/api/orders/{$order->id}/status", [
-                    'status' => $step['status'],
-                ]);
-            }
+            $response = $this->withToken($token)->patchJson("/api/orders/{$order->id}/status", [
+                'status' => $step['status'],
+            ]);
 
             $response->assertOk()->assertJsonPath('data.status', $step['expected']);
             $order->refresh();
@@ -147,9 +136,9 @@ class OrderWorkflowTest extends TestCase
         );
     }
 
-    public function test_cancel_order_from_submitted(): void
+    public function test_cancel_order_from_pending_accountant(): void
     {
-        $order = $this->createOrder(OrderWorkflow::SUBMITTED);
+        $order = $this->createOrder(OrderWorkflow::PENDING_ACCOUNTANT);
 
         $response = $this->withToken($this->token())
             ->postJson("/api/orders/{$order->id}/cancel", ['reason' => 'Client request']);
@@ -160,7 +149,7 @@ class OrderWorkflowTest extends TestCase
 
     public function test_allowed_transitions_endpoint(): void
     {
-        $order = $this->createOrder(OrderWorkflow::SUBMITTED);
+        $order = $this->createOrder(OrderWorkflow::PENDING_ACCOUNTANT);
 
         $response = $this->withToken($this->token())
             ->getJson("/api/orders/{$order->id}/allowed-transitions");
@@ -169,7 +158,8 @@ class OrderWorkflowTest extends TestCase
             ->assertJsonPath('success', true);
 
         $allowed = $response->json('data');
-        $this->assertContains('validated', $allowed);
+        $this->assertContains('pending_manager', $allowed);
+        $this->assertContains('rejected', $allowed);
         $this->assertContains('cancelled', $allowed);
     }
 }
