@@ -57,7 +57,8 @@ class OrderWorkflowTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.status', 'pending');
+            ->assertJsonPath('data.status', 'pending')
+            ->assertJsonPath('data.customer_phone', '0600000000');
     }
 
     public function test_validate_order_transitions_submitted_to_approved(): void
@@ -170,6 +171,32 @@ class OrderWorkflowTest extends TestCase
 
         $allowed = $response->json('data');
         $this->assertContains('validated', $allowed);
+        $this->assertContains('rejected', $allowed);
         $this->assertContains('cancelled', $allowed);
+    }
+
+    public function test_reject_order_transitions_submitted_to_rejected(): void
+    {
+        $order = $this->createOrder(OrderWorkflow::SUBMITTED);
+        $reason = 'Insufficient stock for requested items';
+
+        $response = $this->withToken($this->token())
+            ->postJson("/api/orders/{$order->id}/reject", ['reason' => $reason]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'rejected');
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => OrderWorkflow::REJECTED,
+        ]);
+
+        $this->assertDatabaseHas('order_status_histories', [
+            'order_id' => $order->id,
+            'from_status' => OrderWorkflow::SUBMITTED,
+            'to_status' => OrderWorkflow::REJECTED,
+            'comment' => $reason,
+        ]);
     }
 }

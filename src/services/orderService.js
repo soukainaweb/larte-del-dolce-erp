@@ -44,8 +44,10 @@ export const normalizeOrder = (order) => {
   const customerName = typeof order.customer === 'string'
     ? order.customer
     : (order.customer?.name ?? order.customer_name ?? '—');
-  const repName = order.rep
-    ?? (order.user ? `${order.user.first_name || ''} ${order.user.last_name || ''}`.trim() : '—');
+  const customerPhone = order.customerPhone
+    ?? order.customer_phone
+    ?? (typeof order.customer === 'object' ? order.customer?.phone : null)
+    ?? '';
 
   return {
     ...order,
@@ -54,7 +56,11 @@ export const normalizeOrder = (order) => {
     paymentStatus: order.paymentStatus ?? order.payment_status,
     createdAt: order.createdAt ?? order.created_at,
     customer: customerName,
-    rep: repName || '—',
+    customerPhone,
+    rep: (order.rep
+      ?? order.sales_rep_name
+      ?? (order.user ? `${order.user.first_name || ''} ${order.user.last_name || ''}`.trim() : null))
+      || '—',
     products: items.map((item) => ({
       ...item,
       name: item.name ?? item.product?.name ?? '—',
@@ -252,9 +258,19 @@ const orderService = {
   validateOrder: async (id) => {
     try {
       const response = await api.post(`/orders/${id}/validate`);
-      return response.data;
+      return { data: normalizeOrder(unwrapData(response)), success: true };
     } catch (error) {
       console.error(`Error validating order ${id}:`, error);
+      throw error;
+    }
+  },
+
+  rejectOrder: async (id, reason) => {
+    try {
+      const response = await api.post(`/orders/${id}/reject`, { reason });
+      return { data: normalizeOrder(unwrapData(response)), success: true };
+    } catch (error) {
+      console.error(`Error rejecting order ${id}:`, error);
       throw error;
     }
   },

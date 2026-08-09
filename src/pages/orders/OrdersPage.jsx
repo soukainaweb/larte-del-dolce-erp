@@ -716,9 +716,19 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, order, isLoading }) => {
 // ==========================================
 // ORDER DETAILS MODAL
 // ==========================================
-const OrderDetailsModal = ({ isOpen, onClose, order }) => {
-  const { t, tc, statusLabel, commonStatus } = usePageI18n('orders');
+const OrderDetailsModal = ({
+  isOpen,
+  onClose,
+  order,
+  canApproveReject = false,
+  onApprove,
+  onReject,
+  isActionLoading = false,
+}) => {
+  const { t, tc, statusLabel } = usePageI18n('orders');
   if (!isOpen || !order) return null;
+
+  const canDecide = canApproveReject && order.status === 'pending';
 
   return (
     <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -730,7 +740,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
-            Détails de la commande
+            {t('orders.modals.detailsTitle', 'تفاصيل الطلب')}
           </h3>
           <button
             onClick={onClose}
@@ -741,7 +751,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
         </div>
 
         <div className="p-6 space-y-4">
-          {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-[#ECE8E1]">
             <div>
               <p className="text-xl font-bold text-[#3D2F24]">{order.orderNumber}</p>
@@ -755,7 +764,18 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
             </div>
           </div>
 
-          {/* Info Grid */}
+          <div className="bg-[#F8F7F4] rounded-lg p-4 space-y-2">
+            <h4 className="text-sm font-bold text-[#3D2F24]">{t('orders.sections.customerInfo')}</h4>
+            <div className="flex items-center gap-2 text-sm text-[#3D2F24]">
+              <User size={14} className="text-[#6D6D6D]" />
+              <span>{order.customer}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-[#3D2F24]">
+              <Phone size={14} className="text-[#6D6D6D]" />
+              <span>{order.customerPhone || tc('phone') + ': —'}</span>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="bg-[#F8F7F4] rounded-lg p-3">
               <p className="text-xs text-[#6D6D6D]">{t('orders.table.rep')}</p>
@@ -775,7 +795,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
             </div>
           </div>
 
-          {/* Products */}
           <div className="bg-[#F8F7F4] rounded-lg p-4">
             <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{tc('product')}</h4>
             <div className="space-y-2">
@@ -791,11 +810,33 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
             </div>
           </div>
 
-          {/* Notes */}
           {order.notes && (
             <div className="bg-[#F8F7F4] rounded-lg p-4">
               <h4 className="text-sm font-bold text-[#3D2F24] mb-2">{tc('notes')}</h4>
               <p className="text-sm text-[#6D6D6D]">{order.notes}</p>
+            </div>
+          )}
+
+          {canDecide && (
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onApprove}
+                disabled={isActionLoading}
+                className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              >
+                <CheckCircle size={16} />
+                {t('orders.actions.approve', '✅ الموافقة')}
+              </button>
+              <button
+                type="button"
+                onClick={onReject}
+                disabled={isActionLoading}
+                className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-white bg-rose-600 rounded-lg hover:bg-rose-700 transition-colors disabled:opacity-50"
+              >
+                <XCircle size={16} />
+                {t('orders.actions.reject', '❌ الرفض')}
+              </button>
             </div>
           )}
 
@@ -804,6 +845,73 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
             className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#B8863B] to-[#C89B5A] rounded-lg hover:shadow-lg transition-colors"
           >
             Fermer
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const RejectOrderModal = ({ isOpen, onClose, onConfirm, isLoading, orderNumber, t }) => {
+  const [reason, setReason] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setReason('');
+      setError('');
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleConfirm = () => {
+    if (!reason.trim() || reason.trim().length < 3) {
+      setError(t('orders.validation.rejectionReasonRequired', 'سبب الرفض مطلوب (3 أحرف على الأقل)'));
+      return;
+    }
+    onConfirm(reason.trim());
+  };
+
+  return (
+    <div className="fixed inset-0 z-modal-nested flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6"
+      >
+        <h3 className="text-lg font-bold text-[#3D2F24] mb-2">
+          {t('orders.actions.rejectTitle', 'رفض الطلب')}
+        </h3>
+        <p className="text-sm text-[#6D6D6D] mb-4">
+          {t('orders.actions.rejectMessage', { orderNumber, defaultValue: `رفض الطلب ${orderNumber}` })}
+        </p>
+        <textarea
+          value={reason}
+          onChange={(e) => {
+            setReason(e.target.value);
+            setError('');
+          }}
+          rows={4}
+          className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200"
+          placeholder={t('orders.fields.rejectionReason', 'سبب الرفض...')}
+        />
+        {error && <p className="text-xs text-rose-500 mt-1">{error}</p>}
+        <div className="flex gap-3 mt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 text-sm font-medium text-[#3D2F24] bg-[#F8F7F4] rounded-lg"
+          >
+            {t('common.cancel', 'إلغاء')}
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={isLoading}
+            className="flex-1 py-2.5 text-sm font-medium text-white bg-rose-600 rounded-lg disabled:opacity-50"
+          >
+            {isLoading ? t('common.saving', 'جاري الحفظ...') : t('orders.actions.confirmReject', 'تأكيد الرفض')}
           </button>
         </div>
       </motion.div>
@@ -949,6 +1057,8 @@ const OrdersPage = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isWorkflowLoading, setIsWorkflowLoading] = useState(false);
   const [salesUsers, setSalesUsers] = useState([]);
   const [transfers, setTransfers] = useState([]);
   const [isTransferring, setIsTransferring] = useState(false);
@@ -1257,6 +1367,43 @@ const OrdersPage = () => {
       console.error('Error deleting order:', error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleApproveOrder = async () => {
+    if (!selectedOrder) return;
+    setIsWorkflowLoading(true);
+    try {
+      const response = await orderService.validateOrder(selectedOrder.id);
+      showToast(t('orders.actions.approveSuccess', 'تمت الموافقة على الطلب'), 'success');
+      setOrders((prev) => prev.map((o) => (o.id === selectedOrder.id ? response.data : o)));
+      setSelectedOrder(response.data);
+      setIsDetailsModalOpen(false);
+      window.dispatchEvent(new CustomEvent('notifications:refresh'));
+      fetchOrders();
+    } catch (error) {
+      showToast(getApiErrorMessage(error, t('orders.errors.approve', 'فشلت الموافقة على الطلب')), 'error');
+    } finally {
+      setIsWorkflowLoading(false);
+    }
+  };
+
+  const handleRejectOrder = async (reason) => {
+    if (!selectedOrder) return;
+    setIsWorkflowLoading(true);
+    try {
+      const response = await orderService.rejectOrder(selectedOrder.id, reason);
+      showToast(t('orders.actions.rejectSuccess', 'تم رفض الطلب'), 'success');
+      setOrders((prev) => prev.map((o) => (o.id === selectedOrder.id ? response.data : o)));
+      setSelectedOrder(response.data);
+      setIsRejectModalOpen(false);
+      setIsDetailsModalOpen(false);
+      window.dispatchEvent(new CustomEvent('notifications:refresh'));
+      fetchOrders();
+    } catch (error) {
+      showToast(getApiErrorMessage(error, t('orders.errors.reject', 'فشل رفض الطلب')), 'error');
+    } finally {
+      setIsWorkflowLoading(false);
     }
   };
 
@@ -1609,6 +1756,22 @@ const OrdersPage = () => {
               setSelectedOrder(null);
             }}
             order={selectedOrder}
+            canApproveReject={canUpdateOrder}
+            onApprove={handleApproveOrder}
+            onReject={() => setIsRejectModalOpen(true)}
+            isActionLoading={isWorkflowLoading}
+          />
+        )}
+
+        {isRejectModalOpen && selectedOrder && (
+          <RejectOrderModal
+            key="reject-modal"
+            isOpen={isRejectModalOpen}
+            onClose={() => setIsRejectModalOpen(false)}
+            onConfirm={handleRejectOrder}
+            isLoading={isWorkflowLoading}
+            orderNumber={selectedOrder.orderNumber}
+            t={t}
           />
         )}
 

@@ -395,6 +395,28 @@
       "high": "High",
       "medium": "Medium",
       "low": "Low"
+    },
+    "sections": {
+      "customerInfo": "Customer information"
+    },
+    "actions": {
+      "approve": "✅ Approve",
+      "reject": "❌ Reject",
+      "rejectTitle": "Reject order",
+      "rejectMessage": "Reject order {{orderNumber}}",
+      "confirmReject": "Confirm rejection",
+      "approveSuccess": "Order approved",
+      "rejectSuccess": "Order rejected"
+    },
+    "validation": {
+      "rejectionReasonRequired": "Rejection reason is required (at least 3 characters)"
+    },
+    "errors": {
+      "approve": "Failed to approve order",
+      "reject": "Failed to reject order"
+    },
+    "fields": {
+      "rejectionReason": "Rejection reason..."
     }
   },
   "customers": {

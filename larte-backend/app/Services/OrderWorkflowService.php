@@ -69,10 +69,31 @@ class OrderWorkflowService
                 userId: $user?->id,
             );
 
-            return StatusMapper::transformOrder(
-                $order->fresh()->load(['customer', 'user', 'items.product'])
-            );
+            $freshOrder = $order->fresh()->load(['customer', 'user', 'items.product']);
+
+            $this->notifyStatusChange($freshOrder, $toCanonical, $user, $comment);
+
+            return StatusMapper::transformOrder($freshOrder);
         });
+    }
+
+    protected function notifyStatusChange(
+        Order $order,
+        string $toCanonical,
+        ?User $actor,
+        ?string $comment = null,
+    ): void {
+        if (! $actor) {
+            return;
+        }
+
+        $notifications = app(OrderWorkflowNotificationService::class);
+
+        if ($toCanonical === OrderWorkflow::APPROVED) {
+            $notifications->notifyOrderApproved($order, $actor);
+        } elseif ($toCanonical === OrderWorkflow::REJECTED) {
+            $notifications->notifyOrderRejected($order, $actor, $comment);
+        }
     }
 
     public function statusHistory(Order $order)
