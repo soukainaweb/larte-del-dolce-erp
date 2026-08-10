@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Support\EnsureResponsibleSetup;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Role;
@@ -61,18 +62,6 @@ class UserSeeder extends Seeder
             );
         }
 
-        $responsibleRole = Role::where('name', 'responsible')->first();
-        if ($responsibleRole) {
-            User::updateOrCreate(
-                ['email' => 'responsible@larte.com'],
-                [
-                    'first_name' => 'Responsible',
-                    'last_name' => 'User',
-                    'password' => '123456',
-                    'role_id' => $responsibleRole->id,
-                    'status' => 'online',
-                ]
-            );
-        }
+        EnsureResponsibleSetup::run();
     }
 }
