@@ -116,7 +116,6 @@ class OrderWorkflowTest extends TestCase
         $steps = [
             ['status' => 'in_production', 'expected' => 'in_production', 'db' => OrderWorkflow::PREPARING],
             ['status' => 'ready_for_pickup', 'expected' => 'ready_for_pickup', 'db' => OrderWorkflow::READY],
-            ['status' => 'in_delivery', 'expected' => 'in_delivery', 'db' => OrderWorkflow::ASSIGNED],
         ];
 
         foreach ($steps as $step) {

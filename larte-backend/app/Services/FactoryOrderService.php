@@ -83,20 +83,25 @@ class FactoryOrderService
 
         return DB::transaction(function () use ($order, $rep, $user) {
             $locked = Order::query()->lockForUpdate()->findOrFail($order->id);
-            $fromStatus = $locked->status;
 
-            if (OrderWorkflow::canonical($fromStatus) !== OrderWorkflow::READY) {
+            if (OrderWorkflow::canonical($locked->status) !== OrderWorkflow::READY) {
                 throw new InvalidArgumentException('Representative can only be assigned when order is ready for pickup.');
             }
 
-            OrderWorkflow::assertTransitionAllowed($fromStatus, OrderWorkflow::ASSIGNED);
+            if (! $user->hasPermission('orders.factory.assign_rep')) {
+                throw new \RuntimeException('Permission denied for representative assignment.');
+            }
 
             $locked->update([
-                'status' => OrderWorkflow::ASSIGNED,
                 'assigned_rep_id' => $rep->id,
             ]);
 
-            $this->recordHistory($locked, $fromStatus, OrderWorkflow::ASSIGNED, 'Representative assigned', $user);
+            ActivityLogger::log(
+                module: 'orders',
+                action: 'rep_assigned',
+                description: sprintf('Representative assigned to order %s', $locked->order_number),
+                userId: $user->id,
+            );
 
             $fresh = $locked->fresh()->load(['customer', 'user', 'assignedRep']);
             $this->notifications->notifyRepresentativeReadyForPickup($fresh, $rep);
@@ -109,7 +114,7 @@ class FactoryOrderService
     {
         $user ??= auth()->user();
 
-        if (! SalesScope::isAssignedRep($order, $user) && ! SalesScope::ownsOrder($order, $user)) {
+        if (! SalesScope::isAssignedRep($order, $user)) {
             throw new \RuntimeException('You are not authorized to confirm pickup for this order.');
         }
 
@@ -117,30 +122,33 @@ class FactoryOrderService
             throw new \RuntimeException('Permission denied for pickup confirmation.');
         }
 
-        if (OrderWorkflow::canonical($order->status) !== OrderWorkflow::ASSIGNED) {
-            throw new InvalidArgumentException('Pickup can only be confirmed for assigned orders.');
+        if (OrderWorkflow::canonical($order->status) !== OrderWorkflow::READY) {
+            throw new InvalidArgumentException('Pickup can only be confirmed when the order is ready for pickup.');
+        }
+
+        if (! $order->assigned_rep_id) {
+            throw new InvalidArgumentException('A representative must be assigned before pickup.');
         }
 
         $path = $this->persistPhoto($photo, 'orders/pickup');
 
         return DB::transaction(function () use ($order, $path, $user) {
             $locked = Order::query()->lockForUpdate()->findOrFail($order->id);
+            $fromStatus = $locked->status;
 
             if ($locked->pickup_photo) {
                 throw new InvalidArgumentException('Pickup has already been confirmed.');
             }
 
+            OrderWorkflow::assertTransitionAllowed($fromStatus, OrderWorkflow::ASSIGNED);
+
             $locked->update([
+                'status' => OrderWorkflow::ASSIGNED,
                 'pickup_photo' => $path,
                 'pickup_at' => now(),
             ]);
 
-            ActivityLogger::log(
-                module: 'orders',
-                action: 'pickup_confirmed',
-                description: sprintf('Pickup confirmed for order %s', $locked->order_number),
-                userId: $user->id,
-            );
+            $this->recordHistory($locked, $fromStatus, OrderWorkflow::ASSIGNED, 'Pickup confirmed', $user);
 
             return StatusMapper::transformOrder($locked->fresh()->load(['customer', 'user', 'assignedRep']));
         });
@@ -150,7 +158,7 @@ class FactoryOrderService
     {
         $user ??= auth()->user();
 
-        if (! SalesScope::isAssignedRep($order, $user) && ! SalesScope::ownsOrder($order, $user)) {
+        if (! SalesScope::isAssignedRep($order, $user)) {
             throw new \RuntimeException('You are not authorized to confirm delivery for this order.');
         }
 
@@ -229,7 +237,7 @@ class FactoryOrderService
             $fresh = $locked->fresh()->load(['customer', 'user', 'assignedRep']);
 
             if ($toStatus === OrderWorkflow::READY) {
-                $this->notifications->notifyOrderReadyForPickup($fresh, $user);
+                // Representatives are notified when assigned, not when marked ready.
             }
 
             return StatusMapper::transformOrder($fresh);

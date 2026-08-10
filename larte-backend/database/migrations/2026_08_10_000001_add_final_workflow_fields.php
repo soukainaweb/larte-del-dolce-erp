@@ -52,6 +52,8 @@ return new class extends Migration
         });
 
         // Remap legacy fully-approved orders to the factory queue (additive, non-destructive).
+        // Run `php artisan erp:inspect-order-workflow-states` before production migration
+        // to review other in-flight statuses (pending_manager, pending_accountant, etc.).
         if (Schema::hasTable('orders')) {
             DB::table('orders')
                 ->where('status', 'approved')

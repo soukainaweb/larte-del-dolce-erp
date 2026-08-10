@@ -15,6 +15,12 @@ class EnsureFactoryRoleCommand extends Command
     public function handle(): int
     {
         $password = $this->option('password');
+        $envPassword = (string) env('FACTORY_USER_PASSWORD', '');
+
+        if ($password === null && $envPassword === '') {
+            $this->warn('FACTORY_USER_PASSWORD is not set. A secure random password will be generated for a new user.');
+            $this->warn('The password is NOT printed. Set FACTORY_USER_PASSWORD or use --password for controlled provisioning.');
+        }
 
         $result = EnsureFactorySetup::run($password !== null && $password !== '' ? (string) $password : null);
 
@@ -22,9 +28,13 @@ class EnsureFactoryRoleCommand extends Command
         $user = $result['user'];
 
         $this->info($result['role_created'] ? 'Created factory role.' : 'Factory role already exists.');
-        $this->info($result['user_created'] ? 'Created factory@larte.com user.' : 'factory@larte.com user already exists.');
+        $this->info($result['user_created'] ? 'Created factory@larte.com user (must change password on first login).' : 'factory@larte.com user already exists.');
         $this->line("Role ID: {$role->id} (name: {$role->name})");
         $this->line("User ID: {$user->id} (email: {$user->email}, role_id: {$user->role_id})");
+
+        if ($result['user_created'] && $password !== null && $password !== '') {
+            $this->comment('Initial password was supplied via --password or FACTORY_USER_PASSWORD.');
+        }
 
         return self::SUCCESS;
     }

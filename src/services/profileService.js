@@ -32,7 +32,7 @@ export const uploadAvatar = (file) => {
     });
 };
 
-// Delete avatar
-export const deleteAvatar = () => {
-    return api.delete("/profile/avatar");
+// Update availability
+export const updateAvailability = (availabilityStatus) => {
+    return api.put("/profile/availability", { availability_status: availabilityStatus });
 };

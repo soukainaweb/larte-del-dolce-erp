@@ -8,8 +8,11 @@ use InvalidArgumentException;
  * Canonical order workflow stored in DB.
  *
  * draft → pending_manager → pending_accountant → pending_responsible → pending_factory
- *   → preparing → ready → assigned → delivered → archived
+ *   → preparing → ready_for_pickup → (assign rep, stays ready) → in_delivery (pickup) → delivered
  * Branches: postponed (factory), rejected (from any approval stage), cancelled
+ *
+ * Manager vs Responsible: see WorkflowRoleDocumentation — both are required approval
+ * stages per client spec (Representative → Manager → Accountant → Responsible → Factory).
  */
 final class OrderWorkflow
 {
@@ -44,7 +47,6 @@ final class OrderWorkflow
         self::PREPARING,
         self::POSTPONED,
         self::READY,
-        self::ASSIGNED,
     ];
 
     /** @var array<string, list<string>> */
@@ -80,7 +82,7 @@ final class OrderWorkflow
         self::PREPARING . '>' . self::READY => 'orders.factory.ready',
         self::PREPARING . '>' . self::POSTPONED => 'orders.factory.postpone',
         self::POSTPONED . '>' . self::PREPARING => 'orders.factory.accept',
-        self::READY . '>' . self::ASSIGNED => 'orders.factory.assign_rep',
+        self::READY . '>' . self::ASSIGNED => 'orders.pickup',
         self::ASSIGNED . '>' . self::DELIVERED => 'orders.deliver',
         self::DELIVERED . '>' . self::ARCHIVED => 'orders.update',
         self::REJECTED . '>' . self::DRAFT => 'orders.update',

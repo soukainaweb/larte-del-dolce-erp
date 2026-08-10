@@ -47,6 +47,7 @@ class OrderFinalWorkflowTest extends TestCase
         $this->responsible = User::where('email', 'responsible@larte.com')->firstOrFail();
         EnsureFactorySetup::run();
         $this->factory = User::where('email', EnsureFactorySetup::USER_EMAIL)->firstOrFail();
+        $this->factory->update(['must_change_password' => false]);
 
         $salesRole = Role::where('name', 'sales')->firstOrFail();
         $this->salesB = User::create([
@@ -113,6 +114,141 @@ class OrderFinalWorkflowTest extends TestCase
     private function samplePhoto(): string
     {
         return 'data:image/png;base64,' . base64_encode('fake-image-bytes');
+    }
+
+    public function test_factory_assign_keeps_ready_for_pickup_status(): void
+    {
+        $orderId = $this->createOrderViaApi();
+        $this->advanceToPendingFactory($orderId);
+
+        Sanctum::actingAs($this->factory);
+        $this->postJson("/api/orders/{$orderId}/factory/accept")->assertOk();
+        $this->postJson("/api/orders/{$orderId}/factory/ready")->assertOk()
+            ->assertJsonPath('data.status', 'ready_for_pickup');
+
+        $this->sales->update(['availability_status' => 'available']);
+        $this->postJson("/api/orders/{$orderId}/factory/assign-representative", [
+            'representative_id' => $this->sales->id,
+        ])->assertOk()
+            ->assertJsonPath('data.status', 'ready_for_pickup');
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $orderId,
+            'status' => OrderWorkflow::READY,
+            'assigned_rep_id' => $this->sales->id,
+        ]);
+    }
+
+    public function test_pickup_moves_order_to_in_delivery(): void
+    {
+        $orderId = $this->createOrderViaApi();
+        $this->advanceToPendingFactory($orderId);
+
+        Sanctum::actingAs($this->factory);
+        $this->postJson("/api/orders/{$orderId}/factory/accept")->assertOk();
+        $this->postJson("/api/orders/{$orderId}/factory/ready")->assertOk();
+        $this->postJson("/api/orders/{$orderId}/factory/assign-representative", [
+            'representative_id' => $this->sales->id,
+        ])->assertOk();
+
+        Sanctum::actingAs($this->sales);
+        $this->postJson("/api/orders/{$orderId}/pickup", ['photo' => $this->samplePhoto()])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'in_delivery');
+    }
+
+    public function test_representative_cannot_pickup_another_representatives_order(): void
+    {
+        $orderId = $this->createOrderViaApi();
+        $this->advanceToPendingFactory($orderId);
+
+        Sanctum::actingAs($this->factory);
+        $this->postJson("/api/orders/{$orderId}/factory/accept")->assertOk();
+        $this->postJson("/api/orders/{$orderId}/factory/ready")->assertOk();
+        $this->postJson("/api/orders/{$orderId}/factory/assign-representative", [
+            'representative_id' => $this->sales->id,
+        ])->assertOk();
+
+        Sanctum::actingAs($this->salesB);
+        $this->postJson("/api/orders/{$orderId}/pickup", ['photo' => $this->samplePhoto()])
+            ->assertForbidden();
+    }
+
+    public function test_representative_cannot_deliver_another_representatives_order(): void
+    {
+        $orderId = $this->createOrderViaApi();
+        $this->advanceToPendingFactory($orderId);
+
+        Sanctum::actingAs($this->factory);
+        $this->postJson("/api/orders/{$orderId}/factory/accept")->assertOk();
+        $this->postJson("/api/orders/{$orderId}/factory/ready")->assertOk();
+        $this->postJson("/api/orders/{$orderId}/factory/assign-representative", [
+            'representative_id' => $this->sales->id,
+        ])->assertOk();
+
+        Sanctum::actingAs($this->sales);
+        $this->postJson("/api/orders/{$orderId}/pickup", ['photo' => $this->samplePhoto()])->assertOk();
+
+        Sanctum::actingAs($this->salesB);
+        $this->postJson("/api/orders/{$orderId}/delivery", ['photo' => $this->samplePhoto()])
+            ->assertForbidden();
+    }
+
+    public function test_representative_cannot_access_another_representatives_customer(): void
+    {
+        Sanctum::actingAs($this->sales);
+        $this->getJson("/api/customers/{$this->customerB->id}")->assertForbidden();
+    }
+
+    public function test_newly_created_responsible_user_inherits_role_permissions(): void
+    {
+        $role = Role::where('name', 'responsible')->firstOrFail();
+        DefaultRolePermissions::syncRole($role, DefaultRolePermissions::ensurePermissionsExist());
+
+        $newResponsible = User::create([
+            'email' => 'new.responsible@larte.com',
+            'first_name' => 'New',
+            'last_name' => 'Responsible',
+            'password' => bcrypt('123456'),
+            'role_id' => $role->id,
+            'status' => 'online',
+        ]);
+
+        $newResponsible->load('role.permissions');
+        $names = $newResponsible->role->permissions->pluck('name')->all();
+
+        $this->assertContains('products.view', $names);
+        $this->assertContains('orders.approve.responsible', $names);
+        $this->assertNotContains('users.view', $names);
+    }
+
+    public function test_factory_cannot_access_products_or_reports(): void
+    {
+        Sanctum::actingAs($this->factory);
+        $this->getJson('/api/products')->assertForbidden();
+        $this->getJson('/api/reports/orders')->assertForbidden();
+    }
+
+    public function test_assign_representative_notifies_only_assigned_rep(): void
+    {
+        $orderId = $this->createOrderViaApi();
+        $this->advanceToPendingFactory($orderId);
+        $this->sales->update(['availability_status' => 'available']);
+        $this->salesB->update(['availability_status' => 'available']);
+
+        Sanctum::actingAs($this->factory);
+        $this->postJson("/api/orders/{$orderId}/factory/accept")->assertOk();
+        $this->postJson("/api/orders/{$orderId}/factory/ready")->assertOk();
+
+        $salesBBefore = Notification::where('user_id', $this->salesB->id)->where('type', 'order')->count();
+        $salesBefore = Notification::where('user_id', $this->sales->id)->where('type', 'order')->count();
+
+        $this->postJson("/api/orders/{$orderId}/factory/assign-representative", [
+            'representative_id' => $this->sales->id,
+        ])->assertOk();
+
+        $this->assertGreaterThan($salesBefore, Notification::where('user_id', $this->sales->id)->where('type', 'order')->count());
+        $this->assertSame($salesBBefore, Notification::where('user_id', $this->salesB->id)->where('type', 'order')->count());
     }
 
     public function test_representative_create_order_starts_pending_manager_and_notifies_manager(): void
@@ -266,6 +402,7 @@ class OrderFinalWorkflowTest extends TestCase
         $this->postJson("/api/orders/{$orderId}/factory/ready")->assertOk();
 
         $before = Notification::where('user_id', $this->sales->id)->where('type', 'order')->count();
+
         $this->postJson("/api/orders/{$orderId}/factory/assign-representative", [
             'representative_id' => $this->sales->id,
         ])->assertOk();

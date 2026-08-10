@@ -236,7 +236,7 @@ class OrderService
             'orders.factory.accept' => in_array($status, [OrderWorkflow::PENDING_FACTORY, OrderWorkflow::POSTPONED], true),
             'orders.factory.postpone' => in_array($status, [OrderWorkflow::PENDING_FACTORY, OrderWorkflow::PREPARING], true),
             'orders.factory.ready' => $status === OrderWorkflow::PREPARING,
-            'orders.factory.assign_rep' => $status === OrderWorkflow::READY,
+            'orders.factory.assign_rep' => $status === OrderWorkflow::READY && ! $order->assigned_rep_id,
             default => false,
         };
     }
@@ -244,7 +244,8 @@ class OrderService
     protected function canConfirmPickup(User $user, Order $order): bool
     {
         return $user->hasPermission('orders.pickup')
-            && OrderWorkflow::canonical($order->status) === OrderWorkflow::ASSIGNED
+            && OrderWorkflow::canonical($order->status) === OrderWorkflow::READY
+            && $order->assigned_rep_id
             && ! $order->pickup_photo
             && SalesScope::isAssignedRep($order, $user);
     }

@@ -40,6 +40,9 @@ import {
   formatUserStatus,
   getApiErrorMessage,
 } from '../../utils/apiHelpers';
+import { hasPermission } from '../../utils/permissions';
+import { isSalesRepRole } from '../../utils/roleMapping';
+import { updateAvailability as updateRepAvailability } from '../../services/profileService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -567,6 +570,11 @@ const MyProfilePage = () => {
   });
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [availabilityStatus, setAvailabilityStatus] = useState('unavailable');
+  const [isUpdatingAvailability, setIsUpdatingAvailability] = useState(false);
+
+  const canUpdateAvailability = hasPermission('profile.availability.update', user?.permissions, user?.role)
+    || isSalesRepRole(user);
 
   // Toast
   const showToast = (message, type = 'success') => {
@@ -575,6 +583,23 @@ const MyProfilePage = () => {
 
   const hideToast = () => {
     setToast({ isOpen: false, message: '', type: 'success' });
+  };
+
+  const handleAvailabilityChange = async (nextStatus) => {
+    if (!canUpdateAvailability || isUpdatingAvailability) return;
+    setIsUpdatingAvailability(true);
+    try {
+      const response = await updateRepAvailability(nextStatus);
+      const payload = unwrapData(response) || {};
+      const savedStatus = payload.user?.availability_status || nextStatus;
+      setAvailabilityStatus(savedStatus);
+      updateUser({ ...(user || {}), availability_status: savedStatus });
+      showToast(t('profile.availability.saved', 'Availability updated'), 'success');
+    } catch (error) {
+      handleApiError(error, t('profile.availability.error', 'Could not update availability'));
+    } finally {
+      setIsUpdatingAvailability(false);
+    }
   };
 
   // Gestion d'erreur Axios
@@ -628,6 +653,7 @@ const MyProfilePage = () => {
 
       setAvatar(userData.avatar || user?.avatar || null);
       setTwoFactorEnabled(Boolean(userData.two_factor_enabled));
+      setAvailabilityStatus(userData.availability_status || 'unavailable');
 
       // Préférences
       if (userData.preferences) {
@@ -1363,6 +1389,51 @@ const MyProfilePage = () => {
           </div>
         </div>
       </div>
+
+      {canUpdateAvailability && (
+        <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 md:p-6 shadow-sm mb-4 md:mb-6">
+          <h3 className="text-sm md:text-base font-bold text-[#3D2F24] mb-3 md:mb-4" style={{ fontFamily: FONT_HEADING }}>
+            {t('profile.availability.title', 'Pickup availability')}
+          </h3>
+          <p className="text-xs md:text-sm text-[#6D6D6D] mb-4">
+            {t('profile.availability.description', 'Let the factory know whether you are available to pick up orders.')}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              disabled={isUpdatingAvailability}
+              onClick={() => handleAvailabilityChange('available')}
+              className={`px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${
+                availabilityStatus === 'available'
+                  ? 'bg-emerald-600 text-white border-emerald-600'
+                  : 'bg-white text-[#3D2F24] border-[#ECE8E1] hover:bg-[#F8F7F4]'
+              }`}
+            >
+              {isUpdatingAvailability && availabilityStatus !== 'available' ? t('profile.availability.saving', 'Saving...') : t('profile.availability.available', 'Available')}
+            </button>
+            <button
+              type="button"
+              disabled={isUpdatingAvailability}
+              onClick={() => handleAvailabilityChange('unavailable')}
+              className={`px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${
+                availabilityStatus === 'unavailable'
+                  ? 'bg-rose-500 text-white border-rose-500'
+                  : 'bg-white text-[#3D2F24] border-[#ECE8E1] hover:bg-[#F8F7F4]'
+              }`}
+            >
+              {isUpdatingAvailability && availabilityStatus !== 'unavailable' ? t('profile.availability.saving', 'Saving...') : t('profile.availability.unavailable', 'Unavailable')}
+            </button>
+          </div>
+          <p className="text-xs text-[#6D6D6D] mt-3">
+            {t('profile.availability.current', 'Current status')}:{' '}
+            <span className="font-semibold text-[#3D2F24]">
+              {availabilityStatus === 'available'
+                ? t('profile.availability.available', 'Available')
+                : t('profile.availability.unavailable', 'Unavailable')}
+            </span>
+          </p>
+        </div>
+      )}
 
       {/* Section 4: Sécurité */}
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 md:p-6 shadow-sm mb-4 md:mb-6">

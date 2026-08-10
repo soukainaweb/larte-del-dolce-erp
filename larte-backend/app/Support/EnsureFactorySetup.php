@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * Idempotent setup for the Factory role and default factory user.
@@ -16,14 +17,18 @@ final class EnsureFactorySetup
 
     public const USER_EMAIL = 'factory@larte.com';
 
-    public const DEFAULT_PASSWORD = '123456';
-
     /**
-     * @return array{role: Role, user: User, role_created: bool, user_created: bool}
+     * @return array{role: Role, user: User, role_created: bool, user_created: bool, temporary_password: string|null}
      */
     public static function run(?string $password = null): array
     {
-        $password ??= (string) env('FACTORY_USER_PASSWORD', self::DEFAULT_PASSWORD);
+        $generatedPassword = null;
+        $password ??= (string) env('FACTORY_USER_PASSWORD', '');
+
+        if ($password === '') {
+            $generatedPassword = Str::password(20, symbols: true);
+            $password = $generatedPassword;
+        }
 
         $role = Role::updateOrCreate(
             ['name' => self::ROLE_NAME],
@@ -50,6 +55,7 @@ final class EnsureFactorySetup
                 'role_id' => $role->id,
                 'status' => 'online',
                 'availability_status' => 'unavailable',
+                'must_change_password' => true,
             ]);
             $userCreated = true;
         } else {
@@ -74,6 +80,7 @@ final class EnsureFactorySetup
             'user' => $user->fresh(['role']),
             'role_created' => $role->wasRecentlyCreated,
             'user_created' => $userCreated,
+            'temporary_password' => $userCreated ? $generatedPassword : null,
         ];
     }
 }

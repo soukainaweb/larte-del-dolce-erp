@@ -2502,6 +2502,16 @@
     "avatar": {
       "formats": "PNG, JPG, JPEG, WEBP • الحد الأقصى 5 ميجابايت"
     },
+    "availability": {
+      "title": "توفر الاستلام",
+      "description": "أخبر المصنع ما إذا كنت متاحاً لاستلام الطلبات.",
+      "available": "متاح",
+      "unavailable": "غير متاح",
+      "current": "الحالة الحالية",
+      "saved": "تم تحديث حالة التوفر",
+      "error": "تعذر تحديث حالة التوفر",
+      "saving": "جاري الحفظ..."
+    },
     "validation": {
       "minPassword": "8 أحرف على الأقل"
     },

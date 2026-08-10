@@ -117,7 +117,8 @@ class OrderPolicy
     {
         return $user->hasPermission('orders.pickup')
             && SalesScope::isAssignedRep($order, $user)
-            && OrderWorkflow::canonical($order->status) === OrderWorkflow::ASSIGNED
+            && OrderWorkflow::canonical($order->status) === OrderWorkflow::READY
+            && $order->assigned_rep_id
             && ! $order->pickup_photo;
     }
 
