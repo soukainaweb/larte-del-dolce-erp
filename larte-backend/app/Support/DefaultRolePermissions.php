@@ -22,7 +22,7 @@ class DefaultRolePermissions
     {
         return [
             'dashboard' => ['view'],
-            'orders' => ['view', 'create', 'update', 'delete'],
+            'orders' => ['view', 'create', 'update', 'delete', 'approve.accountant', 'approve.manager', 'approve.responsible'],
             'customers' => ['view', 'create', 'update', 'delete'],
             'products' => ['view', 'create', 'update', 'delete'],
             'categories' => ['view', 'create', 'update', 'delete'],
@@ -57,7 +57,7 @@ class DefaultRolePermissions
             'admin' => ['*'],
             'manager' => array_merge(self::BASELINE, [
                 'reports.view',
-                'orders.view', 'orders.create', 'orders.update', 'orders.delete',
+                'orders.view', 'orders.create', 'orders.update', 'orders.delete', 'orders.approve.manager',
                 'customers.view', 'customers.create', 'customers.update', 'customers.delete',
                 'products.view', 'products.create', 'products.update', 'products.delete',
                 'categories.view', 'categories.create', 'categories.update', 'categories.delete',
@@ -79,7 +79,7 @@ class DefaultRolePermissions
             'expenses.view', 'expenses.create', 'expenses.update',
                 'waste_returns.view', 'waste_returns.create', 'waste_returns.update',
                 'purchases.view', 'purchases.create', 'purchases.update',
-                'orders.view', 'customers.view',
+                'orders.view', 'orders.approve.accountant', 'customers.view',
             ]),
             'sales' => array_merge(self::BASELINE, [
                 'orders.view', 'orders.create',
@@ -91,6 +91,11 @@ class DefaultRolePermissions
             'delivery' => array_merge(self::BASELINE, [
                 'deliveries.view', 'deliveries.update',
                 'orders.view', 'customers.view',
+            ]),
+            'responsible' => array_merge(self::BASELINE, [
+                'reports.view',
+                'orders.view', 'orders.approve.responsible',
+                'customers.view', 'productions.view',
             ]),
         ];
     }

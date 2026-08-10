@@ -851,6 +851,9 @@
     "status": {
       "draft": "مسودة",
       "pending": "قيد الانتظار",
+      "pending_accountant": "في انتظار المحاسب",
+      "pending_manager": "في انتظار المدير",
+      "pending_responsible": "في انتظار المسؤول",
       "validated": "تم التحقق",
       "in_production": "قيد الإنتاج",
       "ready": "جاهز",
@@ -859,6 +862,41 @@
       "cancelled": "ملغى",
       "rejected": "مرفوض",
       "archived": "مؤرشف"
+    },
+    "approval": {
+      "title": "مسار الموافقة",
+      "timeline": "تقدم الموافقة",
+      "currentResponsible": "المسؤول الحالي",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "approveConfirmTitle": "تأكيد الموافقة",
+      "approveConfirmMessage": "هل أنت متأكد من الموافقة على هذا الطلب؟",
+      "rejectTitle": "رفض الطلب",
+      "rejectReason": "سبب الرفض",
+      "rejectReasonRequired": "سبب الرفض مطلوب (3 أحرف على الأقل)",
+      "confirmReject": "تأكيد الرفض",
+      "approvedSuccess": "تمت الموافقة على الطلب",
+      "rejectedSuccess": "تم رفض الطلب",
+      "rejectedBy": "تم الرفض بواسطة",
+      "rejectionStage": "مرحلة الرفض",
+      "rejectionReason": "سبب الرفض",
+      "rejectionDate": "تاريخ الرفض",
+      "waitingForApproval": "في انتظار الموافقة",
+      "orderSubmitted": "تم تقديم الطلب",
+      "approvedReady": "تمت الموافقة — جاهز للتنفيذ",
+      "stages": {
+        "representative": "المندوب",
+        "accountant": "المحاسب",
+        "manager": "المدير",
+        "responsible": "المسؤول",
+        "approved": "معتمد"
+      },
+      "states": {
+        "completed": "تمت الموافقة",
+        "current": "في الانتظار",
+        "pending": "قيد الانتظار",
+        "rejected": "مرفوض"
+      }
     },
     "priority": {
       "high": "عالية",
@@ -1997,6 +2035,7 @@
       "sales": "المندوب",
       "viewer": "مشاهد",
       "delivery": "سائق التوصيل",
+      "responsible": "المسؤول",
       "productionManager": "مسؤول الإنتاج",
       "factoryEmployee": "عامل المصنع",
       "warehouseManager": "مسؤول المستودع",

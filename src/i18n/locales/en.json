@@ -382,6 +382,9 @@
     "status": {
       "draft": "Draft",
       "pending": "Pending",
+      "pending_accountant": "Waiting for Accountant",
+      "pending_manager": "Waiting for Manager",
+      "pending_responsible": "Waiting for Responsible",
       "validated": "Validated",
       "in_production": "In Production",
       "ready": "Ready",
@@ -390,6 +393,41 @@
       "cancelled": "Cancelled",
       "rejected": "Rejected",
       "archived": "Archived"
+    },
+    "approval": {
+      "title": "Approval workflow",
+      "timeline": "Approval progress",
+      "currentResponsible": "Current responsible",
+      "approve": "Approve",
+      "reject": "Reject",
+      "approveConfirmTitle": "Confirm approval",
+      "approveConfirmMessage": "Are you sure you want to approve this order?",
+      "rejectTitle": "Reject order",
+      "rejectReason": "Rejection reason",
+      "rejectReasonRequired": "Rejection reason is required (minimum 3 characters)",
+      "confirmReject": "Confirm rejection",
+      "approvedSuccess": "Order approved",
+      "rejectedSuccess": "Order rejected",
+      "rejectedBy": "Rejected by",
+      "rejectionStage": "Rejection stage",
+      "rejectionReason": "Reason",
+      "rejectionDate": "Rejection date",
+      "waitingForApproval": "Waiting for approval",
+      "orderSubmitted": "Order submitted",
+      "approvedReady": "Approved — ready for execution",
+      "stages": {
+        "representative": "Representative",
+        "accountant": "Accountant",
+        "manager": "Manager",
+        "responsible": "Responsible",
+        "approved": "Approved"
+      },
+      "states": {
+        "completed": "Approved",
+        "current": "Waiting",
+        "pending": "Pending",
+        "rejected": "Rejected"
+      }
     },
     "priority": {
       "high": "High",

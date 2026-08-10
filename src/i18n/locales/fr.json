@@ -368,6 +368,9 @@
     "status": {
       "draft": "Brouillon",
       "pending": "En attente",
+      "pending_accountant": "En attente comptable",
+      "pending_manager": "En attente manager",
+      "pending_responsible": "En attente responsable",
       "validated": "Validée",
       "in_production": "En production",
       "ready": "Prête",
@@ -376,6 +379,41 @@
       "cancelled": "Annulée",
       "rejected": "Refusée",
       "archived": "Archivée"
+    },
+    "approval": {
+      "title": "Circuit d'approbation",
+      "timeline": "Progression de l'approbation",
+      "currentResponsible": "Responsable actuel",
+      "approve": "Approuver",
+      "reject": "Refuser",
+      "approveConfirmTitle": "Confirmer l'approbation",
+      "approveConfirmMessage": "Confirmer l'approbation de cette commande ?",
+      "rejectTitle": "Refuser la commande",
+      "rejectReason": "Motif du refus",
+      "rejectReasonRequired": "Le motif est obligatoire (3 caractères minimum)",
+      "confirmReject": "Confirmer le refus",
+      "approvedSuccess": "Commande approuvée",
+      "rejectedSuccess": "Commande refusée",
+      "rejectedBy": "Refusée par",
+      "rejectionStage": "Étape du refus",
+      "rejectionReason": "Motif",
+      "rejectionDate": "Date du refus",
+      "waitingForApproval": "En attente d'approbation",
+      "orderSubmitted": "Commande soumise",
+      "approvedReady": "Approuvée — prête pour exécution",
+      "stages": {
+        "representative": "Commercial",
+        "accountant": "Comptable",
+        "manager": "Manager",
+        "responsible": "Responsable",
+        "approved": "Approuvée"
+      },
+      "states": {
+        "completed": "Approuvé",
+        "current": "En attente",
+        "pending": "À venir",
+        "rejected": "Refusé"
+      }
     },
     "priority": {
       "high": "Haute",

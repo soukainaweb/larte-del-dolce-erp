@@ -7,13 +7,18 @@ use InvalidArgumentException;
 /**
  * Canonical order workflow stored in DB.
  *
- * draft → submitted → approved → preparing → ready → assigned → delivered → archived
- * Branches: rejected (from submitted), cancelled (from most active states)
+ * draft → pending_accountant → pending_manager → pending_responsible → approved
+ *   → preparing → ready → assigned → delivered → archived
+ * Branches: rejected (from any approval stage), cancelled
  */
 final class OrderWorkflow
 {
     public const DRAFT = 'draft';
-    public const SUBMITTED = 'submitted';
+    public const PENDING_ACCOUNTANT = 'pending_accountant';
+    public const PENDING_MANAGER = 'pending_manager';
+    public const PENDING_RESPONSIBLE = 'pending_responsible';
+    /** @deprecated Use PENDING_ACCOUNTANT */
+    public const SUBMITTED = 'pending_accountant';
     public const APPROVED = 'approved';
     public const PREPARING = 'preparing';
     public const READY = 'ready';
@@ -23,10 +28,19 @@ final class OrderWorkflow
     public const REJECTED = 'rejected';
     public const ARCHIVED = 'archived';
 
+    /** Approval stages that cannot be bypassed via generic status PATCH. */
+    public const APPROVAL_STATUSES = [
+        self::PENDING_ACCOUNTANT,
+        self::PENDING_MANAGER,
+        self::PENDING_RESPONSIBLE,
+    ];
+
     /** @var array<string, list<string>> */
     private const TRANSITIONS = [
-        self::DRAFT => [self::SUBMITTED, self::CANCELLED],
-        self::SUBMITTED => [self::APPROVED, self::REJECTED, self::CANCELLED],
+        self::DRAFT => [self::PENDING_ACCOUNTANT, self::CANCELLED],
+        self::PENDING_ACCOUNTANT => [self::PENDING_MANAGER, self::REJECTED, self::CANCELLED],
+        self::PENDING_MANAGER => [self::PENDING_RESPONSIBLE, self::REJECTED, self::CANCELLED],
+        self::PENDING_RESPONSIBLE => [self::APPROVED, self::REJECTED, self::CANCELLED],
         self::APPROVED => [self::PREPARING, self::CANCELLED],
         self::PREPARING => [self::READY, self::CANCELLED],
         self::READY => [self::ASSIGNED, self::CANCELLED],
@@ -39,9 +53,13 @@ final class OrderWorkflow
 
     /** @var array<string, string> */
     private const TRANSITION_PERMISSIONS = [
-        self::DRAFT . '>' . self::SUBMITTED => 'orders.create',
-        self::SUBMITTED . '>' . self::APPROVED => 'orders.update',
-        self::SUBMITTED . '>' . self::REJECTED => 'orders.update',
+        self::DRAFT . '>' . self::PENDING_ACCOUNTANT => 'orders.create',
+        self::PENDING_ACCOUNTANT . '>' . self::PENDING_MANAGER => 'orders.approve.accountant',
+        self::PENDING_ACCOUNTANT . '>' . self::REJECTED => 'orders.approve.accountant',
+        self::PENDING_MANAGER . '>' . self::PENDING_RESPONSIBLE => 'orders.approve.manager',
+        self::PENDING_MANAGER . '>' . self::REJECTED => 'orders.approve.manager',
+        self::PENDING_RESPONSIBLE . '>' . self::APPROVED => 'orders.approve.responsible',
+        self::PENDING_RESPONSIBLE . '>' . self::REJECTED => 'orders.approve.responsible',
         self::APPROVED . '>' . self::PREPARING => 'orders.update',
         self::PREPARING . '>' . self::READY => 'orders.update',
         self::READY . '>' . self::ASSIGNED => 'orders.update',
@@ -53,8 +71,11 @@ final class OrderWorkflow
     /** @var array<string, string> Legacy + frontend aliases → canonical DB slug */
     private const TO_CANONICAL = [
         'draft' => self::DRAFT,
-        'submitted' => self::SUBMITTED,
-        'pending' => self::SUBMITTED,
+        'submitted' => self::PENDING_ACCOUNTANT,
+        'pending' => self::PENDING_ACCOUNTANT,
+        'pending_accountant' => self::PENDING_ACCOUNTANT,
+        'pending_manager' => self::PENDING_MANAGER,
+        'pending_responsible' => self::PENDING_RESPONSIBLE,
         'approved' => self::APPROVED,
         'validated' => self::APPROVED,
         'confirmed' => self::APPROVED,
@@ -75,7 +96,9 @@ final class OrderWorkflow
     /** @var array<string, string> Canonical DB slug → frontend API status */
     private const TO_FRONTEND = [
         self::DRAFT => 'draft',
-        self::SUBMITTED => 'pending',
+        self::PENDING_ACCOUNTANT => 'pending_accountant',
+        self::PENDING_MANAGER => 'pending_manager',
+        self::PENDING_RESPONSIBLE => 'pending_responsible',
         self::APPROVED => 'validated',
         self::PREPARING => 'in_production',
         self::READY => 'ready',
@@ -116,6 +139,13 @@ final class OrderWorkflow
     public static function frontendStatuses(): array
     {
         return array_values(array_unique(self::TO_FRONTEND));
+    }
+
+    public static function isApprovalStatus(?string $status): bool
+    {
+        $canonical = self::canonical($status);
+
+        return $canonical !== null && in_array($canonical, self::APPROVAL_STATUSES, true);
     }
 
     public static function canTransition(?string $from, ?string $to): bool

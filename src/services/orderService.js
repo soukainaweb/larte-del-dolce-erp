@@ -60,6 +60,11 @@ export const normalizeOrder = (order) => {
       name: item.name ?? item.product?.name ?? '—',
       total: Number(item.total ?? item.subtotal ?? 0),
     })),
+    approval_history: order.approval_history ?? order.approvalHistory ?? [],
+    approval_progress: order.approval_progress ?? order.approvalProgress ?? [],
+    can_approve: Boolean(order.can_approve ?? order.canApprove),
+    can_reject: Boolean(order.can_reject ?? order.canReject),
+    rejection: order.rejection ?? null,
   };
 };
 
@@ -252,11 +257,26 @@ const orderService = {
   validateOrder: async (id) => {
     try {
       const response = await api.post(`/orders/${id}/validate`);
-      return response.data;
+      return { data: normalizeOrder(unwrapData(response)), success: true };
     } catch (error) {
       console.error(`Error validating order ${id}:`, error);
       throw error;
     }
+  },
+
+  approveOrder: async (id) => {
+    const response = await api.post(`/orders/${id}/approve`);
+    return { data: normalizeOrder(unwrapData(response)), success: true };
+  },
+
+  rejectOrder: async (id, reason) => {
+    const response = await api.post(`/orders/${id}/reject`, { reason });
+    return { data: normalizeOrder(unwrapData(response)), success: true };
+  },
+
+  getApprovalHistory: async (id) => {
+    const response = await api.get(`/orders/${id}/approval-history`);
+    return unwrapData(response) || [];
   },
 
   /**
