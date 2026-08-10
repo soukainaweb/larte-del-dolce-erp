@@ -24,11 +24,7 @@ class OrderPolicy
             return false;
         }
 
-        if (SalesScope::isSalesRep($user)) {
-            return SalesScope::ownsOrder($order, $user);
-        }
-
-        return true;
+        return SalesScope::ownsOrder($order, $user);
     }
 
     public function create(User $user): bool
@@ -63,7 +59,20 @@ class OrderPolicy
     public function transition(User $user, Order $order, string $toStatus): bool
     {
         if (SalesScope::isSalesRep($user)) {
+            $canonical = OrderWorkflow::canonical($toStatus);
+            if ($canonical === OrderWorkflow::DELIVERED && SalesScope::isAssignedRep($order, $user)) {
+                return $user->hasPermission('orders.deliver')
+                    && $order->pickup_photo
+                    && OrderWorkflow::canTransition($order->status, $toStatus);
+            }
+
             return false;
+        }
+
+        if (SalesScope::isFactoryUser($user)) {
+            if (! OrderWorkflow::isFactoryStatus($order->status)) {
+                return false;
+            }
         }
 
         if (OrderWorkflow::isApprovalStatus($order->status)) {
@@ -78,7 +87,7 @@ class OrderPolicy
             return false;
         }
 
-        if (! $this->can('orders.update')) {
+        if (! $this->can('orders.update') && ! $this->canFactoryTransition($user, $order->status, $toStatus)) {
             return false;
         }
 
@@ -90,6 +99,44 @@ class OrderPolicy
             $permission = OrderWorkflow::permissionForTransition($order->status, $toStatus);
 
             return $user->hasPermission($permission);
+        } catch (\InvalidArgumentException) {
+            return false;
+        }
+    }
+
+    public function factoryAction(User $user, Order $order): bool
+    {
+        if (! SalesScope::isFactoryUser($user) && ! $user->hasPermission('orders.factory.accept')) {
+            return false;
+        }
+
+        return OrderWorkflow::isFactoryStatus($order->status);
+    }
+
+    public function pickup(User $user, Order $order): bool
+    {
+        return $user->hasPermission('orders.pickup')
+            && SalesScope::isAssignedRep($order, $user)
+            && OrderWorkflow::canonical($order->status) === OrderWorkflow::READY
+            && $order->assigned_rep_id
+            && ! $order->pickup_photo;
+    }
+
+    public function deliver(User $user, Order $order): bool
+    {
+        return $user->hasPermission('orders.deliver')
+            && SalesScope::isAssignedRep($order, $user)
+            && OrderWorkflow::canonical($order->status) === OrderWorkflow::ASSIGNED
+            && $order->pickup_photo
+            && ! $order->delivery_photo;
+    }
+
+    protected function canFactoryTransition(User $user, string $from, string $to): bool
+    {
+        try {
+            $permission = OrderWorkflow::permissionForTransition($from, $to);
+
+            return str_starts_with($permission, 'orders.factory.') && $user->hasPermission($permission);
         } catch (\InvalidArgumentException) {
             return false;
         }

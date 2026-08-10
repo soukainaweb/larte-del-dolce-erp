@@ -95,10 +95,10 @@ class OrderCreationNotificationTest extends TestCase
             'quantity' => 2,
         ]);
 
-        $this->assertSame('pending_accountant', $response->json('data.status'));
+        $this->assertSame('pending_manager', $response->json('data.status'));
 
         $this->assertDatabaseHas('notifications', [
-            'user_id' => $accountant->id,
+            'user_id' => $manager->id,
             'type' => 'order',
         ]);
         $this->assertDatabaseHas('notifications', [
@@ -107,15 +107,15 @@ class OrderCreationNotificationTest extends TestCase
             'title' => 'تم إرسال الطلب',
         ]);
 
-        $accountantNotification = Notification::where('user_id', $accountant->id)
+        $managerNotification = Notification::where('user_id', $manager->id)
             ->where('type', 'order')
             ->where('title', 'طلب جديد يحتاج موافقتك')
             ->first();
-        $this->assertNotNull($accountantNotification);
-        $this->assertStringContainsString($response->json('data.order_number'), $accountantNotification->message);
+        $this->assertNotNull($managerNotification);
+        $this->assertStringContainsString($response->json('data.order_number'), $managerNotification->message);
 
         $this->assertDatabaseMissing('notifications', [
-            'user_id' => $manager->id,
+            'user_id' => $accountant->id,
             'type' => 'order',
             'title' => 'طلب جديد',
         ]);

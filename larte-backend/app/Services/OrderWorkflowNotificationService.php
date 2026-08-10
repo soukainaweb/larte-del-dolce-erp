@@ -16,7 +16,6 @@ class OrderWorkflowNotificationService
         $order->loadMissing(['customer', 'user']);
         $orderUrl = $this->orderUrl($order);
         $customerName = $order->customer->name ?? '—';
-        $creatorName = $this->displayName($creator);
 
         if ($order->user_id) {
             $salesRep = User::find($order->user_id);
@@ -25,7 +24,7 @@ class OrderWorkflowNotificationService
                     'type' => 'order',
                     'title' => 'تم إرسال الطلب',
                     'message' => sprintf(
-                        "تم إرسال طلبك #%s وهو بانتظار موافقة المحاسب.\nالعميل: %s\n%s",
+                        "تم إرسال طلبك #%s وهو بانتظار موافقة المدير.\nالعميل: %s\n%s",
                         $order->order_number,
                         $customerName,
                         $orderUrl,
@@ -34,7 +33,7 @@ class OrderWorkflowNotificationService
             }
         }
 
-        foreach ($this->activeUsersByRole('accountant') as $user) {
+        foreach ($this->activeUsersByRole('manager') as $user) {
             if ((int) $user->id === (int) $creator->id) {
                 continue;
             }
@@ -42,7 +41,7 @@ class OrderWorkflowNotificationService
                 'type' => 'order',
                 'title' => 'طلب جديد يحتاج موافقتك',
                 'message' => sprintf(
-                    "طلب جديد يحتاج إلى موافقة المحاسب.\nرقم الطلب: %s\nالعميل: %s\n%s",
+                    "طلب جديد يحتاج إلى موافقة المدير.\nرقم الطلب: %s\nالعميل: %s\n%s",
                     $order->order_number,
                     $customerName,
                     $orderUrl,
@@ -51,21 +50,21 @@ class OrderWorkflowNotificationService
         }
     }
 
-    public function notifyAccountantApproved(Order $order, User $approver): void
+    public function notifyManagerApproved(Order $order, User $approver): void
     {
         $order->loadMissing(['customer']);
         $orderUrl = $this->orderUrl($order);
         $approverName = $this->displayName($approver);
 
-        foreach ($this->activeUsersByRole('manager') as $user) {
+        foreach ($this->activeUsersByRole('accountant') as $user) {
             if ((int) $user->id === (int) $approver->id) {
                 continue;
             }
             $this->createNotification($user, [
                 'type' => 'order',
-                'title' => 'طلب يحتاج موافقة المدير',
+                'title' => 'طلب يحتاج موافقة المحاسب',
                 'message' => sprintf(
-                    "تمت موافقة المحاسب %s على الطلب #%s ويحتاج موافقتك.\n%s",
+                    "تمت موافقة المدير %s على الطلب #%s ويحتاج موافقة المحاسب.\n%s",
                     $approverName,
                     $order->order_number,
                     $orderUrl,
@@ -74,7 +73,7 @@ class OrderWorkflowNotificationService
         }
     }
 
-    public function notifyManagerApproved(Order $order, User $approver): void
+    public function notifyAccountantApproved(Order $order, User $approver): void
     {
         $order->loadMissing(['customer']);
         $orderUrl = $this->orderUrl($order);
@@ -88,7 +87,7 @@ class OrderWorkflowNotificationService
                 'type' => 'order',
                 'title' => 'طلب يحتاج موافقة المسؤول',
                 'message' => sprintf(
-                    "تمت موافقة المدير %s على الطلب #%s ويحتاج موافقتك.\n%s",
+                    "تمت موافقة المحاسب %s على الطلب #%s ويحتاج موافقتك.\n%s",
                     $approverName,
                     $order->order_number,
                     $orderUrl,
@@ -97,7 +96,7 @@ class OrderWorkflowNotificationService
         }
     }
 
-    public function notifyOrderFullyApproved(Order $order, User $approver): void
+    public function notifyResponsibleApproved(Order $order, User $approver): void
     {
         $order->loadMissing(['customer', 'user']);
         $orderUrl = $this->orderUrl($order);
@@ -108,9 +107,9 @@ class OrderWorkflowNotificationService
             if ($salesRep) {
                 $this->createNotification($salesRep, [
                     'type' => 'order',
-                    'title' => 'تمت الموافقة على الطلب',
+                    'title' => 'تمت الموافقة الإدارية على الطلب',
                     'message' => sprintf(
-                        "تمت الموافقة على طلبك #%s وهو جاهز للتنفيذ.\n%s",
+                        "تمت الموافقة الإدارية على طلبك #%s وهو في انتظار المصنع.\n%s",
                         $order->order_number,
                         $orderUrl,
                     ),
@@ -118,20 +117,71 @@ class OrderWorkflowNotificationService
             }
         }
 
-        foreach ($this->activeUsersWithPermission('productions.view') as $user) {
+        foreach ($this->activeUsersByRole('factory') as $user) {
             if ((int) $user->id === (int) $approver->id) {
                 continue;
             }
             $this->createNotification($user, [
                 'type' => 'order',
-                'title' => 'طلب معتمد للمصنع',
+                'title' => 'طلب جديد للمصنع',
                 'message' => sprintf(
-                    "تمت الموافقة النهائية على الطلب #%s وهو جاهز للمتابعة.\n%s",
+                    "تمت الموافقة النهائية على الطلب #%s من %s وهو جاهز للمعالجة.\n%s",
+                    $order->order_number,
+                    $approverName,
+                    $orderUrl,
+                ),
+            ]);
+        }
+    }
+
+    /** @deprecated Use notifyResponsibleApproved */
+    public function notifyOrderFullyApproved(Order $order, User $approver): void
+    {
+        $this->notifyResponsibleApproved($order, $approver);
+    }
+
+    public function notifyOrderReadyForPickup(Order $order, User $actor): void
+    {
+        $order->loadMissing(['customer', 'assignedRep']);
+        $orderUrl = $this->orderUrl($order);
+
+        if ($order->assigned_rep_id && $order->assignedRep) {
+            $this->notifyRepresentativeReadyForPickup($order, $order->assignedRep);
+            return;
+        }
+
+        foreach ($this->activeUsersByRole('sales') as $user) {
+            if ($user->availability_status !== 'available') {
+                continue;
+            }
+            $this->createNotification($user, [
+                'type' => 'order',
+                'title' => 'طلب جاهز للاستلام',
+                'message' => sprintf(
+                    "الطلب #%s جاهز للاستلام من المصنع.\n%s",
                     $order->order_number,
                     $orderUrl,
                 ),
             ]);
         }
+    }
+
+    public function notifyRepresentativeReadyForPickup(Order $order, User $representative): void
+    {
+        $order->loadMissing(['customer']);
+        $orderUrl = $this->orderUrl($order);
+        $customerName = $order->customer->name ?? '—';
+
+        $this->createNotification($representative, [
+            'type' => 'order',
+            'title' => 'طلبك جاهز للاستلام',
+            'message' => sprintf(
+                "الطلب #%s جاهز للاستلام من المصنع.\nالعميل: %s\n%s",
+                $order->order_number,
+                $customerName,
+                $orderUrl,
+            ),
+        ]);
     }
 
     public function notifyOrderRejectedAtStage(Order $order, User $rejector, string $role, string $reason): void
@@ -140,8 +190,8 @@ class OrderWorkflowNotificationService
         $orderUrl = $this->orderUrl($order);
         $rejectorName = $this->displayName($rejector);
         $roleLabel = match ($role) {
-            'accountant' => 'المحاسب',
             'manager' => 'المدير',
+            'accountant' => 'المحاسب',
             'responsible' => 'المسؤول',
             default => $role,
         };
@@ -200,17 +250,6 @@ class OrderWorkflowNotificationService
             ->with('role:id,name')
             ->whereHas('role', fn ($q) => $q->where('name', $roleSlug))
             ->whereNotIn('status', UserStatus::blockedForLogin())
-            ->get();
-    }
-
-    /**
-     * @return Collection<int, User>
-     */
-    protected function activeUsersWithPermission(string $permission): Collection
-    {
-        return User::query()
-            ->whereNotIn('status', UserStatus::blockedForLogin())
-            ->whereHas('role.permissions', fn ($q) => $q->where('name', $permission))
             ->get();
     }
 

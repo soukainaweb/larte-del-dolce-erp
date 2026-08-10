@@ -17,6 +17,7 @@ class RoleSeeder extends Seeder
             ['name' => 'viewer', 'display_name' => 'Viewer', 'description' => 'Read-only access', 'status' => 'active', 'is_system' => false],
             ['name' => 'delivery', 'display_name' => 'Delivery Driver', 'description' => 'Delivery management', 'status' => 'active', 'is_system' => false],
             ['name' => 'responsible', 'display_name' => 'Responsible', 'description' => 'Final order approval authority', 'status' => 'active', 'is_system' => false],
+            ['name' => 'factory', 'display_name' => 'Factory', 'description' => 'Factory order processing', 'status' => 'active', 'is_system' => false],
         ];
 
         foreach ($roles as $role) {

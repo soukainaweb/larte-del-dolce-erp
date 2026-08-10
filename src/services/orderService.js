@@ -64,6 +64,17 @@ export const normalizeOrder = (order) => {
     approval_progress: order.approval_progress ?? order.approvalProgress ?? [],
     can_approve: Boolean(order.can_approve ?? order.canApprove),
     can_reject: Boolean(order.can_reject ?? order.canReject),
+    can_factory_accept: Boolean(order.can_factory_accept ?? order.canFactoryAccept),
+    can_factory_postpone: Boolean(order.can_factory_postpone ?? order.canFactoryPostpone),
+    can_factory_ready: Boolean(order.can_factory_ready ?? order.canFactoryReady),
+    can_factory_assign_rep: Boolean(order.can_factory_assign_rep ?? order.canFactoryAssignRep),
+    can_confirm_pickup: Boolean(order.can_confirm_pickup ?? order.canConfirmPickup),
+    can_confirm_delivery: Boolean(order.can_confirm_delivery ?? order.canConfirmDelivery),
+    pickup_photo: order.pickup_photo ?? order.pickupPhoto ?? null,
+    delivery_photo: order.delivery_photo ?? order.deliveryPhoto ?? null,
+    pickup_at: order.pickup_at ?? order.pickupAt ?? null,
+    delivered_at: order.delivered_at ?? order.deliveredAt ?? null,
+    assigned_rep_id: order.assigned_rep_id ?? order.assignedRepId ?? null,
     rejection: order.rejection ?? null,
   };
 };
@@ -272,6 +283,48 @@ const orderService = {
   rejectOrder: async (id, reason) => {
     const response = await api.post(`/orders/${id}/reject`, { reason });
     return { data: normalizeOrder(unwrapData(response)), success: true };
+  },
+
+  factoryAccept: async (id) => {
+    const response = await api.post(`/orders/${id}/factory/accept`);
+    return { data: normalizeOrder(unwrapData(response)), success: true };
+  },
+
+  factoryPostpone: async (id, reason, until = null) => {
+    const response = await api.post(`/orders/${id}/factory/postpone`, { reason, until });
+    return { data: normalizeOrder(unwrapData(response)), success: true };
+  },
+
+  factoryMarkReady: async (id) => {
+    const response = await api.post(`/orders/${id}/factory/ready`);
+    return { data: normalizeOrder(unwrapData(response)), success: true };
+  },
+
+  factoryAssignRepresentative: async (id, representativeId) => {
+    const response = await api.post(`/orders/${id}/factory/assign-representative`, {
+      representative_id: representativeId,
+    });
+    return { data: normalizeOrder(unwrapData(response)), success: true };
+  },
+
+  getAvailableRepresentatives: async () => {
+    const response = await api.get('/orders/available-representatives');
+    return unwrapData(response) || [];
+  },
+
+  confirmPickup: async (id, photo) => {
+    const response = await api.post(`/orders/${id}/pickup`, { photo });
+    return { data: normalizeOrder(unwrapData(response)), success: true };
+  },
+
+  confirmDelivery: async (id, photo) => {
+    const response = await api.post(`/orders/${id}/delivery`, { photo });
+    return { data: normalizeOrder(unwrapData(response)), success: true };
+  },
+
+  updateAvailability: async (availabilityStatus) => {
+    const response = await api.put('/profile/availability', { availability_status: availabilityStatus });
+    return unwrapData(response);
   },
 
   getApprovalHistory: async (id) => {

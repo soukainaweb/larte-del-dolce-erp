@@ -106,6 +106,24 @@ class ProfileController extends Controller
         return $this->success(null, 'Preferences updated');
     }
 
+    public function updateAvailability(Request $request)
+    {
+        $validated = $request->validate([
+            'availability_status' => 'required|in:available,unavailable',
+        ]);
+
+        $user = Auth::user();
+        if (! $user->hasPermission('profile.availability.update')) {
+            abort(403);
+        }
+
+        $user->update(['availability_status' => $validated['availability_status']]);
+
+        return $this->success([
+            'user' => $user->fresh()->load('role'),
+        ], 'Availability updated');
+    }
+
     public function exportActivity(Request $request)
     {
         return $this->success($this->profileService->activity(Auth::user()));

@@ -188,14 +188,6 @@ class OrderApprovalService
                 'state' => 'completed',
             ],
             [
-                'key' => 'accountant',
-                'role' => 'accountant',
-                'label' => 'Accountant',
-                'waiting_status' => OrderWorkflow::PENDING_ACCOUNTANT,
-                'approve_action' => OrderApprovalStage::ACTION_ACCOUNTANT_APPROVED,
-                'reject_action' => OrderApprovalStage::ACTION_ACCOUNTANT_REJECTED,
-            ],
-            [
                 'key' => 'manager',
                 'role' => 'manager',
                 'label' => 'Manager',
@@ -204,12 +196,26 @@ class OrderApprovalService
                 'reject_action' => OrderApprovalStage::ACTION_MANAGER_REJECTED,
             ],
             [
+                'key' => 'accountant',
+                'role' => 'accountant',
+                'label' => 'Accountant',
+                'waiting_status' => OrderWorkflow::PENDING_ACCOUNTANT,
+                'approve_action' => OrderApprovalStage::ACTION_ACCOUNTANT_APPROVED,
+                'reject_action' => OrderApprovalStage::ACTION_ACCOUNTANT_REJECTED,
+            ],
+            [
                 'key' => 'responsible',
                 'role' => 'responsible',
                 'label' => 'Responsible',
                 'waiting_status' => OrderWorkflow::PENDING_RESPONSIBLE,
                 'approve_action' => OrderApprovalStage::ACTION_RESPONSIBLE_APPROVED,
                 'reject_action' => OrderApprovalStage::ACTION_RESPONSIBLE_REJECTED,
+            ],
+            [
+                'key' => 'factory',
+                'role' => 'factory',
+                'label' => 'Factory',
+                'waiting_status' => OrderWorkflow::PENDING_FACTORY,
             ],
         ];
 
@@ -229,6 +235,27 @@ class OrderApprovalService
                 continue;
             }
 
+            if ($step['key'] === 'factory') {
+                $factoryState = 'pending';
+                if (in_array($current, [
+                    OrderWorkflow::PREPARING,
+                    OrderWorkflow::POSTPONED,
+                    OrderWorkflow::READY,
+                    OrderWorkflow::ASSIGNED,
+                    OrderWorkflow::DELIVERED,
+                    OrderWorkflow::ARCHIVED,
+                ], true)) {
+                    $factoryState = 'completed';
+                } elseif ($current === OrderWorkflow::PENDING_FACTORY) {
+                    $factoryState = 'current';
+                } elseif ($this->stepIsBeforeCurrent(OrderWorkflow::PENDING_FACTORY, $current)) {
+                    $factoryState = 'pending';
+                }
+
+                $result[] = array_merge($step, ['state' => $factoryState]);
+                continue;
+            }
+
             $approved = $approvalsByAction->get($step['approve_action']);
             $rejected = $approvalsByAction->get($step['reject_action']);
             $state = 'pending';
@@ -242,12 +269,21 @@ class OrderApprovalService
             } elseif ($this->stepIsBeforeCurrent($step['waiting_status'], $current)) {
                 $state = 'pending';
             } elseif ($this->stepIsAfterCurrent($step['waiting_status'], $current)) {
-                $state = in_array($current, [OrderWorkflow::APPROVED, OrderWorkflow::PREPARING, OrderWorkflow::READY, OrderWorkflow::ASSIGNED, OrderWorkflow::DELIVERED, OrderWorkflow::ARCHIVED], true)
+                $state = in_array($current, [
+                    OrderWorkflow::PENDING_FACTORY,
+                    OrderWorkflow::PREPARING,
+                    OrderWorkflow::POSTPONED,
+                    OrderWorkflow::READY,
+                    OrderWorkflow::ASSIGNED,
+                    OrderWorkflow::DELIVERED,
+                    OrderWorkflow::ARCHIVED,
+                    OrderWorkflow::APPROVED,
+                ], true)
                     ? 'completed'
                     : 'pending';
             }
 
-            if ($current === OrderWorkflow::APPROVED && $approved) {
+            if (in_array($current, [OrderWorkflow::PENDING_FACTORY, OrderWorkflow::APPROVED], true) && $approved) {
                 $state = 'completed';
             }
 
@@ -262,15 +298,6 @@ class OrderApprovalService
 
             unset($entry['waiting_status'], $entry['approve_action'], $entry['reject_action']);
             $result[] = $entry;
-        }
-
-        if ($current === OrderWorkflow::APPROVED) {
-            $result[] = [
-                'key' => 'approved',
-                'role' => 'system',
-                'label' => 'Approved',
-                'state' => 'completed',
-            ];
         }
 
         return $result;
@@ -300,8 +327,8 @@ class OrderApprovalService
             'role' => $rejection->role,
             'stage' => OrderApprovalStage::stageLabel(
                 match ($rejection->role) {
-                    'accountant' => OrderWorkflow::PENDING_ACCOUNTANT,
                     'manager' => OrderWorkflow::PENDING_MANAGER,
+                    'accountant' => OrderWorkflow::PENDING_ACCOUNTANT,
                     'responsible' => OrderWorkflow::PENDING_RESPONSIBLE,
                     default => $order->status,
                 }
@@ -315,9 +342,10 @@ class OrderApprovalService
     protected function stepIsBeforeCurrent(string $stepStatus, string $current): bool
     {
         $order = [
-            OrderWorkflow::PENDING_ACCOUNTANT => 1,
-            OrderWorkflow::PENDING_MANAGER => 2,
+            OrderWorkflow::PENDING_MANAGER => 1,
+            OrderWorkflow::PENDING_ACCOUNTANT => 2,
             OrderWorkflow::PENDING_RESPONSIBLE => 3,
+            OrderWorkflow::PENDING_FACTORY => 4,
             OrderWorkflow::APPROVED => 4,
         ];
 
@@ -327,9 +355,10 @@ class OrderApprovalService
     protected function stepIsAfterCurrent(string $stepStatus, string $current): bool
     {
         $order = [
-            OrderWorkflow::PENDING_ACCOUNTANT => 1,
-            OrderWorkflow::PENDING_MANAGER => 2,
+            OrderWorkflow::PENDING_MANAGER => 1,
+            OrderWorkflow::PENDING_ACCOUNTANT => 2,
             OrderWorkflow::PENDING_RESPONSIBLE => 3,
+            OrderWorkflow::PENDING_FACTORY => 4,
             OrderWorkflow::APPROVED => 4,
         ];
 
@@ -342,12 +371,12 @@ class OrderApprovalService
         string $fromStageStatus,
         string $nextStatus,
     ): void {
-        if ($nextStatus === OrderWorkflow::PENDING_MANAGER) {
-            $this->notifications->notifyAccountantApproved($order, $approver);
-        } elseif ($nextStatus === OrderWorkflow::PENDING_RESPONSIBLE) {
+        if ($nextStatus === OrderWorkflow::PENDING_ACCOUNTANT) {
             $this->notifications->notifyManagerApproved($order, $approver);
-        } elseif ($nextStatus === OrderWorkflow::APPROVED) {
-            $this->notifications->notifyOrderFullyApproved($order, $approver);
+        } elseif ($nextStatus === OrderWorkflow::PENDING_RESPONSIBLE) {
+            $this->notifications->notifyAccountantApproved($order, $approver);
+        } elseif ($nextStatus === OrderWorkflow::PENDING_FACTORY) {
+            $this->notifications->notifyResponsibleApproved($order, $approver);
         }
     }
 

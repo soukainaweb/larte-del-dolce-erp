@@ -15,6 +15,7 @@ class Order extends Model
 
         'customer_id',
         'user_id',
+        'assigned_rep_id',
         'order_number',
         'status',
         'total_amount',
@@ -24,6 +25,12 @@ class Order extends Model
         'delivery_time',
         'payment_method',
         'notes',
+        'pickup_photo',
+        'pickup_at',
+        'delivery_photo',
+        'delivered_at',
+        'factory_postponed_reason',
+        'factory_postponed_until',
 
     ];
 
@@ -34,6 +41,9 @@ class Order extends Model
         return [
             'total_amount' => 'decimal:2',
             'delivery_date' => 'date',
+            'pickup_at' => 'datetime',
+            'delivered_at' => 'datetime',
+            'factory_postponed_until' => 'datetime',
         ];
 
     }
@@ -50,6 +60,11 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function assignedRep()
+    {
+        return $this->belongsTo(User::class, 'assigned_rep_id');
     }
 
 

@@ -22,6 +22,7 @@ class OrderService
         private OrderWorkflowService $workflowService,
         private EntityCreatedNotificationService $entityNotifications,
         private OrderApprovalService $approvalService,
+        private FactoryOrderService $factoryService,
     ) {
     }
 
@@ -130,7 +131,7 @@ class OrderService
             unset($data['sales_rep_id']);
 
             $orderNumber = NumberGenerator::next('ORD', Order::class, 'order_number');
-            $initialStatus = OrderWorkflow::PENDING_ACCOUNTANT;
+            $initialStatus = OrderWorkflow::PENDING_MANAGER;
 
             $order = Order::create([
                 'order_number' => $orderNumber,
@@ -213,8 +214,94 @@ class OrderService
         $data['can_approve'] = $viewer ? $this->approvalService->canUserApprove($viewer, $order) : false;
         $data['can_reject'] = $data['can_approve'];
         $data['rejection'] = $this->approvalService->latestRejection($order);
+        $data['can_factory_accept'] = $viewer && $this->canPerformFactoryAction($viewer, $order, 'orders.factory.accept');
+        $data['can_factory_postpone'] = $viewer && $this->canPerformFactoryAction($viewer, $order, 'orders.factory.postpone');
+        $data['can_factory_ready'] = $viewer && $this->canPerformFactoryAction($viewer, $order, 'orders.factory.ready');
+        $data['can_factory_assign_rep'] = $viewer && $this->canPerformFactoryAction($viewer, $order, 'orders.factory.assign_rep');
+        $data['can_confirm_pickup'] = $viewer && $this->canConfirmPickup($viewer, $order);
+        $data['can_confirm_delivery'] = $viewer && $this->canConfirmDelivery($viewer, $order);
 
         return $data;
+    }
+
+    protected function canPerformFactoryAction(User $user, Order $order, string $permission): bool
+    {
+        if (! $user->hasPermission($permission)) {
+            return false;
+        }
+
+        $status = OrderWorkflow::canonical($order->status);
+
+        return match ($permission) {
+            'orders.factory.accept' => in_array($status, [OrderWorkflow::PENDING_FACTORY, OrderWorkflow::POSTPONED], true),
+            'orders.factory.postpone' => in_array($status, [OrderWorkflow::PENDING_FACTORY, OrderWorkflow::PREPARING], true),
+            'orders.factory.ready' => $status === OrderWorkflow::PREPARING,
+            'orders.factory.assign_rep' => $status === OrderWorkflow::READY && ! $order->assigned_rep_id,
+            default => false,
+        };
+    }
+
+    protected function canConfirmPickup(User $user, Order $order): bool
+    {
+        return $user->hasPermission('orders.pickup')
+            && OrderWorkflow::canonical($order->status) === OrderWorkflow::READY
+            && $order->assigned_rep_id
+            && ! $order->pickup_photo
+            && SalesScope::isAssignedRep($order, $user);
+    }
+
+    protected function canConfirmDelivery(User $user, Order $order): bool
+    {
+        return $user->hasPermission('orders.deliver')
+            && OrderWorkflow::canonical($order->status) === OrderWorkflow::ASSIGNED
+            && $order->pickup_photo
+            && ! $order->delivery_photo
+            && SalesScope::isAssignedRep($order, $user);
+    }
+
+    public function factoryAccept(Order $order, ?User $user = null): array
+    {
+        return $this->factoryService->accept($order, $user);
+    }
+
+    public function factoryPostpone(Order $order, string $reason, ?string $until = null, ?User $user = null): array
+    {
+        return $this->factoryService->postpone($order, $reason, $until, $user);
+    }
+
+    public function factoryMarkReady(Order $order, ?User $user = null): array
+    {
+        return $this->factoryService->markReadyForPickup($order, $user);
+    }
+
+    public function factoryAssignRepresentative(Order $order, int $repId, ?User $user = null): array
+    {
+        return $this->factoryService->assignRepresentative($order, $repId, $user);
+    }
+
+    public function confirmPickup(Order $order, mixed $photo, ?User $user = null): array
+    {
+        return $this->factoryService->confirmPickup($order, $photo, $user);
+    }
+
+    public function confirmDelivery(Order $order, mixed $photo, ?User $user = null): array
+    {
+        return $this->factoryService->confirmDelivery($order, $photo, $user);
+    }
+
+    public function availableRepresentatives()
+    {
+        return $this->factoryService->availableRepresentatives()
+            ->map(fn (User $u) => [
+                'id' => $u->id,
+                'first_name' => $u->first_name,
+                'last_name' => $u->last_name,
+                'email' => $u->email,
+                'full_name' => trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')),
+                'availability_status' => $u->availability_status,
+            ])
+            ->values()
+            ->all();
     }
 
     public function approve(Order $order, ?User $user = null): array
@@ -362,12 +449,18 @@ class OrderService
             'total' => (clone $query)->count(),
             'draft' => (clone $query)->where('status', OrderWorkflow::DRAFT)->count(),
             'pending' => (clone $query)->whereIn('status', [
-                OrderWorkflow::PENDING_ACCOUNTANT,
                 OrderWorkflow::PENDING_MANAGER,
+                OrderWorkflow::PENDING_ACCOUNTANT,
                 OrderWorkflow::PENDING_RESPONSIBLE,
             ])->count(),
-            'validated' => (clone $query)->where('status', OrderWorkflow::APPROVED)->count(),
-            'in_production' => (clone $query)->where('status', OrderWorkflow::PREPARING)->count(),
+            'validated' => (clone $query)->whereIn('status', [
+                OrderWorkflow::APPROVED,
+                OrderWorkflow::PENDING_FACTORY,
+            ])->count(),
+            'in_production' => (clone $query)->whereIn('status', [
+                OrderWorkflow::PREPARING,
+                OrderWorkflow::POSTPONED,
+            ])->count(),
             'ready' => (clone $query)->where('status', OrderWorkflow::READY)->count(),
             'in_delivery' => (clone $query)->where('status', OrderWorkflow::ASSIGNED)->count(),
             'delivered' => (clone $query)->where('status', OrderWorkflow::DELIVERED)->count(),

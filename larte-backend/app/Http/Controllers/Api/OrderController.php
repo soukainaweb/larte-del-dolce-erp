@@ -257,4 +257,104 @@ class OrderController extends Controller
 
         return $this->success($this->orderService->export());
     }
+
+    public function availableRepresentatives()
+    {
+        $this->authorize('viewAny', Order::class);
+
+        if (! auth()->user()?->hasPermission('reps.view_available')) {
+            abort(403);
+        }
+
+        return $this->success($this->orderService->availableRepresentatives());
+    }
+
+    public function factoryAccept(Order $order)
+    {
+        $this->authorize('factoryAction', $order);
+
+        try {
+            return $this->success($this->orderService->factoryAccept($order), 'تم قبول الطلب');
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
+
+    public function factoryPostpone(Request $request, Order $order)
+    {
+        $this->authorize('factoryAction', $order);
+
+        $validated = $request->validate([
+            'reason' => 'required|string|min:3|max:1000',
+            'until' => 'nullable|date',
+        ]);
+
+        try {
+            return $this->success(
+                $this->orderService->factoryPostpone($order, $validated['reason'], $validated['until'] ?? null),
+                'تم تأجيل الطلب'
+            );
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
+
+    public function factoryMarkReady(Order $order)
+    {
+        $this->authorize('factoryAction', $order);
+
+        try {
+            return $this->success($this->orderService->factoryMarkReady($order), 'الطلب جاهز للاستلام');
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
+
+    public function factoryAssignRepresentative(Request $request, Order $order)
+    {
+        $this->authorize('factoryAction', $order);
+
+        $validated = $request->validate([
+            'representative_id' => 'required|integer|exists:users,id',
+        ]);
+
+        try {
+            return $this->success(
+                $this->orderService->factoryAssignRepresentative($order, (int) $validated['representative_id']),
+                'تم تعيين المندوب'
+            );
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
+
+    public function confirmPickup(Request $request, Order $order)
+    {
+        $this->authorize('pickup', $order);
+
+        $validated = $request->validate([
+            'photo' => 'required|string',
+        ]);
+
+        try {
+            return $this->success($this->orderService->confirmPickup($order, $validated['photo']), 'تم تأكيد الاستلام');
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
+
+    public function confirmDelivery(Request $request, Order $order)
+    {
+        $this->authorize('deliver', $order);
+
+        $validated = $request->validate([
+            'photo' => 'required|string',
+        ]);
+
+        try {
+            return $this->success($this->orderService->confirmDelivery($order, $validated['photo']), 'تم تأكيد التسليم');
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
 }
