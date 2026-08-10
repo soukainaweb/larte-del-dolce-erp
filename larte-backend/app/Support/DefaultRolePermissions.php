@@ -22,7 +22,14 @@ class DefaultRolePermissions
     {
         return [
             'dashboard' => ['view'],
-            'orders' => ['view', 'create', 'update', 'delete', 'approve.accountant', 'approve.manager', 'approve.responsible'],
+            'orders' => [
+                'view', 'create', 'update', 'delete',
+                'approve.accountant', 'approve.manager', 'approve.responsible',
+                'factory.accept', 'factory.postpone', 'factory.ready', 'factory.assign_rep',
+                'pickup', 'deliver',
+            ],
+            'reps' => ['view_available'],
+            'profile' => ['availability.update'],
             'customers' => ['view', 'create', 'update', 'delete'],
             'products' => ['view', 'create', 'update', 'delete'],
             'categories' => ['view', 'create', 'update', 'delete'],
@@ -82,22 +89,35 @@ class DefaultRolePermissions
                 'orders.view', 'orders.approve.accountant', 'customers.view',
             ]),
             'sales' => array_merge(self::BASELINE, [
-                'orders.view', 'orders.create',
+                'orders.view', 'orders.create', 'orders.pickup', 'orders.deliver',
                 'customers.view', 'customers.create', 'customers.update',
+                'finance.view',
                 'meetings.view', 'meetings.create', 'meetings.update',
                 'samples.view', 'samples.create', 'samples.update',
+                'profile.availability.update',
             ]),
             'viewer' => self::viewerPermissions(),
             'delivery' => array_merge(self::BASELINE, [
                 'deliveries.view', 'deliveries.update',
                 'orders.view', 'customers.view',
             ]),
-            'responsible' => array_merge(self::BASELINE, [
-                'reports.view',
-                'orders.view', 'orders.approve.responsible',
-                'customers.view', 'productions.view',
+            'responsible' => self::responsiblePermissions(),
+            'factory' => array_merge(self::BASELINE, [
+                'orders.view',
+                'orders.factory.accept', 'orders.factory.postpone',
+                'orders.factory.ready', 'orders.factory.assign_rep',
+                'reps.view_available',
             ]),
         ];
+    }
+
+    public static function responsiblePermissions(): array
+    {
+        return array_merge(self::BASELINE, array_diff(self::viewerPermissions(), [
+            'users.view', 'roles.view', 'permissions.view', 'settings.view',
+        ]), [
+            'orders.approve.responsible', 'orders.update',
+        ]);
     }
 
     public static function viewerPermissions(): array

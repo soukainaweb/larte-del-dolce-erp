@@ -7,20 +7,23 @@ use InvalidArgumentException;
 /**
  * Canonical order workflow stored in DB.
  *
- * draft → pending_accountant → pending_manager → pending_responsible → approved
+ * draft → pending_manager → pending_accountant → pending_responsible → pending_factory
  *   → preparing → ready → assigned → delivered → archived
- * Branches: rejected (from any approval stage), cancelled
+ * Branches: postponed (factory), rejected (from any approval stage), cancelled
  */
 final class OrderWorkflow
 {
     public const DRAFT = 'draft';
-    public const PENDING_ACCOUNTANT = 'pending_accountant';
     public const PENDING_MANAGER = 'pending_manager';
+    public const PENDING_ACCOUNTANT = 'pending_accountant';
     public const PENDING_RESPONSIBLE = 'pending_responsible';
-    /** @deprecated Use PENDING_ACCOUNTANT */
-    public const SUBMITTED = 'pending_accountant';
+    public const PENDING_FACTORY = 'pending_factory';
+    /** @deprecated Use PENDING_MANAGER — legacy alias */
+    public const SUBMITTED = 'pending_manager';
+    /** @deprecated Replaced by pending_factory in the final workflow */
     public const APPROVED = 'approved';
     public const PREPARING = 'preparing';
+    public const POSTPONED = 'postponed';
     public const READY = 'ready';
     public const ASSIGNED = 'assigned';
     public const DELIVERED = 'delivered';
@@ -30,52 +33,69 @@ final class OrderWorkflow
 
     /** Approval stages that cannot be bypassed via generic status PATCH. */
     public const APPROVAL_STATUSES = [
-        self::PENDING_ACCOUNTANT,
         self::PENDING_MANAGER,
+        self::PENDING_ACCOUNTANT,
         self::PENDING_RESPONSIBLE,
+    ];
+
+    /** Statuses visible to factory users once administration approval is complete. */
+    public const FACTORY_STATUSES = [
+        self::PENDING_FACTORY,
+        self::PREPARING,
+        self::POSTPONED,
+        self::READY,
+        self::ASSIGNED,
     ];
 
     /** @var array<string, list<string>> */
     private const TRANSITIONS = [
-        self::DRAFT => [self::PENDING_ACCOUNTANT, self::CANCELLED],
-        self::PENDING_ACCOUNTANT => [self::PENDING_MANAGER, self::REJECTED, self::CANCELLED],
-        self::PENDING_MANAGER => [self::PENDING_RESPONSIBLE, self::REJECTED, self::CANCELLED],
-        self::PENDING_RESPONSIBLE => [self::APPROVED, self::REJECTED, self::CANCELLED],
-        self::APPROVED => [self::PREPARING, self::CANCELLED],
-        self::PREPARING => [self::READY, self::CANCELLED],
+        self::DRAFT => [self::PENDING_MANAGER, self::CANCELLED],
+        self::PENDING_MANAGER => [self::PENDING_ACCOUNTANT, self::REJECTED, self::CANCELLED],
+        self::PENDING_ACCOUNTANT => [self::PENDING_RESPONSIBLE, self::REJECTED, self::CANCELLED],
+        self::PENDING_RESPONSIBLE => [self::PENDING_FACTORY, self::REJECTED, self::CANCELLED],
+        self::PENDING_FACTORY => [self::PREPARING, self::POSTPONED, self::CANCELLED],
+        self::PREPARING => [self::READY, self::POSTPONED, self::CANCELLED],
+        self::POSTPONED => [self::PREPARING, self::CANCELLED],
         self::READY => [self::ASSIGNED, self::CANCELLED],
         self::ASSIGNED => [self::DELIVERED, self::CANCELLED],
         self::DELIVERED => [self::ARCHIVED],
         self::REJECTED => [self::DRAFT, self::CANCELLED],
         self::CANCELLED => [],
         self::ARCHIVED => [],
+        // Legacy alias kept for in-flight production orders
+        self::APPROVED => [self::PREPARING, self::PENDING_FACTORY, self::CANCELLED],
     ];
 
     /** @var array<string, string> */
     private const TRANSITION_PERMISSIONS = [
-        self::DRAFT . '>' . self::PENDING_ACCOUNTANT => 'orders.create',
-        self::PENDING_ACCOUNTANT . '>' . self::PENDING_MANAGER => 'orders.approve.accountant',
-        self::PENDING_ACCOUNTANT . '>' . self::REJECTED => 'orders.approve.accountant',
-        self::PENDING_MANAGER . '>' . self::PENDING_RESPONSIBLE => 'orders.approve.manager',
+        self::DRAFT . '>' . self::PENDING_MANAGER => 'orders.create',
+        self::PENDING_MANAGER . '>' . self::PENDING_ACCOUNTANT => 'orders.approve.manager',
         self::PENDING_MANAGER . '>' . self::REJECTED => 'orders.approve.manager',
-        self::PENDING_RESPONSIBLE . '>' . self::APPROVED => 'orders.approve.responsible',
+        self::PENDING_ACCOUNTANT . '>' . self::PENDING_RESPONSIBLE => 'orders.approve.accountant',
+        self::PENDING_ACCOUNTANT . '>' . self::REJECTED => 'orders.approve.accountant',
+        self::PENDING_RESPONSIBLE . '>' . self::PENDING_FACTORY => 'orders.approve.responsible',
         self::PENDING_RESPONSIBLE . '>' . self::REJECTED => 'orders.approve.responsible',
-        self::APPROVED . '>' . self::PREPARING => 'orders.update',
-        self::PREPARING . '>' . self::READY => 'orders.update',
-        self::READY . '>' . self::ASSIGNED => 'orders.update',
-        self::ASSIGNED . '>' . self::DELIVERED => 'orders.update',
+        self::PENDING_FACTORY . '>' . self::PREPARING => 'orders.factory.accept',
+        self::PENDING_FACTORY . '>' . self::POSTPONED => 'orders.factory.postpone',
+        self::PREPARING . '>' . self::READY => 'orders.factory.ready',
+        self::PREPARING . '>' . self::POSTPONED => 'orders.factory.postpone',
+        self::POSTPONED . '>' . self::PREPARING => 'orders.factory.accept',
+        self::READY . '>' . self::ASSIGNED => 'orders.factory.assign_rep',
+        self::ASSIGNED . '>' . self::DELIVERED => 'orders.deliver',
         self::DELIVERED . '>' . self::ARCHIVED => 'orders.update',
         self::REJECTED . '>' . self::DRAFT => 'orders.update',
+        self::APPROVED . '>' . self::PREPARING => 'orders.factory.accept',
     ];
 
     /** @var array<string, string> Legacy + frontend aliases → canonical DB slug */
     private const TO_CANONICAL = [
         'draft' => self::DRAFT,
-        'submitted' => self::PENDING_ACCOUNTANT,
-        'pending' => self::PENDING_ACCOUNTANT,
-        'pending_accountant' => self::PENDING_ACCOUNTANT,
+        'submitted' => self::PENDING_MANAGER,
+        'pending' => self::PENDING_MANAGER,
         'pending_manager' => self::PENDING_MANAGER,
+        'pending_accountant' => self::PENDING_ACCOUNTANT,
         'pending_responsible' => self::PENDING_RESPONSIBLE,
+        'pending_factory' => self::PENDING_FACTORY,
         'approved' => self::APPROVED,
         'validated' => self::APPROVED,
         'confirmed' => self::APPROVED,
@@ -83,7 +103,9 @@ final class OrderWorkflow
         'production' => self::PREPARING,
         'processing' => self::PREPARING,
         'in_production' => self::PREPARING,
+        'postponed' => self::POSTPONED,
         'ready' => self::READY,
+        'ready_for_pickup' => self::READY,
         'assigned' => self::ASSIGNED,
         'in_delivery' => self::ASSIGNED,
         'delivered' => self::DELIVERED,
@@ -96,12 +118,14 @@ final class OrderWorkflow
     /** @var array<string, string> Canonical DB slug → frontend API status */
     private const TO_FRONTEND = [
         self::DRAFT => 'draft',
-        self::PENDING_ACCOUNTANT => 'pending_accountant',
         self::PENDING_MANAGER => 'pending_manager',
+        self::PENDING_ACCOUNTANT => 'pending_accountant',
         self::PENDING_RESPONSIBLE => 'pending_responsible',
+        self::PENDING_FACTORY => 'pending_factory',
         self::APPROVED => 'validated',
         self::PREPARING => 'in_production',
-        self::READY => 'ready',
+        self::POSTPONED => 'postponed',
+        self::READY => 'ready_for_pickup',
         self::ASSIGNED => 'in_delivery',
         self::DELIVERED => 'delivered',
         self::CANCELLED => 'cancelled',
@@ -146,6 +170,13 @@ final class OrderWorkflow
         $canonical = self::canonical($status);
 
         return $canonical !== null && in_array($canonical, self::APPROVAL_STATUSES, true);
+    }
+
+    public static function isFactoryStatus(?string $status): bool
+    {
+        $canonical = self::canonical($status);
+
+        return $canonical !== null && in_array($canonical, self::FACTORY_STATUSES, true);
     }
 
     public static function canTransition(?string $from, ?string $to): bool

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Invoice;
 use App\Models\Order;
+use App\Support\SalesScope;
 use App\Support\StatusMapper;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -11,7 +12,7 @@ class InvoiceService
 {
     public function list(array $filters = []): LengthAwarePaginator
     {
-        $query = Invoice::with(['order', 'customer']);
+        $query = Invoice::with(['order.customer']);
 
         if (!empty($filters['search'])) {
             $query->where('invoice_number', 'LIKE', '%' . $filters['search'] . '%');
@@ -22,7 +23,7 @@ class InvoiceService
         }
 
         if (!empty($filters['customer_id'])) {
-            $query->where('customer_id', $filters['customer_id']);
+            $query->whereHas('order', fn ($q) => $q->where('customer_id', $filters['customer_id']));
         }
 
         if (!empty($filters['date_from'])) {
@@ -32,6 +33,8 @@ class InvoiceService
         if (!empty($filters['date_to'])) {
             $query->whereDate('invoice_date', '<=', $filters['date_to']);
         }
+
+        SalesScope::applyInvoiceScope($query);
 
         return $query->orderByDesc('created_at')->paginate($filters['per_page'] ?? 10);
     }
@@ -45,11 +48,10 @@ class InvoiceService
         $invoice = Invoice::create([
             'invoice_number' => $invoiceNumber,
             'order_id' => $order->id,
-            'customer_id' => $order->customer_id,
             'total_amount' => $data['total_amount'],
             'invoice_date' => $data['invoice_date'],
             'status' => $data['status'] ?? 'draft',
-        ])->load(['order', 'customer']);
+        ])->load(['order.customer']);
 
         ActivityLogger::log(
             module: 'invoices',
@@ -72,7 +74,7 @@ class InvoiceService
             description: sprintf('Facture %s mise à jour', $invoice->invoice_number),
         );
 
-        return $invoice->fresh()->load(['order', 'customer']);
+        return $invoice->fresh()->load(['order.customer']);
     }
 
     public function delete(Invoice $invoice): void
@@ -95,7 +97,7 @@ class InvoiceService
     {
         $invoice->restore();
 
-        return $invoice->fresh()->load(['order', 'customer']);
+        return $invoice->fresh()->load(['order.customer']);
     }
 
     public function send(Invoice $invoice, array $data = []): Invoice
@@ -108,13 +110,13 @@ class InvoiceService
             description: sprintf('Facture %s envoyée', $invoice->invoice_number),
         );
 
-        return $invoice->fresh()->load(['order', 'customer']);
+        return $invoice->fresh()->load(['order.customer']);
     }
 
     public function printData(Invoice $invoice): array
     {
         return [
-            'invoice' => $invoice->load(['order', 'customer']),
+            'invoice' => $invoice->load(['order.customer']),
             'printed_at' => now()->toIso8601String(),
         ];
     }
@@ -154,9 +156,9 @@ class InvoiceService
 
     public function export()
     {
-        return Invoice::with(['order', 'customer'])->get()->map(fn ($invoice) => [
+        return Invoice::with(['order.customer'])->get()->map(fn ($invoice) => [
             'N° Facture' => $invoice->invoice_number,
-            'Client' => $invoice->customer->name ?? '—',
+            'Client' => $invoice->order?->customer?->name ?? '—',
             'Total' => $invoice->total_amount,
             'Statut' => $invoice->status,
             'Date' => $invoice->invoice_date,

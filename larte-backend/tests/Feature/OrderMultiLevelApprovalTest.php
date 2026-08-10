@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Customer;
 use App\Models\Notification;
-use App\Models\Order;
 use App\Models\OrderApproval;
 use App\Models\Product;
 use App\Models\User;
@@ -52,20 +51,20 @@ class OrderMultiLevelApprovalTest extends TestCase
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('data.status', 'pending_accountant');
+            ->assertJsonPath('data.status', 'pending_manager');
 
         return (int) $response->json('data.id');
     }
 
-    public function test_representative_create_order_starts_pending_accountant_and_notifies_accountant(): void
+    public function test_representative_create_order_starts_pending_manager_and_notifies_manager(): void
     {
-        $before = Notification::where('user_id', $this->accountant->id)->where('type', 'order')->count();
+        $before = Notification::where('user_id', $this->manager->id)->where('type', 'order')->count();
 
         $orderId = $this->createOrderViaApi();
 
         $this->assertDatabaseHas('orders', [
             'id' => $orderId,
-            'status' => OrderWorkflow::PENDING_ACCOUNTANT,
+            'status' => OrderWorkflow::PENDING_MANAGER,
         ]);
 
         $this->assertDatabaseHas('order_approvals', [
@@ -75,18 +74,35 @@ class OrderMultiLevelApprovalTest extends TestCase
 
         $this->assertGreaterThan(
             $before,
-            Notification::where('user_id', $this->accountant->id)->where('type', 'order')->count()
+            Notification::where('user_id', $this->manager->id)->where('type', 'order')->count()
         );
     }
 
-    public function test_accountant_approve_moves_to_pending_manager(): void
+    public function test_manager_approve_moves_to_pending_accountant(): void
     {
         $orderId = $this->createOrderViaApi();
+
+        Sanctum::actingAs($this->manager);
+        $this->postJson("/api/orders/{$orderId}/approve")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'pending_accountant');
+
+        $this->assertDatabaseHas('order_approvals', [
+            'order_id' => $orderId,
+            'action' => OrderApprovalStage::ACTION_MANAGER_APPROVED,
+        ]);
+    }
+
+    public function test_accountant_approve_moves_to_pending_responsible(): void
+    {
+        $orderId = $this->createOrderViaApi();
+        Sanctum::actingAs($this->manager);
+        $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
 
         Sanctum::actingAs($this->accountant);
         $this->postJson("/api/orders/{$orderId}/approve")
             ->assertOk()
-            ->assertJsonPath('data.status', 'pending_manager');
+            ->assertJsonPath('data.status', 'pending_responsible');
 
         $this->assertDatabaseHas('order_approvals', [
             'order_id' => $orderId,
@@ -94,40 +110,30 @@ class OrderMultiLevelApprovalTest extends TestCase
         ]);
     }
 
-    public function test_manager_approve_moves_to_pending_responsible(): void
+    public function test_responsible_approve_moves_to_pending_factory(): void
     {
         $orderId = $this->createOrderViaApi();
-        Sanctum::actingAs($this->accountant);
-        $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
-
         Sanctum::actingAs($this->manager);
-        $this->postJson("/api/orders/{$orderId}/approve")
-            ->assertOk()
-            ->assertJsonPath('data.status', 'pending_responsible');
-    }
-
-    public function test_responsible_approve_moves_to_validated_execution_state(): void
-    {
-        $orderId = $this->createOrderViaApi();
-        Sanctum::actingAs($this->accountant);
         $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
-        Sanctum::actingAs($this->manager);
+        Sanctum::actingAs($this->accountant);
         $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
 
         Sanctum::actingAs($this->responsible);
         $this->postJson("/api/orders/{$orderId}/approve")
             ->assertOk()
-            ->assertJsonPath('data.status', 'validated');
+            ->assertJsonPath('data.status', 'pending_factory');
 
         $this->assertDatabaseHas('orders', [
             'id' => $orderId,
-            'status' => OrderWorkflow::APPROVED,
+            'status' => OrderWorkflow::PENDING_FACTORY,
         ]);
     }
 
     public function test_accountant_reject_requires_reason_and_notifies_sales_rep(): void
     {
         $orderId = $this->createOrderViaApi();
+        Sanctum::actingAs($this->manager);
+        $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
 
         Sanctum::actingAs($this->accountant);
         $this->postJson("/api/orders/{$orderId}/reject", ['reason' => 'ab'])
@@ -149,11 +155,9 @@ class OrderMultiLevelApprovalTest extends TestCase
         ]);
     }
 
-    public function test_manager_reject_after_accountant_approval(): void
+    public function test_manager_reject_at_manager_stage(): void
     {
         $orderId = $this->createOrderViaApi();
-        Sanctum::actingAs($this->accountant);
-        $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
 
         Sanctum::actingAs($this->manager);
         $this->postJson("/api/orders/{$orderId}/reject", ['reason' => 'Budget exceeded'])
@@ -161,12 +165,12 @@ class OrderMultiLevelApprovalTest extends TestCase
             ->assertJsonPath('data.status', 'rejected');
     }
 
-    public function test_responsible_reject_after_manager_approval(): void
+    public function test_responsible_reject_after_accountant_approval(): void
     {
         $orderId = $this->createOrderViaApi();
-        Sanctum::actingAs($this->accountant);
-        $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
         Sanctum::actingAs($this->manager);
+        $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
+        Sanctum::actingAs($this->accountant);
         $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
 
         Sanctum::actingAs($this->responsible);
@@ -175,11 +179,11 @@ class OrderMultiLevelApprovalTest extends TestCase
             ->assertJsonPath('data.status', 'rejected');
     }
 
-    public function test_manager_cannot_approve_pending_accountant(): void
+    public function test_accountant_cannot_approve_pending_manager(): void
     {
         $orderId = $this->createOrderViaApi();
 
-        Sanctum::actingAs($this->manager);
+        Sanctum::actingAs($this->accountant);
         $this->postJson("/api/orders/{$orderId}/approve")
             ->assertForbidden();
     }
@@ -187,8 +191,6 @@ class OrderMultiLevelApprovalTest extends TestCase
     public function test_responsible_cannot_approve_pending_manager(): void
     {
         $orderId = $this->createOrderViaApi();
-        Sanctum::actingAs($this->accountant);
-        $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
 
         Sanctum::actingAs($this->responsible);
         $this->postJson("/api/orders/{$orderId}/approve")
@@ -217,7 +219,7 @@ class OrderMultiLevelApprovalTest extends TestCase
     {
         $orderId = $this->createOrderViaApi();
 
-        Sanctum::actingAs($this->accountant);
+        Sanctum::actingAs($this->manager);
         $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
         $second = $this->postJson("/api/orders/{$orderId}/approve");
         $this->assertContains($second->status(), [403, 422]);
@@ -225,7 +227,7 @@ class OrderMultiLevelApprovalTest extends TestCase
         $this->assertSame(
             1,
             OrderApproval::where('order_id', $orderId)
-                ->where('action', OrderApprovalStage::ACTION_ACCOUNTANT_APPROVED)
+                ->where('action', OrderApprovalStage::ACTION_MANAGER_APPROVED)
                 ->count()
         );
     }
@@ -233,9 +235,9 @@ class OrderMultiLevelApprovalTest extends TestCase
     public function test_approval_history_is_ordered(): void
     {
         $orderId = $this->createOrderViaApi();
-        Sanctum::actingAs($this->accountant);
-        $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
         Sanctum::actingAs($this->manager);
+        $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
+        Sanctum::actingAs($this->accountant);
         $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
 
         Sanctum::actingAs($this->responsible);
@@ -245,8 +247,8 @@ class OrderMultiLevelApprovalTest extends TestCase
         $this->assertSame(
             [
                 OrderApprovalStage::ACTION_SUBMITTED,
-                OrderApprovalStage::ACTION_ACCOUNTANT_APPROVED,
                 OrderApprovalStage::ACTION_MANAGER_APPROVED,
+                OrderApprovalStage::ACTION_ACCOUNTANT_APPROVED,
             ],
             $actions
         );
@@ -256,14 +258,14 @@ class OrderMultiLevelApprovalTest extends TestCase
     {
         $orderId = $this->createOrderViaApi();
 
-        Sanctum::actingAs($this->accountant);
-        $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
         Sanctum::actingAs($this->manager);
+        $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
+        Sanctum::actingAs($this->accountant);
         $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
         Sanctum::actingAs($this->responsible);
         $this->postJson("/api/orders/{$orderId}/approve")
             ->assertOk()
-            ->assertJsonPath('data.status', 'validated');
+            ->assertJsonPath('data.status', 'pending_factory');
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $this->sales->id,

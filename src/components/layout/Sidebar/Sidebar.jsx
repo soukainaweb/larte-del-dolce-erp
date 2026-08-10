@@ -192,7 +192,7 @@ const DEFAULT_MENU_CONFIG = [
     title: 'Commandes',
     icon: ClipboardList,
     route: '/dashboard/orders',
-    roles: [...ALL_CORE_ROLES, ROLES.SALES_REP],
+    roles: [...ALL_CORE_ROLES, ROLES.SALES_REP, ROLES.FACTORY_EMPLOYEE, 'responsible'],
     badge: null,
     children: null,
     permission: 'orders.view',

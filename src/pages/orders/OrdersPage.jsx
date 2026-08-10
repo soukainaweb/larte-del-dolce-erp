@@ -86,9 +86,11 @@ const StatusBadge = ({ status }) => {
     pending_accountant: 'bg-amber-50 text-amber-700 border-amber-200',
     pending_manager: 'bg-orange-50 text-orange-700 border-orange-200',
     pending_responsible: 'bg-yellow-50 text-yellow-800 border-yellow-200',
+    pending_factory: 'bg-sky-50 text-sky-700 border-sky-200',
     validated: 'bg-blue-50 text-blue-700 border-blue-200',
     in_production: 'bg-purple-50 text-purple-700 border-purple-200',
-    ready: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    postponed: 'bg-orange-50 text-orange-700 border-orange-200',
+    ready_for_pickup: 'bg-indigo-50 text-indigo-700 border-indigo-200',
     in_delivery: 'bg-cyan-50 text-cyan-700 border-cyan-200',
     delivered: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     cancelled: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -114,7 +116,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const APPROVAL_PENDING_STATUSES = ['pending', 'pending_accountant', 'pending_manager', 'pending_responsible'];
+const APPROVAL_PENDING_STATUSES = ['pending', 'pending_manager', 'pending_accountant', 'pending_responsible'];
 
 const formatApprovalDate = (value) => {
   if (!value) return null;
@@ -869,6 +871,18 @@ const OrderDetailsModal = ({
   const [actionLoading, setActionLoading] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [availableReps, setAvailableReps] = useState([]);
+  const [selectedRepId, setSelectedRepId] = useState('');
+  const [postponeReason, setPostponeReason] = useState('');
+
+  const loadAvailableReps = useCallback(async () => {
+    try {
+      const reps = await orderService.getAvailableRepresentatives();
+      setAvailableReps(Array.isArray(reps) ? reps : []);
+    } catch {
+      setAvailableReps([]);
+    }
+  }, []);
 
   const loadOrder = useCallback(async () => {
     if (!initialOrder?.id) return;
@@ -888,12 +902,15 @@ const OrderDetailsModal = ({
   useEffect(() => {
     if (isOpen && initialOrder?.id) {
       loadOrder();
+      loadAvailableReps();
     } else if (!isOpen) {
       setOrder(null);
       setShowRejectModal(false);
       setShowApproveConfirm(false);
+      setSelectedRepId('');
+      setPostponeReason('');
     }
-  }, [isOpen, initialOrder?.id, loadOrder]);
+  }, [isOpen, initialOrder?.id, loadOrder, loadAvailableReps]);
 
   const handleApprove = async () => {
     if (!order?.id) return;
@@ -925,6 +942,46 @@ const OrderDetailsModal = ({
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const runFactoryAction = async (action, payload) => {
+    if (!order?.id) return;
+    setActionLoading(true);
+    try {
+      let response;
+      if (action === 'accept') response = await orderService.factoryAccept(order.id);
+      else if (action === 'postpone') response = await orderService.factoryPostpone(order.id, payload);
+      else if (action === 'ready') response = await orderService.factoryMarkReady(order.id);
+      else if (action === 'assign') response = await orderService.factoryAssignRepresentative(order.id, Number(payload));
+      setOrder(response.data);
+      onOrderUpdated?.(response.data);
+      showToast?.(t('orders.factory.actionSuccess', 'Action completed'), 'success');
+    } catch (error) {
+      showToast?.(getApiErrorMessage(error, t('orders.errors.load')), 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePhotoProof = async (type, file) => {
+    if (!order?.id || !file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      setActionLoading(true);
+      try {
+        const response = type === 'pickup'
+          ? await orderService.confirmPickup(order.id, reader.result)
+          : await orderService.confirmDelivery(order.id, reader.result);
+        setOrder(response.data);
+        onOrderUpdated?.(response.data);
+        showToast?.(t(`orders.proof.${type}Success`, 'Photo saved'), 'success');
+      } catch (error) {
+        showToast?.(getApiErrorMessage(error, t('orders.errors.load')), 'error');
+      } finally {
+        setActionLoading(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   if (!isOpen || !initialOrder) return null;
@@ -1076,6 +1133,69 @@ const OrderDetailsModal = ({
                         <UserX size={16} />
                         {t('orders.approval.reject')}
                       </button>
+                    )}
+                  </div>
+                )}
+
+                {(displayOrder.can_factory_accept || displayOrder.can_factory_postpone || displayOrder.can_factory_ready || displayOrder.can_factory_assign_rep) && (
+                  <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1] space-y-3">
+                    <h4 className="text-sm font-bold text-[#3D2F24]">{t('orders.factory.title', 'Factory actions')}</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {displayOrder.can_factory_accept && (
+                        <button type="button" disabled={actionLoading} onClick={() => runFactoryAction('accept')} className="px-3 py-2 text-xs font-medium bg-emerald-600 text-white rounded-lg">
+                          {t('orders.factory.accept', 'Accept')}
+                        </button>
+                      )}
+                      {displayOrder.can_factory_ready && (
+                        <button type="button" disabled={actionLoading} onClick={() => runFactoryAction('ready')} className="px-3 py-2 text-xs font-medium bg-indigo-600 text-white rounded-lg">
+                          {t('orders.factory.ready', 'Ready for pickup')}
+                        </button>
+                      )}
+                    </div>
+                    {displayOrder.can_factory_postpone && (
+                      <div className="flex gap-2">
+                        <input value={postponeReason} onChange={(e) => setPostponeReason(e.target.value)} placeholder={t('orders.factory.postponeReason', 'Postpone reason')} className="flex-1 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg" />
+                        <button type="button" disabled={actionLoading || postponeReason.trim().length < 3} onClick={() => runFactoryAction('postpone', postponeReason.trim())} className="px-3 py-2 text-xs font-medium bg-orange-500 text-white rounded-lg">
+                          {t('orders.factory.postpone', 'Postpone')}
+                        </button>
+                      </div>
+                    )}
+                    {displayOrder.can_factory_assign_rep && (
+                      <div className="flex gap-2">
+                        <select value={selectedRepId} onChange={(e) => setSelectedRepId(e.target.value)} className="flex-1 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg">
+                          <option value="">{t('orders.factory.selectRep', 'Select representative')}</option>
+                          {availableReps.map((rep) => (
+                            <option key={rep.id} value={rep.id}>{rep.full_name || `${rep.first_name} ${rep.last_name}`}</option>
+                          ))}
+                        </select>
+                        <button type="button" disabled={actionLoading || !selectedRepId} onClick={() => runFactoryAction('assign', selectedRepId)} className="px-3 py-2 text-xs font-medium bg-[#B8863B] text-white rounded-lg">
+                          {t('orders.factory.assign', 'Assign')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {(displayOrder.can_confirm_pickup || displayOrder.can_confirm_delivery) && (
+                  <div className="bg-[#F8F7F4] rounded-xl p-4 border border-[#ECE8E1] space-y-3">
+                    <h4 className="text-sm font-bold text-[#3D2F24]">{t('orders.proof.title', 'Delivery proof')}</h4>
+                    {displayOrder.can_confirm_pickup && (
+                      <label className="block text-sm">
+                        <span className="text-[#6D6D6D]">{t('orders.proof.pickup', 'Pickup photo')}</span>
+                        <input type="file" accept="image/*" capture="environment" className="mt-1 block w-full text-sm" onChange={(e) => handlePhotoProof('pickup', e.target.files?.[0])} />
+                      </label>
+                    )}
+                    {displayOrder.can_confirm_delivery && (
+                      <label className="block text-sm">
+                        <span className="text-[#6D6D6D]">{t('orders.proof.delivery', 'Delivery photo')}</span>
+                        <input type="file" accept="image/*" capture="environment" className="mt-1 block w-full text-sm" onChange={(e) => handlePhotoProof('delivery', e.target.files?.[0])} />
+                      </label>
+                    )}
+                    {displayOrder.pickup_photo && (
+                      <p className="text-xs text-emerald-700">{t('orders.proof.pickupDone', 'Pickup confirmed')}</p>
+                    )}
+                    {displayOrder.delivery_photo && (
+                      <p className="text-xs text-emerald-700">{t('orders.proof.deliveryDone', 'Delivery confirmed')}</p>
                     )}
                   </div>
                 )}

@@ -162,6 +162,11 @@ Route::middleware(['auth:sanctum', 'password.changed', 'throttle:api'])->group(f
             'updatePreferences'
         ]);
 
+        Route::put('/availability', [
+            ProfileController::class,
+            'updateAvailability'
+        ]);
+
 
 
         // Activity
@@ -590,6 +595,7 @@ Route::middleware(['auth:sanctum', 'password.changed', 'throttle:api'])->group(f
         Route::get('/export', [OrderController::class, 'export']);
         Route::get('/history', [OrderController::class, 'history']);
         Route::get('/form-options', [OrderController::class, 'formOptions'])->middleware('permission:orders.create');
+        Route::get('/available-representatives', [OrderController::class, 'availableRepresentatives']);
         Route::get('/', [OrderController::class, 'index']);
         Route::post('/', [OrderController::class, 'store'])->middleware('permission:orders.create');
         Route::get('/{order}', [OrderController::class, 'show']);
@@ -604,6 +610,12 @@ Route::middleware(['auth:sanctum', 'password.changed', 'throttle:api'])->group(f
         Route::post('/{order}/validate', [OrderController::class, 'validateOrder'])->middleware('permission:orders.view');
         Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->middleware('permission:orders.update');
         Route::post('/{order}/start-production', [OrderController::class, 'startProduction'])->middleware('permission:orders.update');
+        Route::post('/{order}/factory/accept', [OrderController::class, 'factoryAccept']);
+        Route::post('/{order}/factory/postpone', [OrderController::class, 'factoryPostpone']);
+        Route::post('/{order}/factory/ready', [OrderController::class, 'factoryMarkReady']);
+        Route::post('/{order}/factory/assign-representative', [OrderController::class, 'factoryAssignRepresentative']);
+        Route::post('/{order}/pickup', [OrderController::class, 'confirmPickup']);
+        Route::post('/{order}/delivery', [OrderController::class, 'confirmDelivery']);
         Route::get('/{order}/products', [OrderController::class, 'products']);
         Route::post('/{order}/products', [OrderController::class, 'addProduct'])->middleware('permission:orders.update');
         Route::patch('/{order}/products/{orderItem}', [OrderController::class, 'updateProduct'])->middleware('permission:orders.update');

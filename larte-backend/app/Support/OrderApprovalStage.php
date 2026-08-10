@@ -9,37 +9,37 @@ use InvalidArgumentException;
 final class OrderApprovalStage
 {
     public const ACTION_SUBMITTED = 'SUBMITTED';
-    public const ACTION_ACCOUNTANT_APPROVED = 'ACCOUNTANT_APPROVED';
-    public const ACTION_ACCOUNTANT_REJECTED = 'ACCOUNTANT_REJECTED';
     public const ACTION_MANAGER_APPROVED = 'MANAGER_APPROVED';
     public const ACTION_MANAGER_REJECTED = 'MANAGER_REJECTED';
+    public const ACTION_ACCOUNTANT_APPROVED = 'ACCOUNTANT_APPROVED';
+    public const ACTION_ACCOUNTANT_REJECTED = 'ACCOUNTANT_REJECTED';
     public const ACTION_RESPONSIBLE_APPROVED = 'RESPONSIBLE_APPROVED';
     public const ACTION_RESPONSIBLE_REJECTED = 'RESPONSIBLE_REJECTED';
 
     /** @var array<string, array{role: string, permission: string, approve_action: string, reject_action: string, next_status: string, label: string}> */
     private const STAGES = [
-        OrderWorkflow::PENDING_ACCOUNTANT => [
-            'role' => 'accountant',
-            'permission' => 'orders.approve.accountant',
-            'approve_action' => self::ACTION_ACCOUNTANT_APPROVED,
-            'reject_action' => self::ACTION_ACCOUNTANT_REJECTED,
-            'next_status' => OrderWorkflow::PENDING_MANAGER,
-            'label' => 'Accountant Approval',
-        ],
         OrderWorkflow::PENDING_MANAGER => [
             'role' => 'manager',
             'permission' => 'orders.approve.manager',
             'approve_action' => self::ACTION_MANAGER_APPROVED,
             'reject_action' => self::ACTION_MANAGER_REJECTED,
-            'next_status' => OrderWorkflow::PENDING_RESPONSIBLE,
+            'next_status' => OrderWorkflow::PENDING_ACCOUNTANT,
             'label' => 'Manager Approval',
+        ],
+        OrderWorkflow::PENDING_ACCOUNTANT => [
+            'role' => 'accountant',
+            'permission' => 'orders.approve.accountant',
+            'approve_action' => self::ACTION_ACCOUNTANT_APPROVED,
+            'reject_action' => self::ACTION_ACCOUNTANT_REJECTED,
+            'next_status' => OrderWorkflow::PENDING_RESPONSIBLE,
+            'label' => 'Accountant Approval',
         ],
         OrderWorkflow::PENDING_RESPONSIBLE => [
             'role' => 'responsible',
             'permission' => 'orders.approve.responsible',
             'approve_action' => self::ACTION_RESPONSIBLE_APPROVED,
             'reject_action' => self::ACTION_RESPONSIBLE_REJECTED,
-            'next_status' => OrderWorkflow::APPROVED,
+            'next_status' => OrderWorkflow::PENDING_FACTORY,
             'label' => 'Responsible Approval',
         ],
     ];
@@ -95,10 +95,10 @@ final class OrderApprovalStage
     public static function approvalChain(): array
     {
         return [
-            OrderWorkflow::PENDING_ACCOUNTANT,
             OrderWorkflow::PENDING_MANAGER,
+            OrderWorkflow::PENDING_ACCOUNTANT,
             OrderWorkflow::PENDING_RESPONSIBLE,
-            OrderWorkflow::APPROVED,
+            OrderWorkflow::PENDING_FACTORY,
         ];
     }
 

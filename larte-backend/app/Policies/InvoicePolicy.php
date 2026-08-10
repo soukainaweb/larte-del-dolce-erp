@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\Invoice;
 use App\Models\User;
 use App\Policies\Concerns\ChecksPermissions;
+use App\Support\SalesScope;
 
 class InvoicePolicy
 {
@@ -17,7 +18,11 @@ class InvoicePolicy
 
     public function view(User $user, Invoice $invoice): bool
     {
-        return $this->can('finance.view');
+        if (! $this->can('finance.view')) {
+            return false;
+        }
+
+        return SalesScope::ownsInvoice($invoice, $user);
     }
 
     public function create(User $user): bool

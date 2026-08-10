@@ -43,6 +43,7 @@ class User extends Authenticatable implements CanResetPasswordContract
         'office',
         'manager_id',
         'status',
+        'availability_status',
         'two_factor_enabled',
         'two_factor_method',
         'last_device',
