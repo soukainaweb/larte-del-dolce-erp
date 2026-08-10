@@ -45,7 +45,7 @@ import {
   uploadProductImage
 } from '../../services/productService';
 import { getCategories } from '../../services/categoryService';
-import { unwrapPaginated, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
+import { unwrapPaginated, ensureArray, getApiErrorMessage, extractFieldErrors } from '../../utils/apiHelpers';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -206,7 +206,7 @@ const ProductTableRow = ({ product, onEdit, onDelete, onView, index }) => {
 // ==========================================
 // PRODUCT MODAL
 // ==========================================
-const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
+const ProductModal = ({ isOpen, onClose, onSave, product, isLoading, serverErrors = {} }) => {
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
   const [categories, setCategories] = useState([]);
@@ -225,6 +225,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const mergedErrors = { ...serverErrors, ...errors };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -354,7 +355,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
                 errors.name ? 'border-rose-500' : 'border-[#ECE8E1]'
               }`}
             />
-            {errors.name && <p className="text-xs text-rose-500 mt-1">{errors.name}</p>}
+            {mergedErrors.name && <p className="text-xs text-rose-500 mt-1">{mergedErrors.name}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -387,7 +388,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
                   </option>
                 ))}
               </select>
-              {errors.category_id && <p className="text-xs text-rose-500 mt-1">{errors.category_id}</p>}
+              {mergedErrors.category_id && <p className="text-xs text-rose-500 mt-1">{mergedErrors.category_id}</p>}
             </div>
           </div>
 
@@ -403,7 +404,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
                   errors.price ? 'border-rose-500' : 'border-[#ECE8E1]'
                 }`}
               />
-              {errors.price && <p className="text-xs text-rose-500 mt-1">{errors.price}</p>}
+              {mergedErrors.price && <p className="text-xs text-rose-500 mt-1">{mergedErrors.price}</p>}
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('common.stock')} *</label>
@@ -416,7 +417,7 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading }) => {
                   errors.stock ? 'border-rose-500' : 'border-[#ECE8E1]'
                 }`}
               />
-              {errors.stock && <p className="text-xs text-rose-500 mt-1">{errors.stock}</p>}
+              {mergedErrors.stock && <p className="text-xs text-rose-500 mt-1">{mergedErrors.stock}</p>}
             </div>
           </div>
 
@@ -657,6 +658,7 @@ const ProductsPage = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [productFormErrors, setProductFormErrors] = useState({});
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -799,16 +801,26 @@ const ProductsPage = () => {
   // Handlers
   const handleCreateProduct = async (formData) => {
     setIsSaving(true);
+    setProductFormErrors({});
     try {
-      const response = await createProduct(formData);
-      const newProduct = response.data.data;
-      setProducts(prev => [newProduct, ...ensureArray(prev)]);
+      await createProduct(formData);
       setIsCreateModalOpen(false);
+      await fetchProducts();
       await fetchStatistics();
       showToast(t('common.savedSuccessfully', 'تم الحفظ بنجاح'), 'success');
     } catch (error) {
       console.error('Error creating product:', error);
-      showToast(getApiErrorMessage(error, t('products.errors.save')), 'error');
+      const fieldErrors = extractFieldErrors(error, {
+        stock_quantity: 'stock',
+        cost_price: 'cost_price',
+      });
+      if (fieldErrors) {
+        setProductFormErrors(fieldErrors);
+      }
+      const status = error.response?.status;
+      if (!status || status < 500) {
+        showToast(getApiErrorMessage(error, t('products.errors.save')), 'error');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -816,19 +828,27 @@ const ProductsPage = () => {
 
   const handleEditProduct = async (formData) => {
     setIsSaving(true);
+    setProductFormErrors({});
     try {
-      const response = await updateProduct(selectedProduct.id, formData);
-      const updatedProduct = response.data.data;
-      setProducts(prev => ensureArray(prev).map(p =>
-        p.id === selectedProduct.id ? updatedProduct : p
-      ));
+      await updateProduct(selectedProduct.id, formData);
       setIsEditModalOpen(false);
       setSelectedProduct(null);
+      await fetchProducts();
       await fetchStatistics();
       showToast(t('common.savedSuccessfully', 'تم الحفظ بنجاح'), 'success');
     } catch (error) {
       console.error('Error updating product:', error);
-      showToast(getApiErrorMessage(error, t('products.errors.save')), 'error');
+      const fieldErrors = extractFieldErrors(error, {
+        stock_quantity: 'stock',
+        cost_price: 'cost_price',
+      });
+      if (fieldErrors) {
+        setProductFormErrors(fieldErrors);
+      }
+      const status = error.response?.status;
+      if (!status || status < 500) {
+        showToast(getApiErrorMessage(error, t('products.errors.save')), 'error');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -1135,9 +1155,13 @@ const ProductsPage = () => {
           <ProductModal
             key="create-modal"
             isOpen={isCreateModalOpen}
-            onClose={() => setIsCreateModalOpen(false)}
+            onClose={() => {
+              setIsCreateModalOpen(false);
+              setProductFormErrors({});
+            }}
             onSave={handleCreateProduct}
             isLoading={isSaving}
+            serverErrors={productFormErrors}
           />
         )}
 
@@ -1148,10 +1172,12 @@ const ProductsPage = () => {
             onClose={() => {
               setIsEditModalOpen(false);
               setSelectedProduct(null);
+              setProductFormErrors({});
             }}
             onSave={handleEditProduct}
             product={selectedProduct}
             isLoading={isSaving}
+            serverErrors={productFormErrors}
           />
         )}
 

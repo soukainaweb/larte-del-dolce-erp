@@ -15,14 +15,22 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:200',
-            'sku' => 'required|string|unique:products|max:50',
+            'sku' => 'nullable|string|max:50|unique:products,sku',
             'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'cost_price' => 'required|numeric|min:0',
+            'cost_price' => 'nullable|numeric|min:0',
             'stock_quantity' => 'required|integer|min:0',
             'image' => 'nullable|string',
             'status' => 'nullable|in:active,inactive,out_of_stock,low_stock',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $sku = $this->input('sku');
+        if ($sku === '' || $sku === null) {
+            $this->merge(['sku' => null]);
+        }
     }
 }
