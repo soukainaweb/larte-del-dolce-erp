@@ -15,7 +15,6 @@ export const buildProductPayload = (data = {}) => {
 
   const payload = {
     name: data.name,
-    sku: data.sku,
     category_id:
       categoryId !== '' && categoryId != null && !Number.isNaN(Number(categoryId))
         ? Number(categoryId)
@@ -26,6 +25,11 @@ export const buildProductPayload = (data = {}) => {
     stock_quantity: stockQty,
     status: data.status ?? 'active',
   };
+
+  const sku = (data.sku ?? '').trim();
+  if (sku) {
+    payload.sku = sku;
+  }
 
   if (data.image instanceof File) {
     payload.image = data.image;

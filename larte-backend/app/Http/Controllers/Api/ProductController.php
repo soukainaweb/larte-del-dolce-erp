@@ -10,6 +10,7 @@ use App\Http\Requests\Products\UpdateProductStockRequest;
 use App\Models\Product;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 class ProductController extends Controller
 {
@@ -31,7 +32,11 @@ class ProductController extends Controller
     {
         $this->authorize('create', Product::class);
 
-        $product = $this->productService->create($request->validated());
+        try {
+            $product = $this->productService->create($request->validated());
+        } catch (InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), 422);
+        }
 
         return response()->json([
             'success' => true,
@@ -44,9 +49,11 @@ class ProductController extends Controller
     {
         $this->authorize('view', $product);
 
+        $product->load('category');
+
         return response()->json([
             'success' => true,
-            'data' => $product->load('category'),
+            'data' => $this->productService->withPublicImageUrl($product),
         ]);
     }
 
