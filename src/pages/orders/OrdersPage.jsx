@@ -913,32 +913,34 @@ const OrderDetailsModal = ({
   }, [isOpen, initialOrder?.id, loadOrder, loadAvailableReps]);
 
   const handleApprove = async () => {
-    if (!order?.id) return;
+    const orderId = order?.id ?? initialOrder?.id;
+    if (!orderId) return;
     setActionLoading(true);
     try {
-      const response = await orderService.approveOrder(order.id);
+      const response = await orderService.approveOrder(orderId);
       setOrder(response.data);
       onOrderUpdated?.(response.data);
       setShowApproveConfirm(false);
       showToast?.(t('orders.approval.approvedSuccess'), 'success');
     } catch (error) {
-      showToast?.(getApiErrorMessage(error, t('orders.errors.load')), 'error');
+      showToast?.(getApiErrorMessage(error, t('orders.approval.approveFailed', 'تعذر اعتماد الطلب')), 'error');
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleReject = async (reason) => {
-    if (!order?.id) return;
+    const orderId = order?.id ?? initialOrder?.id;
+    if (!orderId) return;
     setActionLoading(true);
     try {
-      const response = await orderService.rejectOrder(order.id, reason);
+      const response = await orderService.rejectOrder(orderId, reason);
       setOrder(response.data);
       onOrderUpdated?.(response.data);
       setShowRejectModal(false);
       showToast?.(t('orders.approval.rejectedSuccess'), 'success');
     } catch (error) {
-      showToast?.(getApiErrorMessage(error, t('orders.errors.load')), 'error');
+      showToast?.(getApiErrorMessage(error, t('orders.approval.rejectFailed', 'تعذر رفض الطلب')), 'error');
     } finally {
       setActionLoading(false);
     }

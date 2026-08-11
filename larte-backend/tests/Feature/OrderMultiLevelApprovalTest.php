@@ -102,13 +102,57 @@ class OrderMultiLevelApprovalTest extends TestCase
         Sanctum::actingAs($this->accountant);
         $this->postJson("/api/orders/{$orderId}/approve")
             ->assertOk()
-            ->assertJsonPath('data.status', 'pending_responsible');
+            ->assertJsonPath('data.status', 'pending_responsible')
+            ->assertJsonPath('data.can_approve', false)
+            ->assertJsonStructure([
+                'data' => [
+                    'approval_history',
+                    'approval_progress',
+                    'can_approve',
+                    'can_reject',
+                ],
+            ]);
 
         $this->assertDatabaseHas('order_approvals', [
             'order_id' => $orderId,
             'action' => OrderApprovalStage::ACTION_ACCOUNTANT_APPROVED,
         ]);
     }
+
+    public function test_accountant_approve_response_includes_updated_workflow_metadata(): void
+    {
+        $orderId = $this->createOrderViaApi();
+        Sanctum::actingAs($this->manager);
+        $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
+
+        Sanctum::actingAs($this->accountant);
+        $response = $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
+
+        $response->assertJsonPath('data.status', 'pending_responsible');
+        $this->assertFalse($response->json('data.can_approve'));
+
+        $history = collect($response->json('data.approval_history'));
+        $this->assertTrue(
+            $history->contains(fn (array $entry) => ($entry['action'] ?? null) === OrderApprovalStage::ACTION_ACCOUNTANT_APPROVED)
+        );
+
+        $progress = collect($response->json('data.approval_progress'));
+        $accountantStep = $progress->firstWhere('key', 'accountant');
+        $this->assertSame('completed', $accountantStep['state'] ?? null);
+    }
+
+    public function test_manager_approve_response_includes_can_approve_for_next_actor(): void
+    {
+        $orderId = $this->createOrderViaApi();
+
+        Sanctum::actingAs($this->manager);
+        $response = $this->postJson("/api/orders/{$orderId}/approve")->assertOk();
+
+        $response->assertJsonPath('data.status', 'pending_accountant')
+            ->assertJsonPath('data.can_approve', false)
+            ->assertJsonStructure(['data' => ['approval_progress', 'approval_history']]);
+    }
+
 
     public function test_responsible_approve_moves_to_pending_factory(): void
     {

@@ -693,6 +693,21 @@ const ProductsPage = () => {
   const [totalCount, setTotalCount] = useState(0);
 
   // Load products
+  const normalizeProductRecord = (product) => {
+    if (!product) return product;
+    const categoryName = typeof product.category === 'string'
+      ? product.category
+      : (product.category?.name ?? '—');
+
+    return {
+      ...product,
+      stock: product.stock ?? product.stock_quantity ?? 0,
+      category: categoryName,
+      createdAt: product.createdAt ?? product.created_at,
+      price: Number(product.price ?? 0),
+    };
+  };
+
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
@@ -705,12 +720,10 @@ const ProductsPage = () => {
         sort_order: 'desc'
       };
       const response = await getProducts(params);
-      const resData = response?.data;
-      const data = Array.isArray(resData?.data)
-        ? resData.data
-        : (Array.isArray(resData) ? resData : []);
-      setProducts(data);
-      setTotalCount(resData?.meta?.total ?? data.length);
+      const { items, meta } = unwrapPaginated(response);
+      const list = ensureArray(items).map(normalizeProductRecord);
+      setProducts(list);
+      setTotalCount(meta?.total ?? list.length);
     } catch (error) {
       console.error('Error fetching products:', error);
       setProducts([]);
