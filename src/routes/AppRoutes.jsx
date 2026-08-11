@@ -44,6 +44,8 @@ import ActivityLogPage from '../pages/activitylog/ActivityLogPage';
 
 // ⭐ NOUVEAU : Importer la page Paramètres
 import SettingsPage from '../pages/settings/SettingsPage';
+import HelpCenterPage from '../pages/help/HelpCenterPage';
+import DocumentationPage from '../pages/documentation/DocumentationPage';
 
 // Composant de fallback
 import EntityDetailRedirect from '../components/EntityDetailRedirect';
@@ -150,6 +152,8 @@ const AppRoutes = () => {
         {/* Pages principales */}
         <Route index element={<PermissionRoute permission="dashboard.view"><DashboardHome /></PermissionRoute>} />
         <Route path="profile" element={<MyProfile />} />
+        <Route path="help" element={<HelpCenterPage />} />
+        <Route path="documentation" element={<DocumentationPage />} />
         <Route path="users" element={<PermissionRoute permission="users.view"><UsersPage /></PermissionRoute>} />
         <Route path="customers" element={<PermissionRoute permission="customers.view"><CustomersPage /></PermissionRoute>} />
         <Route path="products" element={<PermissionRoute permission="products.view"><ProductsPage /></PermissionRoute>} />

@@ -175,7 +175,76 @@
     "meetings": "Meetings",
     "samples": "Samples",
     "waste-returns": "Waste & Returns",
-    "purchases": "Purchases"
+    "purchases": "Purchases",
+    "help": "Help Center",
+    "documentation": "Documentation"
+  },
+  "helpCenter": {
+    "subtitle": "Quick answers and in-app support resources for L'arte ERP.",
+    "backToDashboard": "Back to dashboard",
+    "documentationCard": {
+      "title": "Documentation",
+      "description": "Browse module guides and workflow instructions inside the application.",
+      "action": "Open documentation"
+    },
+    "contactCard": {
+      "title": "Contact support",
+      "description": "For technical help or to report an issue, contact the support team."
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "items": [
+        {
+          "question": "How do I create a new order?",
+          "answer": "Open Orders, click Add Order, select the customer, representative, and products, then save."
+        },
+        {
+          "question": "Why can't I see some menu items?",
+          "answer": "Menu visibility depends on your role permissions. Contact an administrator if you need additional access."
+        },
+        {
+          "question": "Where is the detailed documentation?",
+          "answer": "Click Documentation in the sidebar or use the link on this page to open the module guide."
+        }
+      ]
+    }
+  },
+  "documentation": {
+    "subtitle": "A concise guide to the ERP modules.",
+    "openModule": "Open module",
+    "backToHelp": "Back to help center",
+    "sections": [
+      {
+        "title": "Dashboard",
+        "description": "Overview of KPIs, recent orders, and notifications.",
+        "route": "/dashboard",
+        "linkLabel": "Open dashboard"
+      },
+      {
+        "title": "Orders",
+        "description": "Create orders, track approval workflow, and perform role-specific actions.",
+        "route": "/dashboard/orders",
+        "linkLabel": "Open orders"
+      },
+      {
+        "title": "Customers & products",
+        "description": "Manage customer and product data used in orders and invoices.",
+        "route": "/dashboard/customers",
+        "linkLabel": "Open customers"
+      },
+      {
+        "title": "Notifications",
+        "description": "Review alerts related to orders, approvals, and activity.",
+        "route": "/dashboard/notifications",
+        "linkLabel": "Open notifications"
+      },
+      {
+        "title": "Profile",
+        "description": "Update your personal details, password, and account preferences.",
+        "route": "/dashboard/profile",
+        "linkLabel": "Open profile"
+      }
+    ]
   },
   "meetings": {
     "title": "Meetings",

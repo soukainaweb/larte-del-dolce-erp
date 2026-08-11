@@ -150,11 +150,11 @@ const DashboardLayout = () => {
   }, [navigate, showToast, t]);
 
   const handleHelp = useCallback(() => {
-    navigate('/dashboard/settings');
+    navigate('/dashboard/help');
   }, [navigate]);
 
   const handleDocumentation = useCallback(() => {
-    navigate('/dashboard/settings');
+    navigate('/dashboard/documentation');
   }, [navigate]);
 
   useEffect(() => {

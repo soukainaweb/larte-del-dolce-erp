@@ -138,10 +138,10 @@ const Header = React.memo(({
         icon: Activity,
         action: () => { closeDropdowns(); navigate('/dashboard/activity-logs'); },
       },
-      can('settings.view') && {
+      {
         label: t('header.helpCenter'),
         icon: HelpCircle,
-        action: () => { closeDropdowns(); navigate('/dashboard/settings'); },
+        action: () => { closeDropdowns(); navigate('/dashboard/help'); },
       },
     ].filter(Boolean);
   }, [permissions, user?.role, t, navigate, closeDropdowns]);
