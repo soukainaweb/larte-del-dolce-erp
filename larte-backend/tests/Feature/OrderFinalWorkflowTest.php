@@ -504,6 +504,50 @@ class OrderFinalWorkflowTest extends TestCase
         $this->assertNotContains($this->factory->id, $ids);
     }
 
+    public function test_sales_rep_form_options_returns_only_sales_role_users(): void
+    {
+        Sanctum::actingAs($this->sales);
+        $response = $this->getJson('/api/orders/form-options')->assertOk();
+        $reps = collect($response->json('data.sales_reps'));
+
+        $this->assertGreaterThanOrEqual(2, $reps->count());
+        $this->assertContains($this->sales->id, $reps->pluck('id')->all());
+        $this->assertContains($this->salesB->id, $reps->pluck('id')->all());
+        $this->assertNotContains($this->manager->id, $reps->pluck('id')->all());
+        $this->assertNotContains($this->accountant->id, $reps->pluck('id')->all());
+        $reps->each(fn ($rep) => $this->assertSame('sales', $rep['role']));
+    }
+
+    public function test_sales_rep_can_assign_order_to_another_sales_rep(): void
+    {
+        Sanctum::actingAs($this->sales);
+        $response = $this->postJson('/api/orders', [
+            'customer_id' => $this->customer->id,
+            'sales_rep_id' => $this->salesB->id,
+            'items' => [
+                ['product_id' => $this->product->id, 'quantity' => 1, 'price' => 100, 'discount' => 0],
+            ],
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.user_id', $this->salesB->id);
+    }
+
+    public function test_sales_rep_cannot_assign_order_to_non_sales_user(): void
+    {
+        Sanctum::actingAs($this->sales);
+        $response = $this->postJson('/api/orders', [
+            'customer_id' => $this->customer->id,
+            'sales_rep_id' => $this->manager->id,
+            'items' => [
+                ['product_id' => $this->product->id, 'quantity' => 1, 'price' => 100, 'discount' => 0],
+            ],
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.user_id', $this->sales->id);
+    }
+
     public function test_factory_cannot_access_unauthorized_modules(): void
     {
         Sanctum::actingAs($this->factory);

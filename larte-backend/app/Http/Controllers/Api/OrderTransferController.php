@@ -22,6 +22,25 @@ class OrderTransferController extends Controller
         return $this->success($this->transferService->list($request->all()));
     }
 
+    public function salesRepresentatives()
+    {
+        $this->authorize('viewAny', OrderTransfer::class);
+
+        $reps = $this->transferService->salesRepresentatives()
+            ->map(fn ($user) => [
+                'id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'full_name' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
+                'role' => $user->role?->name,
+            ])
+            ->values()
+            ->all();
+
+        return $this->success($reps);
+    }
+
     public function transfer(TransferOrderRequest $request, Order $order)
     {
         if (\App\Support\SalesScope::isSalesRep()) {

@@ -79,10 +79,6 @@ class OrderService
             ->orderBy('first_name')
             ->orderBy('last_name');
 
-        if (SalesScope::isSalesRep($actor)) {
-            $salesRepsQuery->where('id', $actor->id);
-        }
-
         return [
             'customers' => $customersQuery
                 ->limit(200)
@@ -110,13 +106,14 @@ class OrderService
                 ->all(),
             'sales_reps' => $salesRepsQuery
                 ->limit(100)
-                ->get(['id', 'first_name', 'last_name', 'email'])
+                ->get(['id', 'first_name', 'last_name', 'email', 'role_id'])
                 ->map(fn (User $u) => [
                     'id' => $u->id,
                     'first_name' => $u->first_name,
                     'last_name' => $u->last_name,
                     'email' => $u->email,
                     'full_name' => trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')),
+                    'role' => $u->role?->name,
                 ])
                 ->values()
                 ->all(),
@@ -173,14 +170,11 @@ class OrderService
 
     protected function resolveSalesRepId(?int $salesRepId, User $actor): int
     {
-        if (SalesScope::isSalesRep($actor)) {
-            return (int) $actor->id;
-        }
-
         if ($salesRepId) {
             $rep = User::query()
                 ->where('id', $salesRepId)
                 ->whereHas('role', fn ($q) => $q->where('name', 'sales'))
+                ->whereNotIn('status', UserStatus::blockedForLogin())
                 ->first();
 
             if ($rep) {
