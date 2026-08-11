@@ -5,6 +5,63 @@ import api from "./api";
 // Product API Service
 // ==========================================
 
+const MAX_IMAGE_DIMENSION = 1600;
+const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024;
+
+const compressImageFile = (file) =>
+  new Promise((resolve, reject) => {
+    if (!(file instanceof File) || !file.type.startsWith("image/")) {
+      resolve(file);
+      return;
+    }
+
+    if (file.size <= MAX_IMAGE_BYTES) {
+      resolve(file);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(image.width, image.height));
+      const width = Math.max(1, Math.round(image.width * scale));
+      const height = Math.max(1, Math.round(image.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Image processing is unavailable in this browser."));
+        return;
+      }
+      ctx.drawImage(image, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Image compression failed."));
+            return;
+          }
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        0.85
+      );
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Invalid image file."));
+    };
+
+    image.src = objectUrl;
+  });
+
+const isValidInlineImage = (value) =>
+  typeof value === "string"
+  && (value.startsWith("data:image/") || value.startsWith("http://") || value.startsWith("https://"));
+
 /**
  * Map frontend product form data to Laravel-validated payload.
  */
@@ -33,7 +90,7 @@ export const buildProductPayload = (data = {}) => {
 
   if (data.image instanceof File) {
     payload.image = data.image;
-  } else if (typeof data.image === 'string' && data.image) {
+  } else if (isValidInlineImage(data.image)) {
     payload.image = data.image;
   }
 
@@ -52,7 +109,8 @@ const normalizeProductPayload = async (data = {}) => {
   const payload = buildProductPayload(data);
 
   if (payload.image instanceof File) {
-    payload.image = await readFileAsDataUrl(payload.image);
+    const optimized = await compressImageFile(payload.image);
+    payload.image = await readFileAsDataUrl(optimized);
   }
 
   return payload;

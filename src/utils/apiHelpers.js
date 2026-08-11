@@ -611,6 +611,12 @@ export const getApiErrorMessage = (error, fallback) => {
     return extractValidationMessage(data) || translateApiErrorMessage(data?.message) || i18n.t('errors.invalidData');
   }
 
+  if (status === 413) {
+    return translateApiErrorMessage(data?.message) || i18n.t('errors.payloadTooLarge', {
+      defaultValue: 'حجم الطلب كبير جداً. يرجى تقليل حجم الصورة والمحاولة مرة أخرى.',
+    });
+  }
+
   if (status >= 500) {
     return translateApiErrorMessage(data?.message) || i18n.t('errors.serverConnectionError');
   }

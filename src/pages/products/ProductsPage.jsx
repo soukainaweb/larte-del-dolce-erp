@@ -227,6 +227,16 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading, serverError
   const [errors, setErrors] = useState({});
   const mergedErrors = { ...serverErrors, ...errors };
 
+  const emptyFormState = () => ({
+    name: '',
+    sku: '',
+    category_id: '',
+    price: '',
+    stock: '',
+    status: 'active',
+    description: '',
+  });
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -248,6 +258,8 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading, serverError
   }, [isOpen]);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     if (product) {
       setFormData({
         name: product.name || '',
@@ -258,22 +270,27 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading, serverError
         status: product.status || 'active',
         description: product.description || '',
       });
-      setImagePreview(product.image || null);
-      setImageFile(null);
-      setSelectedFileName('');
-    } else {
-      setFormData({
-        name: '',
-        sku: '',
-        category_id: '',
-        price: '',
-        stock: '',
-        status: 'active',
-        description: '',
+      setImagePreview((prev) => {
+        if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+        return product.image || null;
       });
-      setImagePreview(null);
       setImageFile(null);
       setSelectedFileName('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } else {
+      setFormData(emptyFormState());
+      setErrors({});
+      setImagePreview((prev) => {
+        if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+        return null;
+      });
+      setImageFile(null);
+      setSelectedFileName('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   }, [product, isOpen]);
 
@@ -289,6 +306,10 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading, serverError
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
     setImageFile(file);
     setSelectedFileName(file.name);
     setImagePreview(URL.createObjectURL(file));
@@ -302,10 +323,16 @@ const ProductModal = ({ isOpen, onClose, onSave, product, isLoading, serverError
     const newErrors = {};
     if (!formData.name) newErrors.name = t('products.validation.nameRequired');
     if (!formData.category_id) newErrors.category_id = t('products.validation.categoryRequired');
-    if (!formData.price) newErrors.price = t('products.validation.priceRequired');
-    else if (isNaN(formData.price)) newErrors.price = t('common.mustBeNumber');
-    if (!formData.stock) newErrors.stock = t('products.validation.stockRequired');
-    else if (isNaN(formData.stock)) newErrors.stock = t('common.mustBeNumber');
+    if (formData.price === '' || formData.price === null || formData.price === undefined) {
+      newErrors.price = t('products.validation.priceRequired');
+    } else if (isNaN(formData.price)) {
+      newErrors.price = t('common.mustBeNumber');
+    }
+    if (formData.stock === '' || formData.stock === null || formData.stock === undefined) {
+      newErrors.stock = t('products.validation.stockRequired');
+    } else if (isNaN(formData.stock)) {
+      newErrors.stock = t('common.mustBeNumber');
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -805,6 +832,7 @@ const ProductsPage = () => {
     try {
       await createProduct(formData);
       setIsCreateModalOpen(false);
+      setProductFormErrors({});
       await fetchProducts();
       await fetchStatistics();
       showToast(t('common.savedSuccessfully', 'تم الحفظ بنجاح'), 'success');
@@ -817,10 +845,7 @@ const ProductsPage = () => {
       if (fieldErrors) {
         setProductFormErrors(fieldErrors);
       }
-      const status = error.response?.status;
-      if (!status || status < 500) {
-        showToast(getApiErrorMessage(error, t('products.errors.save')), 'error');
-      }
+      showToast(getApiErrorMessage(error, t('products.errors.save')), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -845,10 +870,7 @@ const ProductsPage = () => {
       if (fieldErrors) {
         setProductFormErrors(fieldErrors);
       }
-      const status = error.response?.status;
-      if (!status || status < 500) {
-        showToast(getApiErrorMessage(error, t('products.errors.save')), 'error');
-      }
+      showToast(getApiErrorMessage(error, t('products.errors.save')), 'error');
     } finally {
       setIsSaving(false);
     }

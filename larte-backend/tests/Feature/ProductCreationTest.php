@@ -86,4 +86,96 @@ class ProductCreationTest extends TestCase
             'stock_quantity' => -5,
         ])->assertStatus(422)->assertJsonPath('success', false);
     }
+
+    public function test_admin_can_create_multiple_products_consecutively(): void
+    {
+        $admin = User::where('email', 'madina7ali7@gmail.com')->firstOrFail();
+        $category = Category::firstOrFail();
+        Sanctum::actingAs($admin);
+
+        for ($i = 1; $i <= 3; $i++) {
+            $response = $this->postJson('/api/products', [
+                'name' => "Consecutive Product {$i}",
+                'category_id' => $category->id,
+                'price' => 100 + $i,
+                'stock_quantity' => 10 + $i,
+                'status' => 'active',
+            ]);
+
+            $response->assertCreated()
+                ->assertJsonPath('success', true)
+                ->assertJsonPath('data.name', "Consecutive Product {$i}");
+        }
+
+        $this->assertSame(3, Product::where('name', 'like', 'Consecutive Product %')->count());
+    }
+
+    public function test_duplicate_sku_returns_validation_error(): void
+    {
+        $admin = User::where('email', 'madina7ali7@gmail.com')->firstOrFail();
+        $category = Category::firstOrFail();
+        Sanctum::actingAs($admin);
+
+        $this->postJson('/api/products', [
+            'name' => 'Product One',
+            'sku' => 'DUPE-SKU-001',
+            'category_id' => $category->id,
+            'price' => 50,
+            'stock_quantity' => 5,
+        ])->assertCreated();
+
+        $this->postJson('/api/products', [
+            'name' => 'Product Two',
+            'sku' => 'DUPE-SKU-001',
+            'category_id' => $category->id,
+            'price' => 60,
+            'stock_quantity' => 6,
+        ])->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonValidationErrors(['sku']);
+    }
+
+    public function test_invalid_image_data_returns_422_not_server_error(): void
+    {
+        $admin = User::where('email', 'madina7ali7@gmail.com')->firstOrFail();
+        $category = Category::firstOrFail();
+        Sanctum::actingAs($admin);
+
+        $this->postJson('/api/products', [
+            'name' => 'Bad Image Product',
+            'category_id' => $category->id,
+            'price' => 50,
+            'stock_quantity' => 5,
+            'image' => 'not-a-valid-image',
+        ])->assertStatus(422)->assertJsonPath('success', false);
+
+        $this->postJson('/api/products', [
+            'name' => 'Blob Image Product',
+            'category_id' => $category->id,
+            'price' => 50,
+            'stock_quantity' => 5,
+            'image' => 'blob:http://localhost/fake',
+        ])->assertStatus(422)->assertJsonPath('success', false);
+    }
+
+    public function test_two_products_with_images_can_be_created_consecutively(): void
+    {
+        $admin = User::where('email', 'madina7ali7@gmail.com')->firstOrFail();
+        $category = Category::firstOrFail();
+        Sanctum::actingAs($admin);
+
+        $base64 = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDAREAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQBAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AKpAP//Z';
+
+        foreach (['Image Product A', 'Image Product B'] as $name) {
+            $this->postJson('/api/products', [
+                'name' => $name,
+                'category_id' => $category->id,
+                'price' => 99,
+                'stock_quantity' => 5,
+                'image' => $base64,
+            ])->assertCreated()->assertJsonPath('success', true);
+        }
+
+        $this->assertSame(2, Product::whereIn('name', ['Image Product A', 'Image Product B'])->count());
+    }
 }

@@ -37,6 +37,18 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        $exceptions->render(function (\Illuminate\Http\Exceptions\PostTooLargeException $e, $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                report($e);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'حجم الطلب كبير جداً. يرجى تقليل حجم الصورة والمحاولة مرة أخرى.',
+                    'errors' => new \stdClass(),
+                ], 413);
+            }
+        });
+
         $exceptions->render(function (\Illuminate\Database\QueryException $e, $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 report($e);

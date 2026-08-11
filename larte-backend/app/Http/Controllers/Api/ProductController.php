@@ -10,7 +10,9 @@ use App\Http\Requests\Products\UpdateProductStockRequest;
 use App\Models\Product;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use Throwable;
 
 class ProductController extends Controller
 {
@@ -35,7 +37,20 @@ class ProductController extends Controller
         try {
             $product = $this->productService->create($request->validated());
         } catch (InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), 422);
+            Log::warning('Product creation rejected', [
+                'user_id' => auth()->id(),
+                'reason' => $e->getMessage(),
+            ]);
+
+            return $this->error($e->getMessage(), [], 422);
+        } catch (Throwable $e) {
+            Log::error('Product creation failed', [
+                'user_id' => auth()->id(),
+                'exception' => $e->getMessage(),
+                'exception_class' => $e::class,
+            ]);
+
+            throw $e;
         }
 
         return response()->json([
