@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Services\ActivityLogger;
 use App\Support\NumberGenerator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -40,9 +41,20 @@ class ProductService
 
     public function create(array $data): Product
     {
-        $data = $this->preparePersistedData($data);
+        try {
+            $data = $this->preparePersistedData($data);
+            $product = Product::create($data)->load('category');
+        } catch (\Throwable $e) {
+            Log::error('ProductService::create failed', [
+                'user_id' => auth()->id(),
+                'name' => $data['name'] ?? null,
+                'sku' => $data['sku'] ?? null,
+                'exception' => $e->getMessage(),
+                'exception_class' => $e::class,
+            ]);
 
-        $product = Product::create($data)->load('category');
+            throw $e;
+        }
 
         ActivityLogger::logModelEvent($product, 'created', sprintf('Produit %s créé', $product->name));
         app(EntityCreatedNotificationService::class)->notify('product', $product);
@@ -163,7 +175,7 @@ class ProductService
     protected function preparePersistedData(array $data): array
     {
         if (empty($data['slug'])) {
-            $data['slug'] = Str::slug($data['name']) . '-' . Str::random(4);
+            $data['slug'] = $this->generateUniqueSlug((string) ($data['name'] ?? 'product'));
         }
 
         if (empty($data['sku'])) {
@@ -181,10 +193,28 @@ class ProductService
         return $data;
     }
 
+    protected function generateUniqueSlug(string $name): string
+    {
+        $base = Str::slug($name);
+        if ($base === '') {
+            $base = 'product';
+        }
+
+        do {
+            $slug = $base . '-' . Str::lower(Str::random(6));
+        } while (Product::withTrashed()->where('slug', $slug)->exists());
+
+        return $slug;
+    }
+
     protected function persistImage(mixed $image, ?string $existingPath = null): ?string
     {
         if ($image === null || $image === '') {
             return null;
+        }
+
+        if (is_string($image) && str_starts_with($image, 'blob:')) {
+            throw new InvalidArgumentException('Invalid image data.');
         }
 
         if (is_string($image) && str_starts_with($image, 'data:image/')) {
@@ -213,7 +243,11 @@ class ProductService
             return $existingPath;
         }
 
-        return is_string($image) ? $image : null;
+        if (is_string($image) && str_starts_with($image, 'products/')) {
+            return $image;
+        }
+
+        throw new InvalidArgumentException('Invalid image data.');
     }
 
     public function withPublicImageUrl(Product $product): Product
