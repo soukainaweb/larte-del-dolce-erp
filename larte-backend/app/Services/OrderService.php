@@ -300,17 +300,26 @@ class OrderService
 
     public function approve(Order $order, ?User $user = null): array
     {
-        return $this->approvalService->approve($order, $user);
+        $user ??= auth()->user();
+        $this->approvalService->approve($order, $user);
+
+        return $this->show($order->fresh(), $user);
     }
 
     public function reject(Order $order, string $reason, ?User $user = null): array
     {
-        return $this->approvalService->reject($order, $reason, $user);
+        $user ??= auth()->user();
+        $this->approvalService->reject($order, $reason, $user);
+
+        return $this->show($order->fresh(), $user);
     }
 
     public function validate(Order $order, ?User $user = null): array
     {
-        return $this->approvalService->approve($order, $user);
+        $user ??= auth()->user();
+        $this->approvalService->approve($order, $user);
+
+        return $this->show($order->fresh(), $user);
     }
 
     public function cancel(Order $order, ?string $reason = null, ?User $user = null): array
