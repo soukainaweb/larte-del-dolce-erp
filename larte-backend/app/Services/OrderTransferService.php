@@ -4,7 +4,10 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\OrderTransfer;
+use App\Models\User;
+use App\Support\UserStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class OrderTransferService
@@ -32,9 +35,27 @@ class OrderTransferService
         return $query->orderByDesc('created_at')->paginate($filters['per_page'] ?? 10);
     }
 
+    /**
+     * @return Collection<int, User>
+     */
+    public function salesRepresentatives(): Collection
+    {
+        return User::query()
+            ->with('role:id,name')
+            ->whereHas('role', fn ($q) => $q->where('name', 'sales'))
+            ->whereNotIn('status', UserStatus::blockedForLogin())
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get(['id', 'first_name', 'last_name', 'email', 'role_id']);
+    }
+
     public function transfer(Order $order, int $toSalespersonId, ?string $notes = null): OrderTransfer
     {
         return DB::transaction(function () use ($order, $toSalespersonId, $notes) {
+            if (! $this->isSalesRepresentative($toSalespersonId)) {
+                throw new \RuntimeException('The selected user must be a sales representative.');
+            }
+
             if ($order->user_id === $toSalespersonId) {
                 throw new \RuntimeException('Order is already assigned to this salesperson.');
             }
@@ -56,5 +77,14 @@ class OrderTransferService
                 'transferredByUser',
             ]);
         });
+    }
+
+    protected function isSalesRepresentative(int $userId): bool
+    {
+        return User::query()
+            ->where('id', $userId)
+            ->whereHas('role', fn ($q) => $q->where('name', 'sales'))
+            ->whereNotIn('status', UserStatus::blockedForLogin())
+            ->exists();
     }
 }

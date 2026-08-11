@@ -7,6 +7,7 @@ import { hasPermission } from '../../utils/permissions';
 import orderService from '../../services/orderService';
 import AddCustomerModal from './AddCustomerModal';
 import { extractFieldErrors, getApiErrorMessage } from '../../utils/apiHelpers';
+import { isSalesRepRole } from '../../utils/roleMapping';
 
 const FONT_HEADING = "'Cormorant Garamond', serif";
 const CURRENCY_SYMBOL = 'ر.س';
@@ -64,6 +65,9 @@ const customerMatchesSearch = (customer, query) => {
   return haystack.includes(q);
 };
 
+const filterSalesReps = (users) =>
+  (Array.isArray(users) ? users : []).filter((user) => isSalesRepRole(user));
+
 const formatRepLabel = (u) => {
   const name = u.full_name || `${u.first_name || ''} ${u.last_name || ''}`.trim();
   return name ? `${name} (${u.email || ''})` : (u.email || `#${u.id}`);
@@ -98,7 +102,7 @@ const OrderFormModal = ({
       const opts = await orderService.getOrderFormOptions();
       setCustomers(Array.isArray(opts.customers) ? opts.customers : []);
       setProducts(Array.isArray(opts.products) ? opts.products : []);
-      setSalesReps(Array.isArray(opts.sales_reps) ? opts.sales_reps : []);
+      setSalesReps(filterSalesReps(opts.sales_reps));
       if (isSalesRep && currentUserId) {
         setForm((prev) => ({ ...prev, sales_rep_id: String(currentUserId) }));
       }
@@ -308,7 +312,7 @@ const OrderFormModal = ({
                   name="sales_rep_id"
                   value={form.sales_rep_id}
                   onChange={handleChange}
-                  disabled={optionsLoading || isSalesRep}
+                  disabled={optionsLoading}
                   className={`w-full px-3 py-2 text-sm border rounded-lg ${errors.sales_rep_id ? 'border-rose-500' : 'border-[#ECE8E1]'} disabled:opacity-70`}
                 >
                   <option value="">{optionsLoading ? tc('loading') : tc('selectOption')}</option>

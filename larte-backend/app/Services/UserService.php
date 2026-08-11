@@ -26,7 +26,11 @@ class UserService
         }
 
         if (!empty($filters['role'])) {
-            $query->where('role_id', $filters['role']);
+            if (is_numeric($filters['role'])) {
+                $query->where('role_id', $filters['role']);
+            } else {
+                $query->whereHas('role', fn ($q) => $q->where('name', $filters['role']));
+            }
         }
 
         if (!empty($filters['status'])) {

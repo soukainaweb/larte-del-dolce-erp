@@ -51,9 +51,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import ExportButtons from '../../components/ExportButtons';
 import orderService, { normalizeOrder } from '../../services/orderService';
-import { transferOrder, getOrderTransfers } from '../../services/orderTransferService';
+import { transferOrder, getOrderTransfers, getTransferSalesReps } from '../../services/orderTransferService';
 import OrderFormModal from '../../components/orders/OrderFormModal';
-import { getUsers } from '../../services/userServicePage';
+import { isSalesRepRole } from '../../utils/roleMapping';
 import { getApiErrorMessage } from '../../utils/apiHelpers';
 import { hasPermission } from '../../utils/permissions';
 import { useToast } from '../../contexts/ToastContext';
@@ -1264,6 +1264,11 @@ const TransferOrderModal = ({ isOpen, onClose, orders, users, onSubmit, isLoadin
   const [toSalespersonId, setToSalespersonId] = useState('');
   const [notes, setNotes] = useState('');
 
+  const salesRepresentatives = useMemo(
+    () => (Array.isArray(users) ? users : []).filter(isSalesRepRole),
+    [users]
+  );
+
   const selectedOrder = orders.find((o) => String(o.id) === String(orderId));
   const currentRep = selectedOrder?.rep || selectedOrder?.user?.name || '—';
 
@@ -1302,7 +1307,7 @@ const TransferOrderModal = ({ isOpen, onClose, orders, users, onSubmit, isLoadin
           <label className="text-xs font-semibold text-[#6D6D6D] uppercase">{t('orderTransfers.newSalesperson')}</label>
           <select value={toSalespersonId} onChange={(e) => setToSalespersonId(e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg">
             <option value="">{t('common.selectOption')}</option>
-            {users.map((u) => (
+            {salesRepresentatives.map((u) => (
               <option key={u.id} value={u.id}>{u.first_name || u.firstName} {u.last_name || u.lastName}</option>
             ))}
           </select>
@@ -1434,9 +1439,8 @@ const OrdersPage = () => {
   }, [fetchOrders]);
 
   useEffect(() => {
-    getUsers({ per_page: 200 }).then((res) => {
-      const list = res?.data?.data?.data || res?.data?.data || [];
-      setSalesUsers(Array.isArray(list) ? list : []);
+    getTransferSalesReps().then((res) => {
+      setSalesUsers(Array.isArray(res.data) ? res.data.filter(isSalesRepRole) : []);
     }).catch(() => {});
   }, []);
 

@@ -625,6 +625,7 @@ Route::middleware(['auth:sanctum', 'password.changed', 'throttle:api'])->group(f
     });
 
     Route::prefix('order-transfers')->middleware('permission:orders.view')->group(function () {
+        Route::get('/sales-reps', [OrderTransferController::class, 'salesRepresentatives']);
         Route::get('/', [OrderTransferController::class, 'index']);
     });
 
