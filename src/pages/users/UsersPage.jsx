@@ -1,5 +1,5 @@
 // src/pages/Users/UsersPage.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -45,6 +45,7 @@ import {
   resendInvitation
 } from '../../services/userServicePage';  // ← Changé de 'userServicePage' à 'userService'
 import { unwrapData, normalizeUserList, normalizeUserRecord, extractFieldErrors, getApiErrorMessage, ensureArray } from '../../utils/apiHelpers';
+import { resolveAvailableRolesUpdate } from '../../utils/userRolesCatalog';
 import { dispatchAppToast } from '../../utils/toastBus';
 import useEntityDeepLink from '../../hooks/useEntityDeepLink';
 
@@ -663,11 +664,58 @@ const UsersPage = () => {
   const [createdUserInfo, setCreatedUserInfo] = useState(null);
   const [isCreatedSuccessOpen, setIsCreatedSuccessOpen] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const rolesFetchInFlightRef = useRef(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+
+  const fetchAvailableRoles = useCallback(async () => {
+    if (rolesFetchInFlightRef.current) {
+      return rolesFetchInFlightRef.current;
+    }
+
+    const request = (async () => {
+      try {
+        const response = await getUserRoles();
+        const roles = ensureArray(unwrapData(response));
+
+        setAvailableRoles((previousRoles) => {
+          const nextRoles = resolveAvailableRolesUpdate(previousRoles, roles);
+          if (nextRoles.length === 0 && roles.length === 0) {
+            dispatchAppToast(
+              t('users.errors.loadRolesFailed', { defaultValue: tc('errors.loadFailed') }),
+              'error'
+            );
+          }
+          return nextRoles;
+        });
+
+        return roles;
+      } catch (error) {
+        console.error('Error fetching user roles:', error);
+        dispatchAppToast(
+          getApiErrorMessage(
+            error,
+            t('users.errors.loadRolesFailed', { defaultValue: tc('errors.loadFailed') })
+          ),
+          'error'
+        );
+        return null;
+      } finally {
+        rolesFetchInFlightRef.current = null;
+      }
+    })();
+
+    rolesFetchInFlightRef.current = request;
+    return request;
+  }, [t, tc]);
+
+  const openCreateUserModal = useCallback(() => {
+    setFormErrors(null);
+    setIsCreateModalOpen(true);
+  }, []);
 
   // Load users
   const fetchUsers = async (overridePage) => {
@@ -742,10 +790,14 @@ const UsersPage = () => {
 
   useEffect(() => {
     fetchStatistics();
-    getUserRoles()
-      .then((response) => setAvailableRoles(ensureArray(unwrapData(response))))
-      .catch(() => setAvailableRoles([]));
-  }, []);
+    fetchAvailableRoles();
+  }, [fetchAvailableRoles]);
+
+  useEffect(() => {
+    if (isCreateModalOpen) {
+      fetchAvailableRoles();
+    }
+  }, [isCreateModalOpen, fetchAvailableRoles]);
 
   // Filter users (client-side for demo, API already handles filters)
   const filteredUsers = useMemo(() => (Array.isArray(users) ? users : []), [users]);
@@ -918,12 +970,11 @@ const UsersPage = () => {
 
   useEffect(() => {
     if (location.state?.openCreate && canCreateUsers) {
-      setFormErrors(null);
       setCreatePresetRoleId(location.state?.presetRoleId ?? null);
-      setIsCreateModalOpen(true);
+      openCreateUserModal();
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, canCreateUsers, location.pathname, navigate]);
+  }, [location.state, canCreateUsers, location.pathname, navigate, openCreateUserModal]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -957,10 +1008,7 @@ const UsersPage = () => {
           />
           {canCreateUsers && (
           <button
-            onClick={() => {
-              setFormErrors(null);
-              setIsCreateModalOpen(true);
-            }}
+            onClick={openCreateUserModal}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
           >
             <UserPlus size={18} />
@@ -1047,7 +1095,7 @@ const UsersPage = () => {
                       <UsersIcon size={40} className="text-[#ECE8E1]" />
                       <p className="text-sm text-[#6D6D6D]">{t('common.table.noItemsFound')}</p>
                       <button
-                        onClick={() => setIsCreateModalOpen(true)}
+                        onClick={openCreateUserModal}
                         className="text-sm text-[#B8863B] font-medium hover:underline"
                       >
                         {t('users.addUser')}
