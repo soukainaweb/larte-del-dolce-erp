@@ -24,6 +24,8 @@ const ROUTE_KEY_MAP = {
   roles: 'breadcrumb.roles',
   settings: 'breadcrumb.settings',
   profile: 'breadcrumb.profile',
+  help: 'breadcrumb.help',
+  documentation: 'breadcrumb.documentation',
   notifications: 'breadcrumb.notifications',
   finance: 'breadcrumb.finance',
   'activity-logs': 'breadcrumb.activityLogs',

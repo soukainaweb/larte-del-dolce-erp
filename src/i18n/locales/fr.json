@@ -161,7 +161,76 @@
     "meetings": "Réunions",
     "samples": "Échantillons",
     "waste-returns": "Déchets & Retours",
-    "purchases": "Achats"
+    "purchases": "Achats",
+    "help": "Centre d'aide",
+    "documentation": "Documentation"
+  },
+  "helpCenter": {
+    "subtitle": "Réponses rapides et ressources d'aide dans L'arte ERP.",
+    "backToDashboard": "Retour au tableau de bord",
+    "documentationCard": {
+      "title": "Documentation",
+      "description": "Consultez les guides des modules et des processus dans l'application.",
+      "action": "Ouvrir la documentation"
+    },
+    "contactCard": {
+      "title": "Contacter le support",
+      "description": "Pour une assistance technique ou signaler un problème, contactez l'équipe support."
+    },
+    "faq": {
+      "title": "Questions fréquentes",
+      "items": [
+        {
+          "question": "Comment créer une nouvelle commande ?",
+          "answer": "Ouvrez Commandes, cliquez sur Ajouter une commande, sélectionnez le client, le représentant et les produits, puis enregistrez."
+        },
+        {
+          "question": "Pourquoi je ne vois pas certains menus ?",
+          "answer": "La visibilité dépend des permissions de votre rôle. Contactez un administrateur si vous avez besoin d'un accès supplémentaire."
+        },
+        {
+          "question": "Où trouver la documentation détaillée ?",
+          "answer": "Cliquez sur Documentation dans la barre latérale ou utilisez le lien sur cette page."
+        }
+      ]
+    }
+  },
+  "documentation": {
+    "subtitle": "Guide concis des modules ERP.",
+    "openModule": "Ouvrir le module",
+    "backToHelp": "Retour au centre d'aide",
+    "sections": [
+      {
+        "title": "Tableau de bord",
+        "description": "Vue d'ensemble des indicateurs, commandes récentes et notifications.",
+        "route": "/dashboard",
+        "linkLabel": "Ouvrir le tableau de bord"
+      },
+      {
+        "title": "Commandes",
+        "description": "Créer des commandes, suivre le workflow d'approbation et les actions par rôle.",
+        "route": "/dashboard/orders",
+        "linkLabel": "Ouvrir les commandes"
+      },
+      {
+        "title": "Clients et produits",
+        "description": "Gérer les clients et produits utilisés dans les commandes et factures.",
+        "route": "/dashboard/customers",
+        "linkLabel": "Ouvrir les clients"
+      },
+      {
+        "title": "Notifications",
+        "description": "Consulter les alertes liées aux commandes, approbations et activités.",
+        "route": "/dashboard/notifications",
+        "linkLabel": "Ouvrir les notifications"
+      },
+      {
+        "title": "Profil",
+        "description": "Mettre à jour vos informations, mot de passe et préférences.",
+        "route": "/dashboard/profile",
+        "linkLabel": "Ouvrir le profil"
+      }
+    ]
   },
   "meetings": {
     "title": "Réunions",

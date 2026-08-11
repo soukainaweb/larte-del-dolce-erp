@@ -69,6 +69,8 @@ export const getActiveMenuId = (pathname) => {
     '/dashboard/activity-logs': 'activity',
     '/dashboard/settings': 'settings',
     '/dashboard/profile': 'profile',
+    '/dashboard/help': 'help',
+    '/dashboard/documentation': 'documentation',
   };
 
   if (pathMap[pathname]) return pathMap[pathname];
