@@ -107,7 +107,7 @@ class StatusMapper
             $data['payment_status'] = self::paymentFromDb($data['payment_status']);
         }
 
-        return $data;
+        return MediaUrl::transformOrderMedia($data);
     }
 
     public static function transformOrderCollection($orders)

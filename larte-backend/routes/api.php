@@ -366,7 +366,8 @@ Route::middleware(['auth:sanctum', 'password.changed', 'throttle:api'])->group(f
         Route::get('/statistics', [UserController::class, 'statistics']);
         Route::get('/export', [UserController::class, 'export']);
         Route::get('/', [UserController::class, 'index']);
-        Route::post('/', [UserController::class, 'store'])->middleware('permission:users.create');
+        Route::post('/', [UserController::class, 'store'])
+            ->middleware(['permission:users.create', 'throttle:users-create']);
         Route::get('/{user}', [UserController::class, 'show']);
         Route::put('/{user}', [UserController::class, 'update'])->middleware('permission:users.update');
         Route::patch('/{user}/status', [UserController::class, 'updateStatus'])->middleware('permission:users.update');

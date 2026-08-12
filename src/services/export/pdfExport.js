@@ -2,6 +2,21 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
+import { registerArabicPdfFont, ARABIC_PDF_FONT } from '../../utils/arabicFont';
+import {
+  containsArabicInValues,
+  getTextAlignment,
+  prepareExportText,
+} from '../../utils/exportText';
+
+const applyPdfFontStyle = (doc, useArabicFont, style = 'normal') => {
+  if (useArabicFont) {
+    doc.setFont(ARABIC_PDF_FONT, style === 'bold' ? 'bold' : 'normal');
+    return;
+  }
+
+  doc.setFont('helvetica', style);
+};
 
 /**
  * Exporte des données au format PDF avec un design professionnel
@@ -21,301 +36,297 @@ export const exportPDF = async ({
   dateFormat = 'dd/MM/yyyy HH:mm',
   primaryColor = '#B8863B'
 }) => {
-  return new Promise((resolve, reject) => {
-    try {
-      // Vérifier les données
-      if (!data || data.length === 0) {
-        reject(new Error('Aucune donnée à exporter'));
-        return;
-      }
+  try {
+    if (!data || data.length === 0) {
+      throw new Error('Aucune donnée à exporter');
+    }
 
-      // Déterminer l'orientation
-      let finalOrientation = orientation;
-      if (orientation === 'auto') {
-        finalOrientation = columns.length > 7 ? 'landscape' : 'portrait';
-      }
+    let finalOrientation = orientation;
+    if (orientation === 'auto') {
+      finalOrientation = columns.length > 7 ? 'landscape' : 'portrait';
+    }
 
-      const doc = new jsPDF({
-        orientation: finalOrientation,
-        unit: 'mm',
-        format: 'a4'
-      });
+    let exportData = data;
+    if (rowFormatter && typeof rowFormatter === 'function') {
+      exportData = data.map(rowFormatter);
+    }
 
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 16;
-      const currentDate = format(new Date(), dateFormat);
+    const previewValues = [
+      title,
+      subtitle,
+      userName,
+      companyName,
+      ...columns.map((col) => col.label),
+      ...exportData.flatMap((row) => columns.map((col) => row[col.accessor])),
+    ];
+    const useArabicFont = containsArabicInValues(previewValues);
 
-      // Préparer les données avec rowFormatter
-      let exportData = data;
-      if (rowFormatter && typeof rowFormatter === 'function') {
-        exportData = data.map(rowFormatter);
-      }
+    const doc = new jsPDF({
+      orientation: finalOrientation,
+      unit: 'mm',
+      format: 'a4'
+    });
 
-      let yPosition = 15;
+    if (useArabicFont) {
+      await registerArabicPdfFont(doc);
+    }
 
-      // ===== EN-TÊTE AVEC FOND =====
-      doc.setFillColor('#B8863B');
-      doc.rect(0, 0, pageWidth, 6, 'F');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 16;
+    const currentDate = format(new Date(), dateFormat);
 
-      // ===== TITRE =====
-      yPosition = 20;
+    let yPosition = 15;
 
-      // Nom de l'entreprise
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor('#B8863B');
-      doc.text(companyName, pageWidth / 2, yPosition, { align: 'center' });
+    doc.setFillColor('#B8863B');
+    doc.rect(0, 0, pageWidth, 6, 'F');
 
-      // Titre du rapport
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor('#2B2B2B');
-      doc.text(title, pageWidth / 2, yPosition + 9, { align: 'center' });
+    yPosition = 20;
 
-      if (subtitle) {
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor('#666666');
-        doc.text(subtitle, pageWidth / 2, yPosition + 16, { align: 'center' });
-        yPosition = yPosition + 26;
-      } else {
-        yPosition = yPosition + 20;
-      }
+    doc.setFontSize(20);
+    applyPdfFontStyle(doc, useArabicFont, 'bold');
+    doc.setTextColor('#B8863B');
+    doc.text(prepareExportText(companyName), pageWidth / 2, yPosition, {
+      align: getTextAlignment(companyName, 'center'),
+    });
 
-      // ===== MÉTADONNÉES =====
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
+    doc.setFontSize(14);
+    applyPdfFontStyle(doc, useArabicFont, 'bold');
+    doc.setTextColor('#2B2B2B');
+    doc.text(prepareExportText(title), pageWidth / 2, yPosition + 9, {
+      align: getTextAlignment(title, 'center'),
+    });
+
+    if (subtitle) {
+      doc.setFontSize(10);
+      applyPdfFontStyle(doc, useArabicFont, 'normal');
       doc.setTextColor('#666666');
-
-      const metaData = [
-        `Généré par : ${userName || 'Utilisateur'}`,
-        `Date : ${currentDate}`,
-        `Total : ${exportData.length} lignes`
-      ];
-
-      let xPos = margin;
-      metaData.forEach((text, index) => {
-        doc.text(text, xPos, yPosition);
-        xPos += doc.getTextWidth(text) + 12;
+      doc.text(prepareExportText(subtitle), pageWidth / 2, yPosition + 16, {
+        align: getTextAlignment(subtitle, 'center'),
       });
+      yPosition = yPosition + 26;
+    } else {
+      yPosition = yPosition + 20;
+    }
 
-      // Métadonnées à droite
-      const metaRight = [
-        `Version : 2.0`,
-        `Référence : ${format(new Date(), 'yyyyMMddHHmmss')}`
-      ];
+    doc.setFontSize(8);
+    applyPdfFontStyle(doc, useArabicFont, 'normal');
+    doc.setTextColor('#666666');
 
-      let rightX = pageWidth - margin;
-      metaRight.forEach((text, index) => {
-        const textWidth = doc.getTextWidth(text);
-        doc.text(text, rightX - textWidth, yPosition + (index * 4));
+    const metaData = [
+      `Generated by: ${userName || 'User'}`,
+      `Date: ${currentDate}`,
+      `Total: ${exportData.length} rows`
+    ];
+
+    let xPos = margin;
+    metaData.forEach((text) => {
+      doc.text(prepareExportText(text), xPos, yPosition, {
+        align: getTextAlignment(text, 'left'),
       });
+      xPos += doc.getTextWidth(prepareExportText(text)) + 12;
+    });
 
-      yPosition += 10;
+    const metaRight = [
+      'Version: 2.0',
+      `Reference: ${format(new Date(), 'yyyyMMddHHmmss')}`
+    ];
 
-      // ===== LIGNE DE SÉPARATION =====
-      doc.setDrawColor('#E8E0D8');
-      doc.setLineWidth(0.3);
-      doc.line(margin, yPosition, pageWidth - margin, yPosition);
-      yPosition += 6;
+    let rightX = pageWidth - margin;
+    metaRight.forEach((text, index) => {
+      const prepared = prepareExportText(text);
+      const textWidth = doc.getTextWidth(prepared);
+      doc.text(prepared, rightX - textWidth, yPosition + (index * 4), {
+        align: getTextAlignment(text, 'right'),
+      });
+    });
 
-      // ===== RÉSUMÉ (KPI) - CORRIGÉ =====
-      if (summary && typeof summary === 'object' && Object.keys(summary).length > 0) {
-        // Si summary est un tableau d'objets avec label et value
-        let summaryItems = [];
-        
-        if (Array.isArray(summary)) {
-          // Format: [{ label: 'Total', value: 248 }, ...]
-          summaryItems = summary;
-        } else {
-          // Format: { 'Total': 248, 'Non lues': 10, ... }
-          summaryItems = Object.keys(summary).map(key => ({
-            label: key,
-            value: summary[key]
-          }));
-        }
+    yPosition += 10;
 
-        if (summaryItems.length > 0) {
-          const colsPerRow = Math.min(4, summaryItems.length);
-          const cardWidth = (pageWidth - margin * 2 - (colsPerRow - 1) * 6) / colsPerRow;
-          const cardHeight = 20;
+    doc.setDrawColor('#E8E0D8');
+    doc.setLineWidth(0.3);
+    doc.line(margin, yPosition, pageWidth - margin, yPosition);
+    yPosition += 6;
 
-          let sumX = margin;
-          let sumY = yPosition;
+    if (summary && typeof summary === 'object' && Object.keys(summary).length > 0) {
+      let summaryItems = [];
 
-          summaryItems.forEach((item, index) => {
-            if (index > 0 && index % colsPerRow === 0) {
-              sumX = margin;
-              sumY += cardHeight + 5;
-            }
+      if (Array.isArray(summary)) {
+        summaryItems = summary;
+      } else {
+        summaryItems = Object.keys(summary).map(key => ({
+          label: key,
+          value: summary[key]
+        }));
+      }
 
-            // Carte
-            doc.setFillColor('#F8F7F4');
-            doc.setDrawColor('#E8E0D8');
-            doc.roundedRect(sumX, sumY, cardWidth, cardHeight, 3, 3, 'FD');
+      if (summaryItems.length > 0) {
+        const colsPerRow = Math.min(4, summaryItems.length);
+        const cardWidth = (pageWidth - margin * 2 - (colsPerRow - 1) * 6) / colsPerRow;
+        const cardHeight = 20;
 
-            // Label
-            doc.setFontSize(7);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor('#888888');
-            doc.text(String(item.label), sumX + 5, sumY + 6);
+        let sumX = margin;
+        let sumY = yPosition;
 
-            // Valeur
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor('#2B2B2B');
-            const value = item.value;
-            const formattedValue = typeof value === 'number' ? value.toLocaleString() : String(value);
-            doc.text(formattedValue, sumX + 5, sumY + 16);
+        summaryItems.forEach((item, index) => {
+          if (index > 0 && index % colsPerRow === 0) {
+            sumX = margin;
+            sumY += cardHeight + 5;
+          }
 
-            sumX += cardWidth + 6;
+          doc.setFillColor('#F8F7F4');
+          doc.setDrawColor('#E8E0D8');
+          doc.roundedRect(sumX, sumY, cardWidth, cardHeight, 3, 3, 'FD');
+
+          doc.setFontSize(7);
+          applyPdfFontStyle(doc, useArabicFont, 'normal');
+          doc.setTextColor('#888888');
+          doc.text(prepareExportText(String(item.label)), sumX + 5, sumY + 6, {
+            align: getTextAlignment(item.label, 'left'),
           });
 
-          yPosition = sumY + cardHeight + 10;
-        }
-      }
+          doc.setFontSize(12);
+          applyPdfFontStyle(doc, useArabicFont, 'bold');
+          doc.setTextColor('#2B2B2B');
+          const value = item.value;
+          const formattedValue = typeof value === 'number' ? value.toLocaleString() : String(value);
+          doc.text(prepareExportText(formattedValue), sumX + 5, sumY + 16, {
+            align: getTextAlignment(formattedValue, 'left'),
+          });
 
-      // ===== TABLEAU =====
-      if (!columns || columns.length === 0) {
-        reject(new Error('Aucune colonne définie pour le tableau'));
-        return;
-      }
-
-      // Nettoyer les colonnes - s'assurer qu'elles ont les bons champs
-      const cleanColumns = columns.map(col => ({
-        header: col.label || col.accessor || 'Colonne',
-        dataKey: col.accessor,
-        align: col.align || 'left'
-      }));
-
-      // Nettoyer les données - s'assurer que chaque ligne a toutes les colonnes
-      const cleanData = exportData.map(row => {
-        const obj = {};
-        columns.forEach(col => {
-          let value = row[col.accessor];
-          if (value === undefined || value === null) {
-            value = '';
-          }
-          if (col.formatter && typeof col.formatter === 'function') {
-            value = col.formatter(value, row);
-          }
-          obj[col.accessor] = String(value);
+          sumX += cardWidth + 6;
         });
-        return obj;
-      });
 
-      // ===== CONFIGURATION DU TABLEAU =====
-      const styles = {
-        fontSize: 8,
-        cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
-        lineColor: '#E8E0D8',
-        lineWidth: 0.1,
-        textColor: '#2B2B2B',
-        overflow: 'linebreak',
-        valign: 'middle'
-      };
-
-      const headStyles = {
-        fillColor: '#B8863B',
-        textColor: '#FFFFFF',
-        fontSize: 8,
-        fontStyle: 'bold',
-        halign: 'center',
-        valign: 'middle',
-        cellPadding: { top: 3, bottom: 3, left: 2, right: 2 }
-      };
-
-      const alternateRowStyles = {
-        fillColor: '#F8F7F4'
-      };
-
-      // ===== CALCUL DES LARGEURS =====
-      const columnStyles = {};
-      const totalCols = cleanColumns.length;
-      
-      // Largeur de base par colonne
-      const baseWidth = Math.min(40, (pageWidth - margin * 2 - 10) / totalCols);
-      
-      cleanColumns.forEach((col, index) => {
-        // Calculer la largeur en fonction du contenu
-        let maxLen = col.header.length;
-        cleanData.slice(0, 50).forEach(row => {
-          const val = row[col.dataKey];
-          if (val && String(val).length > maxLen) {
-            maxLen = String(val).length;
-          }
-        });
-        // Limiter la largeur
-        let width = Math.max(12, Math.min(45, Math.max(baseWidth, maxLen * 1.5)));
-        columnStyles[index] = {
-          halign: col.align || 'left',
-          cellWidth: width
-        };
-      });
-
-      // ===== GÉNÉRATION DU TABLEAU =====
-      autoTable(doc, {
-        columns: cleanColumns,
-        body: cleanData,
-        startY: yPosition,
-        margin: { left: margin, right: margin, top: 2, bottom: 10 },
-        styles: styles,
-        headStyles: headStyles,
-        alternateRowStyles: alternateRowStyles,
-        columnStyles: columnStyles,
-        tableWidth: 'auto',
-        didDrawPage: function(data) {
-          const pageNumber = data.pageNumber;
-          const totalPages = doc.internal.getNumberOfPages();
-
-          // Footer
-          doc.setFontSize(7);
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor('#999999');
-
-          // Ligne de séparation footer
-          doc.setDrawColor('#E8E0D8');
-          doc.setLineWidth(0.2);
-          doc.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
-
-          // Texte footer
-          const footerLeft = `${companyName} - ${new Date().getFullYear()}`;
-          doc.text(footerLeft, margin, pageHeight - 7);
-
-          const footerCenter = `Page ${pageNumber} / ${totalPages}`;
-          doc.text(footerCenter, pageWidth / 2, pageHeight - 7, { align: 'center' });
-
-          const footerRight = `Imprimé le ${format(new Date(), 'dd/MM/yyyy HH:mm')}`;
-          doc.text(footerRight, pageWidth - margin, pageHeight - 7, { align: 'right' });
-        },
-        didParseCell: function(data) {
-          // Tronquer les textes trop longs
-          if (data.cell && data.cell.raw && typeof data.cell.raw === 'string' && data.cell.raw.length > 60) {
-            data.cell.raw = data.cell.raw.substring(0, 57) + '...';
-          }
-          // Formatage des nombres
-          if (data.section === 'body' && data.column && typeof data.cell.raw === 'number') {
-            data.cell.raw = data.cell.raw.toLocaleString();
-          }
-        }
-      });
-
-      // ===== TÉLÉCHARGEMENT =====
-      setTimeout(() => {
-        try {
-          doc.save(filename);
-          resolve({ success: true, filename, rowCount: exportData.length });
-        } catch (saveError) {
-          reject(saveError);
-        }
-      }, 150);
-
-    } catch (error) {
-      console.error('Erreur lors de l\'export PDF:', error);
-      reject(error);
+        yPosition = sumY + cardHeight + 10;
+      }
     }
-  });
+
+    if (!columns || columns.length === 0) {
+      throw new Error('Aucune colonne définie pour le tableau');
+    }
+
+    const cleanColumns = columns.map(col => ({
+      header: prepareExportText(col.label || col.accessor || 'Column'),
+      dataKey: col.accessor,
+      align: col.align || getTextAlignment(col.label, 'left')
+    }));
+
+    const cleanData = exportData.map(row => {
+      const obj = {};
+      columns.forEach(col => {
+        let value = row[col.accessor];
+        if (value === undefined || value === null) {
+          value = '';
+        }
+        if (col.formatter && typeof col.formatter === 'function') {
+          value = col.formatter(value, row);
+        }
+        obj[col.accessor] = prepareExportText(String(value));
+      });
+      return obj;
+    });
+
+    const styles = {
+      font: useArabicFont ? ARABIC_PDF_FONT : 'helvetica',
+      fontSize: 8,
+      cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
+      lineColor: '#E8E0D8',
+      lineWidth: 0.1,
+      textColor: '#2B2B2B',
+      overflow: 'linebreak',
+      valign: 'middle'
+    };
+
+    const headStyles = {
+      fillColor: '#B8863B',
+      textColor: '#FFFFFF',
+      font: useArabicFont ? ARABIC_PDF_FONT : 'helvetica',
+      fontSize: 8,
+      fontStyle: 'bold',
+      halign: useArabicFont ? 'right' : 'center',
+      valign: 'middle',
+      cellPadding: { top: 3, bottom: 3, left: 2, right: 2 }
+    };
+
+    const alternateRowStyles = {
+      fillColor: '#F8F7F4'
+    };
+
+    const columnStyles = {};
+    const totalCols = cleanColumns.length;
+    const baseWidth = Math.min(40, (pageWidth - margin * 2 - 10) / totalCols);
+
+    cleanColumns.forEach((col, index) => {
+      let maxLen = col.header.length;
+      cleanData.slice(0, 50).forEach(row => {
+        const val = row[col.dataKey];
+        if (val && String(val).length > maxLen) {
+          maxLen = String(val).length;
+        }
+      });
+      let width = Math.max(12, Math.min(45, Math.max(baseWidth, maxLen * 1.5)));
+      columnStyles[index] = {
+        halign: col.align || getTextAlignment(col.header, 'left'),
+        cellWidth: width
+      };
+    });
+
+    autoTable(doc, {
+      columns: cleanColumns,
+      body: cleanData,
+      startY: yPosition,
+      margin: { left: margin, right: margin, top: 2, bottom: 10 },
+      styles,
+      headStyles,
+      alternateRowStyles,
+      columnStyles,
+      tableWidth: 'auto',
+      didDrawPage: function(data) {
+        const pageNumber = data.pageNumber;
+        const totalPages = doc.internal.getNumberOfPages();
+
+        doc.setFontSize(7);
+        applyPdfFontStyle(doc, useArabicFont, 'normal');
+        doc.setTextColor('#999999');
+
+        doc.setDrawColor('#E8E0D8');
+        doc.setLineWidth(0.2);
+        doc.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
+
+        const footerLeft = prepareExportText(`${companyName} - ${new Date().getFullYear()}`);
+        doc.text(footerLeft, margin, pageHeight - 7, {
+          align: getTextAlignment(footerLeft, 'left'),
+        });
+
+        const footerCenter = `Page ${pageNumber} / ${totalPages}`;
+        doc.text(footerCenter, pageWidth / 2, pageHeight - 7, { align: 'center' });
+
+        const footerRight = prepareExportText(`Printed on ${format(new Date(), 'dd/MM/yyyy HH:mm')}`);
+        doc.text(footerRight, pageWidth - margin, pageHeight - 7, {
+          align: getTextAlignment(footerRight, 'right'),
+        });
+      },
+      didParseCell: function(data) {
+        if (data.cell && data.cell.raw && typeof data.cell.raw === 'string' && data.cell.raw.length > 60) {
+          data.cell.raw = data.cell.raw.substring(0, 57) + '...';
+        }
+        if (data.section === 'body' && data.column && typeof data.cell.raw === 'number') {
+          data.cell.raw = data.cell.raw.toLocaleString();
+        }
+        if (useArabicFont && data.cell && typeof data.cell.raw === 'string') {
+          data.cell.styles.halign = getTextAlignment(data.cell.raw, data.cell.styles.halign || 'left');
+        }
+      }
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    doc.save(filename);
+
+    return { success: true, filename, rowCount: exportData.length };
+  } catch (error) {
+    console.error('Erreur lors de l\'export PDF:', error);
+    throw error;
+  }
 };
 
 /**

@@ -45,9 +45,11 @@ export const getUserById = (id) => {
  * @param {Object} data - User form data (camelCase UI fields supported)
  * @returns {Promise} - Axios response
  */
-export const createUser = async (data) => {
-  const roles = await loadRoleCatalog();
-  const payload = buildUserPayload(data, roles);
+export const createUser = async (data, roles = null) => {
+  const roleCatalog = Array.isArray(roles) && roles.length > 0
+    ? roles
+    : await loadRoleCatalog();
+  const payload = buildUserPayload(data, roleCatalog);
   const response = await api.post("/users", payload);
   const body = unwrapData(response.data);
   response.temporaryPassword = body?.temporary_password ?? null;
