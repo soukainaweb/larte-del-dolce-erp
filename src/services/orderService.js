@@ -58,6 +58,7 @@ export const normalizeOrder = (order) => {
     products: items.map((item) => ({
       ...item,
       name: item.name ?? item.product?.name ?? '—',
+      image: item.image ?? item.product?.image ?? null,
       total: Number(item.total ?? item.subtotal ?? 0),
     })),
     approval_history: order.approval_history ?? order.approvalHistory ?? [],

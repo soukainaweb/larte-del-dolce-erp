@@ -1094,12 +1094,24 @@ const OrderDetailsModal = ({
                   <h4 className="text-sm font-bold text-[#3D2F24] mb-3">{tc('product')}</h4>
                   <div className="space-y-2">
                     {displayOrder.products && displayOrder.products.map((p, i) => (
-                      <div key={i} className="flex justify-between items-center bg-white rounded-lg p-2 border border-[#ECE8E1]">
-                        <div>
-                          <p className="text-sm font-medium text-[#3D2F24]">{p.name}</p>
-                          <p className="text-xs text-[#6D6D6D]">{t('orders.fields.quantity')}: {p.quantity}</p>
+                      <div key={i} className="flex justify-between items-center gap-3 bg-white rounded-lg p-2 border border-[#ECE8E1]">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {p.image ? (
+                            <img
+                              src={p.image}
+                              alt={p.name}
+                              className="w-12 h-12 rounded-lg object-cover border border-[#ECE8E1] shrink-0"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-[#F8F7F4] border border-[#ECE8E1] shrink-0" aria-hidden="true" />
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-[#3D2F24] truncate">{p.name}</p>
+                            <p className="text-xs text-[#6D6D6D]">{t('orders.fields.quantity')}: {p.quantity}</p>
+                          </div>
                         </div>
-                        <p className="text-sm font-bold text-[#3D2F24]">{p.total?.toFixed(2)} {CURRENCY_SYMBOL}</p>
+                        <p className="text-sm font-bold text-[#3D2F24] shrink-0">{p.total?.toFixed(2)} {CURRENCY_SYMBOL}</p>
                       </div>
                     ))}
                   </div>

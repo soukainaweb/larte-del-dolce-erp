@@ -57,7 +57,7 @@ class FactoryOrderService
 
             $this->recordHistory($locked, $fromStatus, OrderWorkflow::POSTPONED, $reason, $user);
 
-            return StatusMapper::transformOrder($locked->fresh()->load(['customer', 'user', 'assignedRep']));
+            return StatusMapper::transformOrder($locked->fresh()->load(['customer', 'user', 'assignedRep', 'items.product']));
         });
     }
 
@@ -103,7 +103,7 @@ class FactoryOrderService
                 userId: $user->id,
             );
 
-            $fresh = $locked->fresh()->load(['customer', 'user', 'assignedRep']);
+            $fresh = $locked->fresh()->load(['customer', 'user', 'assignedRep', 'items.product']);
             $this->notifications->notifyRepresentativeReadyForPickup($fresh, $rep);
 
             return StatusMapper::transformOrder($fresh);
@@ -150,7 +150,7 @@ class FactoryOrderService
 
             $this->recordHistory($locked, $fromStatus, OrderWorkflow::ASSIGNED, 'Pickup confirmed', $user);
 
-            return StatusMapper::transformOrder($locked->fresh()->load(['customer', 'user', 'assignedRep']));
+            return StatusMapper::transformOrder($locked->fresh()->load(['customer', 'user', 'assignedRep', 'items.product']));
         });
     }
 
@@ -190,7 +190,7 @@ class FactoryOrderService
 
             $this->recordHistory($locked, $fromStatus, OrderWorkflow::DELIVERED, 'Delivery confirmed', $user);
 
-            return StatusMapper::transformOrder($locked->fresh()->load(['customer', 'user', 'assignedRep']));
+            return StatusMapper::transformOrder($locked->fresh()->load(['customer', 'user', 'assignedRep', 'items.product']));
         });
     }
 
@@ -234,7 +234,7 @@ class FactoryOrderService
             $locked->update($updates);
             $this->recordHistory($locked, $fromStatus, $toStatus, $comment, $user);
 
-            $fresh = $locked->fresh()->load(['customer', 'user', 'assignedRep']);
+            $fresh = $locked->fresh()->load(['customer', 'user', 'assignedRep', 'items.product']);
 
             if ($toStatus === OrderWorkflow::READY) {
                 // Representatives are notified when assigned, not when marked ready.

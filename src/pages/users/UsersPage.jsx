@@ -213,6 +213,7 @@ const UserTableRow = ({ user, onEdit, onDelete, onView, index }) => {
 // ==========================================
 const UserModal = ({ isOpen, onClose, onSave, user, isLoading, availableRoles = [], fieldErrors = null, presetRoleId = null }) => {
   const { t, commonStatus, tc } = usePageI18n('users');
+  const submitLockRef = useRef(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -261,6 +262,12 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading, availableRoles = 
     setFormData((prev) => ({ ...prev, roleId: String(presetRoleId) }));
   }, [isOpen, user, presetRoleId]);
 
+  useEffect(() => {
+    if (!isLoading) {
+      submitLockRef.current = false;
+    }
+  }, [isLoading]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -271,6 +278,9 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading, availableRoles = 
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isLoading || submitLockRef.current) {
+      return;
+    }
     const newErrors = {};
     if (!formData.firstName) newErrors.firstName = tc('required');
     if (!formData.lastName) newErrors.lastName = tc('required');
@@ -283,6 +293,7 @@ const UserModal = ({ isOpen, onClose, onSave, user, isLoading, availableRoles = 
       return;
     }
 
+    submitLockRef.current = true;
     onSave(formData);
   };
 
@@ -665,6 +676,7 @@ const UsersPage = () => {
   const [isCreatedSuccessOpen, setIsCreatedSuccessOpen] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const rolesFetchInFlightRef = useRef(null);
+  const createInFlightRef = useRef(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -854,10 +866,15 @@ const UsersPage = () => {
 
   // Handlers
   const handleCreateUser = async (formData) => {
+    if (isSaving || createInFlightRef.current) {
+      return;
+    }
+
+    createInFlightRef.current = true;
     setIsSaving(true);
     setFormErrors(null);
     try {
-      const response = await createUser(formData);
+      const response = await createUser(formData, availableRoles);
       const body = unwrapData(response);
       const temporaryPassword = body?.temporary_password ?? response.temporaryPassword;
       const newUser = normalizeUserRecord(body);
@@ -887,6 +904,7 @@ const UsersPage = () => {
         dispatchAppToast(getApiErrorMessage(error, t('errors.saveFailed')), 'error');
       }
     } finally {
+      createInFlightRef.current = false;
       setIsSaving(false);
     }
   };

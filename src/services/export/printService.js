@@ -1,5 +1,14 @@
 // src/services/export/printService.js
 import { format } from 'date-fns';
+import {
+  containsArabic,
+  escapeHtml,
+  getTextAlignment,
+  NOTO_SANS_ARABIC_FAMILY,
+  NOTO_SANS_ARABIC_FONT_URL,
+  prepareExportText,
+  shouldUseRtlLayout,
+} from '../../utils/exportText';
 
 /**
  * Service d'impression professionnel
@@ -69,8 +78,18 @@ export const printData = async ({
 const createPrintContent = ({ title, subtitle, columns, data, userName, companyName, summary, dateFormat }) => {
   const currentDate = format(new Date(), dateFormat);
   const totalPages = Math.ceil(data.length / 25);
+  const previewValues = [
+    title,
+    subtitle,
+    userName,
+    companyName,
+    ...columns.map((col) => col.label),
+    ...data.flatMap((row) => columns.map((col) => row[col.accessor])),
+  ];
+  const useRtl = shouldUseRtlLayout(previewValues);
+  const textDirection = useRtl ? 'rtl' : 'ltr';
+  const textAlignDefault = useRtl ? 'right' : 'left';
 
-  // Générer le résumé HTML
   let summaryHTML = '';
   if (summary && Object.keys(summary).length > 0) {
     const summaryKeys = Object.keys(summary);
@@ -78,15 +97,14 @@ const createPrintContent = ({ title, subtitle, columns, data, userName, companyN
       <div class="summary-container">
         ${summaryKeys.map(key => `
           <div class="summary-card">
-            <div class="summary-label">${key}</div>
-            <div class="summary-value">${typeof summary[key] === 'number' ? summary[key].toLocaleString() : summary[key]}</div>
+            <div class="summary-label">${escapeHtml(prepareExportText(key))}</div>
+            <div class="summary-value">${escapeHtml(prepareExportText(typeof summary[key] === 'number' ? summary[key].toLocaleString() : summary[key]))}</div>
           </div>
         `).join('')}
       </div>
     `;
   }
 
-  // Générer le tableau
   let tableRows = '';
   data.forEach(row => {
     tableRows += `<tr>`;
@@ -95,17 +113,20 @@ const createPrintContent = ({ title, subtitle, columns, data, userName, companyN
       if (col.printFormatter) {
         value = col.printFormatter(value, row);
       }
-      tableRows += `<td>${value !== undefined && value !== null ? value : ''}</td>`;
+      const displayValue = escapeHtml(prepareExportText(value !== undefined && value !== null ? value : ''));
+      const align = getTextAlignment(value, textAlignDefault);
+      tableRows += `<td style="text-align:${align}; direction:${containsArabic(value) ? 'rtl' : 'inherit'};">${displayValue}</td>`;
     });
     tableRows += `</tr>`;
   });
 
   return `
     <!DOCTYPE html>
-    <html>
+    <html dir="${textDirection}" lang="${useRtl ? 'ar' : 'en'}">
       <head>
         <meta charset="UTF-8">
-        <title>${title}</title>
+        <title>${escapeHtml(prepareExportText(title))}</title>
+        <link rel="stylesheet" href="${NOTO_SANS_ARABIC_FONT_URL}">
         <style>
           /* Reset et styles de base */
           * {
@@ -115,12 +136,14 @@ const createPrintContent = ({ title, subtitle, columns, data, userName, companyN
           }
 
           body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            font-family: ${NOTO_SANS_ARABIC_FAMILY};
             background: #FFFFFF;
             padding: 30px 40px;
             color: #2B2B2B;
             font-size: 12px;
             line-height: 1.5;
+            direction: ${textDirection};
+            text-align: ${textAlignDefault};
           }
 
           /* En-tête */
@@ -210,7 +233,7 @@ const createPrintContent = ({ title, subtitle, columns, data, userName, companyN
 
           .print-table thead th {
             padding: 8px 10px;
-            text-align: left;
+            text-align: ${textAlignDefault};
             font-weight: 600;
             font-size: 10px;
             text-transform: uppercase;
@@ -224,6 +247,7 @@ const createPrintContent = ({ title, subtitle, columns, data, userName, companyN
           .print-table tbody td {
             padding: 6px 10px;
             border-bottom: 1px solid #E8E0D8;
+            text-align: ${textAlignDefault};
           }
 
           /* Badges */
@@ -348,13 +372,13 @@ const createPrintContent = ({ title, subtitle, columns, data, userName, companyN
       <body>
         <!-- Header -->
         <div class="print-header">
-          <div class="company">${companyName}</div>
-          <div class="title">${title}</div>
-          ${subtitle ? `<div class="subtitle">${subtitle}</div>` : ''}
+          <div class="company">${escapeHtml(prepareExportText(companyName))}</div>
+          <div class="title">${escapeHtml(prepareExportText(title))}</div>
+          ${subtitle ? `<div class="subtitle">${escapeHtml(prepareExportText(subtitle))}</div>` : ''}
           <div class="meta">
-            <span>📅 ${currentDate}</span>
-            <span>👤 ${userName}</span>
-            <span>📊 ${data.length} lignes</span>
+            <span>${escapeHtml(currentDate)}</span>
+            <span>${escapeHtml(prepareExportText(userName))}</span>
+            <span>${data.length}</span>
           </div>
         </div>
 
@@ -365,7 +389,7 @@ const createPrintContent = ({ title, subtitle, columns, data, userName, companyN
         <table class="print-table">
           <thead>
             <tr>
-              ${columns.map(col => `<th>${col.label}</th>`).join('')}
+              ${columns.map(col => `<th style="text-align:${getTextAlignment(col.label, textAlignDefault)};">${escapeHtml(prepareExportText(col.label))}</th>`).join('')}
             </tr>
           </thead>
           <tbody>
@@ -375,9 +399,9 @@ const createPrintContent = ({ title, subtitle, columns, data, userName, companyN
 
         <!-- Footer -->
         <div class="print-footer">
-          <div>${companyName} - © ${new Date().getFullYear()} - Tous droits réservés</div>
+          <div>${escapeHtml(prepareExportText(companyName))} - © ${new Date().getFullYear()}</div>
           <div style="margin-top: 5px; font-size: 9px;">
-            Impression : ${currentDate} - Page 1 / ${totalPages}
+            ${escapeHtml(currentDate)} - Page 1 / ${totalPages}
           </div>
         </div>
       </body>
