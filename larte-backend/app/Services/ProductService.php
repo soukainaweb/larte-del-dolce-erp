@@ -33,7 +33,18 @@ class ProductService
             $query->where('status', $filters['status']);
         }
 
-        $paginator = $query->paginate($filters['per_page'] ?? 10);
+        $sortColumn = match ($filters['sort_by'] ?? 'created_at') {
+            'createdAt', 'created_at' => 'created_at',
+            'name' => 'name',
+            'price' => 'price',
+            'stock', 'stock_quantity' => 'stock_quantity',
+            default => 'created_at',
+        };
+        $sortDirection = strtolower((string) ($filters['sort_order'] ?? 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $paginator = $query
+            ->orderBy($sortColumn, $sortDirection)
+            ->paginate($filters['per_page'] ?? 10);
         $paginator->getCollection()->transform(fn (Product $product) => $this->withPublicImageUrl($product));
 
         return $paginator;
