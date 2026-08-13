@@ -419,7 +419,7 @@ class MeetingService
                     $detailsUrl,
                 ),
                 'type' => 'meetings',
-            ]);
+            ], ['skip_email' => true]);
         }
     }
 

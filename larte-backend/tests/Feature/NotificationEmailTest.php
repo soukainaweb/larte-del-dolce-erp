@@ -3,12 +3,15 @@
 namespace Tests\Feature;
 
 use App\Mail\InAppNotificationMail;
+use App\Mail\MeetingInvitationMail;
 use App\Models\Customer;
 use App\Models\Notification;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\OrderWorkflow;
 use App\Services\NotificationDeliveryService;
+use App\Support\EnsureFactorySetup;
 use Database\Seeders\SalesDemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -294,6 +297,214 @@ class NotificationEmailTest extends TestCase
 
         Mail::assertNotSent(InAppNotificationMail::class, function (InAppNotificationMail $mail) use ($sales) {
             return $mail->hasTo($sales->email);
+        });
+    }
+
+    public function test_sales_representative_receives_order_notification_email(): void
+    {
+        Mail::fake();
+
+        $sales = User::where('email', SalesDemoSeeder::DEMO_EMAIL)->firstOrFail();
+        $customer = Customer::where('user_id', $sales->id)->firstOrFail();
+        $product = Product::firstOrFail();
+
+        Sanctum::actingAs($sales);
+
+        $this->postJson('/api/orders', [
+            'customer_id' => $customer->id,
+            'sales_rep_id' => $sales->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'price' => 100, 'discount' => 0],
+            ],
+        ])->assertCreated();
+
+        Mail::assertSent(InAppNotificationMail::class, function (InAppNotificationMail $mail) use ($sales) {
+            return $mail->hasTo($sales->email) && $mail->title === 'تم إرسال الطلب';
+        });
+    }
+
+    public function test_manager_receives_order_notification_email(): void
+    {
+        Mail::fake();
+
+        $sales = User::where('email', SalesDemoSeeder::DEMO_EMAIL)->firstOrFail();
+        $manager = User::where('email', 'manager@larte.com')->firstOrFail();
+        $customer = Customer::where('user_id', $sales->id)->firstOrFail();
+        $product = Product::firstOrFail();
+
+        Sanctum::actingAs($sales);
+
+        $this->postJson('/api/orders', [
+            'customer_id' => $customer->id,
+            'sales_rep_id' => $sales->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'price' => 100, 'discount' => 0],
+            ],
+        ])->assertCreated();
+
+        Mail::assertSent(InAppNotificationMail::class, function (InAppNotificationMail $mail) use ($manager) {
+            return $mail->hasTo($manager->email) && $mail->title === 'طلب جديد يحتاج موافقتك';
+        });
+    }
+
+    public function test_accountant_receives_approval_notification_email(): void
+    {
+        Mail::fake();
+
+        $sales = User::where('email', SalesDemoSeeder::DEMO_EMAIL)->firstOrFail();
+        $manager = User::where('email', 'manager@larte.com')->firstOrFail();
+        $accountant = User::where('email', 'accountant@larte.com')->firstOrFail();
+        $customer = Customer::where('user_id', $sales->id)->firstOrFail();
+        $product = Product::firstOrFail();
+
+        Sanctum::actingAs($sales);
+        $orderId = $this->postJson('/api/orders', [
+            'customer_id' => $customer->id,
+            'sales_rep_id' => $sales->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'price' => 100, 'discount' => 0],
+            ],
+        ])->json('data.id');
+
+        Mail::fake();
+
+        Sanctum::actingAs($manager);
+        $this->postJson("/api/orders/{$orderId}/approve", ['notes' => 'Approved'])->assertOk();
+
+        Mail::assertSent(InAppNotificationMail::class, function (InAppNotificationMail $mail) use ($accountant) {
+            return $mail->hasTo($accountant->email) && $mail->title === 'طلب يحتاج موافقة المحاسب';
+        });
+    }
+
+    public function test_responsible_receives_approval_notification_email(): void
+    {
+        Mail::fake();
+
+        $sales = User::where('email', SalesDemoSeeder::DEMO_EMAIL)->firstOrFail();
+        $manager = User::where('email', 'manager@larte.com')->firstOrFail();
+        $accountant = User::where('email', 'accountant@larte.com')->firstOrFail();
+        $responsible = User::where('email', 'responsible@larte.com')->firstOrFail();
+        $customer = Customer::where('user_id', $sales->id)->firstOrFail();
+        $product = Product::firstOrFail();
+
+        Sanctum::actingAs($sales);
+        $orderId = $this->postJson('/api/orders', [
+            'customer_id' => $customer->id,
+            'sales_rep_id' => $sales->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'price' => 100, 'discount' => 0],
+            ],
+        ])->json('data.id');
+
+        Sanctum::actingAs($manager);
+        $this->postJson("/api/orders/{$orderId}/approve", ['notes' => 'Manager approved'])->assertOk();
+
+        Mail::fake();
+
+        Sanctum::actingAs($accountant);
+        $this->postJson("/api/orders/{$orderId}/approve", ['notes' => 'Accountant approved'])->assertOk();
+
+        Mail::assertSent(InAppNotificationMail::class, function (InAppNotificationMail $mail) use ($responsible) {
+            return $mail->hasTo($responsible->email) && $mail->title === 'طلب يحتاج موافقة المسؤول';
+        });
+    }
+
+    public function test_factory_receives_order_notification_email_after_responsible_approval(): void
+    {
+        Mail::fake();
+
+        EnsureFactorySetup::run('FactoryPass123!');
+
+        $sales = User::where('email', SalesDemoSeeder::DEMO_EMAIL)->firstOrFail();
+        $manager = User::where('email', 'manager@larte.com')->firstOrFail();
+        $accountant = User::where('email', 'accountant@larte.com')->firstOrFail();
+        $responsible = User::where('email', 'responsible@larte.com')->firstOrFail();
+        $factory = User::where('email', EnsureFactorySetup::USER_EMAIL)->firstOrFail();
+        $customer = Customer::where('user_id', $sales->id)->firstOrFail();
+        $product = Product::firstOrFail();
+
+        Sanctum::actingAs($sales);
+        $orderId = $this->postJson('/api/orders', [
+            'customer_id' => $customer->id,
+            'sales_rep_id' => $sales->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'price' => 100, 'discount' => 0],
+            ],
+        ])->json('data.id');
+
+        Sanctum::actingAs($manager);
+        $this->postJson("/api/orders/{$orderId}/approve", ['notes' => 'Manager approved'])->assertOk();
+
+        Sanctum::actingAs($accountant);
+        $this->postJson("/api/orders/{$orderId}/approve", ['notes' => 'Accountant approved'])->assertOk();
+
+        Mail::fake();
+
+        Sanctum::actingAs($responsible);
+        $this->postJson("/api/orders/{$orderId}/approve", ['notes' => 'Responsible approved'])->assertOk()
+            ->assertJsonPath('data.status', OrderWorkflow::PENDING_FACTORY);
+
+        Mail::assertSent(InAppNotificationMail::class, function (InAppNotificationMail $mail) use ($factory) {
+            return $mail->hasTo($factory->email) && $mail->title === 'طلب جديد للمصنع';
+        });
+    }
+
+    public function test_manually_created_notification_sends_email(): void
+    {
+        Mail::fake();
+
+        $admin = User::where('email', 'madina7ali7@gmail.com')->firstOrFail();
+        $manager = User::where('email', 'manager@larte.com')->firstOrFail();
+
+        Sanctum::actingAs($admin);
+
+        $this->postJson('/api/notifications', [
+            'title' => 'Manual notification',
+            'message' => 'Created via API',
+            'type' => 'system',
+            'user_id' => $manager->id,
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $manager->id,
+            'title' => 'Manual notification',
+        ]);
+
+        Mail::assertSent(InAppNotificationMail::class, function (InAppNotificationMail $mail) use ($manager) {
+            return $mail->hasTo($manager->email) && $mail->title === 'Manual notification';
+        });
+    }
+
+    public function test_published_meeting_preserves_invitation_email_without_duplicating_in_app_invite_email(): void
+    {
+        Mail::fake();
+
+        $admin = User::where('email', 'madina7ali7@gmail.com')->firstOrFail();
+        $manager = User::where('email', 'manager@larte.com')->firstOrFail();
+
+        Sanctum::actingAs($admin);
+
+        $this->postJson('/api/meetings', [
+            'title' => 'Published meeting email test',
+            'meeting_date' => now()->addDay()->toDateString(),
+            'meeting_time' => '10:00',
+            'notes' => 'Meeting email dedup test',
+            'publish' => true,
+            'invitee_user_ids' => [$manager->id],
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $manager->id,
+            'type' => 'meetings',
+        ]);
+
+        Mail::assertSent(MeetingInvitationMail::class, function (MeetingInvitationMail $mail) use ($manager) {
+            return $mail->hasTo($manager->email);
+        });
+
+        Mail::assertNotSent(InAppNotificationMail::class, function (InAppNotificationMail $mail) use ($manager) {
+            return $mail->hasTo($manager->email)
+                && str_starts_with($mail->title, 'Meeting invitation:');
         });
     }
 

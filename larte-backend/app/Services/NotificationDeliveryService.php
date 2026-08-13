@@ -16,12 +16,13 @@ class NotificationDeliveryService
      * Persist an in-app notification and email the same recipient.
      *
      * @param  array{type: string, title: string, message: string}  $payload
+     * @param  array{skip_email?: bool}  $options
      */
-    public function deliver(User $user, array $payload): ?Notification
+    public function deliver(User $user, array $payload, array $options = []): ?Notification
     {
         $notification = $this->createInAppNotification($user, $payload);
 
-        if ($notification !== null) {
+        if ($notification !== null && ! ($options['skip_email'] ?? false)) {
             $this->sendEmail($user, $payload);
         }
 
