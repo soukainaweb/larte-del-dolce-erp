@@ -3,10 +3,15 @@
 namespace App\Services;
 
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class NotificationService
 {
+    public function __construct(
+        private NotificationDeliveryService $notificationDelivery,
+    ) {
+    }
     public function list(array $filters = [], ?int $userId = null): LengthAwarePaginator
     {
         $userId = $userId ?? auth()->id();
@@ -35,12 +40,25 @@ class NotificationService
 
     public function create(array $data): Notification
     {
-        return Notification::create([
+        $userId = $data['user_id'] ?? auth()->id();
+        $user = User::findOrFail($userId);
+
+        $notification = $this->notificationDelivery->deliver($user, [
             'title' => $data['title'],
             'message' => $data['message'],
             'type' => $data['type'],
-            'user_id' => $data['user_id'] ?? auth()->id(),
         ]);
+
+        if ($notification === null) {
+            return Notification::create([
+                'title' => $data['title'],
+                'message' => $data['message'],
+                'type' => $data['type'],
+                'user_id' => $userId,
+            ]);
+        }
+
+        return $notification;
     }
 
     public function markAsRead(Notification $notification): Notification

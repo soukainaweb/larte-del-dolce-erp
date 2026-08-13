@@ -6,7 +6,6 @@ use App\Mail\MeetingInvitationMail;
 use App\Models\Meeting;
 use App\Models\MeetingActivity;
 use App\Models\MeetingInvitee;
-use App\Models\Notification;
 use App\Models\User;
 use App\Support\MeetingIcsGenerator;
 use App\Support\SalesScope;
@@ -16,6 +15,11 @@ use Illuminate\Support\Facades\Mail;
 
 class MeetingService
 {
+    public function __construct(
+        private NotificationDeliveryService $notificationDelivery,
+    ) {
+    }
+
     public function list(array $filters = []): LengthAwarePaginator
     {
         $query = Meeting::with(['customer', 'order', 'creator', 'invitees.user']);
@@ -400,22 +404,22 @@ class MeetingService
                 continue;
             }
 
-            try {
-                Notification::create([
-                    'user_id' => $invitee->user_id,
-                    'title' => 'Meeting invitation: ' . $meeting->title,
-                    'message' => sprintf(
-                        '%s invited you to a meeting on %s at %s. View details: %s',
-                        $organizerName,
-                        $meeting->meeting_date?->format('M j, Y') ?? $meeting->meeting_date,
-                        is_string($meeting->meeting_time) ? substr($meeting->meeting_time, 0, 5) : $meeting->meeting_time,
-                        $detailsUrl,
-                    ),
-                    'type' => 'meetings',
-                ]);
-            } catch (\Throwable $e) {
-                report($e);
+            $user = $invitee->user ?? User::find($invitee->user_id);
+            if (! $user) {
+                continue;
             }
+
+            $this->notificationDelivery->deliver($user, [
+                'title' => 'Meeting invitation: ' . $meeting->title,
+                'message' => sprintf(
+                    '%s invited you to a meeting on %s at %s. View details: %s',
+                    $organizerName,
+                    $meeting->meeting_date?->format('M j, Y') ?? $meeting->meeting_date,
+                    is_string($meeting->meeting_time) ? substr($meeting->meeting_time, 0, 5) : $meeting->meeting_time,
+                    $detailsUrl,
+                ),
+                'type' => 'meetings',
+            ]);
         }
     }
 

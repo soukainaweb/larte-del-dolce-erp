@@ -85,7 +85,8 @@ class MeetingApiTest extends TestCase
             'action' => MeetingActivity::ACTION_CREATED,
         ]);
 
-        Mail::assertNothingSent();
+        Mail::assertNotSent(\App\Mail\MeetingInvitationMail::class);
+        Mail::assertSent(\App\Mail\InAppNotificationMail::class);
     }
 
     public function test_create_with_publish_schedules_and_notifies(): void

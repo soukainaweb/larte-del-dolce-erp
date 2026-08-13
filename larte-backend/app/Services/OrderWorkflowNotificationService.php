@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Sample;
 use App\Models\User;
@@ -11,6 +10,11 @@ use Illuminate\Support\Collection;
 
 class OrderWorkflowNotificationService
 {
+    public function __construct(
+        private NotificationDeliveryService $notificationDelivery,
+    ) {
+    }
+
     public function notifyOrderCreated(Order $order, User $creator): void
     {
         $order->loadMissing(['customer', 'user']);
@@ -255,16 +259,7 @@ class OrderWorkflowNotificationService
 
     protected function createNotification(User $user, array $payload): void
     {
-        try {
-            Notification::create([
-                'user_id' => $user->id,
-                'title' => $payload['title'],
-                'message' => $payload['message'],
-                'type' => $payload['type'],
-            ]);
-        } catch (\Throwable $e) {
-            report($e);
-        }
+        $this->notificationDelivery->deliver($user, $payload);
     }
 
     protected function displayName(User $user): string
