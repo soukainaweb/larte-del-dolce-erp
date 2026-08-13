@@ -1574,6 +1574,11 @@ const OrdersPage = () => {
 
   const totalPages = Math.ceil(filteredOrders.length / pagination.perPage);
 
+  const exportOrders = useMemo(
+    () => (isDetailsModalOpen && selectedOrder ? [selectedOrder] : filteredOrders),
+    [isDetailsModalOpen, selectedOrder, filteredOrders]
+  );
+
   // ==========================================
   // EXPORT CONFIGURATION
   // ==========================================
@@ -1774,11 +1779,11 @@ const OrdersPage = () => {
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
           <ExportButtons
-            data={filteredOrders}
+            data={exportOrders}
             columns={columns}
             title={t('orders.export.title')}
             subtitle={t('orders.export.subtitle', {
-              count: filteredOrders.length,
+              count: exportOrders.length,
               revenue: kpis.revenue.toLocaleString(),
               currency: CURRENCY_SYMBOL
             })}
