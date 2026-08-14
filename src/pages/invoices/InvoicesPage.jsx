@@ -48,6 +48,11 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import ScopedExportButtons from '../../components/export/ScopedExportButtons';
+import ExportButtons from '../../components/ExportButtons';
+import {
+  getInvoicesPageExportMode,
+  buildSingleInvoiceExportSummary,
+} from './invoiceExportSelection';
 import {
   getInvoices,
   getInvoiceById,
@@ -1046,6 +1051,24 @@ const InvoicesPage = () => {
     [searchTerm, paymentStatusFilter, statusFilter, totalCount]
   );
 
+  const invoiceExportMode = useMemo(
+    () => getInvoicesPageExportMode(isViewModalOpen, selectedInvoice),
+    [isViewModalOpen, selectedInvoice]
+  );
+
+  const singleInvoiceExportSummary = useMemo(() => {
+    if (invoiceExportMode.mode !== 'single' || !selectedInvoice) return null;
+    return buildSingleInvoiceExportSummary(selectedInvoice, {
+      invoiceNumber: t('invoices.table.invoiceNumber'),
+      orderNumber: t('orders.table.orderNumber'),
+      customer: tc('customer'),
+      total: tc('total'),
+      paidAmount: t('common.labels.paidAmount'),
+      paymentStatus: t('invoices.fields.paymentStatus'),
+      currency: CURRENCY,
+    });
+  }, [invoiceExportMode.mode, selectedInvoice, t, tc]);
+
   // Paginate
   const paginatedInvoices = useMemo(() => ensureArray(filteredInvoices), [filteredInvoices]);
 
@@ -1183,20 +1206,35 @@ const InvoicesPage = () => {
           <p className="text-sm text-[#6D6D6D]">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Export Buttons */}
-          <ScopedExportButtons
-            pageId="invoices"
-            pageContext={invoiceExportContext}
-            columns={columns}
-            title={t('invoices.export.title')}
-            subtitle={`${filteredInvoices.length} factures - Total: ${kpis.revenue.toLocaleString()} ${CURRENCY}`}
-            filename={`factures_${new Date().toISOString().split('T')[0]}`}
-            summary={listSummary}
-            rowFormatter={rowFormatter}
-            userName={user?.firstName}
-            onSuccess={handleExportSuccess}
-            onError={handleExportError}
-          />
+          {/* Export Buttons — single invoice when view modal is open; scoped list export otherwise */}
+          {invoiceExportMode.mode === 'single' && selectedInvoice ? (
+            <ExportButtons
+              data={invoiceExportMode.data}
+              columns={columns}
+              title={t('invoices.export.title')}
+              subtitle={selectedInvoice.invoiceNumber}
+              filename={`facture_${selectedInvoice.invoiceNumber}_${new Date().toISOString().split('T')[0]}`}
+              summary={singleInvoiceExportSummary}
+              rowFormatter={rowFormatter}
+              userName={user?.firstName}
+              onSuccess={handleExportSuccess}
+              onError={handleExportError}
+            />
+          ) : (
+            <ScopedExportButtons
+              pageId="invoices"
+              pageContext={invoiceExportContext}
+              columns={columns}
+              title={t('invoices.export.title')}
+              subtitle={`${filteredInvoices.length} factures - Total: ${kpis.revenue.toLocaleString()} ${CURRENCY}`}
+              filename={`factures_${new Date().toISOString().split('T')[0]}`}
+              summary={listSummary}
+              rowFormatter={rowFormatter}
+              userName={user?.firstName}
+              onSuccess={handleExportSuccess}
+              onError={handleExportError}
+            />
+          )}
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B8863B] to-[#C89B5A] text-white font-medium hover:shadow-lg transition-all"
