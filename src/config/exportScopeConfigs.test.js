@@ -19,6 +19,10 @@ vi.mock('../services/paymentService', () => ({
   getPayments: vi.fn(),
 }));
 
+vi.mock('../services/invoiceService', () => ({
+  getInvoices: vi.fn(),
+}));
+
 vi.mock('../services/deliveryService', () => ({
   default: {
     getDeliveries: vi.fn(),
@@ -28,6 +32,7 @@ vi.mock('../services/deliveryService', () => ({
 import { fetchAllPaginated } from '../utils/fetchAllPaginated';
 import { getInventory } from '../services/inventoryService';
 import { getPayments } from '../services/paymentService';
+import { getInvoices } from '../services/invoiceService';
 import deliveryService from '../services/deliveryService';
 
 describe('report export configs', () => {
@@ -111,6 +116,24 @@ describe('deliveries and payments customer export', () => {
     expect(fetchAllPaginated).toHaveBeenCalledWith(
       expect.any(Function),
       expect.objectContaining({ customer_id: 7 })
+    );
+  });
+
+  it('reports invoices tab uses invoice list API with customer_id for entity export', async () => {
+    fetchAllPaginated.mockResolvedValueOnce({ items: [{ id: 11 }], total: 1 });
+    getInvoices.mockResolvedValue({ data: { data: [{ id: 11 }], total: 1 } });
+
+    const config = getReportsExportConfig('invoices', { filters: {} });
+
+    await config.resolveDataset({
+      scopeMode: SCOPE_MODE.ENTITY,
+      selectedEntity: { id: 5, label: 'Client A', raw: { id: 5, name: 'Client A' } },
+      pageContext: { filters: {} },
+    });
+
+    expect(fetchAllPaginated).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.objectContaining({ customer_id: 5, client: 5 })
     );
   });
 });

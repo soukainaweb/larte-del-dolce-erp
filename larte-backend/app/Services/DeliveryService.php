@@ -32,6 +32,10 @@ class DeliveryService
             $query->whereDate('delivery_date', '<=', $filters['date_to']);
         }
 
+        if (!empty($filters['customer_id'])) {
+            $query->whereHas('order', fn ($q) => $q->where('customer_id', $filters['customer_id']));
+        }
+
         return $query->orderByDesc('delivery_date')->paginate($filters['per_page'] ?? 10);
     }
 

@@ -63,6 +63,10 @@ class ReportService
             $query->where('status', StatusMapper::orderToDb($filters['status']));
         }
 
+        if (!empty($filters['customer_id'])) {
+            $query->where('customer_id', $filters['customer_id']);
+        }
+
         $orders = StatusMapper::transformOrderCollection($query->orderByDesc('created_at')->get());
 
         return [

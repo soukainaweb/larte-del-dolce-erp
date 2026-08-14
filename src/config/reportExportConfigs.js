@@ -2,9 +2,9 @@ import { SCOPE_MODE, ENTITY_SCOPE_TYPE, LARGE_EXPORT_THRESHOLD } from '../compon
 import { fetchAllPaginated } from '../utils/fetchAllPaginated';
 import { safeArray, unwrapPaginated } from '../utils/apiHelpers';
 import { getCustomers } from '../services/customerService';
+import { getInvoices } from '../services/invoiceService';
 import {
   getOrdersReport,
-  getInvoicesReport,
   getCustomersReport,
   getDeliveriesReport,
   getProductsReport,
@@ -183,13 +183,11 @@ export const REPORT_TAB_EXPORT = {
     filenamePrefix: 'report_invoices',
     modes: [SCOPE_MODE.ENTITY, SCOPE_MODE.ALL, SCOPE_MODE.FILTERS],
     supportsCustomerEntity: true,
-    fetchFn: getInvoicesReport,
+    fetchFn: getInvoices,
     getBaseParams: (ctx) =>
       stripUndefined({
-        period: ctx.dateRange,
         search: ctx.searchTerm,
         status: ctx.filters?.status,
-        client: ctx.filters?.client,
       }),
     columns: (t, tc) => [
       { label: 'ID', accessor: 'id', width: 10 },
@@ -200,10 +198,10 @@ export const REPORT_TAB_EXPORT = {
     ],
     rowFormatter: (item) => ({
       id: item.id,
-      client: item.client,
-      date: item.date,
-      amount: item.amount,
-      status: item.status,
+      client: item.order?.customer?.name ?? item.customer?.name ?? item.client ?? '—',
+      date: item.invoice_date ?? item.date ?? item.created_at ?? '—',
+      amount: item.total_amount ?? item.amount ?? 0,
+      status: item.status ?? '—',
     }),
   },
   deliveries: {

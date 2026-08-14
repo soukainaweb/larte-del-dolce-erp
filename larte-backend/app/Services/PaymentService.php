@@ -33,6 +33,10 @@ class PaymentService
             $query->whereDate('payment_date', '<=', $filters['date_to']);
         }
 
+        if (!empty($filters['customer_id'])) {
+            $query->whereHas('invoice.order', fn ($q) => $q->where('customer_id', $filters['customer_id']));
+        }
+
         $paginator = $query->orderByDesc('created_at')->paginate($filters['per_page'] ?? 10);
         $paginator->getCollection()->transform(fn ($p) => $this->transform($p));
 
