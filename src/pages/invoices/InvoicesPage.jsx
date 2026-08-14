@@ -1036,6 +1036,11 @@ const InvoicesPage = () => {
   // Filter invoices (API already handles filters)
   const filteredInvoices = useMemo(() => ensureArray(invoices), [invoices]);
 
+  const exportInvoices = useMemo(
+    () => (isViewModalOpen && selectedInvoice ? [selectedInvoice] : filteredInvoices),
+    [isViewModalOpen, selectedInvoice, filteredInvoices]
+  );
+
   // Paginate
   const paginatedInvoices = useMemo(() => ensureArray(filteredInvoices), [filteredInvoices]);
 
@@ -1076,14 +1081,29 @@ const InvoicesPage = () => {
             item.status === 'paid' ? t('common.paymentStatus.paid') : t('common.cancelled')
   });
 
-  const summary = [
+  const listSummary = useMemo(() => [
     { label: t('invoices.kpi.total'), value: kpis.total },
     { label: t('invoices.kpi.paid'), value: kpis.paid },
     { label: t('invoices.kpi.unpaid'), value: kpis.unpaid },
     { label: t('common.statuses.overdue'), value: kpis.overdue },
     { label: tc('today'), value: kpis.today },
-    { label: t('finance.kpi.totalRevenue'), value: `${kpis.revenue.toLocaleString()} ${CURRENCY}` }
-  ];
+    { label: t('finance.kpi.totalRevenue'), value: `${kpis.revenue.toLocaleString()} ${CURRENCY}` },
+  ], [kpis, t, tc]);
+
+  const exportSummary = useMemo(() => {
+    if (isViewModalOpen && selectedInvoice) {
+      return [
+        { label: t('invoices.table.invoiceNumber'), value: selectedInvoice.invoiceNumber ?? '—' },
+        { label: t('orders.table.orderNumber'), value: selectedInvoice.orderNumber ?? '—' },
+        { label: tc('customer'), value: selectedInvoice.customer ?? '—' },
+        { label: tc('total'), value: `${(selectedInvoice.totalAmount ?? 0).toLocaleString()} ${CURRENCY}` },
+        { label: t('common.labels.paidAmount'), value: `${(selectedInvoice.paidAmount ?? 0).toLocaleString()} ${CURRENCY}` },
+        { label: t('invoices.fields.paymentStatus'), value: selectedInvoice.paymentStatus ?? '—' },
+      ];
+    }
+
+    return listSummary;
+  }, [isViewModalOpen, selectedInvoice, listSummary, t, tc]);
 
   // ==========================================
   // EXPORT HANDLERS
@@ -1175,12 +1195,12 @@ const InvoicesPage = () => {
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
           <ExportButtons
-            data={filteredInvoices}
+            data={exportInvoices}
             columns={columns}
             title="{t('invoices.export.title')}"
-            subtitle={`${filteredInvoices.length} factures - Total: ${kpis.revenue.toLocaleString()} ${CURRENCY}`}
+            subtitle={`${exportInvoices.length} factures - Total: ${kpis.revenue.toLocaleString()} ${CURRENCY}`}
             filename={`factures_${new Date().toISOString().split('T')[0]}`}
-            summary={summary}
+            summary={exportSummary}
             rowFormatter={rowFormatter}
             userName={user?.firstName}
             onSuccess={handleExportSuccess}
