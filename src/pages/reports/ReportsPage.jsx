@@ -119,7 +119,7 @@ import {
 } from 'recharts';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import { useExport } from '../../hooks/useExport';
 import {
   getSalesOverview,
@@ -1788,6 +1788,16 @@ const ReportsPage = () => {
     { label: t('reports.export.statusPending'), value: ordersData.filter(o => o.status === t('common.pending')).length }
   ];
 
+  const reportsExportContext = useMemo(
+    () => ({
+      activeTab,
+      searchTerm,
+      dateRange,
+      filters,
+    }),
+    [activeTab, searchTerm, dateRange, filters]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
@@ -2760,8 +2770,9 @@ const ReportsPage = () => {
             </div>
 
             {/* Export Buttons */}
-            <ExportButtons
-              data={ordersData}
+            <ScopedExportButtons
+              pageId="reports"
+              pageContext={reportsExportContext}
               columns={exportColumns}
               title="Rapport des commandes"
               subtitle={`${ordersData.length} commandes`}

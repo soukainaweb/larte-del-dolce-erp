@@ -37,7 +37,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import {
   getSuppliers,
   getSupplierById,
@@ -832,15 +832,25 @@ const SuppliersPage = () => {
     { label: t('suppliers.types.packaging'), value: kpis.packaging }
   ];
 
+  const supplierExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        status: statusFilter,
+      },
+    }),
+    [searchTerm, statusFilter]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   // Handlers
@@ -933,8 +943,9 @@ const SuppliersPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={filteredSuppliers}
+          <ScopedExportButtons
+            pageId="suppliers"
+            pageContext={supplierExportContext}
             columns={columns}
             title={t('suppliers.export.title')}
             subtitle={t('suppliers.export.subtitle', { count: filteredSuppliers.length })}

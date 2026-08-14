@@ -50,7 +50,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import { useToast } from '../../contexts/ToastContext';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import deliveryService from '../../services/deliveryService';
 import useEntityDeepLink from '../../hooks/useEntityDeepLink';
 
@@ -987,15 +987,25 @@ const DeliveriesPage = () => {
     { label: tc('today'), value: kpis.today }
   ];
 
+  const deliveryExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        status: statusFilter,
+      },
+    }),
+    [searchTerm, statusFilter]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   // ===== FIX: Handler functions =====
@@ -1103,10 +1113,11 @@ const DeliveriesPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={filteredDeliveries}
+          <ScopedExportButtons
+            pageId="deliveries"
+            pageContext={deliveryExportContext}
             columns={columns}
-            title="{t('deliveries.export.title')}"
+            title={t('deliveries.export.title')}
             subtitle={`${filteredDeliveries.length} livraisons`}
             filename={`livraisons_${new Date().toISOString().split('T')[0]}`}
             summary={summary}

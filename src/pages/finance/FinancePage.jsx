@@ -62,7 +62,7 @@ import {
   Legend
 } from 'recharts';
 import { useAuth } from '../../contexts/AuthContext';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import {
   getFinanceMetrics,
   getRevenueExpensesData,
@@ -616,15 +616,24 @@ const FinancePage = () => {
     { label: t('finance.quickActions.accounting'), action: 'accounting', icon: Settings, color: '#F59E0B' }
   ], [t]);
 
+  const financeExportContext = useMemo(
+    () => ({
+      allData: transactions,
+      filteredData: transactions,
+      filters: { dateRange },
+    }),
+    [transactions, dateRange]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleRefresh = async () => {
@@ -683,8 +692,9 @@ const FinancePage = () => {
             <option value="quarter">{t('common.periods.quarter')}</option>
             <option value="year">{t('common.periods.year')}</option>
           </select>
-          <ExportButtons
-            data={transactions}
+          <ScopedExportButtons
+            pageId="finance"
+            pageContext={financeExportContext}
             columns={columns}
             title={t('finance.financialReport')}
             subtitle={t('finance.periodLabel', {

@@ -25,7 +25,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import { useTranslation } from 'react-i18next';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import {
   getCustomers,
   getCustomerById,
@@ -758,15 +758,27 @@ const CustomersPage = () => {
     ];
   }, [kpis, t, commonStatus]);
 
+  const customerExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        type: typeFilter,
+        status: statusFilter,
+      },
+      totalCount,
+    }),
+    [searchTerm, typeFilter, statusFilter, totalCount]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleCreateClient = async (formData) => {
@@ -857,8 +869,9 @@ const CustomersPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={filteredClients}
+          <ScopedExportButtons
+            pageId="customers"
+            pageContext={customerExportContext}
             columns={columns}
             title={t('customers.export.title')}
             subtitle={t('customers.export.subtitle', { count: filteredClients.length })}

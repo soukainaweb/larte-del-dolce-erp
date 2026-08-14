@@ -29,7 +29,7 @@ import { usePageI18n } from '../../hooks/usePageI18n';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import useEntityDeepLink from '../../hooks/useEntityDeepLink';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import {
   getProducts,
   getProductById,
@@ -827,15 +827,26 @@ const ProductsPage = () => {
     { label: t('products.kpi.stockValue'), value: `${kpis.totalValue.toLocaleString()} ${CURRENCY}` }
   ];
 
+  const productExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        status: statusFilter,
+      },
+      totalCount,
+    }),
+    [searchTerm, statusFilter, totalCount]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   // Handlers
@@ -930,8 +941,9 @@ const ProductsPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={filteredProducts}
+          <ScopedExportButtons
+            pageId="products"
+            pageContext={productExportContext}
             columns={columns}
             title={t('products.export.title')}
             subtitle={t('products.export.subtitle', { count: filteredProducts.length })}

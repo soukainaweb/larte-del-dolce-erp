@@ -55,7 +55,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import { useTranslation } from 'react-i18next';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import {
   getExpenses,
   getExpenseById,
@@ -974,15 +974,26 @@ const ExpensesPage = () => {
     { label: 'Nombre de dépenses', value: kpis.count }
   ];
 
+  const expenseExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        category: categoryFilter,
+        status: statusFilter,
+      },
+    }),
+    [searchTerm, categoryFilter, statusFilter]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   // ===== FIX: Handler functions =====
@@ -1089,10 +1100,11 @@ const ExpensesPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={filteredExpenses}
+          <ScopedExportButtons
+            pageId="expenses"
+            pageContext={expenseExportContext}
             columns={columns}
-            title="{t('expenses.export.title')}"
+            title={t('expenses.export.title')}
             subtitle={`${filteredExpenses.length} dépenses - Total: ${kpis.total.toLocaleString()} ${CURRENCY}`}
             filename={`depenses_${new Date().toISOString().split('T')[0]}`}
             summary={summary}

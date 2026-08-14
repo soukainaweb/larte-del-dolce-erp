@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import { useToast } from '../../contexts/ToastContext';
 import { safeArray, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
 import {
@@ -958,15 +958,26 @@ const WarehousePage = () => {
     { label: t('warehouse.fields.stockValue'), value: formatCurrency(kpis.totalValue) }
   ];
 
+  const warehouseExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        status: statusFilter,
+        type: typeFilter,
+      },
+    }),
+    [searchTerm, statusFilter, typeFilter]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   // Handlers
@@ -1072,8 +1083,9 @@ const WarehousePage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={filteredWarehouses}
+          <ScopedExportButtons
+            pageId="warehouse"
+            pageContext={warehouseExportContext}
             columns={columns}
             title={t('warehouse.export.title')}
             subtitle={t('warehouse.export.subtitle', { count: filteredWarehouses.length, value: formatCurrency(kpis.totalValue) })}

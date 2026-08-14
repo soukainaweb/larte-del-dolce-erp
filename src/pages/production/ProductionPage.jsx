@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import { useToast } from '../../contexts/ToastContext';
 import useEntityDeepLink from '../../hooks/useEntityDeepLink';
 import { safeArray, ensureArray, getApiErrorMessage } from '../../utils/apiHelpers';
@@ -826,15 +826,25 @@ const ProductionPage = () => {
     ];
   }, [kpis]);
 
+  const productionExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        status: statusFilter,
+      },
+    }),
+    [searchTerm, statusFilter]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   // Handlers
@@ -908,10 +918,11 @@ const ProductionPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={filteredProductions}
+          <ScopedExportButtons
+            pageId="production"
+            pageContext={productionExportContext}
             columns={columns}
-            title="{t('production.export.title')}"
+            title={t('production.export.title')}
             subtitle={`${filteredProductions.length} productions - Progression moyenne: ${kpis.avgProgress}%`}
             filename={`production_${new Date().toISOString().split('T')[0]}`}
             summary={summary}

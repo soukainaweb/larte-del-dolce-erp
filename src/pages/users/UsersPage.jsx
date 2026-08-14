@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import { hasPermission } from '../../utils/permissions';
 import { translateRoleLabel } from '../../utils/roleMapping';
 // src/pages/Users/UsersPage.jsx
@@ -853,15 +853,26 @@ const UsersPage = () => {
     { label: commonStatus.locked.label, value: kpis.locked }
   ];
 
+  const userExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        role: roleFilter,
+        status: statusFilter,
+      },
+    }),
+    [searchTerm, roleFilter, statusFilter]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   // Handlers
@@ -1012,8 +1023,9 @@ const UsersPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={filteredUsers}
+          <ScopedExportButtons
+            pageId="users"
+            pageContext={userExportContext}
             columns={columns}
             title={t('users.export.title')}
             subtitle={t('users.export.subtitle', { count: filteredUsers.length })}

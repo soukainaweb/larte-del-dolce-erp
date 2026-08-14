@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import {
   getRoles,
   getRoleById,
@@ -325,15 +325,25 @@ const RolesPermissionsPage = () => {
     { label: tc('pending'), value: stats.pendingRequests }
   ], [t, tc, stats]);
 
+  const rolesExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        status: statusFilter,
+      },
+    }),
+    [searchTerm, statusFilter]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   // ==========================================
@@ -550,8 +560,9 @@ const RolesPermissionsPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={filteredRoles}
+          <ScopedExportButtons
+            pageId="rolesPermissions"
+            pageContext={rolesExportContext}
             columns={columns}
             title={t('roles.title')}
             subtitle={t('roles.usersManagement.userCount', { count: filteredRoles.length })}

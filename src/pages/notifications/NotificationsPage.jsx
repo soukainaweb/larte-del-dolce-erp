@@ -153,7 +153,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import { dispatchNotificationsRefresh } from '../../hooks/useUnreadNotificationCount';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import { 
   getNotificationRoute, 
   getModuleLabel, 
@@ -857,6 +857,17 @@ const NotificationsPage = () => {
     { label: tc('today'), value: stats.today }
   ];
 
+  const notificationExportContext = useMemo(
+    () => ({
+      allData: notifications,
+      filteredData: notifications,
+      filteredCount: notifications.length,
+      totalCount,
+      hasActiveFilters: isFilteredList,
+    }),
+    [notifications, totalCount, isFilteredList]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
@@ -1113,10 +1124,11 @@ const NotificationsPage = () => {
 
           <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
             {/* Export Buttons */}
-            <ExportButtons
-              data={notifications}
+            <ScopedExportButtons
+              pageId="notifications"
+              pageContext={notificationExportContext}
               columns={columns}
-              title="{t('notifications.export.title')}"
+              title={t('notifications.export.title')}
               subtitle={`${notifications.length} notifications`}
               filename={`notifications_${new Date().toISOString().split('T')[0]}`}
               summary={summary}

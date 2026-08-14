@@ -46,7 +46,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import { useToast } from '../../contexts/ToastContext';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import {
   getInventory,
   getInventoryItemById,
@@ -798,15 +798,26 @@ const InventoryPage = () => {
     { label: 'Valeur du stock', value: `${kpis.totalValue.toLocaleString()} ${CURRENCY}` }
   ];
 
+  const inventoryExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        category: categoryFilter,
+        status: statusFilter,
+      },
+    }),
+    [searchTerm, categoryFilter, statusFilter]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleAddMovement = async (formData) => {
@@ -886,8 +897,9 @@ const InventoryPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={filteredInventory}
+          <ScopedExportButtons
+            pageId="inventory"
+            pageContext={inventoryExportContext}
             columns={columns}
             title={t('inventory.export.title')}
             subtitle={t('inventory.export.subtitle', { count: filteredInventory.length, value: `${kpis.totalValue.toLocaleString()} ${CURRENCY}` })}
