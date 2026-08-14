@@ -1,5 +1,5 @@
 // src/pages/MyProfile/MyProfilePage.jsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom'; // ✅ Ajout
 import {
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import {
   getProfile,
   updateProfile,
@@ -1002,6 +1002,10 @@ const MyProfilePage = () => {
     neutral: 'bg-gray-400',
   };
   const safeActivityLog = Array.isArray(activityLog) ? activityLog : [];
+  const profileExportContext = useMemo(
+    () => ({ data: safeActivityLog }),
+    [safeActivityLog]
+  );
   const safeSessions = Array.isArray(sessions) ? sessions : [];
   const safeDocuments = Array.isArray(documents) ? documents : [];
   const safePermissionsData = Array.isArray(permissionsData) ? permissionsData : [];
@@ -1041,8 +1045,9 @@ const MyProfilePage = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <ExportButtons
-            data={safeActivityLog}
+          <ScopedExportButtons
+            pageId="myProfile"
+            pageContext={profileExportContext}
             columns={activityColumns}
             title={t('profile.exportRecentActivities')}
             subtitle={t('profile.exportRecentActivitiesSubtitle', { count: safeActivityLog.length, name: `${profileData.firstName} ${profileData.lastName}` })}

@@ -29,6 +29,15 @@ class InventoryService
             $query->whereColumn('quantity', '<=', 'min_stock');
         }
 
+        if (!empty($filters['category_id'])) {
+            $query->whereHas('product', fn ($q) => $q->where('category_id', $filters['category_id']));
+        }
+
+        if (!empty($filters['category'])) {
+            $category = $filters['category'];
+            $query->whereHas('product.category', fn ($q) => $q->where('name', $category));
+        }
+
         return $query->paginate($filters['per_page'] ?? 10);
     }
 

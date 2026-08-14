@@ -114,7 +114,7 @@ import {
 
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import {
   getAnalyticsMetrics,
   getSalesOverview,
@@ -1041,6 +1041,18 @@ const AnalyticsPage = () => {
     }));
   }, [kpis]);
 
+  const analyticsExportContext = useMemo(
+    () => ({
+      data: kpiComparison,
+      hasActiveFilters: Boolean(
+        searchTerm ||
+        dateRange !== 'month' ||
+        Object.values(filters).some((value) => value && String(value).trim() !== '')
+      ),
+    }),
+    [kpiComparison, searchTerm, dateRange, filters]
+  );
+
   // ==========================================
   // HANDLER SUCCÈS EXPORT
   // ==========================================
@@ -1835,8 +1847,9 @@ const AnalyticsPage = () => {
             </button>
 
             {/* ExportButtons */}
-            <ExportButtons
-              data={kpiComparison}
+            <ScopedExportButtons
+              pageId="analytics"
+              pageContext={analyticsExportContext}
               columns={exportColumns}
               title={t('analytics.charts.kpiAnalysisTable')}
               subtitle={t('analytics.charts.kpiAnalysisSub')}

@@ -90,6 +90,9 @@ import { exportExcel } from '../../services/export/excelExport';
 import { exportCSV } from '../../services/export/csvExport';
 import { printData } from '../../services/export/printService';
 
+// Settings exports below are intentional configuration/template exports outside the
+// global ScopedExportButtons list-scope flow (company info, invoice template, activity snapshot).
+
 // ==========================================
 // TYPOGRAPHY SYSTEM
 // ==========================================

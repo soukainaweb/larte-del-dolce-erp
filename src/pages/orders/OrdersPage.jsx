@@ -49,7 +49,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import orderService, { normalizeOrder } from '../../services/orderService';
 import { transferOrder, getOrderTransfers, getTransferSalesReps } from '../../services/orderTransferService';
 import OrderFormModal from '../../components/orders/OrderFormModal';
@@ -57,10 +57,6 @@ import { isSalesRepRole } from '../../utils/roleMapping';
 import { getApiErrorMessage } from '../../utils/apiHelpers';
 import { hasPermission } from '../../utils/permissions';
 import { useToast } from '../../contexts/ToastContext';
-import { exportPDF } from '../../services/export/pdfExport';
-import { exportExcel } from '../../services/export/excelExport';
-import { exportCSV } from '../../services/export/csvExport';
-import { printData } from '../../services/export/printService';
 
 // ==========================================
 // TYPOGRAPHY SYSTEM
@@ -1574,9 +1570,15 @@ const OrdersPage = () => {
 
   const totalPages = Math.ceil(filteredOrders.length / pagination.perPage);
 
-  const exportOrders = useMemo(
-    () => (isDetailsModalOpen && selectedOrder ? [selectedOrder] : filteredOrders),
-    [isDetailsModalOpen, selectedOrder, filteredOrders]
+  const orderExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        status: statusFilter,
+      },
+      totalCount: filteredOrders.length,
+    }),
+    [searchTerm, statusFilter, filteredOrders.length]
   );
 
   // ==========================================
@@ -1630,64 +1632,11 @@ const OrdersPage = () => {
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
-  };
-
-  const handleExport = async (type) => {
-    try {
-      const exportData = filteredOrders.map(rowFormatter);
-      const filename = `commandes_${new Date().toISOString().split('T')[0]}`;
-
-      switch (type) {
-        case 'pdf':
-          await exportPDF({
-            title: t('orders.export.title'),
-            data: exportData,
-            columns: columns,
-            filename: `${filename}.pdf`,
-            userName: user?.firstName || t('users.table.user'),
-            summary: summary.reduce((acc, item) => {
-              acc[item.label] = item.value;
-              return acc;
-            }, {})
-          });
-          break;
-        case 'excel':
-          await exportExcel({
-            title: t('orders.export.title'),
-            data: exportData,
-            columns: columns,
-            filename: `${filename}.xlsx`,
-            userName: user?.firstName || t('users.table.user')
-          });
-          break;
-        case 'csv':
-          await exportCSV({
-            title: t('orders.export.title'),
-            data: exportData,
-            columns: columns,
-            filename: `${filename}.csv`,
-            userName: user?.firstName || t('users.table.user')
-          });
-          break;
-        case 'print':
-          await printData({
-            title: t('orders.export.title'),
-            data: exportData,
-            columns: columns,
-            userName: user?.firstName || t('users.table.user')
-          });
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      console.error('Export error:', error);
-    }
+    // Toast notification handled by ScopedExportButtons
   };
 
   // ==========================================
@@ -1778,12 +1727,13 @@ const OrdersPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={exportOrders}
+          <ScopedExportButtons
+            pageId="orders"
+            pageContext={orderExportContext}
             columns={columns}
             title={t('orders.export.title')}
             subtitle={t('orders.export.subtitle', {
-              count: exportOrders.length,
+              count: filteredOrders.length,
               revenue: kpis.revenue.toLocaleString(),
               currency: CURRENCY_SYMBOL
             })}

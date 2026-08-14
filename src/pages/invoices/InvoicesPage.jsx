@@ -47,7 +47,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import {
   getInvoices,
   getInvoiceById,
@@ -57,9 +57,7 @@ import {
   updateInvoicePaymentStatus,
   updateInvoiceStatus,
   getInvoiceStatistics,
-  exportInvoices,
   sendInvoiceEmail,
-  printInvoice,
   getInvoiceStatuses,
   getPaymentStatuses,
   getPaymentMethods
@@ -1036,9 +1034,16 @@ const InvoicesPage = () => {
   // Filter invoices (API already handles filters)
   const filteredInvoices = useMemo(() => ensureArray(invoices), [invoices]);
 
-  const exportInvoices = useMemo(
-    () => (isViewModalOpen && selectedInvoice ? [selectedInvoice] : filteredInvoices),
-    [isViewModalOpen, selectedInvoice, filteredInvoices]
+  const invoiceExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        paymentStatus: paymentStatusFilter,
+        status: statusFilter,
+      },
+      totalCount,
+    }),
+    [searchTerm, paymentStatusFilter, statusFilter, totalCount]
   );
 
   // Paginate
@@ -1052,8 +1057,8 @@ const InvoicesPage = () => {
   const columns = [
     { label: t('invoices.table.invoiceNumber'), accessor: 'invoiceNumber', width: 12 },
     { label: t('orders.table.orderNumber'), accessor: 'orderNumber', width: 12 },
-    { label: 'Client', accessor: 'customer', width: 15 },
-    { label: 'Date', accessor: 'invoiceDate', width: 12 },
+    { label: t('orders.table.customer'), accessor: 'customer', width: 15 },
+    { label: tc('date'), accessor: 'invoiceDate', width: 12 },
     { label: t('invoices.table.dueDate'), accessor: 'dueDate', width: 12 },
     { label: 'Total', accessor: 'totalAmount', width: 12 },
     { label: t('common.labels.paidAmount'), accessor: 'paidAmount', width: 12 },
@@ -1090,30 +1095,15 @@ const InvoicesPage = () => {
     { label: t('finance.kpi.totalRevenue'), value: `${kpis.revenue.toLocaleString()} ${CURRENCY}` },
   ], [kpis, t, tc]);
 
-  const exportSummary = useMemo(() => {
-    if (isViewModalOpen && selectedInvoice) {
-      return [
-        { label: t('invoices.table.invoiceNumber'), value: selectedInvoice.invoiceNumber ?? '—' },
-        { label: t('orders.table.orderNumber'), value: selectedInvoice.orderNumber ?? '—' },
-        { label: tc('customer'), value: selectedInvoice.customer ?? '—' },
-        { label: tc('total'), value: `${(selectedInvoice.totalAmount ?? 0).toLocaleString()} ${CURRENCY}` },
-        { label: t('common.labels.paidAmount'), value: `${(selectedInvoice.paidAmount ?? 0).toLocaleString()} ${CURRENCY}` },
-        { label: t('invoices.fields.paymentStatus'), value: selectedInvoice.paymentStatus ?? '—' },
-      ];
-    }
-
-    return listSummary;
-  }, [isViewModalOpen, selectedInvoice, listSummary, t, tc]);
-
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleCreateInvoice = async (formData) => {
@@ -1194,13 +1184,14 @@ const InvoicesPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={exportInvoices}
+          <ScopedExportButtons
+            pageId="invoices"
+            pageContext={invoiceExportContext}
             columns={columns}
-            title="{t('invoices.export.title')}"
-            subtitle={`${exportInvoices.length} factures - Total: ${kpis.revenue.toLocaleString()} ${CURRENCY}`}
+            title={t('invoices.export.title')}
+            subtitle={`${filteredInvoices.length} factures - Total: ${kpis.revenue.toLocaleString()} ${CURRENCY}`}
             filename={`factures_${new Date().toISOString().split('T')[0]}`}
-            summary={exportSummary}
+            summary={listSummary}
             rowFormatter={rowFormatter}
             userName={user?.firstName}
             onSuccess={handleExportSuccess}

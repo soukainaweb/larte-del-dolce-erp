@@ -42,7 +42,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import { unwrapPaginated, unwrapData, getApiErrorMessage } from '../../utils/apiHelpers';
 import { useToast } from '../../contexts/ToastContext';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import {
   getCategories,
   createCategory,
@@ -1019,15 +1019,25 @@ const CategoriesPage = () => {
     { label: t('categories.kpi.products'), value: kpis.totalProducts }
   ];
 
+  const categoryExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        status: statusFilter,
+      },
+    }),
+    [searchTerm, statusFilter]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   // Handlers
@@ -1116,8 +1126,9 @@ const CategoriesPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={filteredCategories}
+          <ScopedExportButtons
+            pageId="categories"
+            pageContext={categoryExportContext}
             columns={columns}
             title={t('categories.export.title')}
             subtitle={t('categories.export.subtitle', { count: filteredCategories.length })}

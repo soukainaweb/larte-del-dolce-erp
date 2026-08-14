@@ -162,7 +162,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import { useExport } from '../../hooks/useExport';
 import { useToast } from '../../contexts/ToastContext';
 import {
@@ -790,6 +790,20 @@ const ActivityLogPage = () => {
     showToast(t('activityLog.messages.filtersReset'), 'info');
   };
 
+  const activityLogExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        user: userFilter,
+        module: moduleFilter,
+        action: actionFilter,
+        level: levelFilter,
+        date: dateFilter,
+      },
+    }),
+    [searchTerm, userFilter, moduleFilter, actionFilter, levelFilter, dateFilter]
+  );
+
   const handleExportSuccess = (result) => {
     showToast(
       t('common.exportSuccess', {
@@ -891,8 +905,9 @@ const ActivityLogPage = () => {
             <RefreshCw size={18} className={`text-[#6D6D6D] ${isLoading ? 'animate-spin' : ''}`} />
           </button>
 
-          <ExportButtons
-            data={filteredActivities}
+          <ScopedExportButtons
+            pageId="activityLog"
+            pageContext={activityLogExportContext}
             columns={exportColumns}
             title={t('activityLog.export.title')}
             subtitle={t('activityLog.export.subtitle', { count: filteredActivities.length, today: stats.today })}

@@ -53,7 +53,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import { useTranslation } from 'react-i18next';
-import ExportButtons from '../../components/ExportButtons';
+import ScopedExportButtons from '../../components/export/ScopedExportButtons';
 import useEntityDeepLink from '../../hooks/useEntityDeepLink';
 import {
   getPayments,
@@ -870,15 +870,25 @@ const PaymentsPage = () => {
     { label: 'Revenu du mois', value: `${kpis.monthRevenue.toLocaleString()} ${CURRENCY}` }
   ];
 
+  const paymentExportContext = useMemo(
+    () => ({
+      filters: {
+        search: searchTerm,
+        status: statusFilter,
+      },
+    }),
+    [searchTerm, statusFilter]
+  );
+
   // ==========================================
   // EXPORT HANDLERS
   // ==========================================
   const handleExportSuccess = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleExportError = () => {
-    // Toast notification handled by ExportButtons
+    // Toast notification handled by ScopedExportButtons
   };
 
   const handleCreatePayment = async (formData) => {
@@ -955,10 +965,11 @@ const PaymentsPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Export Buttons */}
-          <ExportButtons
-            data={filteredPayments}
+          <ScopedExportButtons
+            pageId="payments"
+            pageContext={paymentExportContext}
             columns={columns}
-            title="{t('payments.export.title')}"
+            title={t('payments.export.title')}
             subtitle={`${filteredPayments.length} paiements - Total: ${kpis.total.toLocaleString()} ${CURRENCY}`}
             filename={`paiements_${new Date().toISOString().split('T')[0]}`}
             summary={summary}
