@@ -105,6 +105,7 @@ const orderService = {
       if (params.per_page) queryParams.append('per_page', params.per_page);
       
       // Filtres
+      if (params.customer_id) queryParams.append('customer_id', params.customer_id);
       if (params.search) queryParams.append('search', params.search);
       if (params.status) queryParams.append('status', params.status);
       if (params.priority) queryParams.append('priority', params.priority);

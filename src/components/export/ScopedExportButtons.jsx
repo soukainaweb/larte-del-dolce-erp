@@ -11,6 +11,7 @@ import { useExport } from '../../hooks/useExport';
 import { useToast } from '../../contexts/ToastContext';
 import { getExportScopeConfig } from '../../config/exportScopeConfigs';
 import { resolveExportDataset } from '../../utils/resolveExportDataset';
+import { ExportDatasetTooLargeError } from '../../utils/fetchAllPaginated';
 import ExportScopeModal from './ExportScopeModal';
 import { EXPORT_FORMAT } from './exportScopeTypes';
 
@@ -22,9 +23,9 @@ const ScopedExportButtons = ({
   pageContext = {},
   scopeConfig: scopeConfigProp = null,
   columns = [],
-  title = 'Rapport',
+  title = '',
   subtitle = '',
-  filename = 'rapport',
+  filename = 'export',
   summary = null,
   rowFormatter = null,
   onSuccess = null,
@@ -36,6 +37,8 @@ const ScopedExportButtons = ({
   className = '',
   variant = 'default',
   userName = null,
+  exportDisabled = false,
+  exportDisabledReason = '',
 }) => {
   const { t } = useTranslation();
   const { showToast } = useToast();
@@ -49,6 +52,8 @@ const ScopedExportButtons = ({
     () => scopeConfigProp || getExportScopeConfig(pageId, pageContext),
     [scopeConfigProp, pageId, pageContext]
   );
+
+  const isExportBlocked = exportDisabled || !scopeConfig || scopeConfig.exportEnabled === false;
 
   const runExport = useCallback(
     async (type, data) => {
@@ -79,29 +84,24 @@ const ScopedExportButtons = ({
   );
 
   const executeExport = useCallback(
-    async (type, scopeSelection = null) => {
+    async (type, scopeSelection) => {
+      if (!scopeConfig) {
+        showToast(t('exportScope.exportUnavailable'), 'error');
+        return;
+      }
+
       try {
         setIsResolving(true);
 
-        let data;
-        if (scopeConfig?.skipModal) {
-          data = await resolveExportDataset({
-            pageId: scopeConfig,
-            pageContext: { ...pageContext, data: pageContext.data },
-            scopeMode: 'all',
-            selectedEntity: null,
-          });
-        } else {
-          data = await resolveExportDataset({
-            pageId: scopeConfig,
-            pageContext,
-            scopeMode: scopeSelection.scopeMode,
-            selectedEntity: scopeSelection.selectedEntity,
-          });
-        }
+        const data = await resolveExportDataset({
+          pageId: scopeConfig,
+          pageContext,
+          scopeMode: scopeSelection.scopeMode,
+          selectedEntity: scopeSelection.selectedEntity,
+        });
 
         if (!data?.length) {
-          showToast(t('exportScope.noRecords', 'No records to export'), 'error');
+          showToast(t('exportScope.noRecords'), 'error');
           return;
         }
 
@@ -124,7 +124,11 @@ const ScopedExportButtons = ({
         );
       } catch (error) {
         if (onError) onError(error);
-        showToast(t('common.exportError'), 'error');
+        if (error instanceof ExportDatasetTooLargeError) {
+          showToast(t('exportScope.datasetTooLarge'), 'error');
+        } else {
+          showToast(t('common.exportError'), 'error');
+        }
       } finally {
         setIsResolving(false);
         setModalOpen(false);
@@ -136,14 +140,14 @@ const ScopedExportButtons = ({
 
   const handleButtonClick = useCallback(
     (type) => {
-      if (scopeConfig?.skipModal) {
-        executeExport(type);
+      if (isExportBlocked) {
+        showToast(exportDisabledReason || t('exportScope.exportUnavailable'), 'info');
         return;
       }
       setPendingFormat(type);
       setModalOpen(true);
     },
-    [scopeConfig, executeExport]
+    [isExportBlocked, exportDisabledReason, showToast, t]
   );
 
   const handleModalConfirm = useCallback(
@@ -162,17 +166,18 @@ const ScopedExportButtons = ({
 
   const busy = isExporting || isResolving;
   const loadingIcon = <Loader2 size={18} className="animate-spin" />;
+  const disabled = busy || isExportBlocked;
 
   return (
     <>
-      <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+      <div className={`flex flex-wrap items-center gap-2 ${className}`} title={isExportBlocked ? (exportDisabledReason || t('exportScope.exportUnavailable')) : undefined}>
         {showPDF && (
           <motion.button
             type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: disabled ? 1 : 1.02 }}
+            whileTap={{ scale: disabled ? 1 : 0.98 }}
             onClick={() => handleButtonClick(EXPORT_FORMAT.PDF)}
-            disabled={busy}
+            disabled={disabled}
             className={`flex items-center rounded-xl bg-[#B8863B] text-white hover:bg-[#A07532] transition-all disabled:opacity-50 disabled:cursor-not-allowed ${buttonClasses[variant]}`}
           >
             {busy ? loadingIcon : <FileText size={variant === 'icon-only' ? 18 : 16} />}
@@ -183,10 +188,10 @@ const ScopedExportButtons = ({
         {showExcel && (
           <motion.button
             type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: disabled ? 1 : 1.02 }}
+            whileTap={{ scale: disabled ? 1 : 0.98 }}
             onClick={() => handleButtonClick(EXPORT_FORMAT.EXCEL)}
-            disabled={busy}
+            disabled={disabled}
             className={`flex items-center rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${buttonClasses[variant]}`}
           >
             {busy ? loadingIcon : <FileSpreadsheet size={variant === 'icon-only' ? 18 : 16} />}
@@ -197,10 +202,10 @@ const ScopedExportButtons = ({
         {showCSV && (
           <motion.button
             type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: disabled ? 1 : 1.02 }}
+            whileTap={{ scale: disabled ? 1 : 0.98 }}
             onClick={() => handleButtonClick(EXPORT_FORMAT.CSV)}
-            disabled={busy}
+            disabled={disabled}
             className={`flex items-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${buttonClasses[variant]}`}
           >
             {busy ? loadingIcon : <FileText size={variant === 'icon-only' ? 18 : 16} />}
@@ -211,10 +216,10 @@ const ScopedExportButtons = ({
         {showPrint && (
           <motion.button
             type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: disabled ? 1 : 1.02 }}
+            whileTap={{ scale: disabled ? 1 : 0.98 }}
             onClick={() => handleButtonClick(EXPORT_FORMAT.PRINT)}
-            disabled={busy}
+            disabled={disabled}
             className={`flex items-center rounded-xl bg-gray-700 text-white hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${buttonClasses[variant]}`}
           >
             {busy ? loadingIcon : <Printer size={variant === 'icon-only' ? 18 : 16} />}
@@ -223,7 +228,7 @@ const ScopedExportButtons = ({
         )}
       </div>
 
-      {scopeConfig && !scopeConfig.skipModal && (
+      {scopeConfig && !isExportBlocked && (
         <ExportScopeModal
           isOpen={modalOpen}
           onClose={() => {

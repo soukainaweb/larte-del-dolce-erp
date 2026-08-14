@@ -120,6 +120,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageI18n } from '../../hooks/usePageI18n';
 import ScopedExportButtons from '../../components/export/ScopedExportButtons';
+import { getReportTabExportMeta, isReportTabExportEnabled } from '../../config/reportExportConfigs';
 import { useExport } from '../../hooks/useExport';
 import {
   getSalesOverview,
@@ -1540,7 +1541,7 @@ const ReportsPage = () => {
   const { title, subtitle, searchPlaceholder, t, tc, actions, commonStatus, statusLabel } = usePageI18n('reports');
   const location = useLocation();
   const navigate = useNavigate();
-  const { exportPDF, exportExcel } = useExport({ userName: user?.firstName || tc('user') });
+  const { exportPDF } = useExport({ userName: user?.firstName || tc('user') });
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
@@ -1758,35 +1759,30 @@ const ReportsPage = () => {
   // ==========================================
   // EXPORT CONFIGURATION
   // ==========================================
-  const exportColumns = [
-    { label: 'ID', accessor: 'id', width: 10 },
-    { label: tc('customer'), accessor: 'client', width: 20 },
-    { label: tc('salesRep'), accessor: 'salesRep', width: 18 },
-    { label: tc('date'), accessor: 'date', width: 12 },
-    { label: tc('amount'), accessor: 'amount', width: 15 },
-    { label: tc('status'), accessor: 'status', width: 12 },
-    { label: t('nav.production'), accessor: 'production', width: 14 },
-    { label: t('common.delivery'), accessor: 'delivery', width: 14 }
-  ];
+  const reportTabExportMeta = useMemo(
+    () => getReportTabExportMeta(activeTab),
+    [activeTab]
+  );
 
-  const exportRowFormatter = (item) => ({
-    id: item.id,
-    client: item.client,
-    salesRep: item.salesRep,
-    date: item.date,
-    amount: `${item.amount.toLocaleString()} ${CURRENCY}`,
-    status: item.status,
-    production: item.production,
-    delivery: item.delivery
-  });
+  const reportsExportEnabled = isReportTabExportEnabled(activeTab);
 
-  const exportSummary = [
-    { label: t('orders.kpi.total'), value: ordersData.length },
-    { label: tc('totalAmount'), value: `${ordersData.reduce((sum, o) => sum + o.amount, 0).toLocaleString()} ${CURRENCY}` },
-    { label: t('reports.export.statusDelivered'), value: ordersData.filter(o => o.status === t('orders.status.delivered')).length },
-    { label: t('reports.export.statusInProduction'), value: ordersData.filter(o => o.status === t('orders.status.in_production')).length },
-    { label: t('reports.export.statusPending'), value: ordersData.filter(o => o.status === t('common.pending')).length }
-  ];
+  const exportColumns = useMemo(() => {
+    if (!reportTabExportMeta) return [];
+    return reportTabExportMeta.columns(t, tc);
+  }, [reportTabExportMeta, t, tc]);
+
+  const exportRowFormatter = useMemo(() => {
+    if (!reportTabExportMeta) return (item) => item;
+    return reportTabExportMeta.rowFormatter;
+  }, [reportTabExportMeta]);
+
+  const exportTitle = reportTabExportMeta
+    ? t(`exportScope.reports.tabs.${reportTabExportMeta.titleKey}`)
+    : title;
+
+  const exportFilename = reportTabExportMeta
+    ? `${reportTabExportMeta.filenamePrefix}_${new Date().toISOString().split('T')[0]}`
+    : `reports_${new Date().toISOString().split('T')[0]}`;
 
   const reportsExportContext = useMemo(
     () => ({
@@ -1850,43 +1846,6 @@ const ReportsPage = () => {
   // ==========================================
   // HANDLERS - ACTIONS GÉNÉRALES
   // ==========================================
-  const handleExportPDF = async () => {
-    try {
-      await exportPDF({
-        title: t('reports.title'),
-        columns: exportColumns,
-        data: ordersData,
-        filename: `reports_${new Date().toISOString().split('T')[0]}.pdf`,
-        rowFormatter: exportRowFormatter,
-        summary: exportSummary,
-      });
-      showToast(t('reports.export.pdfSuccess'), 'success');
-    } catch {
-      showToast(t('common.exportError'), 'error');
-    }
-  };
-
-  const handleExportExcel = async () => {
-    try {
-      await exportExcel({
-        title: t('reports.title'),
-        columns: exportColumns,
-        data: ordersData,
-        filename: `reports_${new Date().toISOString().split('T')[0]}.xlsx`,
-        rowFormatter: exportRowFormatter,
-        summary: exportSummary,
-      });
-      showToast(t('reports.export.excelSuccess'), 'success');
-    } catch {
-      showToast(t('common.exportError'), 'error');
-    }
-  };
-
-  const handlePrint = () => {
-    window.print();
-    showToast(t('reports.export.printStarted'), 'info');
-  };
-
   const handleRefresh = async () => {
     setIsLoading(true);
     try {
@@ -2774,12 +2733,13 @@ const ReportsPage = () => {
               pageId="reports"
               pageContext={reportsExportContext}
               columns={exportColumns}
-              title="Rapport des commandes"
-              subtitle={`${ordersData.length} commandes`}
-              filename={`rapport_commandes_${new Date().toISOString().split('T')[0]}`}
-              summary={exportSummary}
+              title={exportTitle}
+              subtitle={subtitle}
+              filename={exportFilename}
               rowFormatter={exportRowFormatter}
               userName={user?.firstName}
+              exportDisabled={!reportsExportEnabled}
+              exportDisabledReason={t('exportScope.reportsTabUnavailable')}
               onSuccess={handleExportSuccess}
               onError={handleExportError}
             />

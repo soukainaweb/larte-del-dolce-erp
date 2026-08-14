@@ -2682,6 +2682,38 @@
     "largeExportWarning": "أنت على وشك تصدير {{count}} سجل.",
     "confirmExport": "تصدير {{format}}",
     "noRecords": "لا توجد سجلات للتصدير",
+    "exportUnavailable": "التصدير غير متاح لهذا العرض",
+    "reportsTabUnavailable": "التصدير غير متاح لهذا التبويب",
+    "datasetTooLarge": "حجم بيانات التصدير كبير جداً ولا يمكن إكماله بأمان",
+    "exportCurrentView": "تصدير العرض الحالي",
+    "exportCurrentViewHint": "تصدير البيانات المعروضة للفلاتر والفترة الحالية",
+    "exportSelfScope": "نشاطي فقط",
+    "exportSelfScopeHint": "تصدير سجلات نشاطك فقط",
+    "reports": {
+      "tabs": {
+        "overview": "تقرير النظرة العامة",
+        "orders": "تقرير الطلبات",
+        "sales": "تقرير المبيعات",
+        "production": "تقرير الإنتاج",
+        "products": "تقرير المنتجات",
+        "customers": "تقرير العملاء",
+        "invoices": "تقرير الفواتير",
+        "deliveries": "تقرير التسليمات",
+        "analytics": "تقرير التحليلات",
+        "reports": "التقارير المُنشأة"
+      },
+      "columns": {
+        "revenue": "الإيرادات",
+        "orders": "الطلبات",
+        "sales": "المبيعات",
+        "growth": "النمو",
+        "year": "السنة",
+        "produced": "المُنتَج",
+        "target": "الهدف",
+        "type": "النوع",
+        "period": "الفترة"
+      }
+    },
     "entity": {
       "default": "كيان",
       "customer": "عميل",
@@ -2692,7 +2724,8 @@
       "warehouse": "مستودع",
       "production": "أمر إنتاج",
       "module": "وحدة",
-      "period": "فترة"
+      "period": "فترة",
+      "self": "نشاطي"
     },
     "record": {
       "default": "سجلات",
@@ -2713,7 +2746,11 @@
       "warehouse": "مستودعات",
       "inventoryItem": "عناصر المخزون",
       "production": "أوامر الإنتاج",
-      "role": "أدوار"
+      "role": "أدوار",
+      "overviewRow": "صفوف النظرة العامة",
+      "salesRow": "صفوف المبيعات",
+      "analyticsRow": "صفوف التحليلات",
+      "generatedReport": "تقارير مُنشأة"
     }
   }
 }

@@ -57,9 +57,7 @@ import {
   updateInvoicePaymentStatus,
   updateInvoiceStatus,
   getInvoiceStatistics,
-  exportInvoices,
   sendInvoiceEmail,
-  printInvoice,
   getInvoiceStatuses,
   getPaymentStatuses,
   getPaymentMethods
@@ -1059,8 +1057,8 @@ const InvoicesPage = () => {
   const columns = [
     { label: t('invoices.table.invoiceNumber'), accessor: 'invoiceNumber', width: 12 },
     { label: t('orders.table.orderNumber'), accessor: 'orderNumber', width: 12 },
-    { label: 'Client', accessor: 'customer', width: 15 },
-    { label: 'Date', accessor: 'invoiceDate', width: 12 },
+    { label: t('orders.table.customer'), accessor: 'customer', width: 15 },
+    { label: tc('date'), accessor: 'invoiceDate', width: 12 },
     { label: t('invoices.table.dueDate'), accessor: 'dueDate', width: 12 },
     { label: 'Total', accessor: 'totalAmount', width: 12 },
     { label: t('common.labels.paidAmount'), accessor: 'paidAmount', width: 12 },

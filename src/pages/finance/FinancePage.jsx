@@ -618,11 +618,9 @@ const FinancePage = () => {
 
   const financeExportContext = useMemo(
     () => ({
-      allData: transactions,
-      filteredData: transactions,
       filters: { dateRange },
     }),
-    [transactions, dateRange]
+    [dateRange]
   );
 
   // ==========================================

@@ -1,5 +1,14 @@
 import { unwrapPaginated } from './apiHelpers';
 
+export class ExportDatasetTooLargeError extends Error {
+  constructor(message = 'Export dataset is too large to complete safely.') {
+    super(message);
+    this.name = 'ExportDatasetTooLargeError';
+  }
+}
+
+const MAX_PAGES = 500;
+
 /**
  * Fetch every page from a paginated list API.
  * @param {Function} fetchPage - async ({ page, per_page, ...params }) => axios response or { data, meta }
@@ -34,8 +43,8 @@ export async function fetchAllPaginated(fetchPage, baseParams = {}, pageSize = 1
 
     page += 1;
 
-    if (page > 500) {
-      break;
+    if (page > MAX_PAGES) {
+      throw new ExportDatasetTooLargeError();
     }
   }
 

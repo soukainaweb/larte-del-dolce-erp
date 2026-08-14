@@ -592,18 +592,6 @@ export default function DashboardHome({ isLoading: initialLoading = false }) {
     fetchDashboardData(selectedPeriod);
   };
 
-  const handleExportPDF = () => {
-    window.print();
-  };
-
-  const handleExportExcel = () => {
-    showToast(t('dashboard.exportExcelSoon'), 'info');
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
   const handleViewOrder = (order) => {
     navigate('/dashboard/orders', { state: { viewOrderId: order.id } });
   };

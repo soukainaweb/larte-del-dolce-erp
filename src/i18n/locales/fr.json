@@ -648,6 +648,38 @@
     "largeExportWarning": "Vous allez exporter {{count}} enregistrements.",
     "confirmExport": "Exporter {{format}}",
     "noRecords": "Aucun enregistrement à exporter",
+    "exportUnavailable": "L'export n'est pas disponible pour cette vue",
+    "reportsTabUnavailable": "L'export n'est pas disponible pour cet onglet",
+    "datasetTooLarge": "Le jeu de données est trop volumineux pour être exporté en toute sécurité",
+    "exportCurrentView": "Exporter la vue actuelle",
+    "exportCurrentViewHint": "Exporter les données correspondant aux filtres et à la période actuels",
+    "exportSelfScope": "Mes activités uniquement",
+    "exportSelfScopeHint": "Exporter uniquement vos propres activités",
+    "reports": {
+      "tabs": {
+        "overview": "Rapport vue d'ensemble",
+        "orders": "Rapport des commandes",
+        "sales": "Rapport des ventes",
+        "production": "Rapport de production",
+        "products": "Rapport des produits",
+        "customers": "Rapport des clients",
+        "invoices": "Rapport des factures",
+        "deliveries": "Rapport des livraisons",
+        "analytics": "Rapport analytique",
+        "reports": "Rapports générés"
+      },
+      "columns": {
+        "revenue": "Revenu",
+        "orders": "Commandes",
+        "sales": "Ventes",
+        "growth": "Croissance",
+        "year": "Année",
+        "produced": "Produit",
+        "target": "Objectif",
+        "type": "Type",
+        "period": "Période"
+      }
+    },
     "entity": {
       "default": "Entité",
       "customer": "Client",
@@ -658,7 +690,8 @@
       "warehouse": "Entrepôt",
       "production": "Ordre de production",
       "module": "Module",
-      "period": "Période"
+      "period": "Période",
+      "self": "Mon activité"
     },
     "record": {
       "default": "enregistrements",
@@ -679,7 +712,11 @@
       "warehouse": "entrepôts",
       "inventoryItem": "articles d'inventaire",
       "production": "ordres de production",
-      "role": "rôles"
+      "role": "rôles",
+      "overviewRow": "lignes de synthèse",
+      "salesRow": "lignes de ventes",
+      "analyticsRow": "lignes analytiques",
+      "generatedReport": "rapports générés"
     }
   }
 }

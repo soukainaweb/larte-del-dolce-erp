@@ -29,6 +29,8 @@ const ExportScopeModal = ({
   const supportsEntity = modes.includes(SCOPE_MODE.ENTITY) && scopeConfig?.searchEntities;
   const supportsFilters = modes.includes(SCOPE_MODE.FILTERS);
   const supportsAll = modes.includes(SCOPE_MODE.ALL);
+  const singleFiltersMode = modes.length === 1 && modes[0] === SCOPE_MODE.FILTERS;
+  const selfScopeMode = modes.length === 1 && modes[0] === SCOPE_MODE.ALL && scopeConfig?.entityKind === 'self';
   const hasActiveFilters = scopeConfig?.hasActiveFilters?.(pageContext) ?? false;
   const threshold = scopeConfig?.largeExportThreshold ?? 100;
 
@@ -249,16 +251,16 @@ const ExportScopeModal = ({
                   />
                   <div>
                     <p className="text-sm font-medium text-[#3D2F24]">
-                      {t('exportScope.exportAll', 'Export all')}
+                      {selfScopeMode ? t('exportScope.exportSelfScope') : t('exportScope.exportAll')}
                     </p>
                     <p className="text-xs text-[#6D6D6D] mt-1">
-                      {t('exportScope.exportAllHint', 'Export every accessible record for this module')}
+                      {selfScopeMode ? t('exportScope.exportSelfScopeHint') : t('exportScope.exportAllHint')}
                     </p>
                   </div>
                 </label>
               )}
 
-              {supportsFilters && hasActiveFilters && (
+              {supportsFilters && (hasActiveFilters || singleFiltersMode) && (
                 <label className={`flex gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${scopeMode === SCOPE_MODE.FILTERS ? 'border-[#B8863B] bg-[#FBF7EF]' : 'border-[#ECE8E1] hover:bg-[#F8F7F4]'}`}>
                   <input
                     type="radio"
@@ -272,10 +274,10 @@ const ExportScopeModal = ({
                   />
                   <div>
                     <p className="text-sm font-medium text-[#3D2F24]">
-                      {t('exportScope.useCurrentFilters', 'Use current filters')}
+                      {singleFiltersMode ? t('exportScope.exportCurrentView') : t('exportScope.useCurrentFilters')}
                     </p>
                     <p className="text-xs text-[#6D6D6D] mt-1">
-                      {t('exportScope.useCurrentFiltersHint', 'Export only records matching the active page filters')}
+                      {singleFiltersMode ? t('exportScope.exportCurrentViewHint') : t('exportScope.useCurrentFiltersHint')}
                     </p>
                   </div>
                 </label>

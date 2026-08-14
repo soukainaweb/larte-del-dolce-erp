@@ -11,19 +11,14 @@ import { getExpenses } from '../services/expenseService';
 import { getSuppliers } from '../services/supplierService';
 import { getUsers } from '../services/userServicePage';
 import { getCategories } from '../services/categoryService';
+import { fetchNotificationPage } from '../services/notificationService';
+import { getRecentTransactions } from '../services/financeService';
 import { getActivityLogs } from '../services/activityLogService';
 import { getWarehouses } from '../services/warehouseService';
 import { getInventory } from '../services/inventoryService';
 import { getProductions } from '../services/productionService';
 import { getRoles } from '../services/roleService';
-import {
-  getOrdersReport,
-  getInvoicesReport,
-  getCustomersReport,
-  getDeliveriesReport,
-  getProductsReport,
-  getProductionReport,
-} from '../services/reportService';
+import { getReportsExportConfig } from './reportExportConfigs';
 
 const stripUndefined = (obj) =>
   Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined && v !== '' && v !== 'all'));
@@ -37,7 +32,7 @@ const stripUndefined = (obj) =>
  * @property {string} recordKind - i18n key suffix under exportScope.record.*
  * @property {string} entityScopeType - filter | row
  * @property {string[]} modes - enabled scope modes
- * @property {boolean} skipModal - skip scope dialog (self-scoped pages)
+ * @property {boolean} [exportEnabled] - when false, export is disabled for this page/tab
  * @property {number} [largeExportThreshold]
  * @property {(query: string) => Promise<Array<{id, label, raw}>>} [searchEntities]
  * @property {(args: object) => Promise<number>} countRecords
@@ -57,6 +52,69 @@ function mapOrderFilters(filters = {}) {
     search: filters.search,
     status: filters.status,
   });
+}
+
+function mapNotificationFilters(pageContext, scopeMode) {
+  const filters = pageContext?.filters ?? {};
+  const base = stripUndefined({
+    search: filters.search ?? pageContext?.search,
+    status: filters.status !== 'all' ? filters.status : undefined,
+    module: filters.module && filters.module !== 'Tous' ? filters.module : undefined,
+    priority: filters.priority !== 'all' ? filters.priority : undefined,
+    period: filters.period !== 'all' ? filters.period : undefined,
+  });
+  if (scopeMode === SCOPE_MODE.ALL) {
+    return stripUndefined({
+      module: base.module,
+      priority: base.priority,
+      period: base.period,
+    });
+  }
+  return base;
+}
+
+function mapFinanceFilters(pageContext) {
+  return stripUndefined({
+    period: pageContext?.filters?.dateRange,
+  });
+}
+
+function mapInventoryFilters(pageContext, scopeMode, selectedEntity) {
+  if (scopeMode === SCOPE_MODE.ENTITY && selectedEntity) {
+    const categoryName = selectedEntity.raw?.name || selectedEntity.label;
+    return stripUndefined({ category: categoryName });
+  }
+  if (scopeMode === SCOPE_MODE.ALL) {
+    return {};
+  }
+  return stripUndefined({
+    search: pageContext?.filters?.search,
+    category: pageContext?.filters?.category !== 'all' ? pageContext?.filters?.category : undefined,
+    status: pageContext?.filters?.status !== 'all' ? pageContext?.filters?.status : undefined,
+  });
+}
+
+function mapDeliveryFilters(pageContext, scopeMode, selectedEntity) {
+  const base = stripUndefined({
+    status: pageContext?.filters?.status !== 'all' ? pageContext?.filters?.status : undefined,
+    search: pageContext?.filters?.search,
+  });
+  if (scopeMode === SCOPE_MODE.ENTITY && selectedEntity?.id) {
+    return { ...base, customer_id: selectedEntity.id };
+  }
+  return base;
+}
+
+function mapPaymentFilters(pageContext, scopeMode, selectedEntity) {
+  const base = stripUndefined({
+    status: pageContext?.filters?.status !== 'all' ? pageContext?.filters?.status : undefined,
+    method: pageContext?.filters?.method !== 'all' ? pageContext?.filters?.method : undefined,
+    search: pageContext?.filters?.search,
+  });
+  if (scopeMode === SCOPE_MODE.ENTITY && selectedEntity?.id) {
+    return { ...base, customer_id: selectedEntity.id };
+  }
+  return base;
 }
 
 async function searchCustomers(query = '') {
@@ -269,8 +327,13 @@ export const EXPORT_SCOPE_CONFIGS = {
     largeExportThreshold: LARGE_EXPORT_THRESHOLD,
     searchEntities: searchCustomers,
     countRecords: async ({ scopeMode, selectedEntity, pageContext }) => {
-      const dataset = await resolveDeliveries({ scopeMode, selectedEntity, pageContext });
-      return dataset.length;
+      const filters = mapDeliveryFilters(pageContext, scopeMode, selectedEntity);
+      const fetchPage = async (params) => {
+        const body = await deliveryService.getDeliveries(params);
+        return { data: body };
+      };
+      const { meta } = unwrapPaginated(await fetchPage({ ...filters, per_page: 1, page: 1 }));
+      return meta?.total ?? 0;
     },
     resolveDataset: resolveDeliveries,
     hasActiveFilters: (ctx) =>
@@ -284,7 +347,11 @@ export const EXPORT_SCOPE_CONFIGS = {
     modes: [SCOPE_MODE.ENTITY, SCOPE_MODE.ALL, SCOPE_MODE.FILTERS],
     largeExportThreshold: LARGE_EXPORT_THRESHOLD,
     searchEntities: searchCustomers,
-    countRecords: async (args) => (await resolvePayments(args)).length,
+    countRecords: async ({ scopeMode, selectedEntity, pageContext }) => {
+      const filters = mapPaymentFilters(pageContext, scopeMode, selectedEntity);
+      const { meta } = unwrapPaginated(await getPayments({ ...filters, per_page: 1, page: 1 }));
+      return meta?.total ?? 0;
+    },
     resolveDataset: resolvePayments,
     hasActiveFilters: (ctx) =>
       Boolean(ctx?.filters?.search || (ctx?.filters?.status && ctx.filters.status !== 'all') || (ctx?.filters?.method && ctx.filters.method !== 'all')),
@@ -356,17 +423,22 @@ export const EXPORT_SCOPE_CONFIGS = {
     recordKind: 'notification',
     entityScopeType: ENTITY_SCOPE_TYPE.FILTER,
     modes: [SCOPE_MODE.ALL, SCOPE_MODE.FILTERS],
+    largeExportThreshold: LARGE_EXPORT_THRESHOLD,
     countRecords: async ({ scopeMode, pageContext }) => {
-      if (scopeMode === SCOPE_MODE.FILTERS) {
-        return pageContext?.filteredCount ?? pageContext?.data?.length ?? 0;
-      }
-      return pageContext?.totalCount ?? pageContext?.data?.length ?? 0;
+      const filters = mapNotificationFilters(pageContext, scopeMode);
+      const { meta } = await fetchNotificationPage({ ...filters, per_page: 1, page: 1 });
+      return meta?.total ?? 0;
     },
     resolveDataset: async ({ scopeMode, pageContext }) => {
-      if (scopeMode === SCOPE_MODE.FILTERS) {
-        return pageContext?.filteredData ?? pageContext?.data ?? [];
-      }
-      return pageContext?.allData ?? pageContext?.data ?? [];
+      const filters = mapNotificationFilters(pageContext, scopeMode);
+      const { items } = await fetchAllPaginated(
+        (params) =>
+          fetchNotificationPage(params).then(({ items: pageItems, meta }) => ({
+            data: { data: pageItems, ...meta },
+          })),
+        filters
+      );
+      return items;
     },
     hasActiveFilters: (ctx) => Boolean(ctx?.hasActiveFilters),
   },
@@ -374,25 +446,32 @@ export const EXPORT_SCOPE_CONFIGS = {
     pageId: 'finance',
     entityKind: 'period',
     recordKind: 'transaction',
-    modes: [SCOPE_MODE.ALL, SCOPE_MODE.FILTERS],
-    countRecords: async ({ scopeMode, pageContext }) => {
-      const data = scopeMode === SCOPE_MODE.FILTERS ? pageContext?.filteredData : pageContext?.allData;
-      return data?.length ?? 0;
+    modes: [SCOPE_MODE.FILTERS],
+    countRecords: async ({ pageContext }) => {
+      const filters = mapFinanceFilters(pageContext);
+      const { meta } = unwrapPaginated(await getRecentTransactions({ ...filters, per_page: 1, page: 1 }));
+      return meta?.total ?? 0;
     },
-    resolveDataset: async ({ scopeMode, pageContext }) => {
-      if (scopeMode === SCOPE_MODE.FILTERS) return pageContext?.filteredData ?? [];
-      return pageContext?.allData ?? [];
+    resolveDataset: async ({ pageContext }) => {
+      const filters = mapFinanceFilters(pageContext);
+      const { items } = await fetchAllPaginated((params) => getRecentTransactions(params), filters);
+      return safeArray({ data: items });
     },
-    hasActiveFilters: (ctx) => Boolean(ctx?.filters?.dateRange),
+    hasActiveFilters: () => true,
   },
   analytics: {
     pageId: 'analytics',
     entityKind: 'period',
     recordKind: 'indicator',
-    modes: [SCOPE_MODE.ALL, SCOPE_MODE.FILTERS],
+    modes: [SCOPE_MODE.FILTERS],
     countRecords: async ({ pageContext }) => pageContext?.data?.length ?? 0,
-    resolveDataset: async ({ pageContext }) => pageContext?.data ?? [],
-    hasActiveFilters: (ctx) => Boolean(ctx?.hasActiveFilters),
+    resolveDataset: async ({ scopeMode, pageContext }) => {
+      if (scopeMode !== SCOPE_MODE.FILTERS) {
+        throw new Error('Export scope is required');
+      }
+      return pageContext?.data ?? [];
+    },
+    hasActiveFilters: () => true,
   },
   activityLog: {
     pageId: 'activityLog',
@@ -423,9 +502,16 @@ export const EXPORT_SCOPE_CONFIGS = {
   },
   myProfile: {
     pageId: 'myProfile',
-    skipModal: true,
+    entityKind: 'self',
+    recordKind: 'activity',
+    modes: [SCOPE_MODE.ALL],
     countRecords: async ({ pageContext }) => pageContext?.data?.length ?? 0,
-    resolveDataset: async ({ pageContext }) => pageContext?.data ?? [],
+    resolveDataset: async ({ scopeMode, pageContext }) => {
+      if (scopeMode !== SCOPE_MODE.ALL) {
+        throw new Error('Export scope is required');
+      }
+      return pageContext?.data ?? [];
+    },
   },
   warehouse: createRowListConfig({
     pageId: 'warehouse',
@@ -438,18 +524,34 @@ export const EXPORT_SCOPE_CONFIGS = {
     fetchAllFn: (params) => getWarehouses(params),
     getFilterParams: (ctx) => stripUndefined({ search: ctx?.filters?.search, status: ctx?.filters?.status, type: ctx?.filters?.type }),
   }),
-  inventory: createRowListConfig({
+  inventory: {
     pageId: 'inventory',
     entityKind: 'category',
     recordKind: 'inventoryItem',
-    searchFn: async (query) => {
+    entityScopeType: ENTITY_SCOPE_TYPE.FILTER,
+    modes: [SCOPE_MODE.ENTITY, SCOPE_MODE.ALL, SCOPE_MODE.FILTERS],
+    largeExportThreshold: LARGE_EXPORT_THRESHOLD,
+    searchEntities: async (query) => {
       const response = await getCategories({ search: query || undefined, per_page: 20, page: 1 });
       return safeArray(response).map((c) => ({ id: c.id, label: c.name, raw: c }));
     },
-    fetchAllFn: (params) => getInventory(params),
-    getFilterParams: (ctx) =>
-      stripUndefined({ search: ctx?.filters?.search, category: ctx?.filters?.category, status: ctx?.filters?.status }),
-  }),
+    countRecords: async ({ scopeMode, selectedEntity, pageContext }) => {
+      const filters = mapInventoryFilters(pageContext, scopeMode, selectedEntity);
+      const { meta } = unwrapPaginated(await getInventory({ per_page: 1, page: 1, ...filters }));
+      return meta?.total ?? 0;
+    },
+    resolveDataset: async ({ scopeMode, selectedEntity, pageContext }) => {
+      const filters = mapInventoryFilters(pageContext, scopeMode, selectedEntity);
+      const { items } = await fetchAllPaginated((params) => getInventory(params), filters);
+      return items;
+    },
+    hasActiveFilters: (ctx) =>
+      Boolean(
+        ctx?.filters?.search ||
+        (ctx?.filters?.category && ctx.filters.category !== 'all') ||
+        (ctx?.filters?.status && ctx.filters.status !== 'all')
+      ),
+  },
   production: createRowListConfig({
     pageId: 'production',
     entityKind: 'production',
@@ -479,50 +581,20 @@ export const EXPORT_SCOPE_CONFIGS = {
 };
 
 async function resolveDeliveries({ scopeMode, selectedEntity, pageContext }) {
-  const status = pageContext?.filters?.status !== 'all' ? pageContext?.filters?.status : undefined;
-  const search = pageContext?.filters?.search;
+  const filters = mapDeliveryFilters(pageContext, scopeMode, selectedEntity);
 
   const fetchPage = async (params) => {
     const body = await deliveryService.getDeliveries(params);
     return { data: body };
   };
 
-  if (scopeMode === SCOPE_MODE.ENTITY && selectedEntity?.raw) {
-    const customerName = (selectedEntity.raw.name || selectedEntity.label || '').toLowerCase();
-    const { items } = await fetchAllPaginated(fetchPage, stripUndefined({ status, search }));
-    return items.filter((d) => (d.customer || d.customer_name || '').toLowerCase() === customerName);
-  }
-
-  if (scopeMode === SCOPE_MODE.FILTERS) {
-    const { items } = await fetchAllPaginated(fetchPage, stripUndefined({ status, search }));
-    return items;
-  }
-
-  const { items } = await fetchAllPaginated(fetchPage, {});
+  const { items } = await fetchAllPaginated(fetchPage, filters);
   return items;
 }
 
 async function resolvePayments({ scopeMode, selectedEntity, pageContext }) {
-  const filters = stripUndefined({
-    status: pageContext?.filters?.status,
-    method: pageContext?.filters?.method,
-  });
-
-  const { items } = await fetchAllPaginated((params) => getPayments(params), scopeMode === SCOPE_MODE.ALL ? {} : filters);
-
-  if (scopeMode === SCOPE_MODE.ENTITY && selectedEntity?.raw) {
-    const customerName = (selectedEntity.raw.name || selectedEntity.label || '').toLowerCase();
-    return items.filter((p) => (p.customer || '').toLowerCase() === customerName);
-  }
-
-  if (scopeMode === SCOPE_MODE.FILTERS) {
-    const search = (pageContext?.filters?.search || '').toLowerCase();
-    if (!search) return items;
-    return items.filter((p) =>
-      [p.customer, p.invoiceNumber, p.paymentId].some((v) => String(v || '').toLowerCase().includes(search))
-    );
-  }
-
+  const filters = mapPaymentFilters(pageContext, scopeMode, selectedEntity);
+  const { items } = await fetchAllPaginated((params) => getPayments(params), filters);
   return items;
 }
 
@@ -555,80 +627,13 @@ async function resolveActivityLogs({ scopeMode, selectedEntity, pageContext }) {
   return items;
 }
 
-/** Reports tab-specific configs built at runtime */
-export function getReportsExportConfig(activeTab, pageContext = {}) {
-  const reportParams = stripUndefined({
-    search: pageContext.search,
-    client: pageContext.filters?.client,
-    salesRep: pageContext.filters?.salesRep,
-    status: pageContext.filters?.status,
-    period: pageContext.dateRange,
-  });
-
-  const tabMap = {
-    orders: { fetchFn: getOrdersReport, recordKind: 'order', titleKey: 'orders' },
-    invoices: { fetchFn: getInvoicesReport, recordKind: 'invoice', titleKey: 'invoices' },
-    customers: { fetchFn: getCustomersReport, recordKind: 'customer', titleKey: 'customers' },
-    deliveries: { fetchFn: getDeliveriesReport, recordKind: 'delivery', titleKey: 'deliveries' },
-    products: { fetchFn: getProductsReport, recordKind: 'product', titleKey: 'products' },
-    production: { fetchFn: getProductionReport, recordKind: 'production', titleKey: 'production' },
-  };
-
-  const tabConfig = tabMap[activeTab] || tabMap.orders;
-
-  return {
-    pageId: `reports-${activeTab}`,
-    entityKind: 'customer',
-    recordKind: tabConfig.recordKind,
-    entityScopeType: ENTITY_SCOPE_TYPE.FILTER,
-    modes: [SCOPE_MODE.ENTITY, SCOPE_MODE.ALL, SCOPE_MODE.FILTERS],
-    searchEntities: searchCustomers,
-    hasActiveFilters: () =>
-      Boolean(pageContext.search || pageContext.filters?.client || pageContext.filters?.salesRep || pageContext.filters?.status),
-    countRecords: async ({ scopeMode, selectedEntity }) => {
-      const data = await resolveReportsDataset({ scopeMode, selectedEntity, tabConfig, reportParams, pageContext });
-      return data.length;
-    },
-    resolveDataset: async ({ scopeMode, selectedEntity }) =>
-      resolveReportsDataset({ scopeMode, selectedEntity, tabConfig, reportParams, pageContext }),
-  };
-}
-
-async function resolveReportsDataset({ scopeMode, selectedEntity, tabConfig, reportParams, pageContext }) {
-  const clientFilter =
-    scopeMode === SCOPE_MODE.ENTITY
-      ? selectedEntity?.label
-      : scopeMode === SCOPE_MODE.FILTERS
-        ? reportParams.client
-        : undefined;
-
-  const params = stripUndefined({
-    ...reportParams,
-    client: clientFilter || undefined,
-    per_page: 100,
-  });
-
-  if (scopeMode === SCOPE_MODE.ALL) {
-    const { items } = await fetchAllPaginated((p) => tabConfig.fetchFn(p), stripUndefined({ period: reportParams.period }));
-    return safeArray({ data: items });
-  }
-
-  const { items } = await fetchAllPaginated((p) => tabConfig.fetchFn(p), params);
-  let data = safeArray({ data: items });
-
-  if (pageContext.search && scopeMode === SCOPE_MODE.FILTERS) {
-    const term = pageContext.search.toLowerCase();
-    data = data.filter((row) => JSON.stringify(row).toLowerCase().includes(term));
-  }
-
-  return data;
-}
-
 export function getExportScopeConfig(pageId, pageContext) {
   if (pageId === 'reports') {
-    return getReportsExportConfig(pageContext?.activeTab || 'orders', pageContext);
+    return getReportsExportConfig(pageContext?.activeTab, pageContext);
   }
   return EXPORT_SCOPE_CONFIGS[pageId] ?? null;
 }
+
+export { searchCustomers };
 
 export default EXPORT_SCOPE_CONFIGS;

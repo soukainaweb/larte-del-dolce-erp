@@ -21,10 +21,6 @@ export async function resolveExportDataset({ pageId, pageContext, scopeMode, sel
     throw new Error(`No export scope config for page: ${pageId}`);
   }
 
-  if (config.skipModal) {
-    return config.resolveDataset({ scopeMode: SCOPE_MODE.ALL, selectedEntity: null, pageContext });
-  }
-
   if (!scopeMode) {
     throw new Error('Export scope is required');
   }

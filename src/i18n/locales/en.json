@@ -662,6 +662,38 @@
     "largeExportWarning": "You are about to export {{count}} records.",
     "confirmExport": "Export {{format}}",
     "noRecords": "No records to export",
+    "exportUnavailable": "Export is not available for this view",
+    "reportsTabUnavailable": "Export is not available for this report tab",
+    "datasetTooLarge": "Export dataset is too large to complete safely",
+    "exportCurrentView": "Export current view",
+    "exportCurrentViewHint": "Export the data shown for the current filters and period",
+    "exportSelfScope": "My activity only",
+    "exportSelfScopeHint": "Export only your own activity records",
+    "reports": {
+      "tabs": {
+        "overview": "Overview report",
+        "orders": "Orders report",
+        "sales": "Sales report",
+        "production": "Production report",
+        "products": "Products report",
+        "customers": "Customers report",
+        "invoices": "Invoices report",
+        "deliveries": "Deliveries report",
+        "analytics": "Analytics report",
+        "reports": "Generated reports"
+      },
+      "columns": {
+        "revenue": "Revenue",
+        "orders": "Orders",
+        "sales": "Sales",
+        "growth": "Growth",
+        "year": "Year",
+        "produced": "Produced",
+        "target": "Target",
+        "type": "Type",
+        "period": "Period"
+      }
+    },
     "entity": {
       "default": "Entity",
       "customer": "Customer",
@@ -672,7 +704,8 @@
       "warehouse": "Warehouse",
       "production": "Production order",
       "module": "Module",
-      "period": "Period"
+      "period": "Period",
+      "self": "My activity"
     },
     "record": {
       "default": "records",
@@ -693,7 +726,11 @@
       "warehouse": "warehouses",
       "inventoryItem": "inventory items",
       "production": "production orders",
-      "role": "roles"
+      "role": "roles",
+      "overviewRow": "overview rows",
+      "salesRow": "sales rows",
+      "analyticsRow": "analytics rows",
+      "generatedReport": "generated reports"
     }
   }
 }

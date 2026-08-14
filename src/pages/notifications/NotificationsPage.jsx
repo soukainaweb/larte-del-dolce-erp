@@ -859,13 +859,16 @@ const NotificationsPage = () => {
 
   const notificationExportContext = useMemo(
     () => ({
-      allData: notifications,
-      filteredData: notifications,
-      filteredCount: notifications.length,
-      totalCount,
+      filters: {
+        search: searchTerm,
+        status: filters.status,
+        module: filters.module,
+        priority: filters.priority,
+        period: filters.period,
+      },
       hasActiveFilters: isFilteredList,
     }),
-    [notifications, totalCount, isFilteredList]
+    [searchTerm, filters, isFilteredList]
   );
 
   // ==========================================
@@ -876,7 +879,7 @@ const NotificationsPage = () => {
   };
 
   const handleExportError = () => {
-    showToast('Erreur lors de l\'export', 'error');
+    showToast(t('common.exportError'), 'error');
   };
 
   // ==========================================

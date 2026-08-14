@@ -765,16 +765,16 @@ const InventoryPage = () => {
   // EXPORT CONFIGURATION
   // ==========================================
   const columns = [
-    { label: 'Nom', accessor: 'name', width: 20 },
-    { label: 'SKU', accessor: 'sku', width: 12 },
-    { label: 'Catégorie', accessor: 'category', width: 15 },
-    { label: 'Stock', accessor: 'currentStock', width: 10 },
-    { label: 'Min', accessor: 'minStock', width: 8 },
-    { label: 'Unité', accessor: 'unit', width: 8 },
-    { label: 'Type', accessor: 'type', width: 12 },
-    { label: 'Statut', accessor: 'status', width: 12 },
-    { label: 'Valeur du stock', accessor: 'stockValue', width: 15 },
-    { label: 'Mise à jour', accessor: 'lastUpdated', width: 12 }
+    { label: t('inventory.table.name', t('common.name')), accessor: 'name', width: 20 },
+    { label: t('common.sku'), accessor: 'sku', width: 12 },
+    { label: t('common.category'), accessor: 'category', width: 15 },
+    { label: t('inventory.table.stock', 'Stock'), accessor: 'currentStock', width: 10 },
+    { label: t('inventory.table.min', 'Min'), accessor: 'minStock', width: 8 },
+    { label: t('inventory.table.unit', 'Unit'), accessor: 'unit', width: 8 },
+    { label: t('inventory.table.type', t('common.type', 'Type')), accessor: 'type', width: 12 },
+    { label: t('common.status'), accessor: 'status', width: 12 },
+    { label: t('inventory.table.stockValue', 'Stock value'), accessor: 'stockValue', width: 15 },
+    { label: t('inventory.table.lastUpdated', 'Last updated'), accessor: 'lastUpdated', width: 12 }
   ];
 
   const rowFormatter = (item) => ({
@@ -792,10 +792,10 @@ const InventoryPage = () => {
 
   const summary = [
     { label: t('inventory.kpi.totalItems'), value: kpis.totalProducts },
-    { label: 'Stock total', value: kpis.totalStock },
-    { label: 'Stock faible', value: kpis.lowStock },
-    { label: 'Rupture', value: kpis.outOfStock },
-    { label: 'Valeur du stock', value: `${kpis.totalValue.toLocaleString()} ${CURRENCY}` }
+    { label: t('inventory.kpi.totalStock', 'Total stock'), value: kpis.totalStock },
+    { label: t('inventory.kpi.lowStock', t('inventory.status.low_stock')), value: kpis.lowStock },
+    { label: t('inventory.kpi.outOfStock', t('inventory.status.out_of_stock')), value: kpis.outOfStock },
+    { label: t('inventory.kpi.stockValue', 'Stock value'), value: `${kpis.totalValue.toLocaleString()} ${CURRENCY}` }
   ];
 
   const inventoryExportContext = useMemo(
