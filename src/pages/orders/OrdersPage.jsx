@@ -55,7 +55,7 @@ import { transferOrder, getOrderTransfers, getTransferSalesReps } from '../../se
 import OrderFormModal from '../../components/orders/OrderFormModal';
 import { isSalesRepRole } from '../../utils/roleMapping';
 import { getApiErrorMessage } from '../../utils/apiHelpers';
-import { hasPermission } from '../../utils/permissions';
+import { hasPermission, canTransferOrders as resolveCanTransferOrders } from '../../utils/permissions';
 import { useToast } from '../../contexts/ToastContext';
 
 // ==========================================
@@ -303,14 +303,16 @@ const KPICard = ({ icon: Icon, title, value, color }) => {
 
   return (
     <motion.div
-      whileHover={{ y: -4 }}
-      className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm hover:shadow-md transition-all"
+      whileHover={{ y: -2 }}
+      className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm hover:shadow-md transition-all h-full min-h-[112px] flex flex-col"
     >
-      <div className={`p-2 rounded-xl ${colorClasses[color] || colorClasses.blue}`}>
-        <Icon size={18} />
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className={`p-2 rounded-xl shrink-0 ${colorClasses[color] || colorClasses.blue}`}>
+          <Icon size={18} />
+        </div>
       </div>
-      <p className="text-2xl font-bold text-[#3D2F24] mt-2">{value}</p>
-      <p className="text-xs text-[#6D6D6D]">{title}</p>
+      <p className="text-xs text-[#6D6D6D] leading-snug line-clamp-2 flex-1 text-start">{title}</p>
+      <p className="text-xl sm:text-2xl font-bold text-[#3D2F24] mt-2 tabular-nums text-start break-all">{value}</p>
     </motion.div>
   );
 };
@@ -401,28 +403,28 @@ const OrderTableRow = ({ order, onView, onEdit, onDelete, index, canEdit = false
       transition={{ delay: index * 0.03 }}
       className="hover:bg-[#F8F7F4] transition-colors border-b border-[#ECE8E1]"
     >
-      <td className="px-4 py-3">
+      <td className="px-4 py-3 text-start">
         <p className="text-sm font-bold text-[#3D2F24]">{order.orderNumber}</p>
       </td>
-      <td className="px-4 py-3 text-sm text-[#3D2F24]">{order.customer}</td>
-      <td className="px-4 py-3 text-sm text-[#6D6D6D]">{order.rep}</td>
-      <td className="px-4 py-3 text-sm text-[#6D6D6D]">
+      <td className="px-4 py-3 text-sm text-[#3D2F24] text-start max-w-[180px] truncate" title={order.customer}>{order.customer}</td>
+      <td className="px-4 py-3 text-sm text-[#6D6D6D] text-start max-w-[140px] truncate" title={order.rep}>{order.rep}</td>
+      <td className="px-4 py-3 text-sm text-[#6D6D6D] text-start whitespace-nowrap">
         {new Date(order.createdAt).toLocaleDateString(DATE_LOCALE)}
       </td>
-      <td className="px-4 py-3 text-sm text-[#6D6D6D]">{order.products?.length || 0}</td>
-      <td className="px-4 py-3 text-sm font-bold text-[#3D2F24]">
+      <td className="px-4 py-3 text-sm text-[#6D6D6D] text-center tabular-nums">{order.products?.length || 0}</td>
+      <td className="px-4 py-3 text-sm font-bold text-[#3D2F24] text-start tabular-nums whitespace-nowrap">
         {order.total.toLocaleString()} {CURRENCY_SYMBOL}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3 text-start">
         <StatusBadge status={order.status} />
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3 text-start">
         <PriorityBadge priority={order.priority} />
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3 text-start">
         <PaymentBadge status={order.paymentStatus} />
       </td>
-      <td className="px-4 py-3 text-right">
+      <td className="px-4 py-3 text-end">
         <div className="flex items-center justify-end gap-1">
           <button
             onClick={() => onView(order)}
@@ -1020,7 +1022,7 @@ const OrderDetailsModal = ({
                     <p className="text-xl font-bold text-[#3D2F24]">{displayOrder.orderNumber}</p>
                     <p className="text-sm text-[#6D6D6D]">{displayOrder.customer}</p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-end">
                     <StatusBadge status={displayOrder.status} />
                     <div className="mt-1">
                       <PriorityBadge priority={displayOrder.priority} />
@@ -1354,7 +1356,7 @@ const TransferHistoryModal = ({ isOpen, onClose, transfers, t }) => {
         ) : (
           <table className="w-full text-sm">
             <thead><tr className="border-b">{['order', 'from', 'to', 'date', 'by'].map((c) => (
-              <th key={c} className="px-3 py-2 text-left text-xs uppercase text-[#6D6D6D]">{t(`orderTransfers.columns.${c}`)}</th>
+              <th key={c} className="px-3 py-2 text-start text-xs uppercase text-[#6D6D6D]">{t(`orderTransfers.columns.${c}`)}</th>
             ))}</tr></thead>
             <tbody>
               {transfers.map((tr) => (
@@ -1380,8 +1382,9 @@ const TransferHistoryModal = ({ isOpen, onClose, transfers, t }) => {
 const OrdersPage = () => {
   const { user, roleKey, permissions, isLoading: authLoading } = useAuth();
   const { showToast } = useToast();
-  const isSalesRep = roleKey === 'sales_rep';
+  const isSalesRep = isSalesRepRole(user);
   const canUpdateOrder = !authLoading && hasPermission('orders.update', permissions, user?.role ?? roleKey);
+  const canTransferOrders = resolveCanTransferOrders({ authLoading, user, roleKey, permissions });
   const canDeleteOrder = !authLoading && hasPermission('orders.delete', permissions, user?.role ?? roleKey);
   const canCreateOrder = !authLoading && hasPermission('orders.create', permissions, user?.role ?? roleKey);
   const { t: tGlobal } = useTranslation();
@@ -1716,7 +1719,11 @@ const OrdersPage = () => {
   // RENDER
   // ==========================================
   return (
-    <div className="w-full min-h-screen bg-[#F8F7F4] text-[#202020] p-6" style={{ fontFamily: FONT_BODY }}>
+    <div
+      dir="rtl"
+      className="w-full min-h-screen bg-[#F8F7F4] text-[#202020] p-4 sm:p-6 overflow-x-hidden"
+      style={{ fontFamily: FONT_BODY }}
+    >
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -1744,7 +1751,7 @@ const OrdersPage = () => {
             onSuccess={handleExportSuccess}
             onError={handleExportError}
           />
-          {!isSalesRep && (
+          {canTransferOrders && (
           <>
           <button
             type="button"
@@ -1783,7 +1790,7 @@ const OrdersPage = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
         <KPICard icon={ShoppingBag} title={t('orders.kpi.total')} value={kpis.total} color="blue" />
         <KPICard icon={Clock} title={t('orders.kpi.pending')} value={kpis.pending} color="amber" />
         <KPICard icon={CheckCircle} title={t('orders.kpi.validated')} value={kpis.validated} color="indigo" />
@@ -1797,14 +1804,14 @@ const OrdersPage = () => {
       {/* Filters */}
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 mb-6 shadow-sm">
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" size={18} />
+          <div className="flex-1 relative min-w-0">
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-[#6D6D6D] pointer-events-none" size={18} />
             <input
               type="text"
               placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-[#F8F7F4] text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
+              className="w-full ps-10 pe-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-[#F8F7F4] text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             />
           </div>
           <div className="flex flex-wrap gap-3">
@@ -1848,16 +1855,16 @@ const OrdersPage = () => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">N° Commande</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('customer')}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('orders.table.rep')}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('date')}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('product')}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('amount')}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('priority')}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Paiement</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
+                    <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider whitespace-nowrap">{t('orders.table.orderNumber')}</th>
+                    <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('orders.table.customer')}</th>
+                    <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('orders.table.rep')}</th>
+                    <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider whitespace-nowrap">{t('orders.table.orderDate')}</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('orders.table.products')}</th>
+                    <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider whitespace-nowrap">{t('orders.table.total')}</th>
+                    <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('orders.table.status')}</th>
+                    <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('orders.table.priority')}</th>
+                    <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('orders.table.paymentStatus')}</th>
+                    <th className="px-4 py-3 text-end text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1871,7 +1878,7 @@ const OrdersPage = () => {
                             onClick={() => setIsCreateModalOpen(true)}
                             className="text-sm text-[#B8863B] font-medium hover:underline"
                           >
-                            Créer une commande
+                            {t('orders.addOrder')}
                           </button>
                         </div>
                       </td>
@@ -1944,27 +1951,32 @@ const OrdersPage = () => {
       {/* Pagination */}
       {filteredOrders.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
-          <p className="text-sm text-[#6D6D6D]">
-            Affichage de {((pagination.currentPage - 1) * pagination.perPage) + 1} à{' '}
-            {Math.min(pagination.currentPage * pagination.perPage, filteredOrders.length)} sur {filteredOrders.length} commandes
+          <p className="text-sm text-[#6D6D6D] text-start">
+            {tc('showingRange', {
+              from: ((pagination.currentPage - 1) * pagination.perPage) + 1,
+              to: Math.min(pagination.currentPage * pagination.perPage, filteredOrders.length),
+              total: filteredOrders.length,
+            })}
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => handlePageChange(Math.max(pagination.currentPage - 1, 1))}
               disabled={pagination.currentPage === 1}
               className="p-2 border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={tc('previous')}
             >
-              <ChevronLeft size={16} className="text-[#6D6D6D]" />
+              <ChevronRight size={16} className="text-[#6D6D6D]" />
             </button>
-            <span className="text-sm font-medium text-[#3D2F24]">
-              Page {pagination.currentPage} sur {totalPages}
+            <span className="text-sm font-medium text-[#3D2F24] whitespace-nowrap">
+              {tc('pageOf', { current: pagination.currentPage, total: totalPages })}
             </span>
             <button
               onClick={() => handlePageChange(Math.min(pagination.currentPage + 1, totalPages))}
               disabled={pagination.currentPage === totalPages}
               className="p-2 border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={tc('next')}
             >
-              <ChevronRight size={16} className="text-[#6D6D6D]" />
+              <ChevronLeft size={16} className="text-[#6D6D6D]" />
             </button>
             <select
               value={pagination.perPage}

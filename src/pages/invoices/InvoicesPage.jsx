@@ -78,6 +78,7 @@ const FONT_HEADING = "'Cormorant Garamond', serif";
 const FONT_BODY = "'Inter', sans-serif";
 const DATE_LOCALE = 'ar-SA';
 const CURRENCY = 'SAR';
+const CURRENCY_SYMBOL = 'ر.س';
 
 // ==========================================
 // PAYMENT STATUS BADGE
@@ -159,15 +160,17 @@ const KPICard = ({ icon: Icon, title, value, color, subtitle }) => {
 
   return (
     <motion.div
-      whileHover={{ y: -4, boxShadow: '0 8px 25px rgba(0,0,0,0.08)' }}
-      className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm hover:shadow-md transition-all"
+      whileHover={{ y: -2 }}
+      className="bg-white border border-[#ECE8E1] rounded-xl p-4 shadow-sm hover:shadow-md transition-all h-full min-h-[112px] flex flex-col"
     >
-      <div className={`p-2 rounded-xl ${colorClasses[color] || colorClasses.blue}`}>
-        <Icon size={18} />
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className={`p-2 rounded-xl shrink-0 ${colorClasses[color] || colorClasses.blue}`}>
+          <Icon size={18} />
+        </div>
       </div>
-      <p className="text-2xl font-bold text-[#3D2F24] mt-2">{value}</p>
-      <p className="text-xs text-[#6D6D6D]">{title}</p>
-      {subtitle && <p className="text-[10px] text-[#6D6D6D] mt-1">{subtitle}</p>}
+      <p className="text-xs text-[#6D6D6D] leading-snug line-clamp-2 flex-1 text-start">{title}</p>
+      <p className="text-xl sm:text-2xl font-bold text-[#3D2F24] mt-2 tabular-nums text-start break-all">{value}</p>
+      {subtitle && <p className="text-[10px] text-[#6D6D6D] mt-1 text-start">{subtitle}</p>}
     </motion.div>
   );
 };
@@ -182,7 +185,7 @@ const InvoiceCard = ({ invoice, onView, onEdit, onDelete }) => {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-bold text-[#3D2F24]">{invoice.invoiceNumber}</p>
-          <p className="text-xs text-[#6D6D6D]">Commande: {invoice.orderNumber}</p>
+          <p className="text-xs text-[#6D6D6D]">{t('orders.table.orderNumber')}: {invoice.orderNumber}</p>
         </div>
         <PaymentStatusBadge status={invoice.paymentStatus} />
       </div>
@@ -205,17 +208,17 @@ const InvoiceCard = ({ invoice, onView, onEdit, onDelete }) => {
         </div>
         <div className="flex items-center gap-1">
           <DollarSign size={12} />
-          {invoice.totalAmount.toLocaleString()} ${CURRENCY}
+          {invoice.totalAmount.toLocaleString()} {CURRENCY_SYMBOL}
         </div>
         <div className="flex items-center gap-1">
           <CheckCircle size={12} />
-          {invoice.paidAmount.toLocaleString()} ${CURRENCY}
+          {invoice.paidAmount.toLocaleString()} {CURRENCY_SYMBOL}
         </div>
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#ECE8E1]">
         <div className="flex items-center gap-1">
           {invoice.isOverdue && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 bg-red-100 text-red-700 rounded-full">En retard</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 bg-red-100 text-red-700 rounded-full">{t('invoices.kpi.overdue')}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -246,22 +249,24 @@ const InvoiceTableRow = ({ invoice, onView, onEdit, onDelete, index }) => {
       transition={{ delay: index * 0.03 }}
       className="hover:bg-[#F8F7F4] transition-colors border-b border-[#ECE8E1]"
     >
-      <td className="px-4 py-3">
-        <p className="text-sm font-bold text-[#3D2F24]">{invoice.invoiceNumber}</p>
-        <p className="text-xs text-[#6D6D6D]">{invoice.orderNumber}</p>
+      <td className="px-4 py-3 min-w-[120px]">
+        <p className="text-sm font-bold text-[#3D2F24] truncate">{invoice.invoiceNumber}</p>
+        <p className="text-xs text-[#6D6D6D] truncate">{invoice.orderNumber}</p>
       </td>
-      <td className="px-4 py-3 text-sm text-[#3D2F24]">{invoice.customer}</td>
-      <td className="px-4 py-3 text-sm text-[#6D6D6D]">
+      <td className="px-4 py-3 text-sm text-[#3D2F24] max-w-[160px]">
+        <span className="block truncate">{invoice.customer}</span>
+      </td>
+      <td className="px-4 py-3 text-sm text-[#6D6D6D] whitespace-nowrap tabular-nums">
         {new Date(invoice.invoiceDate).toLocaleDateString(DATE_LOCALE)}
       </td>
-      <td className="px-4 py-3 text-sm text-[#6D6D6D]">
+      <td className="px-4 py-3 text-sm text-[#6D6D6D] whitespace-nowrap tabular-nums">
         {new Date(invoice.dueDate).toLocaleDateString(DATE_LOCALE)}
       </td>
-      <td className="px-4 py-3 text-sm font-medium text-[#3D2F24]">
-        {invoice.totalAmount.toLocaleString()} ${CURRENCY}
+      <td className="px-4 py-3 text-sm font-medium text-[#3D2F24] whitespace-nowrap tabular-nums text-end">
+        {invoice.totalAmount.toLocaleString()} {CURRENCY_SYMBOL}
       </td>
-      <td className="px-4 py-3 text-sm text-[#6D6D6D]">
-        {invoice.paidAmount.toLocaleString()} ${CURRENCY}
+      <td className="px-4 py-3 text-sm text-[#6D6D6D] whitespace-nowrap tabular-nums text-end">
+        {invoice.paidAmount.toLocaleString()} {CURRENCY_SYMBOL}
       </td>
       <td className="px-4 py-3">
         <PaymentMethodBadge method={invoice.paymentMethod} />
@@ -272,7 +277,7 @@ const InvoiceTableRow = ({ invoice, onView, onEdit, onDelete, index }) => {
       <td className="px-4 py-3">
         <InvoiceStatusBadge status={invoice.status} />
       </td>
-      <td className="px-4 py-3 text-right">
+      <td className="px-4 py-3 text-end">
         <div className="flex items-center justify-end gap-1">
           <button
             onClick={() => onView(invoice)}
@@ -440,6 +445,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        dir="rtl"
       >
         <div className="sticky top-0 bg-white border-b border-[#ECE8E1] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
@@ -456,7 +462,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Client *</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{tc('customer')} *</label>
               <select
                 name="customer"
                 value={formData.customer}
@@ -473,7 +479,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
               {errors.customer && <p className="text-xs text-rose-500 mt-1">{errors.customer}</p>}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Commande *</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('orders.table.orderNumber')} *</label>
               <select
                 name="orderNumber"
                 value={formData.orderNumber}
@@ -493,7 +499,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">N° Facture</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('invoices.table.invoiceNumber')}</label>
               <input
                 type="text"
                 name="invoiceNumber"
@@ -503,7 +509,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Date facture</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('invoices.table.issueDate')}</label>
               <input
                 type="date"
                 name="invoiceDate"
@@ -513,7 +519,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Date échéance</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('invoices.table.dueDate')}</label>
               <input
                 type="date"
                 name="dueDate"
@@ -526,7 +532,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Méthode de paiement</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('orders.fields.paymentMethod')}</label>
               <select
                 name="paymentMethod"
                 value={formData.paymentMethod}
@@ -534,9 +540,9 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
                 <option value="cash">{t('common.paymentMethods.cash')}</option>
-                <option value="card">Carte bancaire</option>
-                <option value="transfer">Virement</option>
-                <option value="online">En ligne</option>
+                <option value="card">{t('common.paymentMethods.card')}</option>
+                <option value="transfer">{t('common.paymentMethods.transfer')}</option>
+                <option value="online">{t('common.paymentMethods.online')}</option>
               </select>
             </div>
             <div>
@@ -547,10 +553,10 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="draft">Brouillon</option>
-                <option value="sent">Envoyée</option>
-                <option value="paid">Payée</option>
-                <option value="cancelled">Annulée</option>
+                <option value="draft">{t('orders.status.draft')}</option>
+                <option value="sent">{t('common.statuses.sent')}</option>
+                <option value="paid">{t('common.paymentStatus.paid')}</option>
+                <option value="cancelled">{t('common.cancelled')}</option>
               </select>
             </div>
           </div>
@@ -582,7 +588,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Qté</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{tc('quantity')}</label>
                       <input
                         type="number"
                         value={product.quantity}
@@ -591,7 +597,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">Prix (DH)</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{tc('price')} ({CURRENCY_SYMBOL})</label>
                       <input
                         type="number"
                         value={product.price}
@@ -600,7 +606,7 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">TVA (%)</label>
+                      <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{tc('vat')} (%)</label>
                       <input
                         type="number"
                         value={product.vat}
@@ -620,8 +626,8 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
                     <div className="flex items-end justify-between">
                       <div>
                         <label className="block text-[10px] font-semibold text-[#6D6D6D] mb-1">{tc('total')}</label>
-                        <p className="text-sm font-bold text-[#3D2F24]">
-                          {(product.total || 0).toFixed(2)} ${CURRENCY}
+                        <p className="text-sm font-bold text-[#3D2F24] tabular-nums">
+                          {(product.total || 0).toFixed(2)} {CURRENCY_SYMBOL}
                         </p>
                       </div>
                       {formData.products.length > 1 && (
@@ -646,30 +652,30 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-[#6D6D6D]">{t('orders.summary.subtotal')}</span>
-                <span className="font-medium text-[#3D2F24]">{totals.subtotal.toFixed(2)} ${CURRENCY}</span>
+                <span className="font-medium text-[#3D2F24] tabular-nums">{totals.subtotal.toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#6D6D6D]">{t('orders.summary.totalDiscount')}</span>
-                <span className="font-medium text-[#3D2F24]">{totals.totalDiscount.toFixed(2)} ${CURRENCY}</span>
+                <span className="font-medium text-[#3D2F24] tabular-nums">{totals.totalDiscount.toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#6D6D6D]">TVA</span>
-                <span className="font-medium text-[#3D2F24]">{totals.totalVat.toFixed(2)} ${CURRENCY}</span>
+                <span className="text-[#6D6D6D]">{tc('vat')}</span>
+                <span className="font-medium text-[#3D2F24] tabular-nums">{totals.totalVat.toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#6D6D6D]">Livraison</span>
-                <span className="font-medium text-[#3D2F24]">{totals.delivery.toFixed(2)} ${CURRENCY}</span>
+                <span className="text-[#6D6D6D]">{tc('delivery')}</span>
+                <span className="font-medium text-[#3D2F24] tabular-nums">{totals.delivery.toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
               <div className="flex justify-between pt-2 border-t border-[#ECE8E1]">
                 <span className="font-bold text-[#3D2F24]">{t('orders.summary.grandTotal')}</span>
-                <span className="font-bold text-[#3D2F24] text-lg">{totals.total.toFixed(2)} ${CURRENCY}</span>
+                <span className="font-bold text-[#3D2F24] text-lg tabular-nums">{totals.total.toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Montant payé</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('invoices.fields.paidAmount')}</label>
               <input
                 type="number"
                 name="paidAmount"
@@ -679,17 +685,17 @@ const InvoiceModal = ({ isOpen, onClose, onSave, invoice, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">Statut paiement</label>
+              <label className="block text-xs font-semibold text-[#6D6D6D] mb-1.5 uppercase tracking-wide">{t('invoices.fields.paymentStatus')}</label>
               <select
                 name="paymentStatus"
                 value={formData.paymentStatus}
                 onChange={handleChange}
                 className="w-full px-3 py-2 text-sm border border-[#ECE8E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
               >
-                <option value="paid">Payée</option>
-                <option value="unpaid">Non payée</option>
-                <option value="partial">Partielle</option>
-                <option value="overdue">En retard</option>
+                <option value="paid">{t('common.paymentStatus.paid')}</option>
+                <option value="unpaid">{t('common.paymentStatus.unpaid')}</option>
+                <option value="partial">{t('common.paymentStatus.partial')}</option>
+                <option value="overdue">{t('common.statuses.overdue')}</option>
               </select>
             </div>
           </div>
@@ -801,6 +807,7 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        dir="rtl"
       >
         <div className="p-6 border-b border-[#ECE8E1] flex items-center justify-between">
           <h3 className="text-lg font-bold text-[#3D2F24]" style={{ fontFamily: FONT_HEADING }}>
@@ -818,9 +825,9 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
           <div className="flex items-center justify-between pb-4 border-b border-[#ECE8E1]">
             <div>
               <p className="text-xl font-bold text-[#3D2F24]">{invoice.invoiceNumber}</p>
-              <p className="text-sm text-[#6D6D6D]">Commande: {invoice.orderNumber}</p>
+              <p className="text-sm text-[#6D6D6D]">{t('orders.table.orderNumber')}: {invoice.orderNumber}</p>
             </div>
-            <div className="text-right">
+            <div className="text-end">
               <InvoiceStatusBadge status={invoice.status} />
               <div className="mt-1">
                 <PaymentStatusBadge status={invoice.paymentStatus} />
@@ -834,39 +841,39 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
               <p className="font-medium text-[#3D2F24]">{invoice.customer}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3">
-              <p className="text-xs text-[#6D6D6D]">Méthode de paiement</p>
+              <p className="text-xs text-[#6D6D6D]">{t('orders.fields.paymentMethod')}</p>
               <PaymentMethodBadge method={invoice.paymentMethod} />
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Date facture</p>
-              <p className="text-sm font-medium text-[#3D2F24]">
+              <p className="text-xs text-[#6D6D6D]">{t('invoices.table.issueDate')}</p>
+              <p className="text-sm font-medium text-[#3D2F24] tabular-nums">
                 {new Date(invoice.invoiceDate).toLocaleDateString(DATE_LOCALE)}
               </p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
-              <p className="text-xs text-[#6D6D6D]">Échéance</p>
-              <p className="text-sm font-medium text-[#3D2F24]">
+              <p className="text-xs text-[#6D6D6D]">{t('invoices.table.dueDate')}</p>
+              <p className="text-sm font-medium text-[#3D2F24] tabular-nums">
                 {new Date(invoice.dueDate).toLocaleDateString(DATE_LOCALE)}
               </p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">{tc('total')}</p>
-              <p className="text-sm font-bold text-[#3D2F24]">{invoice.totalAmount.toLocaleString()} ${CURRENCY}</p>
+              <p className="text-sm font-bold text-[#3D2F24] tabular-nums">{invoice.totalAmount.toLocaleString()} {CURRENCY_SYMBOL}</p>
             </div>
             <div className="bg-[#F8F7F4] rounded-lg p-3 text-center">
               <p className="text-xs text-[#6D6D6D]">{t('common.statuses.paid')}</p>
-              <p className="text-sm font-bold text-[#3D2F24]">{invoice.paidAmount.toLocaleString()} ${CURRENCY}</p>
+              <p className="text-sm font-bold text-[#3D2F24] tabular-nums">{invoice.paidAmount.toLocaleString()} {CURRENCY_SYMBOL}</p>
             </div>
           </div>
 
           {remainingAmount > 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
               <p className="text-sm text-amber-700">
-                <Clock size={14} className="inline mr-1" />
-                Montant restant: {remainingAmount.toLocaleString()} ${CURRENCY}
+                <Clock size={14} className="inline ms-1" />
+                {t('invoices.fields.remainingAmount')} {remainingAmount.toLocaleString()} {CURRENCY_SYMBOL}
               </p>
             </div>
           )}
@@ -878,28 +885,28 @@ const ViewInvoiceModal = ({ isOpen, onClose, invoice }) => {
                 <div key={idx} className="flex justify-between items-center bg-white rounded-lg p-2 border border-[#ECE8E1]">
                   <div>
                     <p className="text-sm font-medium text-[#3D2F24]">{p.name}</p>
-                    <p className="text-xs text-[#6D6D6D]">Qté: {p.quantity} × {p.price} ${CURRENCY}</p>
+                    <p className="text-xs text-[#6D6D6D]">{tc('quantity')}: {p.quantity} × {p.price} {CURRENCY_SYMBOL}</p>
                   </div>
-                  <p className="text-sm font-bold text-[#3D2F24]">{p.total?.toFixed(2)} ${CURRENCY}</p>
+                  <p className="text-sm font-bold text-[#3D2F24] tabular-nums">{p.total?.toFixed(2)} {CURRENCY_SYMBOL}</p>
                 </div>
               ))}
             </div>
             <div className="mt-3 pt-3 border-t border-[#ECE8E1] space-y-1 text-sm">
               <div className="flex justify-between">
                 <span className="text-[#6D6D6D]">{t('orders.summary.subtotal')}</span>
-                <span className="text-[#3D2F24]">{invoice.subtotal?.toFixed(2)} ${CURRENCY}</span>
+                <span className="text-[#3D2F24] tabular-nums">{invoice.subtotal?.toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#6D6D6D]">TVA</span>
-                <span className="text-[#3D2F24]">{invoice.totalVat?.toFixed(2)} ${CURRENCY}</span>
+                <span className="text-[#6D6D6D]">{tc('vat')}</span>
+                <span className="text-[#3D2F24] tabular-nums">{invoice.totalVat?.toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#6D6D6D]">Livraison</span>
-                <span className="text-[#3D2F24]">{invoice.deliveryFees?.toFixed(2)} ${CURRENCY}</span>
+                <span className="text-[#6D6D6D]">{tc('delivery')}</span>
+                <span className="text-[#3D2F24] tabular-nums">{invoice.deliveryFees?.toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
               <div className="flex justify-between pt-1 border-t border-[#ECE8E1] font-bold">
                 <span className="text-[#3D2F24]">{t('orders.summary.grandTotal')}</span>
-                <span className="text-[#3D2F24]">{invoice.totalAmount.toFixed(2)} ${CURRENCY}</span>
+                <span className="text-[#3D2F24] tabular-nums">{invoice.totalAmount.toFixed(2)} {CURRENCY_SYMBOL}</span>
               </div>
             </div>
           </div>
@@ -1196,7 +1203,11 @@ const InvoicesPage = () => {
   }, [invoices]);
 
   return (
-    <div className="w-full min-h-screen bg-[#F8F7F4] text-[#202020] p-6" style={{ fontFamily: FONT_BODY }}>
+    <div
+      dir="rtl"
+      className="w-full min-h-screen bg-[#F8F7F4] text-[#202020] p-4 sm:p-6 overflow-x-hidden"
+      style={{ fontFamily: FONT_BODY }}
+    >
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -1226,7 +1237,11 @@ const InvoicesPage = () => {
               pageContext={invoiceExportContext}
               columns={columns}
               title={t('invoices.export.title')}
-              subtitle={`${filteredInvoices.length} factures - Total: ${kpis.revenue.toLocaleString()} ${CURRENCY}`}
+              subtitle={t('orders.export.subtitle', {
+                count: filteredInvoices.length,
+                revenue: kpis.revenue.toLocaleString(),
+                currency: CURRENCY_SYMBOL,
+              })}
               filename={`factures_${new Date().toISOString().split('T')[0]}`}
               summary={listSummary}
               rowFormatter={rowFormatter}
@@ -1269,26 +1284,26 @@ const InvoicesPage = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
-        <KPICard icon={FileText} title="Total factures" value={kpis.total} color="blue" />
-        <KPICard icon={CheckCircle} title="Payées" value={kpis.paid} color="emerald" />
-        <KPICard icon={XCircle} title="Non payées" value={kpis.unpaid} color="rose" />
-        <KPICard icon={AlertCircle} title="En retard" value={kpis.overdue} color="red" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 mb-6">
+        <KPICard icon={FileText} title={t('invoices.kpi.total')} value={kpis.total} color="blue" />
+        <KPICard icon={CheckCircle} title={t('invoices.kpi.paid')} value={kpis.paid} color="emerald" />
+        <KPICard icon={XCircle} title={t('invoices.kpi.unpaid')} value={kpis.unpaid} color="rose" />
+        <KPICard icon={AlertCircle} title={t('invoices.kpi.overdue')} value={kpis.overdue} color="red" />
         <KPICard icon={Calendar} title={tc('today')} value={kpis.today} color="purple" />
-        <KPICard icon={DollarSign} title="Revenu total" value={`${kpis.revenue.toLocaleString()} ${CURRENCY}`} color="gold" />
+        <KPICard icon={DollarSign} title={t('invoices.kpi.totalAmount')} value={`${kpis.revenue.toLocaleString()} ${CURRENCY_SYMBOL}`} color="gold" />
       </div>
 
       {/* Filters */}
       <div className="bg-white border border-[#ECE8E1] rounded-xl p-4 mb-6 shadow-sm">
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6D6D6D]" size={18} />
+          <div className="flex-1 relative min-w-0">
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-[#6D6D6D] pointer-events-none" size={18} />
             <input
               type="text"
               placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-[#F8F7F4] text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
+              className="w-full ps-10 pe-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-[#F8F7F4] text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             />
           </div>
           <div className="flex flex-wrap gap-3">
@@ -1313,10 +1328,10 @@ const InvoicesPage = () => {
               className="px-4 py-2.5 border border-[#ECE8E1] rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]/30 focus:border-[#B8863B] transition-all"
             >
               <option value="all">{t('common.allStatuses')}</option>
-              <option value="draft">Brouillon</option>
-              <option value="sent">Envoyée</option>
-              <option value="paid">Payée</option>
-              <option value="cancelled">Annulée</option>
+              <option value="draft">{t('orders.status.draft')}</option>
+              <option value="sent">{t('common.statuses.sent')}</option>
+              <option value="paid">{t('common.paymentStatus.paid')}</option>
+              <option value="cancelled">{t('common.cancelled')}</option>
             </select>
           </div>
         </div>
@@ -1329,16 +1344,16 @@ const InvoicesPage = () => {
             <table className="w-full">
               <thead>
                 <tr className="bg-[#F8F7F4] border-b border-[#ECE8E1]">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Facture</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('customer')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('date')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Échéance</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('total')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('common.statuses.paid')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('method')}</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">Paiement</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('status')}</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('invoices.table.invoiceNumber')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('invoices.table.customer')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('invoices.table.issueDate')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('invoices.table.dueDate')}</th>
+                  <th className="px-4 py-3 text-end text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('invoices.table.amount')}</th>
+                  <th className="px-4 py-3 text-end text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('invoices.fields.paidAmount')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('method')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('invoices.fields.paymentStatus')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{t('invoices.table.status')}</th>
+                  <th className="px-4 py-3 text-end text-xs font-semibold text-[#6D6D6D] uppercase tracking-wider">{tc('actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1466,27 +1481,32 @@ const InvoicesPage = () => {
       {/* Pagination */}
       {filteredInvoices.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
-          <p className="text-sm text-[#6D6D6D]">
-            Affichage de {((currentPage - 1) * itemsPerPage) + 1} à{' '}
-            {Math.min(currentPage * itemsPerPage, totalCount)} sur {totalCount} factures
+          <p className="text-sm text-[#6D6D6D] text-start">
+            {tc('showingRange', {
+              from: ((currentPage - 1) * itemsPerPage) + 1,
+              to: Math.min(currentPage * itemsPerPage, totalCount),
+              total: totalCount,
+            })}
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
               className="p-2 border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={tc('previous')}
             >
-              <ChevronLeft size={16} className="text-[#6D6D6D]" />
+              <ChevronRight size={16} className="text-[#6D6D6D]" />
             </button>
             <span className="text-sm font-medium text-[#3D2F24]">
-              Page {currentPage} sur {totalPages}
+              {tc('pageOf', { current: currentPage, total: totalPages })}
             </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
               className="p-2 border border-[#ECE8E1] rounded-lg hover:bg-[#F8F7F4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={tc('next')}
             >
-              <ChevronRight size={16} className="text-[#6D6D6D]" />
+              <ChevronLeft size={16} className="text-[#6D6D6D]" />
             </button>
             <select
               value={itemsPerPage}

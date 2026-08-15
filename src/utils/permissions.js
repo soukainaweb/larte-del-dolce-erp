@@ -1,7 +1,7 @@
 /**
  * Frontend permission helpers — mirrors backend User::hasPermission admin bypass.
  */
-import { getBackendRoleSlug, mapRoleToFrontendKey, normalizePermissionNames } from './roleMapping';
+import { getBackendRoleSlug, isSalesRepRole, mapRoleToFrontendKey, normalizePermissionNames } from './roleMapping';
 
 export const FULL_ACCESS_ROLE = 'admin';
 
@@ -49,3 +49,17 @@ export const hasPermission = (permission, permissions = [], roleKey = null) => {
 
 /** Always returns a string[] regardless of backend / cache shape. */
 export const resolvePermissionList = (permissions) => normalizePermissionNames(permissions);
+
+/**
+ * Whether the current user may transfer orders between sales representatives.
+ * Mirrors backend OrderTransferPolicy + OrderTransferController (sales reps blocked).
+ *
+ * @param {{ authLoading?: boolean, user?: object|null, roleKey?: string|null, permissions?: string[] }} params
+ */
+export const canTransferOrders = ({ authLoading = false, user = null, roleKey = null, permissions = [] }) => {
+  if (authLoading) return false;
+  if (isSalesRepRole(user)) return false;
+  const role = user?.role ?? roleKey;
+  return hasPermission('orders.view', permissions, role)
+    && hasPermission('orders.update', permissions, role);
+};
